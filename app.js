@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.8.1';
+const APP_VERSION='1.9.0';
 const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -21,7 +21,7 @@ let sb=null, UID=null, EMAIL='';
 
 /* ---------- state ---------- */
 const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:25,checkDays:180,unusedDays:365,wx:{on:false}},
-  occ:'work',layerMode:'auto',sel:0,fits:[],fitKey:'',seed:Date.now()%100000,cat:'all',tab:'outfits',
+  occ:'work',layerMode:'auto',sel:0,view:(LS.get('wearcycle.view')||'board'),fits:[],fitKey:'',seed:Date.now()%100000,cat:'all',tab:'outfits',
   loaded:false,online:navigator.onLine,fromCache:false,busy:false,installEvt:null};
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
@@ -195,6 +195,70 @@ async function refreshGps(){ // keeps "my location" current when permission is a
     const p=await getPosition(); if(Math.abs(p.lat-w.lat)>0.05||Math.abs(p.lon-w.lon)>0.05){ Object.assign(w,p); queueSettingsSave(); loadWeather(true); } }catch(e){}
 }
 function saveWx(patch){ Object.assign(wxSet(),patch); saveCache(); queueSettingsSave(); S.fitKey=''; }
+
+/* ---------- flat-lay cut-outs (background removed on the phone, in a background worker) ---------- */
+const CUT={worker:null,n:0,pend:{},urls:new Map(),busy:false};
+function bgWorker(){
+  if(CUT.worker) return CUT.worker;
+  CUT.worker=new Worker('vendor/bgworker.mjs',{type:'module'});
+  CUT.worker.onmessage=e=>{ const d=e.data, p=CUT.pend[d.id]; if(!p) return;
+    if(d.progress){ if(p.onp) p.onp(d.progress); return; }
+    delete CUT.pend[d.id]; if(d.error) p.rej(new Error(d.error)); else p.res(d.blob); };
+  CUT.worker.onerror=e=>{ for(const k in CUT.pend){ CUT.pend[k].rej(new Error(e.message||'worker failed')); delete CUT.pend[k]; } CUT.worker=null; };
+  return CUT.worker;
+}
+function removeBg(blob,onp){ return new Promise((res,rej)=>{ const id=++CUT.n; CUT.pend[id]={res,rej,onp};
+  bgWorker().postMessage({id,blob,publicPath:new URL('vendor/bgr-data/',location.href).href}); }); }
+// Trims the transparent margin, caps the size at 640 px and saves as WebP (PNG if WebP is unavailable).
+async function trimAlpha(png){
+  const src=await decode(png); const W=src.width,H=src.height;
+  const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d'); g.drawImage(src,0,0); if(src.close) src.close();
+  const a=g.getImageData(0,0,W,H).data; let x0=W,y0=H,x1=-1,y1=-1;
+  for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2){ if(a[(y*W+x)*4+3]>24){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  if(x1<0) throw new Error('Nothing was found in the photo');
+  const pad=Math.round(0.02*Math.max(x1-x0,y1-y0)); x0=Math.max(0,x0-pad); y0=Math.max(0,y0-pad); x1=Math.min(W-1,x1+pad); y1=Math.min(H-1,y1+pad);
+  const w=x1-x0+1,h=y1-y0+1,k=Math.min(1,640/Math.max(w,h));
+  const out=document.createElement('canvas'); out.width=Math.round(w*k); out.height=Math.round(h*k);
+  out.getContext('2d').drawImage(cv,x0,y0,w,h,0,0,out.width,out.height);
+  let b=await new Promise(r=>out.toBlob(r,'image/webp',0.86)); if(!b||b.type!=='image/webp') b=await new Promise(r=>out.toBlob(r,'image/png'));
+  return b;
+}
+const cutKey=path=>new URL('cutouts/'+path,location.href).href;
+async function cutUrl(it){
+  if(!it||!it.cut) return '';
+  if(CUT.urls.has(it.cut)) return CUT.urls.get(it.cut);
+  let blob=null;
+  try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(cutKey(it.cut)); if(hit) blob=await hit.blob();
+    if(!blob&&sb&&S.online){ const {data}=await sb.storage.from('photos').download(it.cut); if(data){ blob=data; c.put(cutKey(it.cut),new Response(data,{headers:{'Content-Type':data.type||'image/webp'}})); } } }catch(e){}
+  if(!blob) return '';
+  const u=URL.createObjectURL(blob); CUT.urls.set(it.cut,u); return u;
+}
+async function makeCut(it,onp){
+  const src=await photoBlob(it.photo);
+  const png=await removeBg(src,onp);
+  const out=await trimAlpha(png);
+  const ext=out.type==='image/webp'?'webp':'png';
+  const path=UID+'/'+it.id+'-cut-'+Date.now().toString(36)+'.'+ext;
+  const {error}=await sb.storage.from('photos').upload(path,out,{contentType:out.type,upsert:false});
+  if(error) throw new Error(error.message||'upload failed');
+  try{ const c=await caches.open('wearcycle-cutouts'); await c.put(cutKey(path),new Response(out,{headers:{'Content-Type':out.type}})); }catch(e){}
+  const old=it.cut; if(await patchItem(it.id,{cut:path})){ if(old) removePhoto(old); return true; }
+  return false;
+}
+function needsCut(it){ return it&&!isEx(it)&&it.photo&&!it.cut&&isActive(it); }
+async function makeCuts(list){
+  list=list.filter(needsCut); if(!list.length){ toast('All these pieces already have cut-outs.'); return; }
+  if(CUT.busy) return; if(!canWrite()){ toast('You are offline. Cut-outs need a connection the first time.'); return; }
+  CUT.busy=true; closeSheet(); let n=0, fail=0, lastErr='';
+  for(const it of list){
+    const label='Cut-out '+(n+fail+1)+' of '+list.length+' ('+it.name+')';
+    toast(label+'…',0);
+    try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) toast('First time only: downloading the cut-out tool, '+Math.round(100*p.cur/p.tot)+'% of about 100 MB…',0); else if(p&&/compute|inference/.test(p.k)) toast(label+': working…',0); }); n++; renderOutfits(); }
+    catch(e){ fail++; lastErr=String(e&&e.message||e); }
+  }
+  CUT.busy=false; renderAll();
+  toast('Made '+n+' cut-out'+(n===1?'':'s')+'.'+(fail?' '+fail+' failed'+(lastErr?' ('+lastErr.slice(0,80)+')':'')+'.':''),7000);
+}
 
 /* ---------- persistence ---------- */
 async function writeItem(it){
@@ -391,6 +455,7 @@ function renderOutfits(){
   const adv=adviceText();
   const others=S.fits.map((f,i)=>i===S.sel?'':altRow(f,i)).join('');
   renderWx(adv);
+  setTimeout(hydrateCuts,0);
   box.innerHTML=todayLine()+heroCard(S.fits[S.sel],S.sel)+
     `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'Other options':'Only one outfit fits'}</h3><span class="spacer"></span>${S.fits.length>1?'<button class="btn sm" id="shuffleBtn">New ideas</button>':''}</div><p class="hint">${S.fits.length>1?'Ranked by match. Tap one to see it full size.':'Add or tag more pieces for '+esc(OCC[S.occ].label.toLowerCase())+' to get more options.'}</p>${others}</div>`+
     `<p class="hint center">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?' and today’s weather':''}. Settings explain the rules.</p>`;
@@ -409,16 +474,41 @@ function heroCard(f,i){
   const head=f.edited?`<span class="rank">#${f.rank}</span><span class="rk-l"><b>Your version of option ${f.rank}</b>${m.label}</span>`
     :i===0?`<span class="rank top">#1</span><span class="rk-l"><b>Best match</b>${m.label} · 1 of ${S.fits.length}</span>`
     :`<span class="rank">#${f.rank}</span><span class="rk-l"><b>Option ${f.rank} of ${S.fits.length}</b>${m.label}</span>`;
-  return `<article class="fit hero"><header class="fit-h">${head}${bars(m.bars)}</header>
+  const viewSw=`<div class="viewsw" role="group" aria-label="View"><button class="chip" data-view="board" aria-pressed="${S.view==='board'}">Flat-lay</button><button class="chip" data-view="pieces" aria-pressed="${S.view!=='board'}">Pieces</button></div>`;
+  if(S.view==='board') return `<article class="fit hero"><header class="fit-h">${head}${bars(m.bars)}</header>${viewSw}${flatlay(o,i)}${heroMeta(f,i,o,canAddUnder)}</article>`;
+  return `<article class="fit hero"><header class="fit-h">${head}${bars(m.bars)}</header>${viewSw}
     <div class="board2 n${core.length}">${core.map(([k,it])=>k==='bottom'&&beltK>=0?beltOn(it,o.acc[beltK],beltK,i):tile(it,k,i,k==='top'&&o.under?'open':'')).join('')}</div>
     ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}
-    <div class="fit-meta"><ul class="why">${f.reasons.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
+    ${heroMeta(f,i,o,canAddUnder)}</article>`;
+}
+function heroMeta(f,i,o,canAddUnder){
+  return `<div class="fit-meta"><ul class="why">${f.reasons.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
       <div class="row">${f.worn?'<span class="worn-ok">Logged as worn today</span>':`<button class="btn primary grow" data-wear="${i}">Wear this today</button>`}
       ${S.fits.length>1?`<button class="btn" data-next="1" aria-label="Show the next option">Next option</button>`:''}</div>
       ${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}
-      <p class="hint">Tap any piece to swap it for another one that fits.</p>
-      <button class="btn ghost sm logother" data-act="logOther">Wore something else? Log what you wore</button></div></article>`;
+      <p class="hint">${S.view==='board'&&S.fits.length>1?'Swipe the board for the next option. ':''}Tap any piece to swap it for another one that fits.</p>
+      <button class="btn ghost sm logother" data-act="logOther">Wore something else? Log what you wore</button></div>`;
 }
+/* Flat-lay board: pieces laid out like a styled outfit photo. Positions are % of a 4:5 board: [left, top, width, height, z]. */
+const FL={
+  bottom:[3,4,40,46,2], top:[42,2,55,62,3], under:[30,8,32,40,1], outer:[46,1,52,60,4], topWithOuter:[24,4,38,48,3], underWithOuter:[22,30,24,28,1],
+  shoes:[3,56,40,34,3], socks:[42,74,14,22,4], belt:[44,62,24,12,5], watch:[80,64,17,22,5], extra:[[60,80,18,18,5],[80,84,18,14,5]]};
+function flatlay(o,i){
+  const parts=[], miss=[];
+  const put=(it,slot,box,cls)=>{ if(!it) return; if(needsCut(it)) miss.push(it);
+    parts.push(`<button class="fl ${cls||''} ${it.cut?'iscut':''}" style="left:${box[0]}%;top:${box[1]}%;width:${box[2]}%;height:${box[3]}%;z-index:${box[4]}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to swap">${flVisual(it)}</button>`); };
+  if(o.onepiece) put(o.onepiece,'onepiece',[18,2,50,62,2]);
+  else { put(o.bottom,'bottom',FL.bottom,'fold');
+    if(o.outer){ put(o.outer,'outer',FL.outer); put(o.top,'top',FL.topWithOuter); put(o.under,'under',FL.underWithOuter); }
+    else { put(o.top,'top',FL.top); put(o.under,'under',FL.under); } }
+  put(o.shoes,'shoes',FL.shoes);
+  let e=0; o.acc.forEach((a,k)=>{ const box=a.cat==='socks'?FL.socks:a.cat==='belt'?FL.belt:a.cat==='watch'?FL.watch:FL.extra[e++]; if(box) put(a,'acc'+k,box,'acc'); });
+  const note=miss.length&&!CUT.busy?`<div class="cutnote"><span>${miss.length} piece${miss.length>1?'s':''} still on the floor photo.</span><button class="btn sm primary" data-act="cutOutfit">Make cut-outs</button></div>`:(CUT.busy?'<div class="cutnote"><span>Making cut-outs… you can keep using the app.</span></div>':'');
+  return `<div class="flatlay" data-swipe="1">${parts.join('')}</div>${note}`;
+}
+function flVisual(it){ const src=thumbSrc(it); return `<img ${it.cut?`data-cut="${esc(it.id)}"`:''} src="${esc(src||'')}" alt="" ${src?'':'hidden'}>${src?'':glyph(it)}`; }
+// After each render, swap in the transparent cut-outs (loaded from the phone's cache, or downloaded once).
+function hydrateCuts(){ document.querySelectorAll('img[data-cut]').forEach(img=>{ const it=byId(img.dataset.cut); cutUrl(it).then(u=>{ if(u&&img.isConnected){ img.src=u; img.hidden=false; img.classList.add('cut'); } }); }); }
 // The belt is drawn as a band across the top of the trousers tile, where it is worn; it swaps on its own.
 function beltOn(bottom,belt,k,i){
   return `<div class="withbelt">${tile(bottom,'bottom',i)}<button class="beltband" data-swap="${i}" data-slot="acc${k}" aria-label="Belt: ${esc(belt.name)}. Tap to swap"><span class="bimg">${visual(belt)}</span><span class="blab"><span class="k">Belt</span><span class="bn">${esc(belt.name)}</span></span></button></div>`;
@@ -560,6 +650,7 @@ async function saveEditor(){
   ED.busy=true; drawEditor();
   const now=todayISO(); let oldPhoto=null;
   if(!ED.id){ it.id=uuid(); it.created=now; it.status='active'; it.worn=0; it.wearsSinceCheck=0; it.lastCheck=now; }
+  if(ED.blob&&it.cut){ removePhoto(it.cut); it.cut=null; }
   if(ED.blob||ED.cropChanged){ it.thumb=ED.thumb; if(ED.newBox) it.box=ED.newBox; else delete it.box; }
   if(ED.blob){
     if(!isEx(it)){ const path=await uploadPhoto(ED.blob); if(path){ oldPhoto=it.photo; it.photo=path; } }
@@ -603,7 +694,7 @@ async function saveCheck(){
   const it=byId(CK.id); const patch={cond:CK.cond,lastCheck:todayISO(),wearsSinceCheck:0};
   if(CK.res) patch.ai={date:todayISO(),cond:CK.res.condition,rec:CK.res.recommendation||'',summary:String(CK.res.summary||'').slice(0,300),issues:(CK.res.issues||[]).slice(0,8).map(x=>String(x).slice(0,120))};
   const use=$('#ck-use')?.checked; let old=null;
-  if(use&&CK.blob&&canWrite()&&!isEx(it)){ const path=await uploadPhoto(CK.blob); if(path){ old=it.photo; patch.photo=path; patch.thumb=CK.thumb; patch.box=null; } }
+  if(use&&CK.blob&&canWrite()&&!isEx(it)){ const path=await uploadPhoto(CK.blob); if(path){ old=it.photo; patch.photo=path; patch.thumb=CK.thumb; patch.box=null; if(it.cut){ removePhoto(it.cut); patch.cut=null; } } }
   const cond=CK.cond; closeSheet();
   if(await patchItem(it.id,patch)){ if(old) removePhoto(old); toast(cond<=1?'Saved. It is now on the donate list.':'Check saved'); }
 }
@@ -629,7 +720,8 @@ function openSettings(){
    <h3>Weather</h3>
    <div class="panel"><div class="li"><div class="txt"><b>${wxOn()?esc(wxSet().label||'Your location'):'Off'}</b><span>${wxOn()?'Outfits follow today\u2019s forecast.':'Outfits ignore the weather.'}</span></div><div class="acts"><button class="btn sm" data-wx="edit">${wxOn()?'Change':'Set up'}</button></div></div></div>
    <h3>Photos</h3>
-   <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div></div>
+   <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
+   <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div></div>
    <h3>Reminders</h3>
    ${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}
    <p class="hint" id="set-status">Changes save automatically.</p>
@@ -814,6 +906,7 @@ function goTab(tab){
 
 document.addEventListener('click',async e=>{
   const t=e.target.closest('button,[data-scrim]'); if(!t) return;
+  if(Date.now()-swiped<400 && t.closest('[data-swipe]')) return;
   const ds=t.dataset;
   // camera overlay
   if(ds.cam){
@@ -830,6 +923,7 @@ document.addEventListener('click',async e=>{
   if(ds.tabGo){ goTab(ds.tabGo); return; }
   if(ds.occ){ S.occ=ds.occ; S.seed=0; renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
+  if(ds.view){ S.view=ds.view; LS.set('wearcycle.view',S.view); renderOutfits(); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); return; }
   if(ds.sel!==undefined){ S.sel=+ds.sel; if(S.sel) guard(); renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   if(ds.addunder!==undefined){ const f=S.fits[+ds.addunder]; if(!f) return; const o=hydrate(f.ids); const c=swapCandidates(o,'under',allItems(),S.occ,ctx()); if(!c.length) return;
@@ -848,6 +942,8 @@ document.addEventListener('click',async e=>{
     case 'ideas': askIdeas(); return;
     case 'cropAll': cropAll(); return;
     case 'logOther': openLog(); return;
+    case 'cutOutfit': { const f=S.fits[S.sel]; if(!f) return; const o=hydrate(f.ids); makeCuts(coreOf(o).concat(o.acc)); return; }
+    case 'cutAll': makeCuts([...S.items.values()]); return;
     case 'install': if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; closeSheet(); renderStatus(); ev.prompt(); let out='';
       try{ out=(await ev.userChoice).outcome; }catch(err){}
       if(out==='accepted') toast('Installing Wearcycle. The icon appears on your home screen in a few seconds.',6000);
@@ -909,6 +1005,11 @@ document.addEventListener('click',async e=>{
     if(ds.cksave!==undefined){ saveCheck(); return; }
   }
 });
+let SW0=null;
+document.addEventListener('pointerdown',e=>{ const b=e.target.closest('[data-swipe]'); SW0=b?{x:e.clientX,y:e.clientY,t:Date.now()}:null; },{passive:true});
+document.addEventListener('pointerup',e=>{ if(!SW0) return; const dx=e.clientX-SW0.x, dy=e.clientY-SW0.y; const quick=Date.now()-SW0.t<700; SW0=null;
+  if(quick&&Math.abs(dx)>60&&Math.abs(dy)<50&&S.fits.length>1){ S.sel=(S.sel+(dx<0?1:S.fits.length-1))%S.fits.length; if(S.sel) guard(); swiped=Date.now(); renderOutfits(); } },{passive:true});
+let swiped=0;
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });

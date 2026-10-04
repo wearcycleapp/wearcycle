@@ -334,3 +334,19 @@ details.rules p{margin:8px 0}
 .beltband{position:static;left:auto;right:auto;top:auto;width:100%;height:50px;box-shadow:none;border:1px solid var(--line)}
 .withbelt .tile .swap{top:5px}
 .withbelt .beltband{order:-1}
+
+/* v1.9 flat-lay board */
+.viewsw{display:flex;gap:6px;padding:10px 14px 0}
+.viewsw .chip{padding:5px 12px;font-size:13px}
+.flatlay{position:relative;aspect-ratio:4/5;margin:10px 10px 0;border-radius:10px;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none;
+  background:repeating-linear-gradient(90deg,rgba(90,70,40,.035) 0 2px,transparent 2px 38px),linear-gradient(160deg,#ece6dc,#e2d9cb)}
+.fl{position:absolute;border:0;background:none;padding:0;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
+.fl img{max-width:100%;max-height:100%;object-fit:contain;display:block;border-radius:6px;box-shadow:0 2px 6px rgba(0,0,0,.18);pointer-events:none}
+.fl img.cut{border-radius:0;box-shadow:none;filter:drop-shadow(0 4px 5px rgba(60,40,20,.28))}
+.fl svg.glyph{width:72%;height:72%;pointer-events:none}
+.fl.fold{overflow:hidden;align-items:flex-start}
+.fl.fold img.cut{max-height:none;height:165%;width:100%;object-position:top center}
+.fl.fold.iscut::after{content:"";position:absolute;left:8%;right:8%;bottom:0;height:10px;background:linear-gradient(rgba(0,0,0,0),rgba(60,40,20,.18));border-radius:0 0 6px 6px;pointer-events:none}
+.fl:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
+.cutnote{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:8px 10px 0;padding:8px 10px;border-radius:8px;background:var(--accent-soft);font-size:13px}
+.fl.fold img.cut{width:100%;height:auto;max-height:none;object-fit:fill}
