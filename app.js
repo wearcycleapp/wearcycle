@@ -1,5 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
+const APP_VERSION='1.3.1';
 const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps}=WardrobeLogic;
 
@@ -210,7 +211,7 @@ async function addPhotos(blobs){
 }
 
 /* ---------- rendering ---------- */
-function renderAll(){ renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); }
+function renderAll(){ renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.textContent='Wearcycle v'+APP_VERSION; }
 function renderStatus(){
   const st=$('#status'); let b='';
   if(!S.online){ st.textContent='Offline'; st.className='status warn'; b='<div class="banner"><div><b>You are offline.</b> Showing the last saved copy. Changes and Claude need a connection.</div></div>'; }
@@ -461,7 +462,7 @@ function openSettings(){
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
    </div>
-   <div class="row"><button class="btn sm ghost" data-act="server">Change server settings</button><span class="spacer"></span><span class="hint">Version 1.3.0</span></div>`);
+   <div class="row"><button class="btn sm ghost" data-act="server">Change server settings</button><span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
 }
 async function saveSettings(){
   const v=(id,lo,hi,d)=>{ const n=parseInt($(id).value,10); return isNaN(n)?d:Math.max(lo,Math.min(hi,n)); };
@@ -637,7 +638,7 @@ function showLogin(msg){
     <p class="err" id="g-err">${esc(msg||'')}</p>
     <div class="row"><button class="btn primary" id="g-in">Sign in</button><button class="btn ghost" id="g-up">Create account</button></div>
     <p class="hint">Create your account once. After that, turn off new sign-ups in Supabase so nobody else can register (setup guide, step 6).</p></div>
-    <button class="btn ghost sm" id="g-server" style="align-self:flex-start">Change server settings</button>`);
+    <button class="btn ghost sm" id="g-server" style="align-self:flex-start">Change server settings</button><p class="hint">Wearcycle v${APP_VERSION}</p>`);
   const creds=()=>({email:$('#g-email').value.trim(),password:$('#g-pass').value});
   $('#g-in').onclick=async()=>{ const c=creds(); if(!c.email||!c.password){ $('#g-err').textContent='Enter your email and password.'; return; }
     $('#g-in').disabled=true; const {error}=await sb.auth.signInWithPassword(c); $('#g-in').disabled=false;
