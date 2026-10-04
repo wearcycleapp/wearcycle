@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.9.0';
+const APP_VERSION='1.9.1';
 const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -489,20 +489,31 @@ function heroMeta(f,i,o,canAddUnder){
       <p class="hint">${S.view==='board'&&S.fits.length>1?'Swipe the board for the next option. ':''}Tap any piece to swap it for another one that fits.</p>
       <button class="btn ghost sm logother" data-act="logOther">Wore something else? Log what you wore</button></div>`;
 }
-/* Flat-lay board: pieces laid out like a styled outfit photo. Positions are % of a 4:5 board: [left, top, width, height, z]. */
-const FL={
-  bottom:[3,4,40,46,2], top:[42,2,55,62,3], under:[30,8,32,40,1], outer:[46,1,52,60,4], topWithOuter:[24,4,38,48,3], underWithOuter:[22,30,24,28,1],
-  shoes:[3,56,40,34,3], socks:[42,74,14,22,4], belt:[44,62,24,12,5], watch:[80,64,17,22,5], extra:[[60,80,18,18,5],[80,84,18,14,5]]};
+/* Flat-lay board, laid out in wearing order so every outfit reads the same way:
+   left column = upper body (outer layer, top, t-shirt underneath) stacked top to bottom;
+   right column = trousers, then shoes; accessories in a row under the left column.
+   Each piece is fitted inside its own cell (no overlaps), so pieces keep consistent sizes. Units: % of a 4:5 board. */
+function flCells(o){
+  const upper=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under]].filter(Boolean);
+  const bottom=!o.onepiece&&o.bottom?['bottom',o.bottom]:null;
+  const acc=o.acc.map((a,k)=>['acc'+k,a]);
+  const cells=[], G=2;
+  const L={x:4,w:44}, R={x:52,w:44};
+  const accH=acc.length?16:0, colBot=96-(accH?accH+G:0);
+  const n=Math.max(1,upper.length), h=(colBot-4-(n-1)*G)/n;
+  upper.forEach(([slot,it],k)=>cells.push({slot,it,x:L.x,y:4+k*(h+G),w:L.w,h}));
+  if(acc.length){ const m=acc.length, w=Math.min(22,(92-(m-1)*G)/m), x0=4+(92-(m*w+(m-1)*G))/2;
+    acc.forEach(([slot,it],k)=>cells.push({slot,it,x:x0+k*(w+G),y:96-accH,w,h:accH,small:1})); }
+  const colH=colBot-4;
+  if(bottom){ const sh=o.shoes?Math.round(colH*0.3):0; cells.push({slot:bottom[0],it:bottom[1],x:R.x,y:4,w:R.w,h:colH-(sh?sh+G:0)});
+    if(o.shoes) cells.push({slot:'shoes',it:o.shoes,x:R.x,y:colBot-sh,w:R.w,h:sh}); }
+  else if(o.shoes) cells.push({slot:'shoes',it:o.shoes,x:R.x,y:4+colH*0.35,w:R.w,h:colH*0.3});
+  return cells;
+}
 function flatlay(o,i){
-  const parts=[], miss=[];
-  const put=(it,slot,box,cls)=>{ if(!it) return; if(needsCut(it)) miss.push(it);
-    parts.push(`<button class="fl ${cls||''} ${it.cut?'iscut':''}" style="left:${box[0]}%;top:${box[1]}%;width:${box[2]}%;height:${box[3]}%;z-index:${box[4]}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to swap">${flVisual(it)}</button>`); };
-  if(o.onepiece) put(o.onepiece,'onepiece',[18,2,50,62,2]);
-  else { put(o.bottom,'bottom',FL.bottom,'fold');
-    if(o.outer){ put(o.outer,'outer',FL.outer); put(o.top,'top',FL.topWithOuter); put(o.under,'under',FL.underWithOuter); }
-    else { put(o.top,'top',FL.top); put(o.under,'under',FL.under); } }
-  put(o.shoes,'shoes',FL.shoes);
-  let e=0; o.acc.forEach((a,k)=>{ const box=a.cat==='socks'?FL.socks:a.cat==='belt'?FL.belt:a.cat==='watch'?FL.watch:FL.extra[e++]; if(box) put(a,'acc'+k,box,'acc'); });
+  const miss=[];
+  const parts=flCells(o).map(c=>{ if(needsCut(c.it)) miss.push(c.it);
+    return `<button class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%" data-swap="${i}" data-slot="${c.slot}" aria-label="${esc(CAT[c.it.cat].label)}: ${esc(c.it.name)}. Tap to swap">${flVisual(c.it)}</button>`; });
   const note=miss.length&&!CUT.busy?`<div class="cutnote"><span>${miss.length} piece${miss.length>1?'s':''} still on the floor photo.</span><button class="btn sm primary" data-act="cutOutfit">Make cut-outs</button></div>`:(CUT.busy?'<div class="cutnote"><span>Making cut-outs… you can keep using the app.</span></div>':'');
   return `<div class="flatlay" data-swipe="1">${parts.join('')}</div>${note}`;
 }
@@ -618,6 +629,7 @@ function drawEditor(){
    <div class="photo"><div class="pv">${pv?`<img src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
      ${ED.blob?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
+     ${ED.id&&ED.it.cut&&!ED.blob?`<button type="button" class="btn sm ghost" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button><button type="button" class="btn sm ghost" data-cutdel="1">Remove cut-out</button>`:''}
      ${hasPic?(cropped?`<button type="button" class="btn sm ghost" data-uncrop="1" ${ED.busy?'disabled':''}>Show whole photo</button>`:`<button type="button" class="btn sm ghost" data-ai="box" ${ED.busy?'disabled':''}>Crop to the clothes</button>`):''}</div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
@@ -991,6 +1003,8 @@ document.addEventListener('click',async e=>{
       try{ const blob=ED.blob||await photoBlob(ED.it.photo); const p=await prepare(blob); if(!ED) return; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=true; toast('Whole photo. Save to keep it.'); }
       catch(err){ toast(aiMsg(err)); }
       if(ED){ ED.busy=false; drawEditor(); } return; }
+    if(ds.cutdel){ const it=byId(ED.id); if(it&&it.cut&&await patchItem(it.id,{cut:null})){ removePhoto(it.cut); ED.it.cut=null; drawEditor(); toast('Cut-out removed. The board shows the photo instead.'); } return; }
+    if(ds.cutredo){ const it=byId(ED.id); if(!it) return; const old=it.cut; if(await patchItem(it.id,{cut:null})){ if(old) removePhoto(old); makeCuts([byId(it.id)]); } return; }
     if(ds.save!==undefined){ saveEditor(); return; }
     if(ds.del!==undefined){ if(!ED.confirmDel){ readEditorFields(); ED.confirmDel=true; drawEditor(); return; } deleteItem(); return; }
   }

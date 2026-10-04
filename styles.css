@@ -350,3 +350,16 @@ details.rules p{margin:8px 0}
 .fl:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
 .cutnote{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:8px 10px 0;padding:8px 10px;border-radius:8px;background:var(--accent-soft);font-size:13px}
 .fl.fold img.cut{width:100%;height:auto;max-height:none;object-fit:fill}
+
+/* v1.9.1 board polish: calm studio backdrop, consistent shadows, padded cells */
+.flatlay{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#efe9e0 70%,#e7dfd3 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+.fl{padding:3%}
+.fl.small{padding:6%}
+.fl img{border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.10)}
+.fl img.cut{filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
+.fl.fold img.cut,.fl.fold{height:auto}
+.fl:active img{transform:scale(.97)}
+@media (prefers-reduced-motion:no-preference){.fl img{transition:transform .12s ease}}
+.fl svg.glyph{display:block;flex:1 1 auto;width:100%;height:100%;min-width:0;min-height:0}
+.fl{padding:8px}
+.fl.small{padding:4px}
