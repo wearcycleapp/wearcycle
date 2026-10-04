@@ -204,7 +204,7 @@ async function addPhotos(blobs){
     if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error) applyAi(it,r); else aiFail++; }catch(e){ aiFail++; if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
     if(await writeItem(it)) done++;
   }
-  S.busy=false;
+  S.busy=false; renderAll();
   toast('Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'+(aiStop?' '+aiStop:(aiFail?' Claude could not read '+aiFail+'.':'')),7000);
   goTab('closet');
 }
@@ -282,7 +282,7 @@ function renderCloset(){
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():'<p class="hint">Loading…</p>'; return; }
   const list=items.filter(it=>S.cat==='all'||it.cat===S.cat).sort((a,b)=>(b.review?1:0)-(a.review?1:0)||CATS.findIndex(c=>c.id===a.cat)-CATS.findIndex(c=>c.id===b.cat)||String(a.name).localeCompare(b.name));
   const now=Date.now(); const reviews=items.filter(i=>i.review).length;
-  box.innerHTML=(reviews?`<p class="hint" style="margin:0 0 12px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what Claude filled in, then save.</p>`:'')+
+  box.innerHTML=(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what Claude filled in. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
    (S.examples.length?`<div class="row" style="margin-bottom:12px"><span class="hint">Items marked <span class="ex">Example</span> are not saved.</span><span class="spacer"></span><button class="btn sm ghost" data-act="clearEx">Remove examples</button></div>`:'')+
    '<div class="grid">'+list.map(it=>{ const fl=careFlags(it,now,S.settings); const bad=fl.some(f=>f.kind==='retire'); return `<button class="card" data-edit="${esc(it.id)}">
     <div class="vis">${visual(it)}</div><div class="body"><div class="name">${esc(it.name)}</div>
@@ -376,7 +376,7 @@ function drawEditor(){
    <div class="field"><span class="lab">Colors · tap in order, main color first</span><div class="colors">${colorBtns}</div></div>
    <div class="field"><span class="lab">Dress level · ${FORM[it.formality??3]}</span>${seg('formality',FORM)}</div>
    <div class="field"><span class="lab">Occasions</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>`<button type="button" class="chip" data-occt="${o.id}" aria-pressed="${(it.occ||[]).includes(o.id)}">${o.label}</button>`).join('')}</div></div>
-   <div class="field"><span class="lab">Condition · ${COND[it.cond??4]}</span>${seg('cond',COND)}<p class="hint">5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.</p></div>
+   <div class="field"><div class="row"><span class="lab" style="flex:1">Condition · ${COND[it.cond??4]}</span><button type="button" class="btn sm" data-isnew="1">Brand new</button></div>${seg('cond',COND)}<p class="hint">5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.</p></div>
    <div class="field"><label for="f-bought">Bought (month, optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" maxlength="300" placeholder="Fit, care, where it came from">${esc(it.notes||'')}</textarea></div>
    ${ED.id&&!isEx(it)?`<p class="hint">Worn ${it.worn||0} times${it.lastWorn?', last on '+esc(it.lastWorn):''}.${it.lastCheck?' Last condition check '+esc(it.lastCheck)+'.':''}</p>`:''}
@@ -461,7 +461,7 @@ function openSettings(){
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
    </div>
-   <div class="row"><button class="btn sm ghost" data-act="server">Change server settings</button><span class="spacer"></span><span class="hint">Version 1.2.1</span></div>`);
+   <div class="row"><button class="btn sm ghost" data-act="server">Change server settings</button><span class="spacer"></span><span class="hint">Version 1.3.0</span></div>`);
 }
 async function saveSettings(){
   const v=(id,lo,hi,d)=>{ const n=parseInt($(id).value,10); return isNaN(n)?d:Math.max(lo,Math.min(hi,n)); };
@@ -514,6 +514,17 @@ function loadExamples(){
     mk(19,'Teal swim shorts','bottom',['teal'],1,['sport'],4,420)];
   renderAll(); toast('Example closet loaded. It is not saved.');
 }
+async function confirmAll(){
+  if(S.busy) return;
+  if(!canWrite()){ toast('You are offline. Changes need a connection.'); return; }
+  const list=allItems().filter(i=>i.review && isActive(i));
+  const ready=list.filter(i=>(i.colors||[]).length && i.name);
+  const skipped=list.length-ready.length;
+  S.busy=true; renderCloset(); let n=0;
+  for(const it of ready){ toast('Confirming '+(n+1)+' of '+ready.length+'…',0); if(await patchItem(it.id,{review:false})) n++; }
+  S.busy=false; renderAll();
+  toast('Confirmed '+n+' item'+(n===1?'':'s')+'.'+(skipped?' '+skipped+' still need a color or name; open them to finish.':''),6000);
+}
 function goTab(tab){
   S.tab=tab;
   for(const b of document.querySelectorAll('nav.tabs button')){ if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
@@ -547,6 +558,7 @@ document.addEventListener('click',async e=>{
     case 'bulk': { closeSheet(); if(S.busy) return; const files=await pickFiles(true); addPhotos(files); return; }
     case 'add': closeSheet(); openEditor(null); return;
     case 'examples': loadExamples(); return;
+    case 'confirmAll': confirmAll(); return;
     case 'clearEx': S.examples=[]; S.exLog=[]; renderAll(); return;
     case 'ideas': askIdeas(); return;
     case 'install': if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; closeSheet(); renderStatus(); ev.prompt(); let out='';
@@ -570,6 +582,7 @@ document.addEventListener('click',async e=>{
   if(ED){
     if(ds.color){ readEditorFields(); const c=ED.it.colors=(ED.it.colors||[]).slice(); const ix=c.indexOf(ds.color); if(ix>=0) c.splice(ix,1); else if(c.length<3) c.push(ds.color); else toast('Up to three colors.'); drawEditor(); return; }
     if(ds.seg){ readEditorFields(); ED.it[ds.seg]=+ds.v; drawEditor(); return; }
+    if(ds.isnew){ readEditorFields(); ED.it.cond=5; ED.it.bought=todayISO().slice(0,7); drawEditor(); toast('Set to Like new, bought '+ED.it.bought+'.'); return; }
     if(ds.occt){ readEditorFields(); const o=ED.it.occ=(ED.it.occ||[]).slice(); const ix=o.indexOf(ds.occt); if(ix>=0) o.splice(ix,1); else o.push(ds.occt); drawEditor(); return; }
     if(ds.photo){ readEditorFields(); if(ds.photo==='cam'){ const [b]=await openCamera('single'); if(b) editorSetPhoto(b); } else { const [f]=await pickFiles(false); if(f) editorSetPhoto(f); } return; }
     if(ds.ai==='tag'){ readEditorFields(); ED.busy=true; ED.ai=null; drawEditor();
