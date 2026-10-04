@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.3.1';
+const APP_VERSION='1.4.0';
 const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps}=WardrobeLogic;
 
@@ -219,7 +219,7 @@ function renderStatus(){
   else { st.textContent='Saved'; st.className='status ok'; }
   if(S.online && S.installEvt && !LS.get('wardrobe.installDismissed')) b+='<div class="banner" style="background:var(--accent-soft)"><div style="flex:1"><b style="color:var(--accent)">Install Wearcycle</b> to open it from your home screen like any app.</div><button class="btn sm primary" data-act="install">Install</button><button class="btn sm ghost" data-act="installNo">Later</button></div>';
   $('#banner').innerHTML=b;
-  $('#addBtn').hidden=S.tab==='shop';
+  $('#addBtn').hidden=S.tab!=='closet';
   const n=allItems().filter(it=>careFlags(it,Date.now(),S.settings).some(f=>f.kind==='retire'||f.kind==='check'||f.kind==='downgraded')).length;
   const bd=$('#careBadge'); bd.hidden=!n; bd.textContent=n;
 }
@@ -258,6 +258,7 @@ function tile(it,slot,i,size){
   if(!it) return '';
   return `<button class="tile ${size||''}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to swap">${slot.startsWith('acc')?'':SWAP_ICON}<div class="vis">${visual(it)}</div><div class="cap">${esc(it.name)}</div></button>`;
 }
+function fitLabel(s){ return s>=3.5?'Great match':s>=2?'Good match':s>=0.5?'Fair match':'Weak match'; }
 function fitCard(f,i){
   const o=hydrate(f.ids);
   const upper=o.onepiece?tile(o.onepiece,'onepiece',i):tile(o.top,'top',i);
@@ -267,9 +268,8 @@ function fitCard(f,i){
     <div class="main">${hat?tile(hat,'acc'+o.acc.indexOf(hat),i,'xs'):''}${pair}${o.onepiece?'':tile(o.bottom,'bottom',i)}${o.shoes?tile(o.shoes,'shoes',i,'sm'):''}</div>
     <div class="side">${side.map(a=>tile(a,'acc'+o.acc.indexOf(a),i,'xs')).join('')}</div></div>
     <div class="fit-meta">
-      <div class="score"><span class="num">${f.score.toFixed(1)}</span><span class="lbl">match score<br>higher is better</span></div>
+      <div class="score"><span class="num">${f.score.toFixed(1)}</span><span class="lbl"><b>${fitLabel(f.score)}</b><br>higher is better</span><span class="spacer"></span>${f.worn?'<span class="worn-ok">Worn today</span>':`<button class="btn primary" data-wear="${i}">Wear today</button>`}</div>
       <ul class="why">${f.reasons.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
-      <div class="row">${f.worn?'<span class="worn-ok">Logged as worn today</span>':`<button class="btn primary sm" data-wear="${i}">Wear today</button>`}</div>
     </div></article>`;
 }
 function renderCloset(){
@@ -293,7 +293,7 @@ function renderCloset(){
 function thumbBox(it){ return `<div class="thumb">${thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it)}</div>`; }
 function careRow(it,f,acts){
   const cls=f.kind==='retire'?'stripe-retire':(f.kind==='downgraded'?'stripe-down':'');
-  return `<div class="li ${cls}">${thumbBox(it)}<div class="txt"><b>${esc(it.name)} ${isEx(it)?'<span class="ex">Example</span>':''}</b><span>${esc(f.text)}</span></div><div class="acts">${acts}</div></div>`;
+  return `<div class="li care ${cls}">${thumbBox(it)}<div class="txt"><b>${esc(it.name)} ${isEx(it)?'<span class="ex">Example</span>':''}</b><span>${esc(f.text)}</span></div><div class="acts">${acts}</div></div>`;
 }
 function renderCare(){
   const now=Date.now(), items=allItems(); const box=$('#careBody');
@@ -303,7 +303,7 @@ function renderCare(){
   const panel=(title,desc,rows)=>`<div class="panel"><div class="panel-h"><h3>${title}</h3><span class="count">${rows.length}</span></div>${desc?`<div class="panel-h"><p>${desc}</p></div>`:''}${rows.join('')}</div>`;
   const out=[];
   const donate=groups.retire.concat(groups.unused.filter(([it])=>!groups.retire.some(([r])=>r.id===it.id)));
-  out.push(donate.length?panel('Donate or recycle','Retired items and anything unused for '+S.settings.unusedDays+'+ days.',donate.map(([it,f])=>careRow(it,f,`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)))
+  out.push(donate.length?panel('Donate or recycle','Retired items and anything not worn for '+Math.round(S.settings.unusedDays/MONTH)+'+ months.',donate.map(([it,f])=>careRow(it,f,`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)))
     :'<div class="panel"><div class="panel-h"><h3>Donate or recycle</h3><span class="count">0</span></div><div class="li"><span class="done">Nothing to donate right now.</span></div></div>');
   if(groups.downgraded.length) out.push(panel('Moved down a level','Still useful, but no longer counted for work or going out.',groups.downgraded.map(([it,f])=>careRow(it,f,`<button class="btn sm" data-check="${esc(it.id)}">Recheck</button>`))));
   if(groups.check.length) out.push(panel('Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>careRow(it,f,`<button class="btn sm primary" data-check="${esc(it.id)}">Check</button>`))));
@@ -365,7 +365,7 @@ function openEditor(id){
 function drawEditor(){
   const it=ED.it; const pv=ED.preview||ED.full||thumbSrc(it);
   const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
-  const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b>${labels[n].split(' ')[0]}</button>`).join('')}</div>`;
+  const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b><span>${key==='cond'?labels[n]:labels[n].split(' ')[0]}</span></button>`).join('')}</div>`;
   openSheet(sheetHead(ED.id?(it.review?'Review item':'Edit item'):'New item')+`
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
    <div class="photo"><div class="pv">${pv?`<img src="${esc(pv)}" alt="">`:glyph(it)}</div>
@@ -381,7 +381,7 @@ function drawEditor(){
    <div class="field"><label for="f-bought">Bought (month, optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" maxlength="300" placeholder="Fit, care, where it came from">${esc(it.notes||'')}</textarea></div>
    ${ED.id&&!isEx(it)?`<p class="hint">Worn ${it.worn||0} times${it.lastWorn?', last on '+esc(it.lastWorn):''}.${it.lastCheck?' Last condition check '+esc(it.lastCheck)+'.':''}</p>`:''}
-   <div class="row"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
+   <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
    ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`);
 }
 function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); }
@@ -425,12 +425,12 @@ function drawCheck(){
    <p class="hint">${esc(it.name)} · currently ${COND[it.cond??4].toLowerCase()} (${it.cond??4}/5). Photograph the most worn area in good light: collar, cuffs, knees or soles.</p>
    <div class="photo"><div class="pv">${CK.preview?`<img src="${esc(CK.preview)}" alt="">`:(thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it))}</div>
     <div class="col"><button type="button" class="btn sm" data-cphoto="cam">Take photo</button><button type="button" class="btn sm ghost" data-cphoto="gal">Choose photo</button>
-    <button type="button" class="btn sm primary" data-ai="check" ${!CK.blob||CK.busy?'disabled':''}>${CK.busy?'Assessing…':'Assess with Claude'}</button></div></div>
+    <button type="button" class="btn sm primary" data-ai="check" ${!CK.blob||CK.busy?'disabled':''}>${CK.busy?'Assessing…':'Assess with Claude'}</button>${CK.blob?'':'<span class="hint">Take or choose a photo first.</span>'}</div></div>
    ${CK.err?`<p class="err">${esc(CK.err)}</p>`:''}
    ${r?`<div class="ai"><span class="k">Claude's read · ${esc(r.confidence||'')} confidence</span><div><b>${esc(COND[r.condition]||'')} (${esc(r.condition)}/5)</b>, recommends ${esc(r.recommendation||'')}. ${esc(r.summary||'')}</div>${(r.issues||[]).length?`<ul>${r.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<span class="hint">A photo can miss odors, fit and fabric thinning. Adjust the rating if you know better.</span></div>`:''}
-   <div class="field"><span class="lab">Your rating · ${COND[CK.cond]}</span><div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-ckc="${n}" aria-pressed="${CK.cond===n}"><b>${n}</b>${COND[n].split(' ')[0]}</button>`).join('')}</div></div>
+   <div class="field"><span class="lab">Your rating · ${COND[CK.cond]}</span><div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-ckc="${n}" aria-pressed="${CK.cond===n}"><b>${n}</b><span>${COND[n]}</span></button>`).join('')}</div></div>
    ${CK.blob&&!isEx(it)?`<label class="row hint"><input type="checkbox" id="ck-use" ${CK.usePhoto?'checked':''}> Use this photo as the item photo</label>`:''}
-   <div class="row"><button type="button" class="btn primary" data-cksave ${CK.busy?'disabled':''}>Save check</button><button type="button" class="btn ghost" data-close>Cancel</button></div>`);
+   <div class="row sheet-actions"><button type="button" class="btn primary" data-cksave ${CK.busy?'disabled':''}>Save check</button><button type="button" class="btn ghost" data-close>Cancel</button></div>`);
 }
 async function checkSetPhoto(blob){
   try{ const p=await prepare(blob); if(!CK) return; CK.blob=p.full; CK.thumb=p.thumb; if(CK.preview) URL.revokeObjectURL(CK.preview); CK.preview=URL.createObjectURL(p.full); CK.res=null; CK.err=''; }
@@ -446,31 +446,52 @@ async function saveCheck(){
   if(await patchItem(it.id,patch)){ if(old) removePhoto(old); toast(cond<=1?'Saved. It is now on the donate list.':'Check saved'); }
 }
 
+// Settings use steppers and presets instead of typed numbers; months instead of days.
+const MONTH=30.42;
+const SETDEF={
+  checkEvery:{label:'Check condition after',unit:v=>v+' wears',min:5,max:200,step:5,presets:[15,25,40,60],get:s=>s.checkEvery,set:(s,v)=>{s.checkEvery=v;}},
+  checkDays:{label:'…or after',unit:v=>v+(v===1?' month':' months'),min:1,max:24,step:1,presets:[3,6,12],get:s=>Math.max(1,Math.round(s.checkDays/MONTH)),set:(s,v)=>{s.checkDays=Math.round(v*MONTH);}},
+  unusedDays:{label:'Suggest donating clothes not worn for',unit:v=>v+' months',min:3,max:36,step:1,presets:[6,12,18,24],get:s=>Math.max(3,Math.round(s.unusedDays/MONTH)),set:(s,v)=>{s.unusedDays=Math.round(v*MONTH);}}};
+function settingRow(k){
+  const d=SETDEF[k], v=d.get(S.settings);
+  return `<div class="setting"><span class="lab">${d.label}</span>
+    <div class="stepper"><button type="button" class="stepbtn" data-step="${k}" data-d="-1" aria-label="Decrease">&minus;</button>
+    <output id="out-${k}" aria-live="polite">${d.unit(v)}</output>
+    <button type="button" class="stepbtn" data-step="${k}" data-d="1" aria-label="Increase">+</button></div>
+    <div class="presets">${d.presets.map(p=>`<button type="button" class="chip" data-preset="${k}" data-v="${p}" aria-pressed="${p===v}">${d.unit(p)}</button>`).join('')}</div></div>`;
+}
 function openSettings(){
-  const s=S.settings;
   openSheet(sheetHead('Settings')+`
    <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs to your own Supabase project.</span></div><div class="acts"><button class="btn sm" data-act="signout">Sign out</button></div></div>
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
-   <div class="field"><label for="s-ce">Condition check after this many wears</label><input type="number" id="s-ce" min="5" max="200" value="${s.checkEvery}"></div>
-   <div class="field"><label for="s-cd">…or after this many days</label><input type="number" id="s-cd" min="30" max="730" value="${s.checkDays}"></div>
-   <div class="field"><label for="s-ud">Suggest donating after this many days unworn</label><input type="number" id="s-ud" min="90" max="1095" value="${s.unusedDays}"></div>
-   <div class="row"><button type="button" class="btn primary" data-ssave>Save settings</button></div>
-   <h3>How it decides</h3>
-   <div class="rules">
+   <h3>Reminders</h3>
+   ${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}
+   <p class="hint" id="set-status">Changes save automatically.</p>
+   <details class="rules"><summary>How Wearcycle decides</summary>
     <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
-   </div>
+   </details>
    <div class="row"><button class="btn sm ghost" data-act="server">Change server settings</button><span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
 }
-async function saveSettings(){
-  const v=(id,lo,hi,d)=>{ const n=parseInt($(id).value,10); return isNaN(n)?d:Math.max(lo,Math.min(hi,n)); };
-  const s={checkEvery:v('#s-ce',5,200,25),checkDays:v('#s-cd',30,730,180),unusedDays:v('#s-ud',90,1095,365)};
-  if(!canWrite()){ toast('You are offline. Changes need a connection.'); return; }
-  const {error}=await sb.from('settings').upsert({user_id:UID,body:s});
-  if(error){ toast('Could not save settings: '+error.message,4500); return; }
-  S.settings=s; saveCache(); closeSheet(); renderAll(); toast('Settings saved');
+function changeSetting(k,v){
+  const d=SETDEF[k]; v=Math.max(d.min,Math.min(d.max,v));
+  d.set(S.settings,v);
+  const out=$('#out-'+k); if(out) out.textContent=d.unit(v);
+  document.querySelectorAll(`[data-preset="${k}"]`).forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.v===v)));
+  saveCache(); renderAll(); queueSettingsSave();
+}
+let setTimer=null;
+function queueSettingsSave(){
+  const st=$('#set-status'); if(st) st.textContent='Saving…';
+  clearTimeout(setTimer);
+  setTimer=setTimeout(async()=>{
+    const st2=$('#set-status');
+    if(!canWrite()){ if(st2) st2.textContent='Offline: changes will not be saved until you reconnect.'; return; }
+    const {error}=await sb.from('settings').upsert({user_id:UID,body:S.settings});
+    if(st2) st2.textContent=error?'Could not save: '+error.message:'Saved.';
+  },600);
 }
 
 /* ---------- actions ---------- */
@@ -579,7 +600,8 @@ document.addEventListener('click',async e=>{
   if(ds.donate){ if(await patchItem(ds.donate,{status:'donated',donatedOn:todayISO()})) toast('Marked as donated'); return; }
   if(ds.restore){ if(await patchItem(ds.restore,{status:'active'})) toast('Back in your closet'); return; }
   if(ds.check){ openCheck(ds.check); return; }
-  if(ds.ssave!==undefined){ saveSettings(); return; }
+  if(ds.step){ changeSetting(ds.step, SETDEF[ds.step].get(S.settings)+(+ds.d)*SETDEF[ds.step].step); return; }
+  if(ds.preset){ changeSetting(ds.preset,+ds.v); return; }
   if(ED){
     if(ds.color){ readEditorFields(); const c=ED.it.colors=(ED.it.colors||[]).slice(); const ix=c.indexOf(ds.color); if(ix>=0) c.splice(ix,1); else if(c.length<3) c.push(ds.color); else toast('Up to three colors.'); drawEditor(); return; }
     if(ds.seg){ readEditorFields(); ED.it[ds.seg]=+ds.v; drawEditor(); return; }
