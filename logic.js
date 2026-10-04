@@ -3,9 +3,9 @@ const WardrobeLogic=(function(){
 'use strict';
 const CATS=[
   {id:'top',label:'Top'},{id:'bottom',label:'Bottom'},{id:'onepiece',label:'One-piece'},{id:'outerwear',label:'Outerwear'},
-  {id:'shoes',label:'Shoes'},{id:'watch',label:'Watch'},{id:'belt',label:'Belt'},{id:'hat',label:'Hat'},{id:'bag',label:'Bag'},{id:'other',label:'Other accessory'}];
+  {id:'shoes',label:'Shoes'},{id:'socks',label:'Socks'},{id:'watch',label:'Watch'},{id:'belt',label:'Belt'},{id:'hat',label:'Hat'},{id:'bag',label:'Bag'},{id:'other',label:'Other accessory'}];
 const CAT=Object.fromEntries(CATS.map(c=>[c.id,c]));
-const ACCESSORY=['watch','belt','bag','hat','other'];
+const ACCESSORY=['socks','watch','belt','bag','hat','other'];
 const GARMENT=['top','bottom','onepiece','outerwear','shoes'];
 // min = lowest condition (1-5) acceptable for the occasion; formality = target on a 1-5 scale
 const OCCASIONS=[
@@ -132,15 +132,46 @@ function scoreOutfit(o,occ,ctx){
   else if(avgRest>=5) reasons.push({t:'Pieces have rested '+Math.round(avgRest)+(avgRest>=14?'+':'')+' days on average'});
   if(o.top && o.bottom && log.some(e=>daysSince(e.date,now)<7 && (e.items||[]).includes(o.top.id) && (e.items||[]).includes(o.bottom.id))){
     s-=2; reasons.push({t:'Same top and bottom already worn together this week',neg:true}); }
+  const sock=(o.acc||[]).find(a=>a.cat==='socks'); if(sock){ const sf=sockFit(o,sock,occ,ctx.wx); if(sf.why) reasons.push({t:sf.why,neg:sf.neg}); }
   return {score:Math.round(s*100)/100,reasons};
 }
 
-function pickAccessories(o,by,occ,now){
+/* ---------- socks ----------
+   Dressier outfits: match the trousers (longer leg line), else the shoes; with pale trousers a shade darker;
+   no white socks with dress shoes. Casual outfits: any color that keeps the palette in harmony.
+   Sources: Permanent Style "Your socks should match your trousers"; Darn Tough dress sock color guide. */
+const OPEN_SHOE_RX=/\b(sandals?|slides|flip[- ]?flops?|espadrilles?|slippers?)\b/i;
+const DARKER={beige:['khaki','brown'],khaki:['brown','olive'],white:['grey','beige'],grey:['navy','black'],lightblue:['navy','blue']};
+function sockFit(o,sock,occ,wx){
+  const b=o.bottom||o.onepiece, sh=o.shoes, sc=primary(sock), bc=b&&primary(b), shc=sh&&primary(sh);
+  const fs=coreOf(o).filter(i=>i!==o.under).map(i=>i.formality??3); const dressy=OCC[occ].formality>=3 && fs.reduce((a,c)=>a+c,0)/fs.length>=2.5;
+  let s=0, why='', neg=false;
+  if(dressy){
+    if(sc==='white' && sh && (sh.formality??3)>=3){ s-=3; why='White socks with dress shoes'; neg=true; }
+    else if(sc && sc===bc){ s+=2; why=sock.name+' match the '+(b.name||'trousers'); }
+    else if(bc && (DARKER[bc]||[]).includes(sc)){ s+=1.5; why=sock.name+': a shade darker than the '+b.name; }
+    else if(sc && sc===shc){ s+=1; why=sock.name+' match the shoes'; }
+    else { const d=harmony(coreOf(o).map(primary).filter(Boolean).concat(sc||[])).s-harmony(coreOf(o).map(primary).filter(Boolean)).s; s+=d>=0?0.5:d; why=sock.name+(d>=0?' fit the colors':' clash with the outfit'); neg=d<0; }
+  } else {
+    const d=harmony(coreOf(o).map(primary).filter(Boolean).concat(sc||[])).s-harmony(coreOf(o).map(primary).filter(Boolean)).s;
+    s+=d; why=sock.name+(d>=0?' go with the outfit':' clash with the outfit'); neg=d<0;
+  }
+  const f=sock.formality??2; if(Math.abs(f-OCC[occ].formality)>1){ s-=1; if(!neg){ why=sock.name+(f>OCC[occ].formality?' are dressy':' are casual')+' for '+OCC[occ].label.toLowerCase(); neg=true; } }
+  if(wx){ const {lo,hi}=wxFeel(wx); const w=warmthOf(sock); if(lo<5&&w===3) s+=0.5; if(hi>=24&&w===3){ s-=1; } }
+  return {s,why,neg};
+}
+
+function pickAccessories(o,by,occ,now,wx){
   const acc=[]; const baseColors=coreOf(o).map(primary).filter(Boolean); const baseH=harmony(baseColors).s;
   for(const cat of ACCESSORY){
     const list=by[cat]; if(!list||!list.length) continue;
     if(cat==='belt' && !o.bottom) continue;
     if(cat==='hat' && occ==='work') continue;
+    if(cat==='socks'){
+      if(!o.shoes || OPEN_SHOE_RX.test(String(o.shoes.name||''))) continue;
+      let best=null,bs=-Infinity; for(const a of list){ const v=sockFit(o,a,occ,wx).s+Math.min(14,daysSince(a.lastWorn,now))/14; if(v>bs){bs=v;best=a;} }
+      if(best) acc.push(best); continue;
+    }
     let best=null,bestS=-Infinity;
     for(const a of list){
       let s=Math.min(14,daysSince(a.lastWorn,now))/14;
@@ -181,7 +212,7 @@ function suggest(items,occ,ctx,opts){
   for(const c of scored){
     const key=c.o.onepiece?'o'+c.o.onepiece.id:c.o.top.id+'|'+c.o.bottom.id+(c.o.under?'|u':''); if(seen.has(key)) continue; seen.add(key);
     const o=c.o;
-    o.acc=pickAccessories(o,by,occ,ctx.now);
+    o.acc=pickAccessories(o,by,occ,ctx.now,ctx.wx);
     const r=scoreOutfit(o,occ,ctx); out.push({o,score:r.score,reasons:r.reasons});
     if(out.length>=n) break;
   }
@@ -237,6 +268,6 @@ function gaps(items){
 
 return {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,canOpen,canUnder,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  warmthOf,rainReady,canOpen,canUnder,sockFit,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

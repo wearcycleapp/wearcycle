@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.7.0';
 const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder}=WardrobeLogic;
@@ -43,6 +43,7 @@ const GLYPH={
   onepiece:'<path d="M19 6h10l-1 8 8 28H12l8-28-1-8Z"/>',
   outerwear:'<path d="M17 6 8 12v30h11V20l5 6 5-6v22h11V12l-9-6-7 8-7-8Z"/>',
   shoes:'<path d="M5 32c0-7 2-13 4-15h8c0 4 4 7 9 8l12 3c4 1 5 5 5 7H5v-3Z"/>',
+  socks:'<path d="M16 4h13v20l9 8c3 3 1 10-5 10-2 0-4-1-5-2L15 31c-2-2-3-4-3-7V8c0-2 2-4 4-4Z"/>',
   watch:'<rect x="19" y="4" width="10" height="40" rx="3"/><circle cx="24" cy="24" r="10"/>',
   belt:'<rect x="3" y="19" width="42" height="10" rx="2"/><rect x="17" y="16" width="11" height="16" rx="2" fill="none" stroke-width="2.5"/>',
   hat:'<path d="M9 31c0-10 7-17 15-17s15 7 15 17Z"/><rect x="3" y="30" width="42" height="5" rx="2"/>',
@@ -119,6 +120,7 @@ async function aiCheck(blob,it){ return callClaude('check',{image:await blobToBa
 function applyAi(it,res){
   if(res.name) it.name=String(res.name).slice(0,60);
   if(CAT[res.category]) it.cat=res.category;
+  if(/\bsocks?\b/i.test(String(res.name||''))) it.cat='socks'; // works even before the server function knows the Socks category
   const cs=(res.colors||[]).filter(c=>COLORS[c]).slice(0,3); if(cs.length) it.colors=cs;
   if(res.formality>=1&&res.formality<=5) it.formality=Math.round(res.formality);
   const oc=(res.occasions||[]).filter(o=>OCC[o]); if(oc.length) it.occ=oc;
@@ -615,6 +617,7 @@ function openSettings(){
     <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.</p>
     <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1 and open shoes lose 1.5. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
     <p><b>Layered look.</b> Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. Which items count is guessed from their names; change it in each item's editor.</p>
+    <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
     <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
@@ -737,7 +740,9 @@ function loadExamples(){
     mk(15,'Navy blazer','outerwear',['navy'],4,['work','out'],5,12), mk(16,'Old work jeans','bottom',['denim'],1,['chores'],2,30),
     mk(17,'Stained paint tee','top',['white'],1,['chores'],1,40), mk(18,'Green rain jacket','outerwear',['green'],2,['out','chores'],3,90,{lastCheck:d(250)}),
     mk(19,'Teal swim shorts','bottom',['teal'],1,['sport'],4,420), mk(20,'Plaid button-up shirt','top',['red','navy'],2,['out'],5,10),
-    mk(21,'White t-shirt','top',['white'],1,['out','home'],5,7), mk(22,'Black t-shirt','top',['black'],1,['out','home'],4,4)];
+    mk(21,'White t-shirt','top',['white'],1,['out','home'],5,7), mk(22,'Black t-shirt','top',['black'],1,['out','home'],4,4),
+    mk(23,'Navy dress socks','socks',['navy'],3,['work','out'],4,3), mk(24,'Brown dress socks','socks',['brown'],3,['work','out'],4,6),
+    mk(25,'White athletic socks','socks',['white'],1,['sport','home','chores'],3,2), mk(26,'Burgundy patterned socks','socks',['burgundy','navy'],2,['out'],5,15)];
   renderAll(); toast('Example closet loaded. It is not saved.');
 }
 async function confirmAll(){

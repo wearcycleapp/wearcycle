@@ -19,7 +19,7 @@ const CORS = {
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { ...CORS, "Content-Type": "application/json" } });
 
-const CATEGORIES = ["top", "bottom", "onepiece", "outerwear", "shoes", "watch", "belt", "hat", "bag", "other"];
+const CATEGORIES = ["top", "bottom", "onepiece", "outerwear", "shoes", "socks", "watch", "belt", "hat", "bag", "other"];
 const COLORS = ["black", "white", "grey", "navy", "beige", "khaki", "brown", "denim", "olive", "red", "burgundy", "pink",
   "orange", "yellow", "green", "teal", "lightblue", "blue", "purple"];
 const BOX = '"box": [left, top, right, bottom] as fractions from 0 to 1 of the image width and height, a tight box around ' +
