@@ -24,6 +24,13 @@ const COLORS={
   red:{hex:'#b9322e',h:0},burgundy:{hex:'#6e1f2f',h:345},pink:{hex:'#e29ab0',h:340},orange:{hex:'#d6742a',h:28},
   yellow:{hex:'#e0be42',h:50},green:{hex:'#3e8a4d',h:130},teal:{hex:'#2e8987',h:178},lightblue:{hex:'#9bbfe5',h:210},
   blue:{hex:'#3566c4',h:220},purple:{hex:'#6a4a9c',h:275}};
+// Optional style palettes the owner can prefer. Outfits whose main colors all sit in the palette rank higher.
+const PALETTES={
+  any:{label:'Any colors',colors:null,desc:'No preference: only color harmony counts.'},
+  muted:{label:'Muted classics',colors:['black','white','grey','navy','beige','khaki','brown','denim','olive','burgundy','lightblue'],desc:'Neutral base with one muted accent such as olive, burgundy or light blue.'},
+  earth:{label:'Earth tones',colors:['beige','khaki','brown','olive','white','burgundy','denim'],desc:'Cream, tan, brown, olive and rust-like warmth.'},
+  mono:{label:'Monochrome',colors:['black','white','grey'],desc:'Black, white and grey only.'},
+  navy:{label:'Navy and white',colors:['navy','white','denim','lightblue','grey','beige'],desc:'Nautical: navy, white, light blue and soft neutrals.'}};
 const TARGETS={work:{top:5,bottom:3,shoes:2},out:{top:3,bottom:2,shoes:1},sport:{top:3,bottom:2,shoes:1},home:{top:3,bottom:2,shoes:1},chores:{top:2,bottom:1,shoes:1}};
 const IDEAS={
   work:{top:'button-up shirt or knit polo',bottom:'chinos or trousers',shoes:'leather shoes or clean minimal sneakers'},
@@ -118,6 +125,10 @@ function weatherScore(o,wx){
 function scoreOutfit(o,occ,ctx){
   const now=ctx.now, log=ctx.log||[]; const core=coreOf(o); const reasons=[]; let s=0;
   if(ctx.wx){ const w=weatherScore(o,ctx.wx); s+=w.s; reasons.push(...w.r); }
+  const pal=ctx.palette&&PALETTES[ctx.palette]&&PALETTES[ctx.palette].colors;
+  if(pal){ const out=core.filter(i=>primary(i)&&!pal.includes(primary(i)));
+    if(!out.length){ s+=1; reasons.push({t:'Fits your '+PALETTES[ctx.palette].label.toLowerCase()+' palette'}); }
+    else { s-=0.5*out.length; reasons.push({t:[...new Set(out.map(i=>primary(i)))].join(' and ')+(new Set(out.map(i=>primary(i))).size>1?' are':' is')+' outside your '+PALETTES[ctx.palette].label.toLowerCase()+' palette',neg:true}); } }
   const h=harmony(core.map(primary).filter(Boolean)); s+=h.s; reasons.push({t:h.why,neg:!!h.neg});
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
   if(o.under) reasons.push({t:'Open '+o.top.name+' over '+o.under.name+': a relaxed layered look'});
@@ -295,7 +306,7 @@ function gaps(items){
   return out;
 }
 
-return {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
+return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   warmthOf,rainReady,canOpen,canUnder,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();

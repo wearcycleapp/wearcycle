@@ -1,7 +1,7 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.9.1';
-const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
+const APP_VERSION='1.10.0';
+const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
 
@@ -26,7 +26,7 @@ const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:25,che
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
 function byId(id){ return S.items.get(id)||S.examples.find(e=>e.id===id); }
-function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore()}; }
+function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any'}; }
 function canWrite(){ return S.online && !!sb; }
 function cacheKey(){ return 'wardrobe.cache.'+UID; }
 function saveCache(){ if(!UID) return; LS.set(cacheKey(),{items:[...S.items.values()].map(cleanBodyWithId),log:S.log.slice(0,200),settings:S.settings,at:Date.now()}); }
@@ -395,7 +395,7 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&needsLayer(wxForScore())); }
-function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 function regenerate(){
@@ -457,7 +457,7 @@ function renderOutfits(){
   renderWx(adv);
   setTimeout(hydrateCuts,0);
   box.innerHTML=todayLine()+heroCard(S.fits[S.sel],S.sel)+
-    `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'Other options':'Only one outfit fits'}</h3><span class="spacer"></span>${S.fits.length>1?'<button class="btn sm" id="shuffleBtn">New ideas</button>':''}</div><p class="hint">${S.fits.length>1?'Ranked by match. Tap one to see it full size.':'Add or tag more pieces for '+esc(OCC[S.occ].label.toLowerCase())+' to get more options.'}</p>${others}</div>`+
+    `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'Other options':'Only one outfit fits'}</h3><span class="spacer"></span>${S.fits.length>1?'<button class="btn sm" id="shuffleBtn">New ideas</button>':''}</div><p class="hint">${S.fits.length>1?'Ranked by match. Tap one to see it full size.':'Add or tag more pieces for '+esc(OCC[S.occ].label.toLowerCase())+' to get more options.'}</p><div class="altgrid">${others}</div></div>`+
     `<p class="hint center">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?' and today’s weather':''}. Settings explain the rules.</p>`;
 }
 const SWAP_ICON='<span class="swap" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></span>';
@@ -481,8 +481,15 @@ function heroCard(f,i){
     ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}
     ${heroMeta(f,i,o,canAddUnder)}</article>`;
 }
+// The outfit's color story: one swatch per main piece (in wearing order) and the harmony rule it follows.
+function paletteStrip(o){
+  const core=coreOf(o); const cols=core.map(primary).filter(c=>COLORS[c]);
+  const h=WardrobeLogic.harmony(cols); const pal=S.settings.palette&&S.settings.palette!=='any'?PALETTES[S.settings.palette]:null;
+  return `<div class="palette"><span class="sws">${core.filter(i=>COLORS[primary(i)]).map(i=>`<span class="sw" style="background:${COLORS[primary(i)].hex}" title="${esc(primary(i))}: ${esc(i.name)}"></span>`).join('')}</span>
+    <span class="pl"><b>${esc(h.why)}</b>${pal?`<span>Your palette: ${esc(pal.label)}</span>`:''}</span><button class="btn sm ghost" data-act="palettes">Palette</button></div>`;
+}
 function heroMeta(f,i,o,canAddUnder){
-  return `<div class="fit-meta"><ul class="why">${f.reasons.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
+  return `${paletteStrip(o)}<div class="fit-meta"><ul class="why">${f.reasons.filter(r=>r.t!==WardrobeLogic.harmony(coreOf(o).map(primary).filter(c=>COLORS[c])).why).map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
       <div class="row">${f.worn?'<span class="worn-ok">Logged as worn today</span>':`<button class="btn primary grow" data-wear="${i}">Wear this today</button>`}
       ${S.fits.length>1?`<button class="btn" data-next="1" aria-label="Show the next option">Next option</button>`:''}</div>
       ${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}
@@ -525,10 +532,12 @@ function beltOn(bottom,belt,k,i){
   return `<div class="withbelt">${tile(bottom,'bottom',i)}<button class="beltband" data-swap="${i}" data-slot="acc${k}" aria-label="Belt: ${esc(belt.name)}. Tap to swap"><span class="bimg">${visual(belt)}</span><span class="blab"><span class="k">Belt</span><span class="bn">${esc(belt.name)}</span></span></button></div>`;
 }
 function altRow(f,i){
-  const o=hydrate(f.ids); const m=match(f); const list=coreOf(o);
-  return `<button class="alt" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(list.map(x=>x.name).join(', '))}"><span class="rank">#${f.rank}</span>
-    <span class="strip">${list.map(it=>`<span class="mini">${visual(it)}</span>`).join('')}</span>
-    <span class="alt-l">${m.label}${bars(m.bars)}</span></button>`;
+  const o=hydrate(f.ids); const m=match(f);
+  const cells=flCells(o).map(c=>`<span class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${flVisual(c.it)}</span>`).join('');
+  const sws=coreOf(o).map(primary).filter(c=>COLORS[c]).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('');
+  return `<button class="alt2" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(coreOf(o).map(x=>x.name).join(', '))}">
+    <span class="flatlay mini">${cells}<span class="rank">#${f.rank}</span></span>
+    <span class="alt2-l"><span class="sws">${sws}</span><span class="ml">${m.label}</span>${bars(m.bars)}</span></button>`;
 }
 function renderCloset(){
   const items=allItems().filter(isActive);
@@ -731,6 +740,8 @@ function openSettings(){
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
    <h3>Weather</h3>
    <div class="panel"><div class="li"><div class="txt"><b>${wxOn()?esc(wxSet().label||'Your location'):'Off'}</b><span>${wxOn()?'Outfits follow today\u2019s forecast.':'Outfits ignore the weather.'}</span></div><div class="acts"><button class="btn sm" data-wx="edit">${wxOn()?'Change':'Set up'}</button></div></div></div>
+   <h3>Style</h3>
+   <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(PALETTES[S.settings.palette||'any'].label)}</b><span>${esc(PALETTES[S.settings.palette||'any'].desc)}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
    <h3>Photos</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
    <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div></div>
@@ -743,6 +754,7 @@ function openSettings(){
     <p><b>Layered look.</b> Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. Which items count is guessed from their names; change it in each item's editor.</p>
     <p><b>Belts.</b> Jeans, chinos, trousers and casual shorts always get a belt if you own one, even one not tagged for the occasion; joggers and athletic wear don't. With leather dress shoes the belt should match them (black with black, brown with brown) and a casual belt is flagged; with sneakers any belt that keeps the colors in harmony. If your only belt doesn't fit the rule it is still shown, with a warning. Change whether a bottom takes a belt in its editor.</p>
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
+    <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.</p>
     <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
@@ -767,6 +779,13 @@ function queueSettingsSave(){
     const {error}=await sb.from('settings').upsert({user_id:UID,body:S.settings});
     if(st2) st2.textContent=error?'Could not save: '+error.message:'Saved.';
   },600);
+}
+
+/* ---------- style palette ---------- */
+function openPalettes(){
+  const cur=S.settings.palette||'any';
+  openSheet(sheetHead('Style palette')+`<p class="hint">Outfits whose main colors all sit in your palette rank higher (+1); each piece outside it costs half a point. Color harmony still applies to every palette.</p>
+   ${Object.entries(PALETTES).map(([k,p])=>`<button class="palopt" data-pal="${k}" aria-pressed="${cur===k}"><span class="sws">${(p.colors||['black','white','navy','olive','burgundy','khaki','lightblue']).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><span class="pl"><b>${esc(p.label)}</b><span>${esc(p.desc)}</span></span></button>`).join('')}`);
 }
 
 /* ---------- weather sheet ---------- */
@@ -935,6 +954,7 @@ document.addEventListener('click',async e=>{
   if(ds.tabGo){ goTab(ds.tabGo); return; }
   if(ds.occ){ S.occ=ds.occ; S.seed=0; renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
+  if(ds.pal){ S.settings.palette=ds.pal; saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast(ds.pal==='any'?'No palette preference.':'Ranking now favors '+PALETTES[ds.pal].label.toLowerCase()+'.'); return; }
   if(ds.view){ S.view=ds.view; LS.set('wearcycle.view',S.view); renderOutfits(); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); return; }
   if(ds.sel!==undefined){ S.sel=+ds.sel; if(S.sel) guard(); renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
@@ -954,6 +974,7 @@ document.addEventListener('click',async e=>{
     case 'ideas': askIdeas(); return;
     case 'cropAll': cropAll(); return;
     case 'logOther': openLog(); return;
+    case 'palettes': openPalettes(); return;
     case 'cutOutfit': { const f=S.fits[S.sel]; if(!f) return; const o=hydrate(f.ids); makeCuts(coreOf(o).concat(o.acc)); return; }
     case 'cutAll': makeCuts([...S.items.values()]); return;
     case 'install': if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; closeSheet(); renderStatus(); ev.prompt(); let out='';
