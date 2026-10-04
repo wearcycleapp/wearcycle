@@ -301,3 +301,29 @@ details.rules p{margin:8px 0}
 .sheet>*{flex-shrink:0}
 .board2.n5 .tile:last-child{grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}
 .addunder{align-self:flex-start}
+
+/* v1.8: belt worn over the trousers, logging sheet */
+.withbelt{position:relative;min-width:0}
+.withbelt>.tile{height:100%}
+.beltband{position:absolute;left:8px;right:8px;top:8px;height:46px;border:0;border-radius:8px;padding:0;overflow:hidden;display:flex;align-items:stretch;background:var(--raised);box-shadow:0 2px 8px rgba(0,0,0,.25);text-align:left;z-index:1}
+.beltband .bimg{width:64px;flex:none;position:relative;overflow:hidden;background:var(--surface)}
+.beltband .bimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.beltband .bimg svg.glyph{width:100%;height:100%}
+.beltband .blab{flex:1;min-width:0;padding:4px 8px;font-size:12px;line-height:1.2;display:flex;flex-direction:column;justify-content:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.beltband .blab .k{font-family:var(--f-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.withbelt .tile .swap{top:58px}
+.logother{align-self:flex-start;padding-left:0}
+.hint.today{background:var(--good-soft);color:var(--ink);padding:8px 12px;border-radius:8px}
+.pickrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
+.pick{flex:none;width:84px;border:2px solid var(--line);background:var(--raised);border-radius:10px;padding:4px;display:flex;flex-direction:column;gap:4px;align-items:center}
+.pick .mini{width:72px;height:72px}
+.pick .pn{font-size:11px;line-height:1.2;color:var(--muted);text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.pick[aria-pressed="true"]{border-color:var(--coral);background:var(--accent-soft)}
+.pick[aria-pressed="true"] .pn{color:var(--ink);font-weight:600}
+.beltband .blab{white-space:normal;font-size:11.5px}
+.beltband .blab>span+*{display:block}
+.beltband{height:50px}
+.withbelt .tile .swap{top:62px}
+.beltband .bn{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.beltband .bimg{width:52px}
+.beltband .bn{max-height:2.4em;line-height:1.2}

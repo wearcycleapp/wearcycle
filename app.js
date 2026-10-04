@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.7.1';
+const APP_VERSION='1.8.0';
 const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -223,7 +223,20 @@ function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
 
 /* ---------- camera ---------- */
 const CAM={stream:null,mode:'single',shots:[],resolve:null,facing:'environment',busy:false};
+let guarded=false;
+function guard(){ if(!guarded){ try{ history.pushState({wearcycle:1},''); guarded=true; }catch(e){} } }
+function inDepth(){ return !!CAM.resolve || !!$('#sheetRoot').innerHTML || S.sel!==0 || S.tab!=='outfits'; }
+window.addEventListener('popstate',()=>{
+  guarded=false;
+  if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]);
+  else if($('#sheetRoot').innerHTML) closeSheet();
+  else if(S.sel!==0){ S.sel=0; renderOutfits(); window.scrollTo(0,0); }
+  else if(S.tab!=='outfits') goTab('outfits');
+  else { history.back(); return; } // nothing left to close: let back leave the app
+  if(inDepth()) guard();
+});
 function openCamera(mode){
+  guard();
   return new Promise(resolve=>{
     CAM.mode=mode; CAM.shots=[]; CAM.resolve=resolve;
     drawCamera(); startStream();
@@ -378,7 +391,7 @@ function renderOutfits(){
   const adv=adviceText();
   const others=S.fits.map((f,i)=>i===S.sel?'':altRow(f,i)).join('');
   renderWx(adv);
-  box.innerHTML=heroCard(S.fits[S.sel],S.sel)+
+  box.innerHTML=todayLine()+heroCard(S.fits[S.sel],S.sel)+
     `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'Other options':'Only one outfit fits'}</h3><span class="spacer"></span>${S.fits.length>1?'<button class="btn sm" id="shuffleBtn">New ideas</button>':''}</div><p class="hint">${S.fits.length>1?'Ranked by match. Tap one to see it full size.':'Add or tag more pieces for '+esc(OCC[S.occ].label.toLowerCase())+' to get more options.'}</p>${others}</div>`+
     `<p class="hint center">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?' and today’s weather':''}. Settings explain the rules.</p>`;
 }
@@ -392,17 +405,23 @@ function heroCard(f,i){
   const o=hydrate(f.ids); const m=match(f);
   const core=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom],o.shoes&&['shoes',o.shoes]].filter(Boolean);
   const canAddUnder=o.top&&!o.under&&canOpen(o.top)&&swapCandidates(o,'under',allItems(),S.occ,ctx()).length;
+  const beltK=o.bottom?o.acc.findIndex(a=>a.cat==='belt'):-1; const rest=o.acc.map((a,k)=>[a,k]).filter(([a,k])=>k!==beltK);
   const head=f.edited?`<span class="rank">#${f.rank}</span><span class="rk-l"><b>Your version of option ${f.rank}</b>${m.label}</span>`
     :i===0?`<span class="rank top">#1</span><span class="rk-l"><b>Best match</b>${m.label} · 1 of ${S.fits.length}</span>`
     :`<span class="rank">#${f.rank}</span><span class="rk-l"><b>Option ${f.rank} of ${S.fits.length}</b>${m.label}</span>`;
   return `<article class="fit hero"><header class="fit-h">${head}${bars(m.bars)}</header>
-    <div class="board2 n${core.length}">${core.map(([k,it])=>tile(it,k,i,k==='top'&&o.under?'open':'')).join('')}</div>
-    ${o.acc.length?`<div class="accrow">${o.acc.map((a,k)=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}
+    <div class="board2 n${core.length}">${core.map(([k,it])=>k==='bottom'&&beltK>=0?beltOn(it,o.acc[beltK],beltK,i):tile(it,k,i,k==='top'&&o.under?'open':'')).join('')}</div>
+    ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}
     <div class="fit-meta"><ul class="why">${f.reasons.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
       <div class="row">${f.worn?'<span class="worn-ok">Logged as worn today</span>':`<button class="btn primary grow" data-wear="${i}">Wear this today</button>`}
       ${S.fits.length>1?`<button class="btn" data-next="1" aria-label="Show the next option">Next option</button>`:''}</div>
       ${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}
-      <p class="hint">Tap any piece to swap it for another one that fits.</p></div></article>`;
+      <p class="hint">Tap any piece to swap it for another one that fits.</p>
+      <button class="btn ghost sm logother" data-act="logOther">Wore something else? Log what you wore</button></div></article>`;
+}
+// The belt is drawn as a band across the top of the trousers tile, where it is worn; it swaps on its own.
+function beltOn(bottom,belt,k,i){
+  return `<div class="withbelt">${tile(bottom,'bottom',i)}<button class="beltband" data-swap="${i}" data-slot="acc${k}" aria-label="Belt: ${esc(belt.name)}. Tap to swap"><span class="bimg">${visual(belt)}</span><span class="blab"><span class="k">Belt</span><span class="bn">${esc(belt.name)}</span></span></button></div>`;
 }
 function altRow(f,i){
   const o=hydrate(f.ids); const m=match(f); const list=coreOf(o);
@@ -481,8 +500,8 @@ async function askIdeas(){
 }
 
 /* ---------- sheets ---------- */
-function closeSheet(){ $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; }
-function openSheet(html){ $('#sheetRoot').innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; document.body.style.overflow='hidden'; }
+function closeSheet(){ $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; }
+function openSheet(html){ guard(); $('#sheetRoot').innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; document.body.style.overflow='hidden'; }
 const sheetHead=t=>`<div class="sheet-h"><h3>${t}</h3><span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">${CLOSE_ICON}</button></div>`;
 
 function openAddMenu(){
@@ -701,17 +720,45 @@ async function cropAll(){
 }
 
 /* ---------- actions ---------- */
+async function logWear(list,day,occ){
+  const ids=list.map(x=>x.id); const real=ids.filter(id=>!String(id).startsWith('ex-'));
+  if(real.length&&!canWrite()){ toast('You are offline. Logging needs a connection.'); return false; }
+  for(const it of list){ await patchItem(it.id,{worn:(it.worn||0)+1,lastWorn:(it.lastWorn&&it.lastWorn>day)?it.lastWorn:day,wearsSinceCheck:(it.wearsSinceCheck||0)+1}); }
+  const entry={date:day,occ,items:ids};
+  if(!real.length) S.exLog.unshift(entry);
+  else { const {error}=await sb.from('wears').insert(entry); if(error){ toast('Could not log the outfit: '+error.message,4500); return false; } S.log.unshift(entry); saveCache(); }
+  S.fitKey=fitKeyNow(); renderAll(); return true;
+}
 async function wear(i){
   const f=S.fits[i]; if(!f||f.worn) return;
-  const o=hydrate(f.ids); const list=coreOf(o).concat(o.acc); const day=todayISO(); const ids=list.map(x=>x.id);
-  const real=ids.filter(id=>!String(id).startsWith('ex-'));
-  if(real.length&&!canWrite()){ toast('You are offline. Logging needs a connection.'); return; }
-  f.worn=true; renderOutfits();
-  for(const it of list){ await patchItem(it.id,{worn:(it.worn||0)+1,lastWorn:day,wearsSinceCheck:(it.wearsSinceCheck||0)+1}); }
-  const entry={date:day,occ:S.occ,items:ids};
-  if(!real.length) S.exLog.unshift(entry);
-  else { const {error}=await sb.from('wears').insert(entry); if(error) toast('Could not log the outfit: '+error.message,4500); else { S.log.unshift(entry); saveCache(); } }
-  S.fitKey=fitKeyNow(); renderAll(); toast('Logged as worn today');
+  const o=hydrate(f.ids); f.worn=true; renderOutfits();
+  if(await logWear(coreOf(o).concat(o.acc),todayISO(),S.occ)) toast('Logged as worn today'); else f.worn=false;
+}
+/* Log any combination: starts from the outfit on screen, then pick or unpick pieces from the closet. */
+let LG=null;
+function yesterdayISO(){ const d=new Date(Date.now()-DAY); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function openLog(){
+  const f=S.fits[S.sel]; const o=f?hydrate(f.ids):null;
+  LG={day:todayISO(),occ:S.occ,sel:new Set(o?coreOf(o).concat(o.acc).map(x=>x.id):[])}; LG.first=new Set(LG.sel); drawLog();
+}
+function drawLog(){
+  const items=allItems().filter(isActive); const groups=CATS.map(c=>[c,items.filter(i=>i.cat===c.id)]).filter(([c,l])=>l.length);
+  openSheet(sheetHead('What I wore')+`
+   <p class="hint">Starts with the outfit on screen. Tap pieces to add or remove them, then log.</p>
+   <div class="field"><span class="lab">Day</span><div class="chips"><button class="chip" data-lgday="${todayISO()}" aria-pressed="${LG.day===todayISO()}">Today</button><button class="chip" data-lgday="${yesterdayISO()}" aria-pressed="${LG.day===yesterdayISO()}">Yesterday</button></div></div>
+   <div class="field"><span class="lab">Occasion</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>`<button class="chip" data-lgocc="${o.id}" aria-pressed="${LG.occ===o.id}">${o.label}</button>`).join('')}</div></div>
+   ${groups.map(([c,l])=>`<div class="field"><span class="lab">${esc(c.label)}</span><div class="pickrow">${l.slice().sort((a,b)=>(LG.first.has(b.id)?1:0)-(LG.first.has(a.id)?1:0)).map(it=>`<button class="pick" data-lgit="${esc(it.id)}" aria-pressed="${LG.sel.has(it.id)}" aria-label="${esc(it.name)}"><span class="mini">${visual(it)}</span><span class="pn">${esc(it.name)}</span></button>`).join('')}</div></div>`).join('')}
+   <div class="row sheet-actions"><button class="btn primary" data-lgsave ${LG.sel.size?'':'disabled'}>Log ${LG.sel.size} piece${LG.sel.size===1?'':'s'}</button><button class="btn ghost" data-close>Cancel</button></div>`);
+}
+async function saveLog(){
+  const list=[...LG.sel].map(byId).filter(Boolean); if(!list.length) return;
+  const day=LG.day, occ=LG.occ; closeSheet();
+  if(await logWear(list,day,occ)) toast('Logged '+list.length+' piece'+(list.length===1?'':'s')+' for '+(day===todayISO()?'today':'yesterday')+'.');
+}
+function todayLine(){
+  const es=allLog().filter(e=>e.date===todayISO()); if(!es.length) return '';
+  const names=[...new Set(es.flatMap(e=>e.items))].map(byId).filter(Boolean).filter(i=>!ACCESSORY.includes(i.cat)).map(i=>i.name);
+  return `<p class="hint today">Logged today: ${esc(names.join(', ')||es.length+' outfit')}</p>`;
 }
 function swap(i,slot){
   const f=S.fits[i]; if(!f) return; const o=hydrate(f.ids);
@@ -759,7 +806,7 @@ async function confirmAll(){
   toast('Confirmed '+n+' item'+(n===1?'':'s')+'.'+(skipped?' '+skipped+' still need a color or name; open them to finish.':''),6000);
 }
 function goTab(tab){
-  S.tab=tab;
+  S.tab=tab; if(tab!=='outfits') guard();
   for(const b of document.querySelectorAll('nav.tabs button')){ if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
   for(const s of document.querySelectorAll('section.tab')) s.hidden=s.id!=='tab-'+tab;
   renderStatus(); window.scrollTo(0,0);
@@ -784,10 +831,10 @@ document.addEventListener('click',async e=>{
   if(ds.occ){ S.occ=ds.occ; S.seed=0; renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); return; }
-  if(ds.sel!==undefined){ S.sel=+ds.sel; renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  if(ds.sel!==undefined){ S.sel=+ds.sel; if(S.sel) guard(); renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   if(ds.addunder!==undefined){ const f=S.fits[+ds.addunder]; if(!f) return; const o=hydrate(f.ids); const c=swapCandidates(o,'under',allItems(),S.occ,ctx()); if(!c.length) return;
     o.under=c[0]; const r=scoreOutfit(o,S.occ,ctx()); S.fits[+ds.addunder]={ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true}; renderOutfits(); return; }
-  if(ds.next){ S.sel=(S.sel+1)%S.fits.length; renderOutfits(); return; }
+  if(ds.next){ S.sel=(S.sel+1)%S.fits.length; if(S.sel) guard(); renderOutfits(); return; }
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
   if(t.id==='rulesBtn'){ openSettings(); return; }
@@ -800,6 +847,7 @@ document.addEventListener('click',async e=>{
     case 'clearEx': S.examples=[]; S.exLog=[]; renderAll(); return;
     case 'ideas': askIdeas(); return;
     case 'cropAll': cropAll(); return;
+    case 'logOther': openLog(); return;
     case 'install': if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; closeSheet(); renderStatus(); ev.prompt(); let out='';
       try{ out=(await ev.userChoice).outcome; }catch(err){}
       if(out==='accepted') toast('Installing Wearcycle. The icon appears on your home screen in a few seconds.',6000);
@@ -809,6 +857,12 @@ document.addEventListener('click',async e=>{
     case 'installNo': LS.set('wardrobe.installDismissed',true); renderStatus(); return;
     case 'signout': closeSheet(); await sb.auth.signOut(); return;
     case 'server': closeSheet(); showSetup(true); return;
+  }
+  if(LG && $('#sheetRoot').innerHTML){
+    if(ds.lgday){ LG.day=ds.lgday; drawLog(); return; }
+    if(ds.lgocc){ LG.occ=ds.lgocc; drawLog(); return; }
+    if(ds.lgit){ const sc=document.querySelector('.sheet')?.scrollTop||0; LG.sel.has(ds.lgit)?LG.sel.delete(ds.lgit):LG.sel.add(ds.lgit); drawLog(); const sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sc; return; }
+    if(ds.lgsave!==undefined){ saveLog(); return; }
   }
   if(ds.cat){ S.cat=ds.cat; renderCloset(); return; }
   if(ds.edit){ closeSheet(); openEditor(ds.edit); return; }
