@@ -62,7 +62,15 @@ function harmony(colorNames){
   }
   return {s:-3,why:'Three or more accent colors',neg:1};
 }
-function coreOf(o){ return [o.top,o.bottom,o.onepiece,o.outer,o.shoes].filter(Boolean); }
+function coreOf(o){ return [o.top,o.under,o.bottom,o.onepiece,o.outer,o.shoes].filter(Boolean); }
+
+/* ---------- layered look: an open shirt over a t-shirt ---------- */
+// Set by the owner in the editor; otherwise guessed from the name.
+const OPEN_RX=/\b(button[- ]?(up|down)|flannel|plaid|overshirt|shacket|cardigan|chambray|camp[- ]collar|oxford|linen shirt|denim shirt|hawaiian)\b/i;
+const UNDER_RX=/\b(t-?shirts?|tees?|tank( top)?|henley|undershirt)\b/i;
+function canOpen(it){ if(typeof it.open==='boolean') return it.open; return it.cat==='top' && (it.formality??3)<=3 && OPEN_RX.test(String(it.name||'')); }
+function canUnder(it){ if(typeof it.inner==='boolean') return it.inner; return it.cat==='top' && !canOpen(it) && UNDER_RX.test(String(it.name||'')); }
+const LAYER_OCC=['work','out','home','chores'];
 
 /* ---------- weather ---------- */
 // Warmth 1 light, 2 medium, 3 warm. Set by Claude or the owner; otherwise guessed from the name.
@@ -82,7 +90,7 @@ function weatherScore(o,wx){
   if(lo<12){
     if(o.bottom && warmthOf(o.bottom)===1){ s-=lo<5?3:2; r.push({t:o.bottom.name+' is too light for '+deg(lo),neg:1}); }
     if(!outer){
-      const tw=warmthOf(o.top||o.onepiece||{});
+      const tw=Math.min(3,warmthOf(o.top||o.onepiece||{})+(o.under?1:0));
       if(lo<5){ s-=2; r.push({t:'No outer layer for '+deg(lo),neg:1}); }
       else if(tw<3){ s-=1; r.push({t:'May feel cool at '+deg(lo)+' without a layer',neg:1}); }
     } else {
@@ -93,6 +101,8 @@ function weatherScore(o,wx){
   }
   else if(lo<16 && o.bottom && warmthOf(o.bottom)===1){ s-=1; r.push({t:o.bottom.name+' may feel cool at '+deg(lo),neg:1}); }
   if(outer && warmthOf(outer)===3 && lo>=10){ s-=1.5; r.push({t:outer.name+' is heavy for '+deg(lo)+' to '+deg(hi),neg:1}); }
+  if(o.under && hi>=24){ s-=1; r.push({t:'Two layers on top at '+deg(hi),neg:1}); }
+  else if(o.under && lo<16) { s+=0.5; r.push({t:'The t-shirt adds warmth at '+deg(lo)}); }
   if(hi>=24){
     const heavy=body.concat(outer?[outer]:[]).filter(i=>warmthOf(i)===3);
     if(heavy.length){ s-=2*heavy.length; r.push({t:heavy.map(i=>i.name).join(' and ')+' too warm for '+deg(hi),neg:1}); }
@@ -110,7 +120,8 @@ function scoreOutfit(o,occ,ctx){
   if(ctx.wx){ const w=weatherScore(o,ctx.wx); s+=w.s; reasons.push(...w.r); }
   const h=harmony(core.map(primary).filter(Boolean)); s+=h.s; reasons.push({t:h.why,neg:!!h.neg});
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
-  const f=core.map(i=>i.formality??3); const lo=Math.min(...f), hi=Math.max(...f);
+  if(o.under) reasons.push({t:'Open '+o.top.name+' over '+o.under.name+': a relaxed layered look'});
+  const f=core.filter(i=>i!==o.under).map(i=>i===o.top&&o.under?Math.min(2,i.formality??3):(i.formality??3)); const lo=Math.min(...f), hi=Math.max(...f);
   if(hi-lo<=1){ s+=1; reasons.push({t:'Pieces sit at the same dress level'}); }
   else { s-=(hi-lo-1); reasons.push({t:'Dress levels clash ('+FORM[lo]+' with '+FORM[hi]+')',neg:true}); }
   const avg=f.reduce((a,b)=>a+b,0)/f.length, dev=Math.abs(avg-OCC[occ].formality);
@@ -155,7 +166,12 @@ function suggest(items,occ,ctx,opts){
   const needShoes=occ!=='home'; let shoes=by.shoes||[];
   if(!shoes.length){ if(needShoes) missing.push('shoes'); shoes=[null]; } else if(!needShoes) shoes=shoes.concat([null]);
   if(missing.length) return {outfits:[],missing};
-  let combos=[]; for(const b of bases) for(const sh of shoes) combos.push(Object.assign({},b,sh?{shoes:sh}:{}));
+  // A t-shirt worn under an open shirt only needs to be in good enough condition; it need not be tagged for the occasion.
+  const unders=LAYER_OCC.includes(occ)?items.filter(i=>isActive(i)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min):[];
+  const bases2=bases.slice(); for(const b of bases){ if(b.top && canOpen(b.top) && unders.length){
+    let best=null,bs=-Infinity; for(const u of unders){ const r=scoreOutfit(Object.assign({},b,{under:u}),occ,ctx).score; if(r>bs){bs=r;best=u;} }
+    bases2.push(Object.assign({},b,{under:best})); } }
+  let combos=[]; for(const b of bases2) for(const sh of shoes) combos.push(Object.assign({},b,sh?{shoes:sh}:{}));
   if(combos.length>3000){ combos=combos.map(c=>[rnd(),c]).sort((a,b)=>a[0]-b[0]).slice(0,3000).map(x=>x[1]); }
   const outers=opts.layer?(by.outerwear||[]):[];
   const scored=combos.map(c=>{
@@ -163,7 +179,7 @@ function suggest(items,occ,ctx,opts){
     const r=scoreOutfit(c,occ,ctx); return {o:c,...r,rank:r.score+(rnd()-.5)*jitter}; }).sort((a,b)=>b.rank-a.rank);
   const out=[], seen=new Set();
   for(const c of scored){
-    const key=c.o.onepiece?'o'+c.o.onepiece.id:c.o.top.id+'|'+c.o.bottom.id; if(seen.has(key)) continue; seen.add(key);
+    const key=c.o.onepiece?'o'+c.o.onepiece.id:c.o.top.id+'|'+c.o.bottom.id+(c.o.under?'|u':''); if(seen.has(key)) continue; seen.add(key);
     const o=c.o;
     o.acc=pickAccessories(o,by,occ,ctx.now);
     const r=scoreOutfit(o,occ,ctx); out.push({o,score:r.score,reasons:r.reasons});
@@ -173,7 +189,10 @@ function suggest(items,occ,ctx,opts){
 }
 
 function swapCandidates(o,slot,items,occ,ctx){
-  const cat=slot==='outer'?'outerwear':slot; const pool=eligible(items,occ).filter(i=>i.cat===cat);
+  const cat=slot==='outer'?'outerwear':slot==='under'?'top':slot;
+  let pool=eligible(items,occ).filter(i=>i.cat===cat);
+  if(slot==='under') pool=items.filter(i=>isActive(i)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min&&(!o.top||i.id!==o.top.id));
+  if(slot==='top'&&o.under) pool=pool.filter(i=>canOpen(i));
   return pool.map(i=>{ const t=Object.assign({},o,{[slot]:i}); return {item:i,score:scoreOutfit(t,occ,ctx).score}; }).sort((a,b)=>b.score-a.score).map(x=>x.item);
 }
 
@@ -218,6 +237,6 @@ function gaps(items){
 
 return {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  warmthOf,rainReady,canOpen,canUnder,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

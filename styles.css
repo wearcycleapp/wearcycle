@@ -299,3 +299,5 @@ details.rules p{margin:8px 0}
 .board2 .tile .vis,.accrow .tile .vis{position:relative;overflow:hidden;min-height:0}
 .board2 .tile .vis img,.accrow .tile .vis img{position:absolute;inset:0;width:100%;height:100%}
 .sheet>*{flex-shrink:0}
+.board2.n5 .tile:last-child{grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}
+.addunder{align-self:flex-start}
