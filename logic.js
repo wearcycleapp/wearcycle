@@ -132,6 +132,7 @@ function scoreOutfit(o,occ,ctx){
   else if(avgRest>=5) reasons.push({t:'Pieces have rested '+Math.round(avgRest)+(avgRest>=14?'+':'')+' days on average'});
   if(o.top && o.bottom && log.some(e=>daysSince(e.date,now)<7 && (e.items||[]).includes(o.top.id) && (e.items||[]).includes(o.bottom.id))){
     s-=2; reasons.push({t:'Same top and bottom already worn together this week',neg:true}); }
+  const belt=(o.acc||[]).find(a=>a.cat==='belt'); if(belt){ const bf=beltFit(o,belt,occ); reasons.push({t:bf.why,neg:bf.neg}); }
   const sock=(o.acc||[]).find(a=>a.cat==='socks'); if(sock){ const sf=sockFit(o,sock,occ,ctx.wx); if(sf.why) reasons.push({t:sf.why,neg:sf.neg}); }
   return {score:Math.round(s*100)/100,reasons};
 }
@@ -161,9 +162,37 @@ function sockFit(o,sock,occ,wx){
   return {s,why,neg};
 }
 
-function pickAccessories(o,by,occ,now,wx){
+/* ---------- belts ----------
+   Bottoms with belt loops (jeans, chinos, trousers...) always get a belt when you own one, even if it is not tagged
+   for the occasion. With leather shoes the belt should match them (black with black, brown with brown), and a casual
+   belt should not go with dress shoes; with sneakers the rules relax. Source: Florsheim style guide on men's belts. */
+const BELT_RX=/\b(jeans|chinos?|khakis|trousers|slacks|pants|cords|corduroys?|shorts)\b/i;
+const NOBELT_RX=/\b(joggers?|sweat\w*|lounge|track|leggings?|pyjamas?|pajamas?|athletic|gym|swim\w*|running|training)\b/i;
+function needsBelt(b){ if(!b||b.cat!=='bottom') return false; if(typeof b.belt==='boolean') return b.belt; const n=String(b.name||''); return (b.formality??3)>=2 && BELT_RX.test(n) && !NOBELT_RX.test(n); }
+function beltFit(o,belt,occ){
+  const sh=o.shoes, bc=primary(belt), sc=sh&&primary(sh), leather=['black','brown'];
+  let s=0, why=belt.name+' goes with the outfit', neg=false;
+  if(sh && (sh.formality??3)>=3 && leather.includes(sc)){
+    if(bc===sc){ s+=2; why=belt.name+' matches the '+sh.name; }
+    else if(leather.includes(bc)){ s-=2; why=belt.name+' with '+sh.name+': black and brown leather clash'; neg=true; }
+    else { s-=0.5; why=belt.name+' with dress shoes: a '+sc+' belt would match better'; neg=true; }
+    if((belt.formality??3)<=2 && !neg){ s-=1.5; why='Casual '+belt.name+' with dress shoes'; neg=true; }
+  } else {
+    const base=coreOf(o).map(primary).filter(Boolean); const d=harmony(base.concat(bc||[])).s-harmony(base).s;
+    s+=d+(bc&&bc===sc?0.5:0); if(bc&&bc===sc) why=belt.name+' matches the shoes'; if(d<0){ why=belt.name+' clashes with the colors'; neg=true; }
+  }
+  return {s,why,neg};
+}
+function beltPool(all,occ){ return (all||[]).filter(i=>i.cat==='belt'&&isActive(i)&&(i.cond??4)>=Math.min(3,OCC[occ].min)); }
+
+function pickAccessories(o,by,occ,now,wx,all){
   const acc=[]; const baseColors=coreOf(o).map(primary).filter(Boolean); const baseH=harmony(baseColors).s;
+  if(needsBelt(o.bottom)){
+    let best=null,bs=-Infinity; for(const a of beltPool(all||[].concat(...Object.values(by)),occ)){ const v=beltFit(o,a,occ).s+Math.min(14,daysSince(a.lastWorn,now))/14; if(v>bs){bs=v;best=a;} }
+    if(best) acc.push(best);
+  }
   for(const cat of ACCESSORY){
+    if(cat==='belt') continue;
     const list=by[cat]; if(!list||!list.length) continue;
     if(cat==='belt' && !o.bottom) continue;
     if(cat==='hat' && occ==='work') continue;
@@ -212,7 +241,7 @@ function suggest(items,occ,ctx,opts){
   for(const c of scored){
     const key=c.o.onepiece?'o'+c.o.onepiece.id:c.o.top.id+'|'+c.o.bottom.id+(c.o.under?'|u':''); if(seen.has(key)) continue; seen.add(key);
     const o=c.o;
-    o.acc=pickAccessories(o,by,occ,ctx.now,ctx.wx);
+    o.acc=pickAccessories(o,by,occ,ctx.now,ctx.wx,items);
     const r=scoreOutfit(o,occ,ctx); out.push({o,score:r.score,reasons:r.reasons});
     if(out.length>=n) break;
   }
@@ -268,6 +297,6 @@ function gaps(items){
 
 return {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,canOpen,canUnder,sockFit,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  warmthOf,rainReady,canOpen,canUnder,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;
