@@ -1,8 +1,9 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.4.0';
+const APP_VERSION='1.5.0';
 const {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
-  daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps}=WardrobeLogic;
+  daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -19,13 +20,13 @@ const CFG=(()=>{ const c=window.WARDROBE_CONFIG||{}; const saved=LS.get('wardrob
 let sb=null, UID=null, EMAIL='';
 
 /* ---------- state ---------- */
-const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:25,checkDays:180,unusedDays:365},
-  occ:'work',layer:false,fits:[],fitKey:'',seed:Date.now()%100000,cat:'all',tab:'outfits',
+const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:25,checkDays:180,unusedDays:365,wx:{on:false}},
+  occ:'work',layerMode:'auto',sel:0,fits:[],fitKey:'',seed:Date.now()%100000,cat:'all',tab:'outfits',
   loaded:false,online:navigator.onLine,fromCache:false,busy:false,installEvt:null};
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
 function byId(id){ return S.items.get(id)||S.examples.find(e=>e.id===id); }
-function ctx(){ return {now:Date.now(),log:allLog()}; }
+function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore()}; }
 function canWrite(){ return S.online && !!sb; }
 function cacheKey(){ return 'wardrobe.cache.'+UID; }
 function saveCache(){ if(!UID) return; LS.set(cacheKey(),{items:[...S.items.values()].map(cleanBodyWithId),log:S.log.slice(0,200),settings:S.settings,at:Date.now()}); }
@@ -49,7 +50,7 @@ const GLYPH={
   other:'<circle cx="24" cy="24" r="13"/>'};
 function glyph(it){ const c=COLORS[primary(it)]?.hex||'#9aa3ad'; return `<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true" fill="${c}" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round">${GLYPH[it.cat]||GLYPH.other}</svg>`; }
 function thumbSrc(it){ return it.thumb||it._localUrl||''; }
-function visual(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="${esc(it.name)}" loading="lazy">`:glyph(it); }
+function visual(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="${esc(it.name)}" loading="lazy" class="${it.box?'fitted':'cover'}">`:glyph(it); }
 function condTag(it){ const c=it.cond??4; return `<span class="tag c${c}">C${c} · ${COND[c]}</span>`; }
 
 /* ---------- images ---------- */
@@ -66,6 +67,19 @@ async function prepare(blob){ // -> {full: Blob (<=1024px), thumb: dataURL (<=25
   if(src.close) src.close();
   return {full,thumb};
 }
+// Crops a photo to Claude's box around the garment, padded and squared so the whole piece fills a tile.
+function validBox(b){ return Array.isArray(b)&&b.length===4&&b.every(v=>typeof v==='number'&&v>=0&&v<=1)&&b[2]-b[0]>0.05&&b[3]-b[1]>0.05; }
+async function cropThumb(blob,box){
+  const src=await decode(blob); const W=src.width,H=src.height;
+  let x0=box[0]*W,y0=box[1]*H,x1=box[2]*W,y1=box[3]*H; const pad=0.06*Math.max(x1-x0,y1-y0);
+  x0-=pad; y0-=pad; x1+=pad; y1+=pad;
+  const side=Math.min(Math.max(x1-x0,y1-y0),W,H), cx=(x0+x1)/2, cy=(y0+y1)/2;
+  const sx=Math.max(0,Math.min(W-side,cx-side/2)), sy=Math.max(0,Math.min(H-side,cy-side/2));
+  const out=Math.min(320,Math.round(side)); const cv=document.createElement('canvas'); cv.width=cv.height=out;
+  cv.getContext('2d').drawImage(src,sx,sy,side,side,0,0,out,out); if(src.close) src.close();
+  return cv.toDataURL('image/jpeg',0.8);
+}
+async function shrink(blob,max){ const src=await decode(blob); const b=await new Promise(r=>drawScaled(src,max).toBlob(r,'image/jpeg',0.82)); if(src.close) src.close(); return b; }
 function blobToBase64(blob){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(String(r.result).split(',')[1]); r.onerror=rej; r.readAsDataURL(blob); }); }
 const signed=new Map();
 async function fullPhotoUrl(path){
@@ -91,6 +105,7 @@ async function callClaude(task,payload){
     try{ const j=await error.context.json(); detail=j&&j.error||''; }catch(e){}
     if(status===404) throw {friendly:'Photo reading is not set up yet. Deploy the "claude" function (setup guide, step 5).'};
     if(status===401) throw {friendly:'Your sign-in expired. Sign out and back in.'};
+    if(detail==='unknown_task') throw {friendly:'Update the "claude" function in Supabase to the latest index.ts first.'};
     if(detail==='missing_api_key') throw {friendly:'The Anthropic API key is not set on the server (setup guide, step 5).'};
     if(status===429||detail==='rate_limited') throw {friendly:'Too many requests right now. Try again in a minute.'};
     throw {friendly:'Claude could not answer'+(detail?' ('+detail+')':'')+'. Try again.'};
@@ -108,7 +123,76 @@ function applyAi(it,res){
   if(res.formality>=1&&res.formality<=5) it.formality=Math.round(res.formality);
   const oc=(res.occasions||[]).filter(o=>OCC[o]); if(oc.length) it.occ=oc;
   if(res.condition>=1&&res.condition<=5) it.cond=Math.round(res.condition);
+  if(res.warmth>=1&&res.warmth<=3) it.warmth=Math.round(res.warmth);
+  if(typeof res.waterproof==='boolean') it.rain=res.waterproof;
 }
+async function applyBox(it,blob,box){ if(!validBox(box)) return false; try{ it.thumb=await cropThumb(blob,box); it.box=box.map(v=>Math.round(v*1000)/1000); return true; }catch(e){ return false; } }
+
+/* ---------- weather (Open-Meteo, no key; postal codes via Zippopotam) ---------- */
+// Only rounded coordinates (about 1 km) are stored, in your own settings row.
+const WXC={data:null,busy:false,err:''};
+const COUNTRIES=[['CA','Canada'],['US','United States'],['MX','Mexico'],['GB','United Kingdom'],['FR','France'],['DE','Germany'],['ES','Spain'],['IT','Italy'],['PT','Portugal'],['NL','Netherlands'],['BE','Belgium'],['CH','Switzerland'],['AU','Australia'],['NZ','New Zealand'],['BR','Brazil'],['IN','India'],['JP','Japan']];
+function wxSet(){ return S.settings.wx||(S.settings.wx={on:false}); }
+function wxOn(){ const w=wxSet(); return !!(w.on&&isFinite(w.lat)&&isFinite(w.lon)); }
+function wxForScore(){ const d=WXC.data; if(!wxOn()||!d) return null; return {feelMin:d.feelMin,feelMax:d.feelMax,rain:d.rain,snow:d.snow,off:wxSet().off||0}; }
+function unitsF(){ const u=wxSet().units; return u?u==='F':/-US$/i.test(navigator.language||''); }
+function tdeg(c){ return unitsF()?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C'; }
+function hourLabel(h){ return unitsF()?((h%12)||12)+(h<12?' am':' pm'):String(h).padStart(2,'0')+':00'; }
+const r2=v=>Math.round(v*100)/100;
+function wmo(c){ return c===0||c===1?'Clear':c===2?'Partly cloudy':c===3?'Cloudy':c===45||c===48?'Fog':(c>=51&&c<=57)?'Drizzle':(c>=61&&c<=67)||(c>=80&&c<=82)?'Rain':(c>=71&&c<=77)||c===85||c===86?'Snow':c>=95?'Thunderstorms':'Mixed'; }
+async function geocode(q,cc){
+  const raw=q.trim(); if(!raw) return null;
+  let pc=raw.toUpperCase().replace(/\s+/g,' ');
+  if(cc==='CA') pc=pc.replace(/\s/g,'').slice(0,3); else if(cc==='GB') pc=pc.split(' ')[0];
+  if(/\d/.test(pc)){ try{ const r=await fetch('https://api.zippopotam.us/'+cc.toLowerCase()+'/'+encodeURIComponent(pc));
+    if(r.ok){ const j=await r.json(); const p=j.places&&j.places[0];
+      if(p) return {lat:+p.latitude,lon:+p.longitude,label:pc+' · '+String(p['place name']).replace(/\s*\(.*$/,'')+(p['state abbreviation']?', '+p['state abbreviation']:'')}; } }catch(e){} }
+  try{ const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=1&language=en&format=json&name='+encodeURIComponent(raw)+'&countryCode='+cc);
+    if(r.ok){ const j=await r.json(); const p=j.results&&j.results[0]; if(p) return {lat:p.latitude,lon:p.longitude,label:p.name+(p.admin1?', '+p.admin1:'')}; } }catch(e){}
+  return null;
+}
+function summarize(j){
+  const H=j.hourly; const nowLocal=new Date(Date.now()+j.utc_offset_seconds*1000).toISOString().slice(0,13);
+  let i0=H.time.findIndex(t=>t.slice(0,13)>=nowLocal); if(i0<0) i0=0;
+  const day=H.time[i0].slice(0,10); let i1=H.time.findIndex(t=>t>=day+'T21'); if(i1<=i0+2) i1=i0+3; i1=Math.min(i1,H.time.length-1);
+  const idx=[]; for(let i=i0;i<=i1;i++) idx.push(i);
+  const pick=k=>idx.map(i=>H[k][i]).filter(v=>v!=null);
+  const feel=pick('apparent_temperature'), temp=pick('temperature_2m'), pp=pick('precipitation_probability'), mm=pick('precipitation'), codes=pick('weather_code'), wind=pick('wind_speed_10m');
+  const snow=codes.some(c=>(c>=71&&c<=77)||c===85||c===86);
+  const rainProb=pp.length?Math.max(...pp):0, rainMm=mm.reduce((a,b)=>a+b,0);
+  const wetFrom=idx.find(i=>(H.precipitation_probability[i]||0)>=50);
+  const main=codes.slice().sort((a,b)=>codes.filter(x=>x===b).length-codes.filter(x=>x===a).length)[0];
+  return {feelMin:Math.min(...feel),feelMax:Math.max(...feel),tempMin:Math.min(...temp),tempMax:Math.max(...temp),rainProb,rainMm,
+    rain:!snow&&(rainProb>=50||rainMm>=1),snow:snow&&(rainProb>=40||rainMm>=0.5),wind:wind.length?Math.max(...wind):0,
+    wetFrom:wetFrom!=null?+H.time[wetFrom].slice(11,13):null,from:+H.time[i0].slice(11,13),to:+H.time[i1].slice(11,13),sky:wmo(main),at:Date.now()};
+}
+async function loadWeather(force){
+  const w=wxSet(); if(!wxOn()){ WXC.data=null; return; }
+  const key=r2(w.lat)+','+r2(w.lon)+','+todayISO();
+  const c=LS.get('wearcycle.wx');
+  if(!force&&c&&c.key===key&&Date.now()-c.data.at<3600e3){ WXC.data=c.data; return; }
+  if(!S.online){ if(c&&c.key===key) WXC.data=c.data; return; }
+  WXC.busy=true; WXC.err=''; if($('#wx')) renderWx();
+  try{
+    const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+r2(w.lat)+'&longitude='+r2(w.lon)+
+      '&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m&timezone=auto&forecast_days=2');
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    WXC.data=summarize(await r.json()); LS.set('wearcycle.wx',{key,data:WXC.data});
+  }catch(e){ WXC.err='Could not get the forecast right now.'; if(c&&c.key===key) WXC.data=c.data; }
+  WXC.busy=false; S.fitKey=''; renderOutfits();
+}
+function getPosition(){
+  return new Promise((res,rej)=>{ if(!navigator.geolocation){ rej({friendly:'This browser cannot share a location. Enter a postal code instead.'}); return; }
+    navigator.geolocation.getCurrentPosition(p=>res({lat:r2(p.coords.latitude),lon:r2(p.coords.longitude)}),
+      e=>rej({friendly:e.code===1?'Location is blocked for this site. Allow it in Chrome (icon left of the address, then Permissions), or enter a postal code.':'Your location could not be found. Try again or enter a postal code.'}),
+      {enableHighAccuracy:false,timeout:12000,maximumAge:1800e3}); });
+}
+async function refreshGps(){ // keeps "my location" current when permission is already granted; never prompts on its own
+  const w=wxSet(); if(!w.on||w.mode!=='gps'||!navigator.permissions) return;
+  try{ const st=await navigator.permissions.query({name:'geolocation'}); if(st.state!=='granted') return;
+    const p=await getPosition(); if(Math.abs(p.lat-w.lat)>0.05||Math.abs(p.lon-w.lon)>0.05){ Object.assign(w,p); queueSettingsSave(); loadWeather(true); } }catch(e){}
+}
+function saveWx(patch){ Object.assign(wxSet(),patch); saveCache(); queueSettingsSave(); S.fitKey=''; }
 
 /* ---------- persistence ---------- */
 async function writeItem(it){
@@ -129,7 +213,7 @@ async function loadRemote(){
   if(err){ S.fromCache=true; renderAll(); if(S.online) toast('Could not load from the server: '+(err.message||'unknown error'),5000); return; }
   S.items=new Map(it.data.map(r=>[r.id,Object.assign({},r.body,{id:r.id})]));
   S.log=we.data||[]; if(se.data&&se.data.body) Object.assign(S.settings,se.data.body);
-  S.fromCache=false; S.loaded=true; saveCache(); renderAll();
+  S.fromCache=false; S.loaded=true; saveCache(); renderAll(); loadWeather(); refreshGps();
 }
 function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
   S.items=new Map((c.items||[]).map(r=>[r.id,r])); S.log=c.log||[]; if(c.settings) Object.assign(S.settings,c.settings);
@@ -202,7 +286,7 @@ async function addPhotos(blobs){
     const now=todayISO();
     const it={id:uuid(),name:'New item '+(done+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
     const path=await uploadPhoto(p.full); if(path) it.photo=path;
-    if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error) applyAi(it,r); else aiFail++; }catch(e){ aiFail++; if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
+    if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else aiFail++; }catch(e){ aiFail++; if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
     if(await writeItem(it)) done++;
   }
   S.busy=false; renderAll();
@@ -231,16 +315,53 @@ function emptyCloset(){
     <div class="row"><button class="btn primary" data-act="camBatch">Take photos</button><button class="btn" data-act="bulk">Choose from gallery</button>${S.examples.length?'':'<button class="btn ghost" data-act="examples">Example closet</button>'}</div>
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
-function fitKeyNow(){ return S.occ+'|'+S.layer+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)).sort().join(';'); }
+function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&needsLayer(wxForScore())); }
+function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 function regenerate(){
-  const r=suggest(allItems(),S.occ,ctx(),{n:4,jitter:S.seed?1.2:0,rng:makeRng(S.seed),layer:S.layer});
-  S.fits=r.outfits.map(f=>({ids:idsOf(f.o),score:f.score,reasons:f.reasons})); S.missing=r.missing; S.fitKey=fitKeyNow();
+  const r=suggest(allItems(),S.occ,ctx(),{n:4,jitter:S.seed?1.2:0,rng:makeRng(S.seed),layer:layerOn()});
+  S.fits=r.outfits.map(f=>({ids:idsOf(f.o),score:f.score,reasons:f.reasons})).sort((a,b)=>b.score-a.score); S.fits.forEach((f,k)=>{f.rank=k+1;}); S.missing=r.missing; S.fitKey=fitKeyNow(); S.sel=0;
+}
+// Match label from the score (see "How Wearcycle decides"); bars give a quick visual of the same thing.
+const MATCH=[[4,'Excellent match',5],[3,'Great match',4],[2,'Good match',3],[0.5,'Fair match',2],[-Infinity,'Weak match',1]];
+// Each warning (red dot) lowers the label one step, so a high score can't hide a real problem.
+function match(f){ const lv=Math.max(1,MATCH.find(x=>f.score>=x[0])[2]-(f.reasons||[]).filter(r=>r.neg).length); const m=MATCH.find(x=>x[2]===lv); return {label:m[1],bars:lv}; }
+function bars(n){ return `<span class="bars" aria-hidden="true">${[1,2,3,4,5].map(k=>`<i class="${k<=n?'on':''}"></i>`).join('')}</span>`; }
+const WX_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 1 1 .8-7.9A5.5 5.5 0 0 1 18.5 12 3 3 0 0 1 18 18H7Z"/></svg>';
+function renderWx(adv){
+  const box=$('#wx'); const w=wxSet();
+  if(!wxOn()){
+    box.innerHTML=w.dismissed?'':`<div class="wxcard setup"><div class="wxtxt"><b>Dress for the weather</b><span>Wearcycle checks today's forecast for your area and picks layers, rain gear and fabrics to match.</span></div>
+      <div class="row"><button class="btn sm primary" data-wx="gps">Use my location</button><button class="btn sm" data-wx="edit">Enter postal code</button><button class="btn sm ghost" data-wx="dismiss">Not now</button></div></div>`;
+    return;
+  }
+  const d=WXC.data;
+  if(!d){ box.innerHTML=`<div class="wxcard"><span class="wxic">${WX_ICON}</span><div class="wxtxt"><b>${esc(w.label||'Your area')}</b><span>${WXC.busy?'Getting the forecast…':esc(WXC.err||'Forecast not loaded yet.')}</span></div><button class="btn sm ghost" data-wx="edit">Change</button></div>`; return; }
+  const wet=d.snow?'Snow likely'+(d.wetFrom!=null?' from '+hourLabel(d.wetFrom):''):d.rain?Math.round(d.rainProb)+'% chance of rain'+(d.wetFrom!=null&&d.wetFrom>d.from?' from '+hourLabel(d.wetFrom):''):(d.rainProb>=20?Math.round(d.rainProb)+'% chance of rain':'Dry');
+  box.innerHTML=`<div class="wxcard"><div class="wxtxt"><b><span class="wxic">${WX_ICON}</span>${tdeg(d.tempMin)} to ${tdeg(d.tempMax)} · ${esc(d.sky)}</b>
+    <span>Feels like ${tdeg(d.feelMin)} to ${tdeg(d.feelMax)} · ${esc(wet)}${d.wind>=30?' · windy':''}</span>
+    <span class="wxwhere">${esc(w.label||'Your location')} · ${hourLabel(d.from)} to ${hourLabel(d.to)}</span></div><button class="btn sm ghost" data-wx="edit">Change</button>
+    ${adv?`<p class="advice">${esc(adv)}</p>`:''}</div>`;
+}
+function adviceText(){
+  const w=wxForScore(), d=WXC.data; if(!w||!d) return '';
+  const {lo,hi}=wxFeel(w); const out=[];
+  const band=lo<0?'Freezing':lo<5?'Cold':lo<12?'Cool':lo<18?'Mild':hi>=25?'Hot':'Warm';
+  out.push(band+(d.snow?' with snow':d.rain?' and wet':'')+' for '+OCC[S.occ].label.toLowerCase()+'.');
+  const hasOuter=eligible(allItems(),S.occ).some(i=>i.cat==='outerwear');
+  if(S.layerMode==='auto'){
+    if(needsLayer(w)) out.push(hasOuter?'I added an outer layer.':'An outer layer would help, but none is tagged for '+OCC[S.occ].label.toLowerCase()+' yet.');
+    else if(hi>=24) out.push('Light, breathable pieces ranked first.');
+  }
+  if(wxWet(w)){ const top=S.fits[0]&&hydrate(S.fits[0].ids); if(!(top&&top.outer&&rainReady(top.outer))) out.push(d.snow?'Wear boots if you have them.':'Take an umbrella.'); }
+  return out.join(' ');
 }
 function renderOutfits(){
+  renderWx('');
   $('#occChips').innerHTML=OCCASIONS.map(o=>`<button class="chip" data-occ="${o.id}" aria-pressed="${S.occ===o.id}">${o.label}</button>`).join('');
-  const lb=$('#layerBtn'); lb.setAttribute('aria-pressed',S.layer); lb.textContent='Add outerwear: '+(S.layer?'on':'off');
+  const auto=needsLayer(wxForScore());
+  $('#layerSeg').innerHTML=`<span class="lab">Outer layer</span>`+[['auto','Auto'+(wxForScore()?(auto?' · on':' · off'):'')],['on','Add'],['off','None']].map(([k,l])=>`<button class="chip" data-layer="${k}" aria-pressed="${S.layerMode===k}">${l}</button>`).join('');
   const box=$('#fits');
   if(!S.loaded){ box.innerHTML='<p class="hint">Loading your closet…</p>'; return; }
   if(!allItems().length){ box.innerHTML=emptyCloset(); return; }
@@ -251,26 +372,39 @@ function renderOutfits(){
       <p class="hint">Missing: ${(S.missing||[]).map(m=>names[m]).join(', ')} tagged for ${esc(occ.label.toLowerCase())} in condition ${occ.min}/5 or better. Tag existing items for this occasion in Closet, or see the Shop tab.</p>
       <div class="row"><button class="btn" data-tab-go="shop">Open shopping list</button></div></div>`; return;
   }
-  box.innerHTML='<div class="fits">'+S.fits.map((f,i)=>fitCard(f,i)).join('')+'</div>';
+  if(S.sel>=S.fits.length) S.sel=0;
+  const adv=adviceText();
+  const others=S.fits.map((f,i)=>i===S.sel?'':altRow(f,i)).join('');
+  renderWx(adv);
+  box.innerHTML=heroCard(S.fits[S.sel],S.sel)+
+    `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'Other options':'Only one outfit fits'}</h3><span class="spacer"></span>${S.fits.length>1?'<button class="btn sm" id="shuffleBtn">New ideas</button>':''}</div><p class="hint">${S.fits.length>1?'Ranked by match. Tap one to see it full size.':'Add or tag more pieces for '+esc(OCC[S.occ].label.toLowerCase())+' to get more options.'}</p>${others}</div>`+
+    `<p class="hint center">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?' and today’s weather':''}. Settings explain the rules.</p>`;
 }
 const SWAP_ICON='<span class="swap" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></span>';
 function tile(it,slot,i,size){
   if(!it) return '';
-  return `<button class="tile ${size||''}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to swap">${slot.startsWith('acc')?'':SWAP_ICON}<div class="vis">${visual(it)}</div><div class="cap">${esc(it.name)}</div></button>`;
+  const acc=slot.startsWith('acc');
+  return `<button class="tile ${size||''}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to swap">${acc?'':SWAP_ICON}<div class="vis">${visual(it)}</div><div class="cap"><span class="k">${esc(slot==='outer'?'Layer':CAT[it.cat].label)}</span>${esc(it.name)}</div></button>`;
 }
-function fitLabel(s){ return s>=3.5?'Great match':s>=2?'Good match':s>=0.5?'Fair match':'Weak match'; }
-function fitCard(f,i){
-  const o=hydrate(f.ids);
-  const upper=o.onepiece?tile(o.onepiece,'onepiece',i):tile(o.top,'top',i);
-  const pair=o.outer?`<div class="pair two">${tile(o.outer,'outer',i)}${upper}</div>`:`<div class="pair">${upper}</div>`;
-  const hat=o.acc.find(a=>a.cat==='hat'); const side=o.acc.filter(a=>a.cat!=='hat');
-  return `<article class="fit"><div class="board">
-    <div class="main">${hat?tile(hat,'acc'+o.acc.indexOf(hat),i,'xs'):''}${pair}${o.onepiece?'':tile(o.bottom,'bottom',i)}${o.shoes?tile(o.shoes,'shoes',i,'sm'):''}</div>
-    <div class="side">${side.map(a=>tile(a,'acc'+o.acc.indexOf(a),i,'xs')).join('')}</div></div>
-    <div class="fit-meta">
-      <div class="score"><span class="num">${f.score.toFixed(1)}</span><span class="lbl"><b>${fitLabel(f.score)}</b><br>higher is better</span><span class="spacer"></span>${f.worn?'<span class="worn-ok">Worn today</span>':`<button class="btn primary" data-wear="${i}">Wear today</button>`}</div>
-      <ul class="why">${f.reasons.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
-    </div></article>`;
+function heroCard(f,i){
+  const o=hydrate(f.ids); const m=match(f);
+  const core=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],!o.onepiece&&o.bottom&&['bottom',o.bottom],o.shoes&&['shoes',o.shoes]].filter(Boolean);
+  const head=f.edited?`<span class="rank">#${f.rank}</span><span class="rk-l"><b>Your version of option ${f.rank}</b>${m.label}</span>`
+    :i===0?`<span class="rank top">#1</span><span class="rk-l"><b>Best match</b>${m.label} · 1 of ${S.fits.length}</span>`
+    :`<span class="rank">#${f.rank}</span><span class="rk-l"><b>Option ${f.rank} of ${S.fits.length}</b>${m.label}</span>`;
+  return `<article class="fit hero"><header class="fit-h">${head}${bars(m.bars)}</header>
+    <div class="board2 n${core.length}">${core.map(([k,it])=>tile(it,k,i)).join('')}</div>
+    ${o.acc.length?`<div class="accrow">${o.acc.map((a,k)=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}
+    <div class="fit-meta"><ul class="why">${f.reasons.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
+      <div class="row">${f.worn?'<span class="worn-ok">Logged as worn today</span>':`<button class="btn primary grow" data-wear="${i}">Wear this today</button>`}
+      ${S.fits.length>1?`<button class="btn" data-next="1" aria-label="Show the next option">Next option</button>`:''}</div>
+      <p class="hint">Tap any piece to swap it for another one that fits.</p></div></article>`;
+}
+function altRow(f,i){
+  const o=hydrate(f.ids); const m=match(f); const list=coreOf(o);
+  return `<button class="alt" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(list.map(x=>x.name).join(', '))}"><span class="rank">#${f.rank}</span>
+    <span class="strip">${list.map(it=>`<span class="mini">${visual(it)}</span>`).join('')}</span>
+    <span class="alt-l">${m.label}${bars(m.bars)}</span></button>`;
 }
 function renderCloset(){
   const items=allItems().filter(isActive);
@@ -363,19 +497,22 @@ function openEditor(id){
   if(base&&base.photo&&canWrite()) fullPhotoUrl(base.photo).then(u=>{ if(ED&&ED.id===base.id&&u){ ED.full=u; drawEditor(); } });
 }
 function drawEditor(){
-  const it=ED.it; const pv=ED.preview||ED.full||thumbSrc(it);
+  const it=ED.it; const pv=ED.cropChanged?ED.thumb:(ED.preview||ED.full||thumbSrc(it)); const hasPic=!!(ED.blob||it.photo)&&!isEx(it); const cropped=ED.cropChanged?!!ED.newBox:!!it.box;
   const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
   const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b><span>${key==='cond'?labels[n]:labels[n].split(' ')[0]}</span></button>`).join('')}</div>`;
   openSheet(sheetHead(ED.id?(it.review?'Review item':'Edit item'):'New item')+`
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
    <div class="photo"><div class="pv">${pv?`<img src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
-     ${ED.blob?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}</div></div>
+     ${ED.blob?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
+     ${hasPic?(cropped?`<button type="button" class="btn sm ghost" data-uncrop="1" ${ED.busy?'disabled':''}>Show whole photo</button>`:`<button type="button" class="btn sm ghost" data-ai="box" ${ED.busy?'disabled':''}>Crop to the clothes</button>`):''}</div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
    <div class="field"><label for="f-cat">Category</label><select id="f-cat">${CATS.map(c=>`<option value="${c.id}" ${it.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select></div>
    <div class="field"><span class="lab">Colors · tap in order, main color first</span><div class="colors">${colorBtns}</div></div>
    <div class="field"><span class="lab">Dress level · ${FORM[it.formality??3]}</span>${seg('formality',FORM)}</div>
+   <div class="field"><span class="lab">Warmth · ${['','Light','Medium','Warm'][warmthOf(it)]}${it.warmth?'':' (guessed)'}</span><div class="seg s3">${[[1,'Light','tee, shorts'],[2,'Medium','shirt, jeans'],[3,'Warm','sweater, coat']].map(([n,l,e])=>`<button type="button" data-seg="warmth" data-v="${n}" aria-pressed="${warmthOf(it)===n}"><b>${l}</b><span>${e}</span></button>`).join('')}</div>
+     ${['outerwear','shoes','hat','bag'].includes(it.cat)?`<label class="row hint"><input type="checkbox" id="f-rain" ${rainReady(it)?'checked':''}> Made for rain or snow</label>`:''}</div>
    <div class="field"><span class="lab">Occasions</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>`<button type="button" class="chip" data-occt="${o.id}" aria-pressed="${(it.occ||[]).includes(o.id)}">${o.label}</button>`).join('')}</div></div>
    <div class="field"><div class="row"><span class="lab" style="flex:1">Condition · ${COND[it.cond??4]}</span><button type="button" class="btn sm" data-isnew="1">Brand new</button></div>${seg('cond',COND)}<p class="hint">5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.</p></div>
    <div class="field"><label for="f-bought">Bought (month, optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
@@ -384,9 +521,9 @@ function drawEditor(){
    <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
    ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`);
 }
-function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); }
+function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); }
 async function editorSetPhoto(blob){
-  try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null; }
+  try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null; }
   catch(e){ toast('That image could not be opened.'); }
   if(ED) drawEditor();
 }
@@ -398,8 +535,8 @@ async function saveEditor(){
   ED.busy=true; drawEditor();
   const now=todayISO(); let oldPhoto=null;
   if(!ED.id){ it.id=uuid(); it.created=now; it.status='active'; it.worn=0; it.wearsSinceCheck=0; it.lastCheck=now; }
+  if(ED.blob||ED.cropChanged){ it.thumb=ED.thumb; if(ED.newBox) it.box=ED.newBox; else delete it.box; }
   if(ED.blob){
-    it.thumb=ED.thumb;
     if(!isEx(it)){ const path=await uploadPhoto(ED.blob); if(path){ oldPhoto=it.photo; it.photo=path; } }
     else it._localUrl=ED.preview;
   }
@@ -441,7 +578,7 @@ async function saveCheck(){
   const it=byId(CK.id); const patch={cond:CK.cond,lastCheck:todayISO(),wearsSinceCheck:0};
   if(CK.res) patch.ai={date:todayISO(),cond:CK.res.condition,rec:CK.res.recommendation||'',summary:String(CK.res.summary||'').slice(0,300),issues:(CK.res.issues||[]).slice(0,8).map(x=>String(x).slice(0,120))};
   const use=$('#ck-use')?.checked; let old=null;
-  if(use&&CK.blob&&canWrite()&&!isEx(it)){ const path=await uploadPhoto(CK.blob); if(path){ old=it.photo; patch.photo=path; patch.thumb=CK.thumb; } }
+  if(use&&CK.blob&&canWrite()&&!isEx(it)){ const path=await uploadPhoto(CK.blob); if(path){ old=it.photo; patch.photo=path; patch.thumb=CK.thumb; patch.box=null; } }
   const cond=CK.cond; closeSheet();
   if(await patchItem(it.id,patch)){ if(old) removePhoto(old); toast(cond<=1?'Saved. It is now on the donate list.':'Check saved'); }
 }
@@ -464,11 +601,17 @@ function openSettings(){
   openSheet(sheetHead('Settings')+`
    <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs to your own Supabase project.</span></div><div class="acts"><button class="btn sm" data-act="signout">Sign out</button></div></div>
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
+   <h3>Weather</h3>
+   <div class="panel"><div class="li"><div class="txt"><b>${wxOn()?esc(wxSet().label||'Your location'):'Off'}</b><span>${wxOn()?'Outfits follow today\u2019s forecast.':'Outfits ignore the weather.'}</span></div><div class="acts"><button class="btn sm" data-wx="edit">${wxOn()?'Change':'Set up'}</button></div></div></div>
+   <h3>Photos</h3>
+   <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div></div>
    <h3>Reminders</h3>
    ${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}
    <p class="hint" id="set-status">Changes save automatically.</p>
    <details class="rules"><summary>How Wearcycle decides</summary>
     <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.</p>
+    <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1 and open shoes lose 1.5. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
+    <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
@@ -492,6 +635,60 @@ function queueSettingsSave(){
     const {error}=await sb.from('settings').upsert({user_id:UID,body:S.settings});
     if(st2) st2.textContent=error?'Could not save: '+error.message:'Saved.';
   },600);
+}
+
+/* ---------- weather sheet ---------- */
+function openWxSheet(msg){
+  const w=wxSet(); const cc=w.cc||((navigator.language||'').split('-')[1]||'CA').toUpperCase();
+  const off=w.off||0;
+  openSheet(sheetHead('Weather')+`
+   <p class="hint">${wxOn()?'Now using: <b>'+esc(w.label||'your location')+'</b>.':'Pick where to check the forecast.'} Outfits use the feels-like temperature and rain chance from now until 9 pm.</p>
+   <button class="btn primary" data-wx="gps" style="justify-content:flex-start;padding:14px">Use my current location <span class="hint" style="color:inherit;opacity:.8;margin-left:auto">approximate</span></button>
+   <div class="field"><label for="wx-q">Or postal code or city</label><div class="row" style="flex-wrap:nowrap"><input type="text" id="wx-q" value="${esc(w.mode==='place'?w.q||'':'')}" placeholder="e.g. M5V 3L9 or Toronto" autocomplete="postal-code" style="flex:1">
+     <select id="wx-cc" aria-label="Country" style="width:auto">${COUNTRIES.map(([k,n])=>`<option value="${k}" ${k===cc?'selected':''}>${k}</option>`).join('')}</select></div>
+     <button class="btn" data-wx="lookup">Use this place</button>
+     <p class="hint">Canadian postal codes resolve to the first three characters (your neighbourhood area).</p></div>
+   ${msg?`<p class="err">${esc(msg)}</p>`:''}
+   <div class="field"><span class="lab">Temperature</span><div class="chips"><button class="chip" data-wx="units-C" aria-pressed="${!unitsF()}">°C</button><button class="chip" data-wx="units-F" aria-pressed="${unitsF()}">°F</button></div></div>
+   <div class="field"><span class="lab">I usually feel</span><div class="chips" style="flex-wrap:wrap">${[[-3,'The cold'],[0,'Average'],[3,'Warm']].map(([v,l])=>`<button class="chip" data-wx="off${v}" aria-pressed="${off===v}">${l}</button>`).join('')}</div>
+     <p class="hint">"The cold" treats the day as 3° colder when choosing layers; "Warm" as 3° warmer.</p></div>
+   ${wxOn()?'<button class="btn ghost danger" data-wx="disable">Turn off weather advice</button>':''}
+   <p class="hint">Forecast from <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a> (CC BY 4.0). Postal codes via Zippopotam.us. Saved in your own database: the place name and coordinates rounded to about 1 km. Canadian postal codes keep only the first three characters.</p>`);
+}
+async function wxAction(k){
+  if(k==='edit'){ openWxSheet(); return; }
+  if(k==='dismiss'){ saveWx({dismissed:true}); renderOutfits(); toast('Weather advice is off. Turn it on any time in Settings.',4500); return; }
+  if(k==='disable'){ saveWx({on:false,dismissed:true}); WXC.data=null; closeSheet(); renderOutfits(); toast('Weather advice turned off.'); return; }
+  if(k==='units-C'||k==='units-F'){ saveWx({units:k.slice(-1)}); openWxSheet(); renderOutfits(); return; }
+  if(k.startsWith('off')){ saveWx({off:+k.slice(3)}); openWxSheet(); renderOutfits(); return; }
+  if(k==='gps'){
+    toast('Finding your area…',0);
+    try{ const p=await getPosition(); saveWx(Object.assign({on:true,mode:'gps',label:'Your location',dismissed:false},p)); closeSheet(); toast('Checking the forecast…',0); await loadWeather(true); toast(WXC.err||'Outfits now follow today’s weather.'); }
+    catch(e){ toast(''); $('#toastRoot').innerHTML=''; openWxSheet(e.friendly||'Location failed.'); }
+    return;
+  }
+  if(k==='lookup'){
+    const q=$('#wx-q')?.value||'', cc=$('#wx-cc')?.value||'CA';
+    if(!q.trim()){ openWxSheet('Type a postal code or a city.'); return; }
+    if(!S.online){ openWxSheet('You are offline.'); return; }
+    toast('Looking it up…',0); const g=await geocode(q,cc); $('#toastRoot').innerHTML='';
+    if(!g){ openWxSheet('Could not find "'+q.trim()+'" in '+cc+'. Try the city name instead.'); return; }
+    saveWx({on:true,mode:'place',q:cc==='CA'&&/\d/.test(q)?q.replace(/\s/g,'').slice(0,3).toUpperCase():q.trim(),cc,lat:r2(g.lat),lon:r2(g.lon),label:g.label,dismissed:false}); closeSheet();
+    toast('Checking the forecast…',0); await loadWeather(true); toast(WXC.err||'Using '+g.label+'.'); return;
+  }
+}
+async function photoBlob(path){ const {data,error}=await sb.storage.from('photos').download(path); if(error||!data) throw {friendly:'Could not load the photo.'}; return data; }
+async function aiBox(blob){ return callClaude('box',{image:await blobToBase64(await shrink(blob,768))}); }
+async function cropAll(){
+  if(S.busy) return; if(!canWrite()){ toast('You are offline.'); return; }
+  const list=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box); if(!list.length){ toast('All photos are already cropped.'); return; }
+  closeSheet(); S.busy=true; let n=0, miss=0;
+  for(const it of list){
+    toast('Cropping '+(n+miss+1)+' of '+list.length+'…',0);
+    try{ const blob=await photoBlob(it.photo); const r=await aiBox(blob); const tmp={}; if(r&&await applyBox(tmp,blob,r.box)){ if(await patchItem(it.id,{thumb:tmp.thumb,box:tmp.box})) n++; else miss++; } else miss++; }
+    catch(e){ S.busy=false; toast(aiMsg(e)+(n?' Cropped '+n+' so far.':''),7000); return; }
+  }
+  S.busy=false; S.fitKey=''; renderAll(); toast('Cropped '+n+' photo'+(n===1?'':'s')+'.'+(miss?' '+miss+' could not be read; open them to crop by hand or leave them.':''),6000);
 }
 
 /* ---------- actions ---------- */
@@ -518,7 +715,7 @@ function swap(i,slot){
     if(cands.length<2){ toast('No other '+CAT[slot==='outer'?'outerwear':slot].label.toLowerCase()+' for this occasion.'); return; }
     o[slot]=cands[(cands.findIndex(x=>x.id===cur.id)+1)%cands.length];
   }
-  const r=scoreOutfit(o,S.occ,ctx()); S.fits[i]={ids:idsOf(o),score:r.score,reasons:r.reasons}; renderOutfits();
+  const r=scoreOutfit(o,S.occ,ctx()); S.fits[i]={ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true}; renderOutfits();
 }
 function loadExamples(){
   const d=n=>new Date(Date.now()-n*DAY).toISOString().slice(0,10);
@@ -571,8 +768,11 @@ document.addEventListener('click',async e=>{
   if(ds.tab){ goTab(ds.tab); return; }
   if(ds.tabGo){ goTab(ds.tabGo); return; }
   if(ds.occ){ S.occ=ds.occ; S.seed=0; renderOutfits(); return; }
-  if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); return; }
-  if(t.id==='layerBtn'){ S.layer=!S.layer; renderOutfits(); return; }
+  if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
+  if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); return; }
+  if(ds.sel!==undefined){ S.sel=+ds.sel; renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  if(ds.next){ S.sel=(S.sel+1)%S.fits.length; renderOutfits(); return; }
+  if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
   if(t.id==='rulesBtn'){ openSettings(); return; }
   switch(ds.act){
@@ -583,6 +783,7 @@ document.addEventListener('click',async e=>{
     case 'confirmAll': confirmAll(); return;
     case 'clearEx': S.examples=[]; S.exLog=[]; renderAll(); return;
     case 'ideas': askIdeas(); return;
+    case 'cropAll': cropAll(); return;
     case 'install': if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; closeSheet(); renderStatus(); ev.prompt(); let out='';
       try{ out=(await ev.userChoice).outcome; }catch(err){}
       if(out==='accepted') toast('Installing Wearcycle. The icon appears on your home screen in a few seconds.',6000);
@@ -611,8 +812,18 @@ document.addEventListener('click',async e=>{
     if(ds.ai==='tag'){ readEditorFields(); ED.busy=true; ED.ai=null; drawEditor();
       try{ const res=await aiTag(ED.blob); if(!ED) return;
         if(res&&res.error) ED.ai=`<span class="k">Claude</span><div>${esc(res.error)}</div>`;
-        else if(res){ applyAi(ED.it,res); ED.ai=`<span class="k">Filled in by Claude · ${esc(res.confidence||'')} confidence</span><div>Check each field below before saving.</div>${(res.issues||[]).length?`<ul>${res.issues.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}`; }
+        else if(res){ applyAi(ED.it,res); if(validBox(res.box)){ try{ ED.thumb=await cropThumb(ED.blob,res.box); ED.newBox=res.box.map(v=>Math.round(v*1000)/1000); ED.cropChanged=true; }catch(e){} } ED.ai=`<span class="k">Filled in by Claude · ${esc(res.confidence||'')} confidence</span><div>Check each field below before saving.</div>${(res.issues||[]).length?`<ul>${res.issues.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}`; }
       }catch(err){ if(ED) ED.ai=`<span class="k">Claude</span><div>${esc(aiMsg(err))}</div>`; }
+      if(ED){ ED.busy=false; drawEditor(); } return; }
+    if(ds.ai==='box'){ readEditorFields(); ED.busy=true; drawEditor();
+      try{ const blob=ED.blob||await photoBlob(ED.it.photo); const r=await aiBox(blob); if(!ED) return;
+        if(r&&validBox(r.box)){ ED.thumb=await cropThumb(blob,r.box); ED.newBox=r.box.map(v=>Math.round(v*1000)/1000); ED.cropChanged=true; toast('Cropped. Save to keep it.'); }
+        else toast('Claude could not find the item in this photo.'); }
+      catch(err){ toast(aiMsg(err),5000); }
+      if(ED){ ED.busy=false; drawEditor(); } return; }
+    if(ds.uncrop){ readEditorFields(); ED.busy=true; drawEditor();
+      try{ const blob=ED.blob||await photoBlob(ED.it.photo); const p=await prepare(blob); if(!ED) return; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=true; toast('Whole photo. Save to keep it.'); }
+      catch(err){ toast(aiMsg(err)); }
       if(ED){ ED.busy=false; drawEditor(); } return; }
     if(ds.save!==undefined){ saveEditor(); return; }
     if(ds.del!==undefined){ if(!ED.confirmDel){ readEditorFields(); ED.confirmDel=true; drawEditor(); return; } deleteItem(); return; }
@@ -675,7 +886,7 @@ function startApp(session){
   if(UID===session.user.id) return;
   UID=session.user.id; EMAIL=session.user.email||'';
   $('#gate').hidden=true; $('#appRoot').hidden=false;
-  loadCache(); renderAll();
+  loadCache(); renderAll(); loadWeather();
   if(S.online) loadRemote(); else renderAll();
 }
 async function boot(){

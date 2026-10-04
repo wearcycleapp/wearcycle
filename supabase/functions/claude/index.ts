@@ -1,5 +1,5 @@
 // Supabase Edge Function "claude": the only place that holds your Anthropic API key.
-// The app sends a task ("tag", "check" or "ideas"); prompts are built here so the key
+// The app sends a task ("tag", "box", "check" or "ideas"); prompts are built here so the key
 // cannot be used as a general-purpose Claude proxy.
 // The function checks the caller's sign-in itself (see requireUser), so in the dashboard turn
 // "Verify JWT with legacy secret" OFF, as Supabase recommends for projects using the new API keys.
@@ -22,6 +22,8 @@ const json = (body: unknown, status = 200) =>
 const CATEGORIES = ["top", "bottom", "onepiece", "outerwear", "shoes", "watch", "belt", "hat", "bag", "other"];
 const COLORS = ["black", "white", "grey", "navy", "beige", "khaki", "brown", "denim", "olive", "red", "burgundy", "pink",
   "orange", "yellow", "green", "teal", "lightblue", "blue", "purple"];
+const BOX = '"box": [left, top, right, bottom] as fractions from 0 to 1 of the image width and height, a tight box around ' +
+  'the whole item including sleeves, straps and soles';
 const SCALE = "Condition scale: 5 = like new; 4 = good, no visible wear; 3 = visible wear such as pilling, fading or a " +
   "stretched collar, fine for home; 2 = worn out with stains, small holes or broken stitching, only for chores; " +
   "1 = unusable or beyond repair.";
@@ -34,8 +36,14 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
       `"colors": array of 1-3 values from [${COLORS.join(", ")}], dominant first, ` +
       '"formality": 1-5 (1 athletic or lounge, 2 casual, 3 smart casual, 4 business, 5 formal), ' +
       '"occasions": subset of [work, out, sport, home, chores] where wearing it would be appropriate, ' +
-      '"condition": 1-5, "issues": array of short visible defects (empty if none), "confidence": "low" | "medium" | "high"}.\n' +
+      '"condition": 1-5, "issues": array of short visible defects (empty if none), ' +
+      '"warmth": 1-3 (1 light such as a t-shirt, shorts or sandals; 2 medium such as a shirt, jeans or a light jacket; 3 warm such as a sweater, wool coat or boots), ' +
+      '"waterproof": true if it is made for rain or snow, ' + BOX + ', "confidence": "low" | "medium" | "high"}.\n' +
       SCALE + '\nJudge only what is visible. If the photo does not show clothing or an accessory, reply {"error": "short reason"}.';
+  }
+  if (task === "box") {
+    return "Find the clothing item or accessory in this photo. Reply with only JSON: {" + BOX +
+      '}. If several items are visible, box the largest one. If there is no clothing, reply {"error": "short reason"}.';
   }
   if (task === "check") {
     return `Assess the physical condition of this clothing item from the photo. The owner calls it "${s(b.name, 80)}" (${s(b.category, 30)}). ` +
@@ -95,7 +103,7 @@ Deno.serve(async (req) => {
   if (!text) return json({ error: "unknown_task" }, 400);
 
   const content: unknown[] = [];
-  if (task === "tag" || task === "check") {
+  if (task === "tag" || task === "box" || task === "check") {
     const image = String(body.image ?? "");
     if (!image || image.length > 6_000_000) return json({ error: "image_missing_or_too_large" }, 400);
     content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: image } });
@@ -109,7 +117,7 @@ Deno.serve(async (req) => {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
-    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 1500 : 600, messages: [{ role: "user", content }] }),
+    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 1500 : task === "box" ? 120 : 700, messages: [{ role: "user", content }] }),
   });
 
   if (res.status === 429) return json({ error: "rate_limited" }, 429);

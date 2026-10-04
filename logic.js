@@ -64,8 +64,50 @@ function harmony(colorNames){
 }
 function coreOf(o){ return [o.top,o.bottom,o.onepiece,o.outer,o.shoes].filter(Boolean); }
 
+/* ---------- weather ---------- */
+// Warmth 1 light, 2 medium, 3 warm. Set by Claude or the owner; otherwise guessed from the name.
+const WARM_RX=/\b(sweaters?|jumpers?|hoodies?|sweatshirts?|fleece|wool|woolen|knit|cardigans?|flannel|thermal|turtleneck|coat|overcoat|parka|puffer|down jacket|boots?)\b/i;
+const LIGHT_RX=/\b(t-?shirts?|tees?|tanks?|tank top|shorts|linen|sandals?|flip[- ]?flops?|slides|swim\w*|sleeveless|short[- ]sleeved?|polo)\b/i;
+const RAIN_RX=/\b(rain\w*|waterproof|shell|anorak|trench|gore-?tex|boots?)\b/i;
+function warmthOf(it){ if(it.warmth>=1&&it.warmth<=3) return it.warmth; const n=String(it.name||''); if(WARM_RX.test(n)) return 3; if(LIGHT_RX.test(n)) return 1; return 2; }
+function rainReady(it){ if(typeof it.rain==='boolean') return it.rain; return RAIN_RX.test(String(it.name||'')); }
+// Temperatures are °C feels-like, shifted by the owner's "I run cold/warm" offset.
+function wxFeel(wx){ const off=wx.off||0; return {lo:wx.feelMin+off,hi:wx.feelMax+off}; }
+function wxWet(wx){ return !!(wx.rain||wx.snow); }
+function needsLayer(wx){ if(!wx) return false; return wxFeel(wx).lo<15 || wxWet(wx); }
+const deg=t=>Math.round(t)+'°';
+function weatherScore(o,wx){
+  const r=[]; let s=0; const {lo,hi}=wxFeel(wx);
+  const body=[o.top,o.bottom,o.onepiece].filter(Boolean), outer=o.outer;
+  if(lo<12){
+    if(o.bottom && warmthOf(o.bottom)===1){ s-=lo<5?3:2; r.push({t:o.bottom.name+' is too light for '+deg(lo),neg:1}); }
+    if(!outer){
+      const tw=warmthOf(o.top||o.onepiece||{});
+      if(lo<5){ s-=2; r.push({t:'No outer layer for '+deg(lo),neg:1}); }
+      else if(tw<3){ s-=1; r.push({t:'May feel cool at '+deg(lo)+' without a layer',neg:1}); }
+    } else {
+      const need=lo<5?3:2;
+      if(warmthOf(outer)>=need){ s+=1; r.push({t:outer.name+' suits '+deg(lo)}); }
+      else { s-=1; r.push({t:outer.name+' is light for '+deg(lo),neg:1}); }
+    }
+  }
+  else if(lo<16 && o.bottom && warmthOf(o.bottom)===1){ s-=1; r.push({t:o.bottom.name+' may feel cool at '+deg(lo),neg:1}); }
+  if(outer && warmthOf(outer)===3 && lo>=10){ s-=1.5; r.push({t:outer.name+' is heavy for '+deg(lo)+' to '+deg(hi),neg:1}); }
+  if(hi>=24){
+    const heavy=body.concat(outer?[outer]:[]).filter(i=>warmthOf(i)===3);
+    if(heavy.length){ s-=2*heavy.length; r.push({t:heavy.map(i=>i.name).join(' and ')+' too warm for '+deg(hi),neg:1}); }
+    else if(body.length && body.every(i=>warmthOf(i)===1)){ s+=1; r.push({t:'Light pieces for '+deg(hi)}); }
+  }
+  if(wxWet(wx)){
+    if(outer && rainReady(outer)){ s+=1; r.push({t:outer.name+' handles '+(wx.snow?'snow':'rain')}); }
+    if(o.shoes && warmthOf(o.shoes)===1){ s-=1.5; r.push({t:'Open shoes on a '+(wx.snow?'snowy':'wet')+' day',neg:1}); }
+  }
+  return {s,r};
+}
+
 function scoreOutfit(o,occ,ctx){
   const now=ctx.now, log=ctx.log||[]; const core=coreOf(o); const reasons=[]; let s=0;
+  if(ctx.wx){ const w=weatherScore(o,ctx.wx); s+=w.s; reasons.push(...w.r); }
   const h=harmony(core.map(primary).filter(Boolean)); s+=h.s; reasons.push({t:h.why,neg:!!h.neg});
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
   const f=core.map(i=>i.formality??3); const lo=Math.min(...f), hi=Math.max(...f);
@@ -175,6 +217,7 @@ function gaps(items){
 }
 
 return {CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
-  daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

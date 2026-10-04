@@ -33,13 +33,11 @@
   <section class="tab" id="tab-outfits">
     <div>
       <h2>What to wear</h2>
-      <p class="lede">Combinations built from what you own, scored on color, dress level and how recently each piece was worn. Tap a piece to swap it.</p>
+      <p class="lede">Your best outfit first. Swap any piece or pick another option.</p>
     </div>
+    <div id="wx"></div>
     <div class="chips" id="occChips" role="group" aria-label="Occasion"></div>
-    <div class="row">
-      <button class="btn sm" id="shuffleBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Shuffle</button>
-      <button class="btn sm" id="layerBtn" aria-pressed="false">Add outerwear: off</button>
-    </div>
+    <div class="row"><div class="chips layerseg" id="layerSeg" role="group" aria-label="Outer layer"></div></div>
     <div id="fits"></div>
   </section>
 
