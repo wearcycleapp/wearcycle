@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Wearcycle</title>
+<meta name="application-name" content="Wearcycle">
+<meta name="description" content="Wearcycle: your closet, outfits for every kind of day, wear and care tracking, and a shopping list.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/logo-icon.svg" type="image/svg+xml">
+<link rel="icon" href="icons/icon-192.png" sizes="192x192">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="theme-color" content="#f6f4f1" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12161e" media="(prefers-color-scheme: dark)">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="gate" class="gate" hidden></div>
+
+<div id="appRoot" hidden>
+<div class="app">
+  <header class="top">
+    <img class="logo" src="icons/logo-icon.svg" alt="" width="36" height="36"><div class="brand">Wearcycle<small>WEAR · CARE · DONATE · BUY</small></div>
+    <span class="status" id="status">Loading</span>
+    <button class="iconbtn" id="rulesBtn" aria-label="Settings and rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  </header>
+  <div id="banner"></div>
+
+  <section class="tab" id="tab-outfits">
+    <div>
+      <h2>What to wear</h2>
+      <p class="lede">Combinations built from what you own, scored on color, dress level and how recently each piece was worn. Tap a piece to swap it.</p>
+    </div>
+    <div class="chips" id="occChips" role="group" aria-label="Occasion"></div>
+    <div class="row">
+      <button class="btn sm" id="shuffleBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5"/></svg>Shuffle</button>
+      <button class="btn sm" id="layerBtn" aria-pressed="false">Add outerwear: off</button>
+    </div>
+    <div id="fits"></div>
+  </section>
+
+  <section class="tab" id="tab-closet" hidden>
+    <div>
+      <h2>Closet</h2>
+      <p class="lede">Everything you own that is still in rotation. Tap an item to edit it.</p>
+    </div>
+    <div class="chips" id="catChips" role="group" aria-label="Category"></div>
+    <div id="closetGrid"></div>
+  </section>
+
+  <section class="tab" id="tab-care" hidden>
+    <div>
+      <h2>Care &amp; donate</h2>
+      <p class="lede">Items flagged by condition, wear and age. Nothing is removed until you confirm it.</p>
+    </div>
+    <div id="careBody"></div>
+  </section>
+
+  <section class="tab" id="tab-shop" hidden>
+    <div>
+      <h2>Shopping list</h2>
+      <p class="lede">What is missing for each kind of day, and which colors would add the most outfits with what you already have.</p>
+    </div>
+    <div id="shopBody"></div>
+  </section>
+</div>
+
+<button class="fab" id="addBtn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Add clothes</button>
+
+<nav class="tabs" aria-label="Sections"><div class="inner">
+  <button data-tab="outfits" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 3 3 6l2 5 3-1.5V21h8V9.5l3 1.5 2-5-5-3c-.5 1.7-2 3-4 3S8.5 4.7 8 3Z"/></svg>Outfits</button>
+  <button data-tab="closet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 .7-2 2v1M12 11 3 17.5c-.8.6-.4 1.5.5 1.5h17c.9 0 1.3-.9.5-1.5L12 11Z"/></svg>Closet</button>
+  <button data-tab="care"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10Z"/></svg>Care<span class="badge" id="careBadge" hidden></span></button>
+  <button data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>Shop</button>
+</div></nav>
+</div>
+
+<input type="file" id="camIn" accept="image/*" capture="environment" class="sr" tabindex="-1" aria-hidden="true">
+<input type="file" id="galIn" accept="image/*" class="sr" tabindex="-1" aria-hidden="true">
+<input type="file" id="bulkIn" accept="image/*" multiple class="sr" tabindex="-1" aria-hidden="true">
+<div id="sheetRoot"></div>
+<div id="camRoot"></div>
+<div id="toastRoot"></div>
+
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
+<script src="logic.js"></script>
+<script src="app.js"></script>
+<script>
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>
