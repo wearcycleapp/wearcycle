@@ -327,3 +327,10 @@ details.rules p{margin:8px 0}
 .beltband .bn{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .beltband .bimg{width:52px}
 .beltband .bn{max-height:2.4em;line-height:1.2}
+/* v1.8.1: belt strip sits above the trousers instead of covering them */
+.board2{align-items:start}
+.withbelt{display:flex;flex-direction:column;gap:6px}
+.withbelt>.tile{height:auto}
+.beltband{position:static;left:auto;right:auto;top:auto;width:100%;height:50px;box-shadow:none;border:1px solid var(--line)}
+.withbelt .tile .swap{top:5px}
+.withbelt .beltband{order:-1}
