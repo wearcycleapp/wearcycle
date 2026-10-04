@@ -461,7 +461,7 @@ function openSettings(){
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
    </div>
-   <div class="row"><button class="btn sm ghost" data-act="server">Change server settings</button><span class="spacer"></span><span class="hint">Version 1.2.0</span></div>`);
+   <div class="row"><button class="btn sm ghost" data-act="server">Change server settings</button><span class="spacer"></span><span class="hint">Version 1.2.1</span></div>`);
 }
 async function saveSettings(){
   const v=(id,lo,hi,d)=>{ const n=parseInt($(id).value,10); return isNaN(n)?d:Math.max(lo,Math.min(hi,n)); };
@@ -549,7 +549,12 @@ document.addEventListener('click',async e=>{
     case 'examples': loadExamples(); return;
     case 'clearEx': S.examples=[]; S.exLog=[]; renderAll(); return;
     case 'ideas': askIdeas(); return;
-    case 'install': if(S.installEvt){ S.installEvt.prompt(); try{ await S.installEvt.userChoice; }catch(err){} S.installEvt=null; closeSheet(); renderStatus(); } return;
+    case 'install': if(S.installEvt){ const ev=S.installEvt; S.installEvt=null; closeSheet(); renderStatus(); ev.prompt(); let out='';
+      try{ out=(await ev.userChoice).outcome; }catch(err){}
+      if(out==='accepted') toast('Installing Wearcycle. The icon appears on your home screen in a few seconds.',6000);
+      else toast('Not installed. You can install any time from Chrome\u2019s menu: Install app or Add to Home screen.',6000); }
+    else toast('To install, open Chrome\u2019s menu and choose Install app or Add to Home screen.',6000);
+    return;
     case 'installNo': LS.set('wardrobe.installDismissed',true); renderStatus(); return;
     case 'signout': closeSheet(); await sb.auth.signOut(); return;
     case 'server': closeSheet(); showSetup(true); return;
@@ -591,7 +596,7 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) c
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); S.installEvt=e; if(UID) renderStatus(); });
-window.addEventListener('appinstalled',()=>{ S.installEvt=null; if(UID) renderStatus(); });
+window.addEventListener('appinstalled',()=>{ S.installEvt=null; if(UID){ renderStatus(); toast('Wearcycle is installed. Open it from its home-screen icon.',6000); } });
 
 /* ---------- setup and sign-in screens ---------- */
 function showGate(html){ $('#appRoot').hidden=true; const g=$('#gate'); g.hidden=false; g.innerHTML=`<div class="brandrow"><img class="logo" src="icons/logo-icon.svg" alt="" width="52" height="52"><div class="brand">Wearcycle<small>WEAR · CARE · DONATE · BUY</small></div></div>`+html; }

@@ -1,7 +1,8 @@
 // Supabase Edge Function "claude": the only place that holds your Anthropic API key.
 // The app sends a task ("tag", "check" or "ideas"); prompts are built here so the key
 // cannot be used as a general-purpose Claude proxy.
-// Supabase verifies the caller's sign-in token before this code runs (JWT verification is on by default).
+// The function checks the caller's sign-in itself (see requireUser), so in the dashboard turn
+// "Verify JWT with legacy secret" OFF, as Supabase recommends for projects using the new API keys.
 //
 // Secrets (Edge Functions > Secrets in the dashboard):
 //   ANTHROPIC_API_KEY  required
@@ -53,6 +54,23 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
   return null;
 }
 
+// Confirms the request comes from a signed-in user by asking Supabase Auth about the token.
+async function requireUser(req: Request): Promise<boolean> {
+  const auth = req.headers.get("Authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return false;
+  const base = Deno.env.get("SUPABASE_URL") ?? "";
+  let apikey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  try {
+    const keys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
+    apikey = keys.default ?? Object.values(keys)[0] ?? apikey;
+  } catch { /* keep legacy key */ }
+  if (!base || !apikey) return false;
+  const res = await fetch(`${base}/auth/v1/user`, { headers: { Authorization: auth, apikey } });
+  if (!res.ok) return false;
+  const user = await res.json().catch(() => null);
+  return !!(user && user.id && user.role === "authenticated");
+}
+
 function extractJson(text: string): unknown {
   try { return JSON.parse(text); } catch { /* fall through */ }
   const fence = text.match(/```(?:json)?\s*([\s\S]*?)```/);
@@ -66,6 +84,7 @@ function extractJson(text: string): unknown {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+  if (!(await requireUser(req))) return json({ error: "not_signed_in" }, 401);
   if (!API_KEY) return json({ error: "missing_api_key" }, 500);
 
   let body: Record<string, unknown>;

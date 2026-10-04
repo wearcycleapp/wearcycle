@@ -1,5 +1,5 @@
 /* Service worker: keeps the app shell available offline. Data and photos come from Supabase. */
-const VERSION = 'wearcycle-v1.2.0';
+const VERSION = 'wearcycle-v1.2.1';
 const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'app.js', 'config.js', 'vendor/supabase.js',
   'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/logo-icon.svg'];
 
