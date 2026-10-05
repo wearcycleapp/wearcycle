@@ -505,3 +505,17 @@ details.more .field{margin-top:14px}
 .statgrid span{font-size:12px;color:var(--muted)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .field input[type=number]{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
+
+/* v1.15 welcome / sign-in */
+.gate{padding-top:28px}
+.welcome h1{font-family:var(--f-display);font-weight:800;font-size:40px;line-height:1;margin:6px 0 10px;letter-spacing:.01em}
+.welcome p{margin:0 0 10px;color:var(--muted);font-size:15px}
+.perks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.perks li{display:flex;gap:8px;align-items:center}
+.perks li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--coral);flex:none}
+.seg2{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.seg2 button{height:40px;border:0;border-radius:9px;background:none;font-weight:600;color:var(--muted)}
+.seg2 button[aria-selected="true"]{background:var(--raised);color:var(--ink);box-shadow:var(--shadow)}
+.gate .card2 .btn.cta{width:100%}
+.gate a{color:inherit}
+a.lirow{text-decoration:none;color:inherit}

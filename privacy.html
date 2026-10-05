@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Wearcycle privacy</title><link rel="icon" href="icons/logo-icon.svg">
+<style>
+:root{--bg:#f6f4f1;--ink:#1b2433;--muted:#5b6270;--line:#e2ded8}
+@media (prefers-color-scheme:dark){:root{--bg:#12161e;--ink:#eceef2;--muted:#9aa2b0;--line:#2e3646}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+main{max-width:680px;margin:0 auto;padding:32px 16px 64px}
+h1{font-size:28px;margin:0 0 4px}h2{font-size:18px;margin:28px 0 6px}p,li{color:var(--muted)}b{color:var(--ink)}
+a{color:inherit}
+</style></head><body><main>
+<h1>Privacy at Wearcycle</h1>
+<p>Last updated October 4, 2026. Wearcycle is a personal wardrobe app. This page says what it stores, where, and who processes it.</p>
+
+<h2>What is stored</h2>
+<ul>
+<li><b>Your account:</b> email address and a hashed password, managed by Supabase Auth.</li>
+<li><b>Your clothes:</b> photos, cut-outs and the details you or Claude fill in (name, category, colours, condition, price paid if you add it).</li>
+<li><b>Your outfit log and settings:</b> what you wore and when, reminders, style palette, and, if you turn on weather, an approximate location rounded to about 1 km (or the first three characters of a Canadian postal code).</li>
+</ul>
+<p>Everything is kept in a Supabase database and private storage bucket protected by row-level security, so only your signed-in account can read your rows and files.</p>
+
+<h2>Who processes your data</h2>
+<ul>
+<li><b>Anthropic (Claude):</b> when you add a photo, ask for a condition check or shopping ideas, that photo or a text summary of your closet is sent to Anthropic's API to fill in details. Anthropic <a href="https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training" target="_blank" rel="noopener">states</a> that, by default, it does not use inputs or outputs from its commercial products, including the API, to train its models.</li>
+<li><b>Open-Meteo</b> receives rounded coordinates to return the forecast; <b>Zippopotam.us</b> receives the postal code you type to find its area. Both only if you turn on weather.</li>
+<li><b>Background removal</b> for flat-lay cut-outs runs on your phone; those photos are not sent anywhere for that step.</li>
+</ul>
+
+<h2>What Wearcycle does not do</h2>
+<p>No ads, no selling or sharing of your data, no tracking analytics.</p>
+
+<h2>Your choices</h2>
+<ul>
+<li><b>Delete my data</b> in Settings removes your clothes, photos, cut-outs, outfit log and settings from the server.</li>
+<li>To close the sign-in account itself, email <a href="mailto:wearcycle.app@gmail.com">wearcycle.app@gmail.com</a> from your account address.</li>
+</ul>
+<p><a href="./">Back to Wearcycle</a></p>
+</main></body></html>

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.14.0';
+const APP_VERSION='1.15.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -108,6 +108,7 @@ async function callClaude(task,payload){
     if(status===401) throw {friendly:'Your sign-in expired. Sign out and back in.'};
     if(detail==='unknown_task') throw {friendly:'Update the "claude" function in Supabase to the latest index.ts first.'};
     if(detail==='missing_api_key') throw {friendly:'The Anthropic API key is not set on the server (setup guide, step 5).'};
+    if(detail==='daily_limit') throw {friendly:'You have reached today\u2019s limit for this Claude feature. It resets tomorrow.'};
     if(status===429||detail==='rate_limited') throw {friendly:'Too many requests right now. Try again in a minute.'};
     throw {friendly:'Claude could not answer'+(detail?' ('+detail+')':'')+'. Try again.'};
   }
@@ -761,7 +762,7 @@ function settingRow(k){
 }
 function openSettings(){
   openSheet(sheetHead('Settings')+`
-   <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs to your own Supabase project.</span></div><div class="acts"><button class="btn sm" data-act="signout">Sign out</button></div></div>
+   <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs privately to your account.</span></div><div class="acts"><button class="btn sm" data-act="signout">Sign out</button></div></div>
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
    <h3>Style</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(PALETTES[S.settings.palette||'any'].label)}</b><span>${esc(PALETTES[S.settings.palette||'any'].desc)}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
@@ -776,7 +777,9 @@ function openSettings(){
    <p class="hint" id="set-status">Changes save automatically.</p>
    <h3>Help</h3>
    <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev">›</span></button></div>
-   <div class="row"><button class="linkbtn" data-act="server" style="margin:0">Server settings</button><span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
+   <div class="panel"><a class="li lirow" href="privacy.html" target="_blank" rel="noopener"><div class="txt"><b>Privacy</b><span>What is stored, where, and who processes it.</span></div><span class="chev">›</span></a>
+   <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data</b><span>Removes your clothes, photos, outfit log and settings from the server.</span></div><span class="chev">›</span></button></div>
+   <div class="row">${FIXED_SERVER?'':'<button class="linkbtn" data-act="server" style="margin:0">Server settings</button>'}<span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
 }
 function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="rules helpdoc">    <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.</p>
     <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1 and open shoes lose 1.5. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
@@ -806,6 +809,23 @@ function queueSettingsSave(){
     const {error}=await sb.from('settings').upsert({user_id:UID,body:S.settings});
     if(st2) st2.textContent=error?'Could not save: '+error.message:'Saved.';
   },600);
+}
+
+/* ---------- delete my data ---------- */
+function openWipe(){
+  openSheet(sheetHead('Delete my data')+`<p>This permanently deletes your ${S.items.size} pieces, their photos and cut-outs, your outfit log and settings. It cannot be undone.</p>
+   <div class="field"><label for="wipe-t">Type DELETE to confirm</label><input type="text" id="wipe-t" autocomplete="off"></div><p class="err" id="wipe-err"></p>
+   <div class="row sheet-actions"><button class="btn danger" id="wipe-go">Delete everything</button><button class="btn ghost" data-close>Cancel</button></div>
+   <p class="hint">To also close the sign-in account itself, email wearcycle.app@gmail.com from your account address.</p>`);
+  $('#wipe-go').onclick=async()=>{ if($('#wipe-t').value.trim()!=='DELETE'){ $('#wipe-err').textContent='Type DELETE in capitals.'; return; }
+    if(!canWrite()){ $('#wipe-err').textContent='You are offline.'; return; }
+    $('#wipe-go').disabled=true; $('#wipe-err').textContent='Deleting…';
+    const paths=[...S.items.values()].flatMap(i=>[i.photo,i.cut]).filter(Boolean);
+    for(let k=0;k<paths.length;k+=100) await sb.storage.from('photos').remove(paths.slice(k,k+100));
+    const r=await Promise.all([sb.from('items').delete().eq('user_id',UID),sb.from('wears').delete().eq('user_id',UID),sb.from('settings').delete().eq('user_id',UID)]);
+    const err=r.find(x=>x.error); if(err){ $('#wipe-err').textContent='Could not finish: '+err.error.message; $('#wipe-go').disabled=false; return; }
+    try{ await caches.delete('wearcycle-cutouts'); }catch(e){}
+    LS.del(cacheKey()); closeSheet(); await sb.auth.signOut(); };
 }
 
 /* ---------- money ---------- */
@@ -1118,6 +1138,7 @@ document.addEventListener('click',async e=>{
     case 'palettes': openPalettes(); return;
     case 'adjust': openAdjust(); return;
     case 'help': openHelp(); return;
+    case 'wipe': openWipe(); return;
     case 'diary': DI=null; openDiary(); return;
     case 'stats': openStats(); return;
     case 'share': shareOutfit(); return;
@@ -1218,23 +1239,40 @@ function showSetup(again){
   if(again) $('#g-back').onclick=()=>location.reload();
 }
 function atobSafe(k){ try{ return atob(k.split('.')[1]||''); }catch(e){ return ''; } }
-function showLogin(msg){
-  showGate(`<div class="card2"><h3>Sign in</h3>
+const FIXED_SERVER=!!(window.WARDROBE_CONFIG&&window.WARDROBE_CONFIG.supabaseUrl);
+function showLogin(msg,mode){
+  mode=mode||'up';
+  const up=mode==='up', reset=mode==='reset';
+  showGate(`<div class="welcome"><h1>Get dressed in seconds.</h1>
+    <p>Photograph your clothes once. Every day, Wearcycle lays out the best outfit from your own closet, for the weather and the occasion, and tells you what to repair, donate or buy.</p>
+    <ul class="perks"><li>Ranked outfits with a reason for each</li><li>Flat-lay view of every look</li><li>Care, donate and shopping lists from what you own</li></ul></div>
+   <div class="card2"><div class="seg2" role="tablist"><button role="tab" aria-selected="${up}" id="g-mode-up">Create account</button><button role="tab" aria-selected="${!up}" id="g-mode-in">Sign in</button></div>
     <div class="field"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email"></div>
-    <div class="field"><label for="g-pass">Password</label><input type="password" id="g-pass" autocomplete="current-password" minlength="8"></div>
+    ${reset?'':`<div class="field"><label for="g-pass">Password${up?' (8+ characters)':''}</label><input type="password" id="g-pass" autocomplete="${up?'new-password':'current-password'}" minlength="8"></div>`}
     <p class="err" id="g-err">${esc(msg||'')}</p>
-    <div class="row"><button class="btn primary" id="g-in">Sign in</button><button class="btn ghost" id="g-up">Create account</button></div>
-    <p class="hint">Create your account once. After that, turn off new sign-ups in Supabase so nobody else can register (setup guide, step 6).</p></div>
-    <button class="btn ghost sm" id="g-server" style="align-self:flex-start">Change server settings</button><p class="hint">Wearcycle v${APP_VERSION}</p>`);
-  const creds=()=>({email:$('#g-email').value.trim(),password:$('#g-pass').value});
-  $('#g-in').onclick=async()=>{ const c=creds(); if(!c.email||!c.password){ $('#g-err').textContent='Enter your email and password.'; return; }
-    $('#g-in').disabled=true; const {error}=await sb.auth.signInWithPassword(c); $('#g-in').disabled=false;
+    ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back" style="margin:0">Back to sign in</button>'
+      :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'':'<button class="linkbtn" id="g-forgot" style="margin:0">Forgot password?</button>'}`}
+    <p class="hint">By continuing you agree to how your data is handled: <a href="privacy.html" target="_blank" rel="noopener">privacy</a>.</p></div>
+    ${FIXED_SERVER?'':'<button class="btn ghost sm" id="g-server" style="align-self:flex-start">Server settings</button>'}<p class="hint">Wearcycle v${APP_VERSION}</p>`);
+  const creds=()=>({email:$('#g-email').value.trim(),password:($('#g-pass')||{}).value||''});
+  $('#g-mode-up').onclick=()=>showLogin('','up'); $('#g-mode-in').onclick=()=>showLogin('','in');
+  if($('#g-in')) $('#g-in').onclick=async()=>{ const c=creds(); if(!c.email||!c.password){ $('#g-err').textContent='Enter your email and password.'; return; }
+    $('#g-in').disabled=true; const {error}=await sb.auth.signInWithPassword(c); if($('#g-in')) $('#g-in').disabled=false;
     if(error) $('#g-err').textContent=error.message==='Invalid login credentials'?'Email or password is wrong.':error.message; };
-  $('#g-up').onclick=async()=>{ const c=creds(); if(!c.email||c.password.length<8){ $('#g-err').textContent='Enter an email and a password of at least 8 characters.'; return; }
-    $('#g-up').disabled=true; const {data,error}=await sb.auth.signUp({email:c.email,password:c.password,options:{emailRedirectTo:location.origin+location.pathname}}); $('#g-up').disabled=false;
-    if(error){ $('#g-err').textContent=error.message; return; }
-    if(!data.session) $('#g-err').textContent='Account created. Open the confirmation email, tap the link, then sign in here.'; };
-  $('#g-server').onclick=()=>showSetup(true);
+  if($('#g-up')) $('#g-up').onclick=async()=>{ const c=creds(); if(!c.email||c.password.length<8){ $('#g-err').textContent='Enter an email and a password of at least 8 characters.'; return; }
+    $('#g-up').disabled=true; const {data,error}=await sb.auth.signUp({email:c.email,password:c.password,options:{emailRedirectTo:location.origin+location.pathname}}); if($('#g-up')) $('#g-up').disabled=false;
+    if(error){ $('#g-err').textContent=/not allowed|disabled/i.test(error.message)?'New accounts are not open yet.':error.message; return; }
+    if(!data.session) $('#g-err').textContent='Almost there: open the confirmation email, tap the link, then sign in here.'; };
+  if($('#g-forgot')) $('#g-forgot').onclick=()=>showLogin('','reset');
+  if($('#g-back')) $('#g-back').onclick=()=>showLogin('','in');
+  if($('#g-reset')) $('#g-reset').onclick=async()=>{ const e=$('#g-email').value.trim(); if(!e){ $('#g-err').textContent='Enter your email.'; return; }
+    const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}); $('#g-err').textContent=error?error.message:'If that email has an account, a reset link is on its way.'; };
+  if($('#g-server')) $('#g-server').onclick=()=>showSetup(true);
+}
+async function askNewPassword(){
+  openSheet(sheetHead('Choose a new password')+`<div class="field"><label for="np">New password (8+ characters)</label><input type="password" id="np" autocomplete="new-password"></div><p class="err" id="np-err"></p><div class="row sheet-actions"><button class="btn primary" id="np-save">Save password</button></div>`);
+  $('#np-save').onclick=async()=>{ const v=$('#np').value; if(v.length<8){ $('#np-err').textContent='Use at least 8 characters.'; return; }
+    const {error}=await sb.auth.updateUser({password:v}); if(error){ $('#np-err').textContent=error.message; return; } closeSheet(); toast('Password updated.'); };
 }
 function defaultOcc(){
   const saved=LS.get('wearcycle.occ'); if(saved&&saved.day===todayISO()&&OCC[saved.occ]) return saved.occ;
@@ -1243,7 +1281,7 @@ function defaultOcc(){
 }
 function startApp(session){
   if(UID===session.user.id) return;
-  UID=session.user.id; EMAIL=session.user.email||''; S.occ=defaultOcc();
+  UID=session.user.id; EMAIL=session.user.email||''; S.occ=defaultOcc(); LS.set('wearcycle.known',true);
   $('#gate').hidden=true; $('#appRoot').hidden=false;
   loadCache(); renderAll(); loadWeather();
   if(S.online) loadRemote(); else renderAll();
@@ -1253,9 +1291,10 @@ async function boot(){
   sb=window.supabase.createClient(CFG.url,CFG.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
   sb.auth.onAuthStateChange((event,session)=>{
     if(session&&session.user) setTimeout(()=>startApp(session),0);
-    else if(event==='SIGNED_OUT'){ if(UID) LS.del(cacheKey()); UID=null; S.items=new Map(); S.log=[]; S.loaded=false; showLogin(); }
+    else if(event==='SIGNED_OUT'){ if(UID) LS.del(cacheKey()); UID=null; S.items=new Map(); S.log=[]; S.loaded=false; showLogin('','in'); }
+    else if(event==='PASSWORD_RECOVERY'){ setTimeout(askNewPassword,0); }
   });
   const {data}=await sb.auth.getSession();
-  if(data&&data.session) startApp(data.session); else showLogin();
+  if(data&&data.session) startApp(data.session); else showLogin('',LS.get('wearcycle.known')?'in':'up');
 }
 boot();

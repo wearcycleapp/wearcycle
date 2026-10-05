@@ -62,16 +62,39 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
   return null;
 }
 
-// Confirms the request comes from a signed-in user by asking Supabase Auth about the token.
-async function requireUser(req: Request): Promise<boolean> {
-  const auth = req.headers.get("Authorization") ?? "";
-  if (!auth.startsWith("Bearer ")) return false;
+// Requests per person per day (UTC). Only enforced once supabase/limits.sql has been run; until then, no limit.
+const DAILY_LIMIT: Record<string, number> = { tag: 80, box: 80, check: 30, ideas: 10 };
+
+function supabaseKeys(): { base: string; apikey: string } {
   const base = Deno.env.get("SUPABASE_URL") ?? "";
   let apikey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
   try {
     const keys = JSON.parse(Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}");
     apikey = keys.default ?? Object.values(keys)[0] ?? apikey;
   } catch { /* keep legacy key */ }
+  return { base, apikey };
+}
+
+// Counts this request against the caller's daily limit. Returns false when the limit is reached.
+async function withinLimit(req: Request, task: string): Promise<boolean> {
+  const { base, apikey } = supabaseKeys();
+  try {
+    const res = await fetch(`${base}/rest/v1/rpc/bump_ai_usage`, {
+      method: "POST",
+      headers: { Authorization: req.headers.get("Authorization") ?? "", apikey, "content-type": "application/json" },
+      body: JSON.stringify({ p_task: task }),
+    });
+    if (!res.ok) return true; // limits.sql not installed yet: do not block
+    const n = await res.json();
+    return typeof n !== "number" || n <= (DAILY_LIMIT[task] ?? 50);
+  } catch { return true; }
+}
+
+// Confirms the request comes from a signed-in user by asking Supabase Auth about the token.
+async function requireUser(req: Request): Promise<boolean> {
+  const auth = req.headers.get("Authorization") ?? "";
+  if (!auth.startsWith("Bearer ")) return false;
+  const { base, apikey } = supabaseKeys();
   if (!base || !apikey) return false;
   const res = await fetch(`${base}/auth/v1/user`, { headers: { Authorization: auth, apikey } });
   if (!res.ok) return false;
@@ -101,6 +124,7 @@ Deno.serve(async (req) => {
   const task = String(body.task ?? "");
   const text = prompt(task, body);
   if (!text) return json({ error: "unknown_task" }, 400);
+  if (!(await withinLimit(req, task))) return json({ error: "daily_limit" }, 429);
 
   const content: unknown[] = [];
   if (task === "tag" || task === "box" || task === "check") {
