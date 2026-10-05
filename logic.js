@@ -55,7 +55,23 @@ function effectiveOccasions(it){
   if((c===3||c===2) && GARMENT.includes(it.cat) && (it.formality??3)<=3){ if(c>=OCC.home.min) set.add('home'); set.add('chores'); }
   return [...set];
 }
-function eligible(items,occ){ return items.filter(it=>isActive(it) && effectiveOccasions(it).includes(occ)); }
+/* ---------- laundry ----------
+   Pieces in the wash are left out of suggestions (but still count for the shopping list, since you own them).
+   Default wears before washing, from laundry experts quoted by Reviewed and Scripps/KSHB: t-shirts and socks every wear,
+   jeans 4-10, smart trousers 4-5, sweaters 3-10, other tops 1-3. Jackets, shoes and accessories are not washed after wearing. */
+const NOWASH=['outerwear','shoes','watch','belt','hat','bag','other'];
+function washEvery(it){
+  if(it.washEvery>=0&&it.washEvery!==undefined&&it.washEvery!==null) return it.washEvery; // 0 = never goes to the wash on its own
+  if(NOWASH.includes(it.cat)) return 0;
+  const n=String(it.name||'');
+  if(it.cat==='socks') return 1;
+  if(it.cat==='top'){ if(/\b(sweaters?|jumpers?|knit|cardigans?|hoodies?|sweatshirts?|fleece)\b/i.test(n)) return 5; if(UNDER_RX.test(n)||(it.formality??3)<=1) return 1; return 2; }
+  if(it.cat==='bottom'){ if(/\bjeans\b/i.test(n)) return 5; if((it.formality??3)<=1||/\b(shorts|joggers?|leggings?|sweat\w*)\b/i.test(n)) return 2; return 4; }
+  if(it.cat==='onepiece') return 2;
+  return 0;
+}
+function available(it){ return isActive(it) && !it.dirty; }
+function eligible(items,occ,inclDirty){ return items.filter(it=>(inclDirty?isActive(it):available(it)) && effectiveOccasions(it).includes(occ)); }
 
 function harmony(colorNames){
   const chrom=[...new Set(colorNames.filter(c=>COLORS[c] && COLORS[c].h!==undefined))];
@@ -194,7 +210,7 @@ function beltFit(o,belt,occ){
   }
   return {s,why,neg};
 }
-function beltPool(all,occ){ return (all||[]).filter(i=>i.cat==='belt'&&isActive(i)&&(i.cond??4)>=Math.min(3,OCC[occ].min)); }
+function beltPool(all,occ){ return (all||[]).filter(i=>i.cat==='belt'&&available(i)&&(i.cond??4)>=Math.min(3,OCC[occ].min)); }
 
 function pickAccessories(o,by,occ,now,wx,all){
   const acc=[]; const baseColors=coreOf(o).map(primary).filter(Boolean); const baseH=harmony(baseColors).s;
@@ -238,7 +254,7 @@ function suggest(items,occ,ctx,opts){
   if(!shoes.length){ if(needShoes) missing.push('shoes'); shoes=[null]; } else if(!needShoes) shoes=shoes.concat([null]);
   if(missing.length) return {outfits:[],missing};
   // A t-shirt worn under an open shirt only needs to be in good enough condition; it need not be tagged for the occasion.
-  const unders=LAYER_OCC.includes(occ)?items.filter(i=>isActive(i)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min):[];
+  const unders=LAYER_OCC.includes(occ)?items.filter(i=>available(i)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min):[];
   const bases2=bases.slice(); for(const b of bases){ if(b.top && canOpen(b.top) && unders.length){
     let best=null,bs=-Infinity; for(const u of unders){ const r=scoreOutfit(Object.assign({},b,{under:u}),occ,ctx).score; if(r>bs){bs=r;best=u;} }
     bases2.push(Object.assign({},b,{under:best})); } }
@@ -262,7 +278,7 @@ function suggest(items,occ,ctx,opts){
 function swapCandidates(o,slot,items,occ,ctx){
   const cat=slot==='outer'?'outerwear':slot==='under'?'top':slot;
   let pool=eligible(items,occ).filter(i=>i.cat===cat);
-  if(slot==='under') pool=items.filter(i=>isActive(i)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min&&(!o.top||i.id!==o.top.id));
+  if(slot==='under') pool=items.filter(i=>available(i)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min&&(!o.top||i.id!==o.top.id));
   if(slot==='top'&&o.under) pool=pool.filter(i=>canOpen(i));
   return pool.map(i=>{ const t=Object.assign({},o,{[slot]:i}); return {item:i,score:scoreOutfit(t,occ,ctx).score}; }).sort((a,b)=>b.score-a.score).map(x=>x.item);
 }
@@ -292,7 +308,7 @@ function combosWith(h,pool,occ){
 function gaps(items){
   const out=[];
   for(const o of OCCASIONS){
-    const pool=eligible(items,o.id), by=group(pool), one=(by.onepiece||[]).length;
+    const pool=eligible(items,o.id,true), by=group(pool), one=(by.onepiece||[]).length;
     const have={top:(by.top||[]).length+one,bottom:(by.bottom||[]).length+one,shoes:(by.shoes||[]).length};
     const needs=[];
     for(const slot of ['top','bottom','shoes']){
@@ -308,6 +324,6 @@ function gaps(items){
 
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,canOpen,canUnder,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  warmthOf,rainReady,canOpen,canUnder,washEvery,available,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

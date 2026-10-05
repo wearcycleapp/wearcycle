@@ -527,3 +527,4 @@ a.lirow{text-decoration:none;color:inherit}
 .card .vis{position:relative;overflow:hidden}
 .card .vis img{position:absolute;inset:0;width:100%;height:100%}
 .card .vis.studio img{object-fit:contain;padding:10px;box-sizing:border-box}
+.ex.wash{background:var(--warn-soft);color:var(--warn)}

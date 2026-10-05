@@ -1,9 +1,9 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.15.3';
+const APP_VERSION='1.16.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
-  warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -413,7 +413,7 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&needsLayer(wxForScore())); }
-function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 function regenerate(){
@@ -459,6 +459,7 @@ function renderOutfits(){
     const names={top:'tops',bottom:'bottoms',shoes:'shoes'}; const occ=OCC[S.occ];
     box.innerHTML=`<div class="empty"><h3>Not enough for ${esc(occ.label.toLowerCase())} yet</h3>
       <p class="hint">Missing: ${(S.missing||[]).map(m=>names[m]).join(', ')} tagged for ${esc(occ.label.toLowerCase())} in condition ${occ.min}/5 or better. Tag existing items for this occasion in Closet, or see the Shop tab.</p>
+      ${allItems().some(i=>isActive(i)&&i.dirty)?`<p class="hint"><b>${allItems().filter(i=>isActive(i)&&i.dirty).length} pieces are in the wash.</b> Mark them clean in Closet when they are ready.</p><div class="row"><button class="btn" data-laundry-go="1">Open laundry</button></div>`:''}
       <div class="row"><button class="btn" data-tab-go="shop">Open shopping list</button></div></div>`; return;
   }
   if(S.sel>=S.fits.length) S.sel=0;
@@ -563,19 +564,25 @@ function altRow(f,i){
 function renderCloset(){ setTimeout(hydrateCuts,0);
   const items=allItems().filter(isActive);
   const counts={}; for(const it of items) counts[it.cat]=(counts[it.cat]||0)+1;
-  const cats=[{id:'all',label:'All'}].concat(CATS.filter(c=>counts[c.id]));
+  const dirtyN=items.filter(i=>i.dirty).length;
+  const cats=[{id:'all',label:'All'}].concat(dirtyN?[{id:'laundry',label:'In the wash'}]:[]).concat(CATS.filter(c=>counts[c.id]));
   if(!cats.find(c=>c.id===S.cat)) S.cat='all';
-  $('#catChips').innerHTML=cats.map(c=>`<button class="chip" data-cat="${c.id}" aria-pressed="${S.cat===c.id}">${c.label}<span class="n">${c.id==='all'?items.length:counts[c.id]}</span></button>`).join('');
+  $('#catChips').innerHTML=cats.map(c=>`<button class="chip" data-cat="${c.id}" aria-pressed="${S.cat===c.id}">${c.label}<span class="n">${c.id==='all'?items.length:c.id==='laundry'?dirtyN:counts[c.id]}</span></button>`).join('');
   $('#catChips').hidden=!items.length;
   const box=$('#closetGrid');
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():'<p class="hint">Loading…</p>'; return; }
+  if(S.cat==='laundry'){ const ds=items.filter(i=>i.dirty);
+    box.innerHTML=`<div class="panel"><div class="panel-h"><h3>In the wash</h3><span class="count">${ds.length}</span><span class="spacer"></span><button class="btn sm primary" data-act="allClean">Mark all clean</button></div>
+      ${ds.map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>Worn ${it.wearsSinceWash||1} time${(it.wearsSinceWash||1)===1?'':'s'} since washing${it.lastWorn?', last on '+esc(it.lastWorn):''}</span></div><div class="acts"><button class="btn sm" data-clean="${esc(it.id)}">Clean</button></div></div>`).join('')}</div>
+      <p class="hint" style="margin-top:10px">Pieces in the wash are left out of outfit suggestions. Change how often a piece needs washing in its More details.</p>`;
+    setTimeout(hydrateCuts,0); return; }
   const list=items.filter(it=>S.cat==='all'||it.cat===S.cat).sort((a,b)=>(b.review?1:0)-(a.review?1:0)||CATS.findIndex(c=>c.id===a.cat)-CATS.findIndex(c=>c.id===b.cat)||String(a.name).localeCompare(b.name));
   const now=Date.now(); const reviews=items.filter(i=>i.review).length;
   box.innerHTML=(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what Claude filled in. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
    (S.examples.length?`<div class="row" style="margin-bottom:12px"><span class="hint">Items marked <span class="ex">Example</span> are not saved.</span><span class="spacer"></span><button class="btn sm ghost" data-act="clearEx">Remove examples</button></div>`:'')+
    '<div class="grid">'+list.map(it=>{ const fl=careFlags(it,now,S.settings); const bad=fl.some(f=>f.kind==='retire'); return `<button class="card" data-edit="${esc(it.id)}">
     <div class="vis ${it.cut?'studio':''}">${it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}" class="${it.box?'fitted':'cover'}">`:visual(it)}</div><div class="body"><div class="name">${esc(it.name)}</div>
-    <div class="meta">${condTag(it)}${fl.length?`<span class="dot ${bad?'bad':''}" title="Needs attention"></span>`:''}${isEx(it)?'<span class="ex">Example</span>':''}${it.review?'<span class="ex">Review</span>':''}</div>
+    <div class="meta">${condTag(it)}${fl.length?`<span class="dot ${bad?'bad':''}" title="Needs attention"></span>`:''}${isEx(it)?'<span class="ex">Example</span>':''}${it.review?'<span class="ex">Review</span>':''}${it.dirty?'<span class="ex wash">In the wash</span>':''}</div>
     <div class="meta">${(effectiveOccasions(it).map(o=>OCC[o].label).join(' · '))||'No occasion fits'}</div></div></button>`; }).join('')+'</div>';
 }
 function thumbBox(it){ return `<div class="thumb">${thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it)}</div>`; }
@@ -674,6 +681,8 @@ function drawEditor(){
    <div class="field"><div class="row"><span class="lab" style="flex:1">Condition · ${COND[it.cond??4]}</span><button type="button" class="btn sm" data-isnew="1">Brand new</button></div>${seg('cond',COND)}<p class="hint">5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.</p></div>
    <div class="row2"><div class="field"><label for="f-bought">Bought (optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
    <div class="field"><label for="f-price">Price paid (optional)</label><input type="number" inputmode="decimal" min="0" step="0.01" id="f-price" value="${it.price!=null?esc(it.price):''}" placeholder="0.00"></div></div>
+   ${['top','bottom','onepiece','socks','outerwear'].includes(it.cat)?`<div class="field"><span class="lab">Needs washing after</span><div class="chips" style="flex-wrap:wrap">${[[1,'Every wear'],[2,'2 wears'],[3,'3'],[5,'5'],[10,'10'],[0,'Never']].map(([v,l])=>`<button type="button" class="chip" data-washev="${v}" aria-pressed="${washEvery(it)===v}">${l}</button>`).join('')}</div>
+     <label class="row hint"><input type="checkbox" id="f-dirty" ${it.dirty?'checked':''}> In the wash now (left out of suggestions)</label></div>`:''}
    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" maxlength="300" placeholder="Fit, care, where it came from">${esc(it.notes||'')}</textarea></div>
    ${hasPic||(ED.id&&ED.it.cut)?`<div class="field"><span class="lab">Photo tools</span><div class="row">
      ${hasPic?(cropped?`<button type="button" class="btn sm" data-uncrop="1" ${ED.busy?'disabled':''}>Show whole photo</button>`:`<button type="button" class="btn sm" data-ai="box" ${ED.busy?'disabled':''}>Crop to the clothes</button>`):''}
@@ -683,7 +692,7 @@ function drawEditor(){
    <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
    ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`);
 }
-function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
+function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(!d) it.wearsSinceWash=0; } } if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
   try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null; }
   catch(e){ toast('That image could not be opened.'); }
@@ -772,6 +781,8 @@ function openSettings(){
    <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
    <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div>
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
+   <h3>Laundry</h3>
+   <div class="panel"><label class="li"><div class="txt"><b>Track what's in the wash</b><span>Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.</span></div><input type="checkbox" id="laundryT" ${laundryOn()?'checked':''}></label></div>
    <h3>Reminders</h3>
    ${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}
    <p class="hint" id="set-status">Changes save automatically.</p>
@@ -788,6 +799,7 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
     <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.</p>
     <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
+    <p><b>Laundry.</b> Each wear counts toward a piece's wash point; when it is reached the piece goes to the wash and leaves suggestions until you mark it clean. Defaults follow laundry experts quoted by Reviewed and Scripps/KSHB: t-shirts, tank tops and socks after every wear; other shirts after 2; sweaters and knits after 5; jeans after 5; smart trousers after 4; shorts and joggers after 2. Anything worn for Sport goes straight to the wash. Jackets, shoes and accessories never go on their own. Change any piece in its More details.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
@@ -830,6 +842,7 @@ function openWipe(){
 
 /* ---------- money ---------- */
 const REGION_CUR={CA:'CAD',US:'USD',GB:'GBP',AU:'AUD',NZ:'NZD',MX:'MXN',BR:'BRL',IN:'INR',JP:'JPY',CH:'CHF',FR:'EUR',DE:'EUR',ES:'EUR',IT:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',IE:'EUR',AT:'EUR',FI:'EUR'};
+function laundryOn(){ return S.settings.laundry!==false; }
 function currency(){ return S.settings.currency||REGION_CUR[((navigator.language||'').split('-')[1]||'').toUpperCase()]||'USD'; }
 function money(v){ try{ return new Intl.NumberFormat(undefined,{style:'currency',currency:currency(),maximumFractionDigits:v<10?2:0}).format(v); }catch(e){ return '$'+v.toFixed(2); } }
 
@@ -873,6 +886,8 @@ async function removeWear(e){
     const {error}=await q; if(error){ toast('Could not remove: '+error.message,4500); return; } }
   S.log=S.log.filter(x=>x!==e); S.exLog=S.exLog.filter(x=>x!==e);
   for(const id of e.items||[]){ const it=byId(id); if(!it) continue;
+    const wsw=Math.max(0,(it.wearsSinceWash||0)-1); const undirty=it.dirty&&wsw<washEvery(it);
+    await patchItem(id,Object.assign({wearsSinceWash:wsw},undirty?{dirty:false}:{}));
     const last=allLog().filter(x=>(x.items||[]).includes(id)).map(x=>x.date).sort().pop();
     await patchItem(id,{worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),lastWorn:last||null}); }
   saveCache(); S.fitKey=''; for(const f of S.fits) if(f.worn&&e.date===todayISO()) f.worn=false; renderAll(); drawDiary(); toast('Log removed.');
@@ -1001,7 +1016,12 @@ async function cropAll(){
 async function logWear(list,day,occ){
   const ids=list.map(x=>x.id); const real=ids.filter(id=>!String(id).startsWith('ex-'));
   if(real.length&&!canWrite()){ toast('You are offline. Logging needs a connection.'); return false; }
-  for(const it of list){ await patchItem(it.id,{worn:(it.worn||0)+1,lastWorn:(it.lastWorn&&it.lastWorn>day)?it.lastWorn:day,wearsSinceCheck:(it.wearsSinceCheck||0)+1}); }
+  const washed=[];
+  for(const it of list){ const p={worn:(it.worn||0)+1,lastWorn:(it.lastWorn&&it.lastWorn>day)?it.lastWorn:day,wearsSinceCheck:(it.wearsSinceCheck||0)+1,wearsSinceWash:(it.wearsSinceWash||0)+1};
+    const we=washEvery(it);
+    if(laundryOn()&&we>0&&!it.dirty&&(p.wearsSinceWash>=we||(occ==='sport'&&!NOWASH.includes(it.cat)))){ p.dirty=true; washed.push(it.name); }
+    await patchItem(it.id,p); }
+  if(washed.length) setTimeout(()=>toast('To the wash: '+washed.join(', ')+'. They return to suggestions when you mark them clean in Closet.',6500),900);
   const entry={date:day,occ,items:ids};
   if(!real.length) S.exLog.unshift(entry);
   else { const {data,error}=await sb.from('wears').insert(entry).select('id'); if(error){ toast('Could not log the outfit: '+error.message,4500); return false; }
@@ -1108,6 +1128,7 @@ document.addEventListener('click',async e=>{
   if(ds.close!==undefined){ closeSheet(); return; }
   if(ds.tab){ goTab(ds.tab); return; }
   if(ds.tabGo){ goTab(ds.tabGo); return; }
+  if(ds.laundryGo){ S.cat='laundry'; goTab('closet'); renderCloset(); return; }
   if(ds.occ){ S.occ=ds.occ; S.seed=0; LS.set('wearcycle.occ',{day:todayISO(),occ:S.occ}); renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
   if(DI&&$('#sheetRoot').innerHTML){
@@ -1139,6 +1160,7 @@ document.addEventListener('click',async e=>{
     case 'adjust': openAdjust(); return;
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
+    case 'allClean': { const ds=allItems().filter(i=>isActive(i)&&i.dirty); for(const it of ds) await patchItem(it.id,{dirty:false,wearsSinceWash:0}); S.cat='all'; renderAll(); toast(ds.length+' piece'+(ds.length===1?'':'s')+' back in rotation.'); return; }
     case 'diary': DI=null; openDiary(); return;
     case 'stats': openStats(); return;
     case 'share': shareOutfit(); return;
@@ -1160,6 +1182,7 @@ document.addEventListener('click',async e=>{
     if(ds.lgit){ const sc=document.querySelector('.sheet')?.scrollTop||0; LG.sel.has(ds.lgit)?LG.sel.delete(ds.lgit):LG.sel.add(ds.lgit); drawLog(); const sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sc; return; }
     if(ds.lgsave!==undefined){ saveLog(); return; }
   }
+  if(ds.clean){ if(await patchItem(ds.clean,{dirty:false,wearsSinceWash:0})){ if(!allItems().some(i=>i.dirty)) S.cat='all'; renderAll(); toast('Back in rotation.'); } return; }
   if(ds.cat){ S.cat=ds.cat; renderCloset(); return; }
   if(ds.edit){ closeSheet(); openEditor(ds.edit); return; }
   if(ds.wear){ wear(+ds.wear); return; }
@@ -1172,6 +1195,7 @@ document.addEventListener('click',async e=>{
   if(ED){
     if(ds.color){ readEditorFields(); const c=ED.it.colors=(ED.it.colors||[]).slice(); const ix=c.indexOf(ds.color); if(ix>=0) c.splice(ix,1); else if(c.length<3) c.push(ds.color); else toast('Up to three colors.'); drawEditor(); return; }
     if(ds.seg){ readEditorFields(); ED.it[ds.seg]=+ds.v; drawEditor(); return; }
+    if(ds.washev!==undefined){ readEditorFields(); ED.it.washEvery=+ds.washev; drawEditor(); return; }
     if(ds.isnew){ readEditorFields(); ED.it.cond=5; ED.it.bought=todayISO().slice(0,7); drawEditor(); toast('Set to Like new, bought '+ED.it.bought+'.'); return; }
     if(ds.occt){ readEditorFields(); const o=ED.it.occ=(ED.it.occ||[]).slice(); const ix=o.indexOf(ds.occt); if(ix>=0) o.splice(ix,1); else o.push(ds.occt); drawEditor(); return; }
     if(ds.photo){ readEditorFields(); if(ds.photo==='cam'){ const [b]=await openCamera('single'); if(b) editorSetPhoto(b); } else { const [f]=await pickFiles(false); if(f) editorSetPhoto(f); } return; }
@@ -1213,7 +1237,8 @@ document.addEventListener('pointerup',e=>{ if(!SW0) return; const dx=e.clientX-S
   if(quick&&Math.abs(dx)>60&&Math.abs(dy)<50&&S.fits.length>1){ S.sel=(S.sel+(dx<0?1:S.fits.length-1))%S.fits.length; if(S.sel) guard(); swiped=Date.now(); renderOutfits(); } },{passive:true});
 let swiped=0;
 document.addEventListener('toggle',e=>{ if(ED&&e.target.matches&&e.target.matches('details.more')) ED.more=e.target.open; },true);
-document.addEventListener('change',e=>{ if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); } });
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
+  if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
