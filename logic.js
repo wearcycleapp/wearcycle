@@ -191,7 +191,8 @@ function scoreOutfit(o,occ,ctx){
     s-=2; reasons.push({t:'Same top and bottom already worn together this week',neg:true}); }
   const belt=(o.acc||[]).find(a=>a.cat==='belt'); if(belt){ const bf=beltFit(o,belt,occ); reasons.push({t:bf.why,neg:bf.neg}); }
   const sock=(o.acc||[]).find(a=>a.cat==='socks'); if(sock){ const sf=sockFit(o,sock,occ,ctx.wx); if(sf.why) reasons.push({t:sf.why,neg:sf.neg}); }
-  return {score:Math.round(s*100)/100,reasons};
+  const st=styleScore(o,ctx.style); s+=st.s; reasons.push(...st.r);
+  return {score:Math.round(s*100)/100,reasons,style:outfitStyle(o)};
 }
 
 /* ---------- socks ----------
@@ -299,7 +300,7 @@ function suggest(items,occ,ctx,opts){
     const key=c.o.onepiece?'o'+c.o.onepiece.id:c.o.top.id+'|'+c.o.bottom.id+(c.o.under?'|u':''); if(seen.has(key)) continue; seen.add(key);
     const o=c.o;
     o.acc=pickAccessories(o,by,occ,ctx.now,ctx.wx,items);
-    const r=scoreOutfit(o,occ,ctx); out.push({o,score:r.score,reasons:r.reasons});
+    const r=scoreOutfit(o,occ,ctx); out.push({o,score:r.score,reasons:r.reasons,style:r.style});
     if(out.length>=n) break;
   }
   return {outfits:out,missing:[]};
@@ -353,8 +354,105 @@ function gaps(items){
   return out;
 }
 
+/* ---------- styles ----------
+   A style is a consistent set of piece types, fabrics and patterns (common menswear conventions, not standards).
+   Each piece gets its styles from Claude's photo reading ("styles" field) or, until then, from its name and details.
+   Outfits whose pieces share the wanted style rank higher; mixing street or sporty pieces with smart ones gets a note. */
+const STYLES={
+  classic:{label:'Classic',desc:'Oxford shirts, chinos, knits, blazers, loafers or derbies.'},
+  heritage:{label:'Heritage',desc:'Flannel, denim, chore or duffle coats, boots, leather.'},
+  minimal:{label:'Minimal',desc:'Plain neutrals, no patterns, clean sneakers, simple shapes.'},
+  street:{label:'Street',desc:'Hoodies, graphic tees, joggers, sneakers, caps.'},
+  sporty:{label:'Sporty',desc:'Technical fabrics, track pieces, running shoes.'},
+  preppy:{label:'Preppy',desc:'Polos, cable knits, stripes, boat shoes.'}};
+const STYLE_IDS=Object.keys(STYLES);
+const STYLE_RX={
+  classic:/\b(oxford|dress shirt|button[- ]?(down|up)|chinos?|khakis?|trousers?|slacks|blazers?|sport coat|suit|loafers?|derby|derbies|brogues?|dress shoes?|leather shoes?|cardigan|merino|fine knit|overcoat|trench)\b/i,
+  heritage:/\b(flannel|plaid|check(ed)?|buffalo|tartan|jeans|denim|chore|field jacket|duffle|duffel|pea ?coat|waxed|work boots?|boots?|henley|corduroy|cords|suede|canvas|shacket|overshirt|chambray|selvedge|moc toe|wool|leather)\b/i,
+  street:/\b(hoodies?|hooded|sweatshirts?|graphic|joggers?|sweatpants|cargo|bomber|puffer|varsity|coach jacket|caps?|beanie|high-?tops?|oversized|streetwear)\b/i,
+  sporty:/\b(athletic|running|training|gym|track|technical|performance|moisture|leggings|windbreaker|trainers?|sport|swim|fleece|quarter[- ]zip|half[- ]zip)\b/i,
+  preppy:/\b(polo|cable|stripes?|striped|rugby|boat shoes?|deck shoes?|loafers?|quarter[- ]zip|v-?neck|madras|button[- ]?down|seersucker|blazer)\b/i};
+const NEUTRALS=['black','white','grey','navy','beige','khaki','brown','denim','olive'];
+function itemText(it){ return [it.name,it.kind,it.material,it.pattern].filter(Boolean).join(' '); }
+function pieceStyles(it){
+  if(Array.isArray(it.styles)&&it.styles.length) return it.styles.filter(x=>STYLES[x]);
+  const n=itemText(it), out=[];
+  for(const k of ['classic','heritage','street','sporty','preppy']) if(STYLE_RX[k].test(n)) out.push(k);
+  const patterned=/\b(plaid|check|stripe|print|graphic|floral|camo|pattern)/i.test(n)||(it.pattern&&it.pattern!=='solid')||it.graphic;
+  if(!patterned && (!primary(it)||NEUTRALS.includes(primary(it))) && !out.includes('sporty') && !out.includes('street')) out.push('minimal');
+  if(!out.length){ const f=it.formality??3; if(f>=4) out.push('classic'); else if(f<=1) out.push('sporty'); }
+  return out;
+}
+// Does a piece of the closet match a described piece such as "camel duffle coat"? The last word (the type) must match,
+// and so must one defining word (like "duffle" or "flannel") when there is one; colors and light/dark are optional.
+const SOFT_WORDS=new Set(Object.keys(COLORS).concat(['light','dark','camel','tan','cream','ivory','charcoal','plain','slim','classic','simple','casual','white','black','with','and']));
+const SYN={};
+[['check','checked','plaid','buffalo','tartan','gingham'],['tee','t-shirt','tshirt'],['t-shirt','tee','tshirt'],['derby','derbie','derbies'],['sneaker','trainer'],['trainer','sneaker'],
+ ['jogger','sweatpant','track'],['trouser','pant','slack'],['pant','trouser','slack'],['jumper','sweater','knit'],['sweater','jumper','knit'],['coat','overcoat','parka']].forEach(g=>{ SYN[g[0]]=g; });
+const sing=w=>w.length>3&&/s$/.test(w)&&!/ss$/.test(w)?w.slice(0,-1):w;
+function pieceMatch(it,piece){
+  const words=String(piece).toLowerCase().replace(/[^a-z\s-]/g,' ').split(/\s+/).filter(Boolean).map(sing); if(!words.length) return false;
+  const text=' '+itemText(it).toLowerCase().replace(/[^a-z\s-]/g,' ').split(/\s+/).map(sing).join(' ')+' ';
+  const has=w=>(SYN[w]||[w]).some(x=>text.includes(' '+x+' '));
+  const head=words[words.length-1]; if(!has(head)) return false;
+  const defining=words.slice(0,-1).filter(w=>!SOFT_WORDS.has(w));
+  return !defining.length||defining.some(has);
+}
+// A style target: {ids:[style ids], looks:[custom looks], weight}. Custom looks come from a photo: base styles plus piece words.
+function lookMatch(it,look){ const n=itemText(it).toLowerCase(); if((look.base||[]).some(b=>pieceStyles(it).includes(b))) return true;
+  return (look.pieces||[]).some(p=>pieceMatch(it,p)); }
+function fitsTarget(it,t){ return pieceStyles(it).some(x=>t.ids.includes(x)) || (t.looks||[]).some(l=>lookMatch(it,l)); }
+const SMART=['classic','preppy'], CASUALX=['street','sporty'];
+function styleScore(o,t){
+  const core=coreOf(o).filter(i=>i!==o.under); const r=[]; let s=0;
+  const only=(it,grp)=>{ const st=pieceStyles(it).filter(x=>x!=='minimal'); return st.length>0 && st.every(x=>grp.includes(x)); };
+  const a=core.find(i=>only(i,CASUALX)), b=core.find(i=>only(i,SMART));
+  if(a&&b){ s-=1; r.push({t:a.name+' with '+b.name+' mixes casual and smart styles',neg:1}); }
+  if(t&&(t.ids.length||(t.looks||[]).length)&&core.length){
+    const m=core.filter(i=>fitsTarget(i,t)).length/core.length, w=t.weight||1;
+    s+=(2*m-0.5)*w;
+    const name=t.label||STYLES[t.ids[0]]?.label||'';
+    if(m>=0.75&&name) r.push({t:'Fits your '+name+' style'});
+    else if(m<0.4&&name&&!t.learned) r.push({t:'Few '+name+' pieces'}); // informational: the score already reflects it
+  }
+  return {s,r};
+}
+// The outfit's style: the style most of its main pieces share.
+function outfitStyle(o){ const core=coreOf(o).filter(i=>i!==o.under); if(!core.length) return null; const c={};
+  for(const i of core) for(const x of pieceStyles(i)) c[x]=(c[x]||0)+1;
+  const best=Object.entries(c).filter(([k])=>k!=='minimal'||Object.keys(c).length===1).sort((a,b)=>b[1]-a[1])[0]||Object.entries(c).sort((a,b)=>b[1]-a[1])[0];
+  return best&&best[1]>=Math.ceil(core.length/2)?best[0]:null; }
+// Learned from what was worn in the last 120 days (5+ logged outfits): styles making up at least a quarter of worn pieces.
+function learnStyles(items,log,now){
+  const by=new Map(items.map(i=>[i.id,i])); const c={}; let n=0, days=0;
+  for(const e of log||[]){ if(daysSince(e.date,now)>120) continue; days++;
+    for(const id of e.items||[]){ const it=by.get(id); if(!it||!GARMENT.includes(it.cat)) continue; n++; for(const x of pieceStyles(it)) c[x]=(c[x]||0)+1; } }
+  if(days<5||!n) return {ids:[],days};
+  const ids=Object.entries(c).filter(([k,v])=>v/n>=0.25).sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]);
+  return {ids,days};
+}
+// Essentials per style for the shopping list: what a small, working wardrobe in that style usually has.
+const ESSENTIALS={
+  classic:[['White or light blue oxford shirt','top',/oxford|dress shirt|button[- ]?(down|up)/],['Fine knit sweater','top',/merino|knit|sweater|jumper|cardigan/],['Navy blazer','outerwear',/blazer|sport coat|suit jacket/],['Chinos','bottom',/chino|khaki/],['Grey or navy trousers','bottom',/trouser|slack|dress pant/],['Leather derbies or oxfords','shoes',/derb|oxford|brogue|dress shoe/],['Loafers','shoes',/loafer/],['Wool overcoat or trench','outerwear',/overcoat|trench|wool coat|duffle|pea ?coat/],['Leather belt','belt',/./]],
+  heritage:[['Flannel or check shirt','top',/flannel|plaid|check|buffalo|tartan/],['Henley or plain tee','top',/henley|t-?shirt|\btee/],['Chunky or wool knit','top',/wool|knit|sweater|cable|jumper/],['Dark jeans','bottom',/jeans|denim/],['Chore, field or denim jacket','outerwear',/chore|field|denim jacket|trucker|shacket|overshirt/],['Duffle, pea or waxed coat','outerwear',/duffle|duffel|pea ?coat|waxed|wool coat/],['Leather boots','shoes',/boot/],['Brown leather shoes','shoes',/derb|leather|moc|brogue/],['Brown leather belt','belt',/./]],
+  minimal:[['Plain white tee','top',/t-?shirt|\btee/,['white']],['Plain black or grey tee','top',/t-?shirt|\btee/,['black','grey']],['Grey or navy crewneck knit','top',/knit|sweater|crew|jumper/],['Black or navy trousers','bottom',/trouser|chino|pant/,['black','navy','grey']],['Dark jeans','bottom',/jeans|denim/],['Clean white sneakers','shoes',/sneaker|trainer/,['white']],['Simple overcoat','outerwear',/coat|overcoat/],['Plain watch','watch',/./]],
+  street:[['Hoodie','top',/hood/],['Graphic tee','top',/graphic|print/],['Joggers or cargo pants','bottom',/jogger|cargo|sweatpant/],['Relaxed jeans','bottom',/jeans|denim/],['Bomber or puffer jacket','outerwear',/bomber|puffer|varsity|coach/],['Statement sneakers','shoes',/sneaker|trainer|high-?top/],['Cap or beanie','hat',/./],['Crossbody bag','bag',/./]],
+  sporty:[['Technical t-shirt','top',/technical|performance|moisture|athletic|training|running|gym|dri/],['Track or quarter-zip top','top',/track|quarter[- ]zip|half[- ]zip|zip-?up/],['Joggers or track pants','bottom',/jogger|track|sweatpant/],['Athletic shorts','bottom',/short/],['Windbreaker or shell','outerwear',/windbreaker|shell|anorak|rain/],['Running shoes','shoes',/running|trainer|training|sneaker/],['Sport watch','watch',/./],['Cap','hat',/./]],
+  preppy:[['Polo shirt','top',/polo/],['Oxford button-down','top',/oxford|button[- ]?down/],['Cable or V-neck knit','top',/cable|v-?neck|sweater|cardigan|quarter[- ]zip/],['Striped shirt or tee','top',/stripe/],['Chinos','bottom',/chino|khaki/],['Navy blazer','outerwear',/blazer/],['Boat shoes or loafers','shoes',/boat|loafer|deck/],['Leather or webbing belt','belt',/./]]};
+function essentials(styleOrLook,items){
+  const own=items.filter(isActive);
+  if(typeof styleOrLook==='string'){ const used=new Set();
+    return (ESSENTIALS[styleOrLook]||[]).map(([label,cat,rx,cols])=>{ const it=own.find(i=>!used.has(i)&&i.cat===cat&&rx.test(itemText(i).toLowerCase())&&(!cols||cols.includes(primary(i))));
+      if(it) used.add(it); return {label,cat,have:it||null}; }); }
+  const look=styleOrLook, used=new Set();
+  return (look.pieces||[]).slice(0,10).map(p=>{
+    const pw=String(p).toLowerCase().split(/\s+/);
+    const it=own.filter(i=>!used.has(i)&&pieceMatch(i,p)).sort((a,b)=>{ const sc=i=>pw.filter(w=>SOFT_WORDS.has(w)&&(itemText(i).toLowerCase().includes(w)||primary(i)===w)).length; return sc(b)-sc(a); })[0];
+    if(it) used.add(it); return {label:p,have:it||null}; });
+}
+
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,canOpen,canUnder,washEvery,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  warmthOf,rainReady,canOpen,canUnder,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

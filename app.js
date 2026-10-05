@@ -1,9 +1,9 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.24.0';
+const APP_VERSION='1.25.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
-  warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -26,7 +26,27 @@ const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:30,che
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
 function byId(id){ return S.items.get(id)||S.examples.find(e=>e.id===id); }
-function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any'}; }
+function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',style:styleTarget(S.occ)}; }
+/* ---------- styles ----------
+   Picked styles (up to three, plus looks learned from photos) guide Work and Going out; Work can have its own.
+   With nothing picked, the style is learned from what was worn (5+ logged outfits in 120 days), at half weight.
+   Sport, home, chores and formal follow their own rules, so no style target applies there. */
+const STYLE_OCC=['work','out'];
+function styleSet(){ const st=S.settings.style||(S.settings.style={pick:[],work:''}); st.pick=st.pick||[]; return st; }
+function looks(){ return S.settings.looks||(S.settings.looks=[]); }
+function styleName(k){ return STYLES[k]?STYLES[k].label:(looks().find(l=>l.id===k)||{}).label||''; }
+function learned(){ return learnStyles(allItems().filter(isActive),allLog(),Date.now()); }
+function targetOf(keys,weight,isLearned){ const ids=keys.filter(k=>STYLES[k]), lk=looks().filter(l=>keys.includes(l.id));
+  if(!ids.length&&!lk.length) return null; return {ids,looks:lk,weight,learned:!!isLearned,label:styleName(keys[0])}; }
+function styleTarget(occ){
+  if(!STYLE_OCC.includes(occ)) return null;
+  if(S.styleToday==='none') return null;
+  if(S.styleToday) return targetOf([S.styleToday],1);
+  const st=styleSet(); const keys=occ==='work'&&st.work?[st.work]:st.pick;
+  if(keys.length) return targetOf(keys,1);
+  const l=learned(); return l.ids.length?targetOf(l.ids,0.5,true):null;
+}
+function styleKey(){ const t=styleTarget(S.occ); return t?(t.ids.join(',')+'/'+t.looks.map(l=>l.id).join(',')+'/'+t.weight):'-'; }
 function canWrite(){ return S.online && !!sb; }
 function cacheKey(){ return 'wardrobe.cache.'+UID; }
 function saveCache(){ if(!UID) return; LS.set(cacheKey(),{items:[...S.items.values()].map(cleanBodyWithId),log:S.log.slice(0,200),settings:S.settings,at:Date.now()}); }
@@ -129,6 +149,7 @@ function applyAi(it,res){
   if(res.warmth>=1&&res.warmth<=3) it.warmth=Math.round(res.warmth);
   if(typeof res.graphic==='boolean') it.graphic=res.graphic;
   if(typeof res.waterproof==='boolean') it.rain=res.waterproof;
+  applyStyleFields(it,res);
 }
 async function applyBox(it,blob,box){ if(!validBox(box)) return false; try{ it.thumb=await cropThumb(blob,box); it.box=box.map(v=>Math.round(v*1000)/1000); return true; }catch(e){ return false; } }
 
@@ -416,12 +437,12 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
-function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+styleKey()+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 function regenerate(){
   const r=suggest(allItems(),S.occ,ctx(),{n:4,jitter:S.seed?1.2:0,rng:makeRng(S.seed),layer:layerOn()});
-  S.fits=r.outfits.map(f=>({ids:idsOf(f.o),score:f.score,reasons:f.reasons})).sort((a,b)=>b.score-a.score); S.fits.forEach((f,k)=>{f.rank=k+1;}); S.missing=r.missing; S.fitKey=fitKeyNow(); S.sel=0;
+  S.fits=r.outfits.map(f=>({ids:idsOf(f.o),score:f.score,reasons:f.reasons,style:f.style})).sort((a,b)=>b.score-a.score); S.fits.forEach((f,k)=>{f.rank=k+1;}); S.missing=r.missing; S.fitKey=fitKeyNow(); S.sel=0;
 }
 // Match label from the score (see "How Wearcycle decides"); bars give a quick visual of the same thing.
 const MATCH=[[4,'Excellent match',5],[3,'Great match',4],[2,'Good match',3],[0.5,'Fair match',2],[-Infinity,'Weak match',1]];
@@ -510,7 +531,7 @@ function heroCard(f,i){
   const canAddUnder=o.top&&!o.under&&canOpen(o.top)&&swapCandidates(o,'under',allItems(),S.occ,ctx()).length;
   const beltK=o.bottom?o.acc.findIndex(a=>a.cat==='belt'):-1; const rest=o.acc.map((a,k)=>[a,k]).filter(([a,k])=>k!==beltK);
   const title=f.edited?'Your version':i===0?'Today’s pick':'Option '+f.rank;
-  const head=`<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}">${f.rank}</span><span class="rk-l"><b>${title}</b><span>${m.label}${bars(m.bars)}</span></span>
+  const head=`<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}">${f.rank}</span><span class="rk-l"><b>${title}</b><span>${m.label}${f.style&&STYLES[f.style]?' · '+STYLES[f.style].label:''}${bars(m.bars)}</span></span>
     <button class="iconbtn" data-act="adjust" aria-label="Adjust: outer layer, view and palette">${ADJ_ICON}</button></header>`;
   const n=S.fits.length;
   const nav=n>1?`<div class="pager"><button class="pg" data-step-opt="-1" aria-label="Previous option">‹</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===i}"></button>`).join('')}<button class="pg" data-step-opt="1" aria-label="Next option">›</button></div>`:'';
@@ -545,6 +566,8 @@ function openAdjust(){
    <div class="field"><span class="lab">Outer layer</span><div class="chips">${[['auto','Auto'+(wxForScore()?(auto?' (on today)':' (off today)'):'')],['on','Always add'],['off','None']].map(([k,l])=>`<button class="chip" data-layer="${k}" aria-pressed="${S.layerMode===k}">${l}</button>`).join('')}</div>
      <p class="hint">Auto adds a jacket or coat when it is below 15° or wet.</p></div>
    <div class="field"><span class="lab">Show outfits as</span><div class="chips"><button class="chip" data-view="board" aria-pressed="${S.view==='board'}">Flat-lay</button><button class="chip" data-view="pieces" aria-pressed="${S.view!=='board'}">Pieces</button></div></div>
+   ${STYLE_OCC.includes(S.occ)?`<div class="field"><span class="lab">Style today</span><div class="chips" style="flex-wrap:wrap">${[['','My style'],...STYLE_IDS.map(k=>[k,STYLES[k].label]),...looks().map(l=>[l.id,l.label]),['none','No style']].map(([k,l])=>`<button class="chip" data-stoday="${esc(k)}" aria-pressed="${(S.styleToday||'')===k}" ${looks().some(x=>x.id===k)?'data-notr':''}>${esc(l)}</button>`).join('')}</div>
+     <p class="hint">${(()=>{ const t=styleTarget(S.occ); return t?(t.learned?'Learned from what you wear: ':'Now favoring: ')+esc([...t.ids.map(k=>STYLES[k].label),...t.looks.map(l=>l.label)].join(', '))+'.':'No style preference for today.'; })()}</p></div>`:''}
    <div class="field"><span class="lab">Style palette</span><button class="btn" data-act="palettes" style="justify-content:space-between">${esc(pal.label)}<span class="hint">Change</span></button></div>`);
 }
 /* Flat-lay board, laid out in wearing order so every outfit reads the same way:
@@ -670,14 +693,21 @@ function renderShop(){
   const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
      ${list?list.map(x=>`<div class="idea"><b>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${esc(OCC[x.occasion]?.label||x.occasion||'')}${x.pairsWith&&x.pairsWith.length?' · pairs with '+esc(x.pairsWith.join(', ')):''}</span><span>${esc(x.why||'')}</span></div>`).join(''):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
-  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+repl+blocks.join('')+ai+'</div>';
+  const st=styleSet(); const lr=learned(); const keys=(st.pick.length?st.pick:lr.ids).slice(0,3);
+  const build=keys.length?keys.map(k=>{ const ess=STYLES[k]?essentials(k,items):essentials(looks().find(l=>l.id===k)||{},items); const have=ess.filter(e=>e.have).length;
+      return `<div class="panel"><div class="panel-h"><h3 ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</h3><span class="count">${have} of ${ess.length}</span></div>
+       ${ess.map(e=>`<div class="li ess ${e.have?'have':''}"><span class="mark">${e.have?'✓':'+'}</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b>${e.have?`<span data-notr>${esc(e.have.name)}</span>`:''}</div></div>`).join('')}</div>`; }).join('')
+    :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
+  const buildH=`<div><h3 style="margin:0">Build toward a style</h3><p class="hint" style="margin:4px 0 0">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p></div>`;
+  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+repl+blocks.join('')+(keys.length?buildH:'')+build+ai+'</div>';
 }
 async function askIdeas(){
   if(ideasState.busy) return; ideasState={busy:true,list:ideasState.list,err:''}; renderShop();
   const items=allItems().filter(isActive);
   const closet=items.map(it=>`- ${it.name} | ${it.cat} | colors: ${(it.colors||[]).join('/')} | formality ${it.formality??3} | condition ${it.cond??4} | for: ${effectiveOccasions(it).join(', ')||'none'}`).join('\n').slice(0,12000);
   const gapText=gaps(items).map(x=>`${x.occ}: `+(x.needs.map(n=>`${n.slot} ${n.have}/${n.target}`).join(', ')||'covered')).join('\n');
-  try{ const r=await callClaude('ideas',{closet,gaps:gapText}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],err:Array.isArray(r)?'':'No ideas came back. Try again.'}; }
+  const st=styleSet(); const t=(st.pick.length?st.pick:learned().ids).map(k=>STYLES[k]?STYLES[k].label+' ('+STYLES[k].desc+')':(()=>{ const l=looks().find(x=>x.id===k); return l?l.label+' ('+l.pieces.join(', ')+')':''; })()).filter(Boolean).join('; ');
+  try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],err:Array.isArray(r)?'':'No ideas came back. Try again.'}; }
   catch(e){ ideasState={busy:false,list:ideasState.list,err:aiMsg(e)}; }
   renderShop();
 }
@@ -727,6 +757,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
        return `<button type="button" class="chip" data-occt="${o.id}" aria-pressed="${on}">${o.label}${rule&&!ov?' <span class="n">auto</span>':''}</button>`; }).join('')}</div>
      <p class="hint">Work follows your dress code (${esc(DRESS_CODES[(S.settings.work&&S.settings.work.code)||'casual'].label)}) and Formal takes suits, dress shirts and dress shoes. Tap either to override this piece.</p>
      ${['top','outerwear','onepiece'].includes(it.cat)?`<label class="row hint"><input type="checkbox" id="f-graphic" ${it.graphic?'checked':''}> Big logo, text or print (left out of Work unless your dress code allows it)</label>`:''}</div>
+   ${['top','bottom','onepiece','outerwear','shoes'].includes(it.cat)?`<div class="field"><span class="lab">Styles${Array.isArray(it.styles)&&it.styles.length?'':' (guessed)'}</span><div class="chips" style="flex-wrap:wrap">${STYLE_IDS.map(k=>`<button type="button" class="chip" data-pstyle="${k}" aria-pressed="${pieceStyles(it).includes(k)}">${STYLES[k].label}</button>`).join('')}</div></div>`:''}
    <div class="field"><div class="row"><span class="lab" style="flex:1">Condition · ${COND[it.cond??4]}</span><button type="button" class="btn sm" data-isnew="1">Brand new</button></div>${seg('cond',COND)}<p class="hint">5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.</p></div>
    <div class="row2"><div class="field"><label for="f-bought">Bought (optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
    <div class="field"><label for="f-price">Price paid (optional)</label><input type="number" inputmode="decimal" min="0" step="0.01" id="f-price" value="${it.price!=null?esc(it.price):''}" placeholder="0.00"></div></div>
@@ -836,6 +867,50 @@ function themeSet(t){ try{ localStorage.setItem('wearcycle.theme',t); }catch(e){
   const r=document.documentElement; if(t==='auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme',t);
   const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{ m.removeAttribute('media'); m.setAttribute('content',dark?'#12161e':'#f6f4f1'); }); }
+function styleSummary(){ const st=styleSet();
+  if(st.pick.length) return st.pick.map(styleName).filter(Boolean).join(', ')+(st.work?' · '+'Work: '+styleName(st.work):'');
+  const l=learned(); return l.ids.length?'Auto, learned from what you wear: '+l.ids.map(k=>STYLES[k].label).join(', '):'Auto: log '+Math.max(1,5-l.days)+' more outfits to learn it, or pick one.'; }
+function styleCount(k){ return allItems().filter(i=>isActive(i)&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&(STYLES[k]?pieceStyles(i).includes(k):WardrobeLogic.lookMatch(i,looks().find(l=>l.id===k)||{}))).length; }
+function openStyles(){
+  const st=styleSet(); const l=learned();
+  const card=(k,label,desc,extra)=>`<button class="stylecard" data-style-tog="${esc(k)}" aria-pressed="${st.pick.includes(k)}"><b ${extra?'data-notr':''}>${esc(label)}</b><span ${extra?'data-notr':''}>${esc(desc)}</span><em>${styleCount(k)===1?'You own 1 piece':'You own '+styleCount(k)+' pieces'}</em>${extra||''}</button>`;
+  openSheet(sheetHead('Your style')+`
+   <p class="hint">Pick up to three. Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them. With none picked, Wearcycle learns from what you wear${l.ids.length?' (now: '+esc(l.ids.map(k=>STYLES[k].label).join(', '))+')':''}.</p>
+   <div class="stylegrid">${STYLE_IDS.map(k=>card(k,STYLES[k].label,STYLES[k].desc)).join('')}
+   ${looks().map(x=>card(x.id,x.label,(x.summary||'')+(x.pieces&&x.pieces.length?' · '+x.pieces.join(', '):''),`<span class="lookdel" role="button" data-look-del="${esc(x.id)}">Remove</span>`)).join('')}</div>
+   <button class="btn" data-act="addLook">+ Add a look you like</button>
+   <p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. Claude describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
+   <div class="field"><span class="lab">For work</span><div class="chips" style="flex-wrap:wrap">${[['','Same as above'],...STYLE_IDS.map(k=>[k,STYLES[k].label]),...looks().map(x=>[x.id,x.label])].map(([k,lb])=>`<button class="chip" data-style-work="${esc(k)}" aria-pressed="${(st.work||'')===k}" ${looks().some(x=>x.id===k)?'data-notr':''}>${esc(lb)}</button>`).join('')}</div>
+   <p class="hint">Your work dress code still decides which pieces count for Work.</p></div>`);
+}
+async function addLook(){
+  if(!canWrite()){ toast('You are offline. Claude needs a connection.'); return; }
+  const [f]=await pickFiles(false); if(!f) return;
+  job('Reading the look…',40);
+  try{ const r=await callClaude('look',{image:await blobToBase64(await shrink(f,1024))}); job('');
+    if(!r||r.error||!Array.isArray(r.pieces)){ toast(r&&r.error?String(r.error):'Claude could not find clothes in that photo.',5000); return; }
+    const look={id:'look-'+uuid().slice(0,8),label:String(r.name||'My look').slice(0,40),base:(r.styles||[]).filter(x=>STYLES[x]).slice(0,3),pieces:r.pieces.map(String).slice(0,10),colors:(r.colors||[]).filter(c=>COLORS[c]).slice(0,5),summary:String(r.summary||'').slice(0,160)};
+    looks().push(look); const st=styleSet(); if(st.pick.length<3) st.pick.push(look.id);
+    saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); toast('Saved '+look.label+'. Outfits now favor it.',5000);
+  }catch(e){ job(''); toast(aiMsg(e),6000); }
+}
+async function scanStyles(){
+  if(S.busy) return; if(!canWrite()){ toast('You are offline.'); return; }
+  const list=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!Array.isArray(i.styles));
+  if(!list.length){ toast('Every piece with a photo has its type and styles.'); return; }
+  closeSheet(); S.busy=true; let n=0;
+  for(const it of list){ job('Recognizing pieces '+(n+1)+' of '+list.length,n/list.length*100);
+    try{ const blob=await photoBlob(it.photo); const r=await callClaude('style',{image:await blobToBase64(await shrink(blob,768))});
+      if(r&&!r.error){ const p={}; applyStyleFields(p,r); if(typeof r.graphic==='boolean'&&typeof it.graphic!=='boolean') p.graphic=r.graphic; if(!p.styles) p.styles=[]; await patchItem(it.id,p); } n++; }
+    catch(e){ S.busy=false; job(''); toast(aiMsg(e),6000); return; } }
+  S.busy=false; job(''); S.fitKey=''; renderAll(); toast('Recognized '+n+' pieces.',5000);
+}
+function applyStyleFields(it,r){
+  if(r.kind) it.kind=String(r.kind).slice(0,40);
+  if(['solid','check','stripe','print','graphic','other'].includes(r.pattern)) it.pattern=r.pattern;
+  if(r.material) it.material=String(r.material).slice(0,20);
+  if(Array.isArray(r.styles)){ const v=r.styles.filter(x=>STYLES[x]).slice(0,3); if(v.length) it.styles=v; }
+}
 function openSettings(){
   openSheet(sheetHead('Settings')+`
    <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs privately to your account.</span></div><div class="acts"><button class="btn sm" data-act="signout">Sign out</button></div></div>
@@ -845,6 +920,8 @@ function openSettings(){
      <div class="chips" style="margin-top:8px">${[['auto','Auto'],['light','Light mode'],['dark','Dark mode']].map(([k,l])=>`<button type="button" class="chip" data-theme-set="${k}" aria-pressed="${themeGet()===k}">${l}</button>`).join('')}</div></div></div>
    <div class="li"><div class="txt"><b>Language</b><span>Item names you typed stay as they are.</span></div><div class="acts">${langSelect('langSel')}</div></div></div>
    <h3>Style</h3>
+   <div class="panel"><button class="li lirow" data-act="styles"><div class="txt"><b>Your style</b><span>${esc(styleSummary())}</span></div><span class="chev">›</span></button>
+   <div class="li"><div class="txt"><b>Recognize piece types</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!Array.isArray(i.styles)).length;return n?'Claude looks at '+n+' piece'+(n===1?'':'s')+' once to note the type, pattern, fabric and styles (one small request each). New photos get this when Claude reads them.':'Every piece with a photo has its type and styles.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanStyles">Check</button></div></div></div>
    <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(PALETTES[S.settings.palette||'any'].label)}</b><span>${esc(PALETTES[S.settings.palette||'any'].desc)}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
    <h3>Weather</h3>
    <div class="panel"><div class="li"><div class="txt"><b>${wxOn()?esc(wxSet().label||'Your location'):'Off'}</b><span>${wxOn()?'Outfits follow today\u2019s forecast.':'Outfits ignore the weather.'}</span></div><div class="acts"><button class="btn sm" data-wx="edit">${wxOn()?'Change':'Set up'}</button></div></div></div>
@@ -884,6 +961,7 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p><b>Laundry.</b> Each wear counts toward a piece's wash point; when it is reached the piece goes to the wash and leaves suggestions until you mark it clean. Defaults follow laundry experts quoted by Reviewed and Scripps/KSHB: t-shirts, tank tops and socks after every wear; other shirts after 2; sweaters and knits after 5; jeans after 5; smart trousers after 4; shorts and joggers after 2. Anything worn for Sport goes straight to the wash. Jackets, shoes and accessories never go on their own. Change any piece in its More details. Wearcycle cannot tell when you do laundry, so after 7 days (a weekly wash; change it in Settings) the Outfits screen asks whether the wash is done. Returning pieces automatically is optional and off by default, because a wrong guess would suggest clothes that are still dirty.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Repairs.</b> Mark a piece \u201cNeeds repair\u201d in its More details and note what to fix. Until it is fixed it is suggested only for sport, home and chores, unless you say it is fine anywhere. The Care tab lists it with a link to tailors (or cobblers for shoes, belts and bags, watch repair for watches) near you. Repair pays off: wearing clothes nine months longer cuts their carbon, water and waste footprints by about 20 to 30% each (WRAP, 2015).</p>
+    <p><b>Styles.</b> A style is a consistent set of piece types, fabrics and patterns: Classic, Heritage, Minimal, Street, Sporty and Preppy (common menswear conventions, not rules). Each piece's styles come from Claude's photo reading or, until then, from its name. For work and going out, an outfit gets up to +1.5 when all its main pieces fit your style and -0.5 when none do; with no style picked, Wearcycle learns it from what you logged (5+ outfits in 120 days) at half weight. Mixing street or sporty pieces with classic or preppy ones costs 1 point and shows a note. Looks added from a photo keep only Claude's description of the clothes, never the photo.</p>
     <p><b>Where to donate.</b> The Donate list links to a Google Maps search for clothing drop-offs near your weather place, or near you. Worn-out pieces are worth taking too: Value Village pays charities for textiles even when damaged, and those become insulation, matting or underlay (CBC News, 2017).</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
@@ -1155,7 +1233,7 @@ function todayLine(){
   return `<p class="hint today">Logged today: ${esc(names.join(', ')||es.length+' outfit')}</p>`;
 }
 // An edited outfit remembers the suggestion it came from, so it can go back.
-function editedFit(f,o){ const r=scoreOutfit(o,S.occ,ctx()); return {ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true,orig:f.orig||f}; }
+function editedFit(f,o){ const r=scoreOutfit(o,S.occ,ctx()); return {ids:idsOf(o),score:r.score,reasons:r.reasons,style:r.style,rank:f.rank,edited:true,orig:f.orig||f}; }
 // Tapping a piece shows it large with its name; swapping is an explicit button (it changes the outfit).
 function pieceAt(i,slot){ const f=S.fits[i]; if(!f) return null; const o=hydrate(f.ids); return slot.startsWith('acc')?o.acc[+slot.slice(3)]:o[slot]; }
 function openPiece(i,slot,again){
@@ -1226,6 +1304,9 @@ function goTab(tab){
 }
 
 document.addEventListener('click',async e=>{
+  const del=e.target.closest('[data-look-del]');
+  if(del){ const id=del.dataset.lookDel, st=styleSet(); S.settings.looks=looks().filter(l=>l.id!==id); st.pick=st.pick.filter(k=>k!==id); if(st.work===id) st.work='';
+    saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); toast('Look removed.'); return; }
   const t=e.target.closest('button,[data-scrim]'); if(!t) return;
   if(Date.now()-swiped<400 && t.closest('[data-swipe]')) return;
   const ds=t.dataset;
@@ -1272,6 +1353,9 @@ document.addEventListener('click',async e=>{
     case 'cropAll': cropAll(); return;
     case 'logOther': openLog(); return;
     case 'palettes': openPalettes(); return;
+    case 'styles': openStyles(); return;
+    case 'addLook': addLook(); return;
+    case 'scanStyles': scanStyles(); return;
     case 'adjust': openAdjust(); return;
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
@@ -1300,6 +1384,11 @@ document.addEventListener('click',async e=>{
     if(ds.lgsave!==undefined){ saveLog(); return; }
   }
   if(ds.themeSet){ themeSet(ds.themeSet); document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===ds.themeSet))); return; }
+  if(ds.pstyle){ readEditorFields(); const cur=pieceStyles(ED.it); ED.it.styles=cur.includes(ds.pstyle)?cur.filter(x=>x!==ds.pstyle):cur.concat([ds.pstyle]); if(!ED.it.styles.length) ED.it.styles=[]; drawEditor(); return; }
+  if(ds.stoday!==undefined){ S.styleToday=ds.stoday||undefined; S.fitKey=''; openAdjust(); renderOutfits(); return; }
+  if(ds.styleTog){ const st=styleSet(), k=ds.styleTog; if(st.pick.includes(k)) st.pick=st.pick.filter(x=>x!==k); else { if(st.pick.length>=3){ toast('Pick up to three styles.'); return; } st.pick.push(k); }
+    saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
+  if(ds.styleWork!==undefined){ styleSet().work=ds.styleWork; saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
   if(ds.fixed){ if(await patchItem(ds.fixed,{repair:undefined,repairNote:undefined,repairOn:undefined,repairOk:undefined})) toast('Fixed. Back in every outfit it suits.'); return; }
   if(ds.clean){ if(await patchItem(ds.clean,{dirty:false,wearsSinceWash:0,dirtyOn:undefined})){ if(!allItems().some(i=>i.dirty)) S.cat='all'; renderAll(); toast('Back in rotation.'); } return; }

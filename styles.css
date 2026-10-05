@@ -559,3 +559,15 @@ a.lirow{text-decoration:none;color:inherit}
 .piecebig svg.glyph{width:55%;height:60%}
 .sheet-actions .btn .swap{position:static;display:inline-grid;width:18px;height:18px;margin-right:6px;background:none;box-shadow:none}
 .sheet-actions .btn .swap svg{width:16px;height:16px}
+/* v1.25 styles */
+.stylegrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stylecard{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:12px;border-radius:14px;border:1.5px solid var(--line);background:var(--raised);color:var(--ink);min-height:120px}
+.stylecard b{font-size:15px}
+.stylecard span{font-size:12.5px;color:var(--muted);line-height:1.35}
+.stylecard em{font-style:normal;font-size:12px;color:var(--muted);margin-top:auto}
+.stylecard[aria-pressed="true"]{border-color:var(--coral);box-shadow:0 0 0 2px var(--coral) inset}
+.stylecard .lookdel{font-size:12px;color:var(--bad);text-decoration:underline}
+.li.ess{align-items:center}
+.li.ess .mark{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:700;font-size:13px;background:var(--accent-soft);color:var(--muted)}
+.li.ess.have .mark{background:var(--good-soft);color:var(--good)}
+.li.ess:not(.have) b{font-weight:500}

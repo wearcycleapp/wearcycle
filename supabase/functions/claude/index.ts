@@ -30,6 +30,15 @@ const SCALE = "Condition scale: 5 = like new; 4 = good, no visible wear; 3 = vis
 
 const LANGS: Record<string, string> = { es: "Spanish", fr: "Canadian French", tl: "Filipino (Tagalog)", hi: "Hindi", ja: "Japanese", ko: "Korean" };
 
+const STYLE_IDS = ["classic", "heritage", "minimal", "street", "sporty", "preppy"];
+const STYLE_DEF = "classic = oxford shirts, chinos, knits, blazers, loafers or derbies; heritage = flannel, denim, chore or duffle coats, boots, leather; " +
+  "minimal = plain neutrals, no patterns, clean sneakers, simple shapes; street = hoodies, graphic tees, joggers, sneakers, caps; " +
+  "sporty = technical fabrics, track pieces, running shoes; preppy = polos, cable knits, stripes, boat shoes";
+const PIECE = '"kind": the type of piece in plain English, 1-3 words (for example "flannel shirt", "duffle coat", "derby shoes"), ' +
+  '"pattern": one of [solid, check, stripe, print, graphic, other], ' +
+  '"material": one of [denim, flannel, wool, knit, cotton, linen, leather, suede, canvas, technical, other], ' +
+  `"styles": 1-3 values from [${STYLE_IDS.join(", ")}] that this piece fits (${STYLE_DEF})`;
+
 function prompt(task: string, b: Record<string, unknown>): string | null {
   const s = (v: unknown, n: number) => String(v ?? "").slice(0, n);
   if (task === "tag") {
@@ -40,7 +49,7 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
       '"occasions": subset of [work, out, sport, home, chores, formal] where wearing it would be appropriate, ' +
       '"condition": 1-5, "issues": array of short visible defects (empty if none), ' +
       '"warmth": 1-3 (1 light such as a t-shirt, shorts or sandals; 2 medium such as a shirt, jeans or a light jacket; 3 warm such as a sweater, wool coat or boots), ' +
-      '"waterproof": true if it is made for rain or snow, "graphic": true if it shows a big logo, text or picture print (small brand marks do not count), ' + BOX + ', "confidence": "low" | "medium" | "high"}.\n' +
+      '"waterproof": true if it is made for rain or snow, "graphic": true if it shows a big logo, text or picture print (small brand marks do not count), ' + PIECE + ", " + BOX + ', "confidence": "low" | "medium" | "high"}.\n' +
       SCALE + '\nJudge only what is visible. If the photo does not show clothing or an accessory, reply {"error": "short reason"}.';
   }
   if (task === "box") {
@@ -52,6 +61,19 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
       "large text, or a picture or graphic print that would look out of place in a casual office. Small brand marks, plain colors, " +
       "stripes, checks and plaid are false.";
   }
+  if (task === "style") {
+    return "Describe this clothing item or accessory for a wardrobe app. Reply with only JSON: {" + PIECE +
+      ', "graphic": true if it shows a big logo, text or picture print (small brand marks do not count)}. If there is no clothing, reply {"error": "short reason"}.';
+  }
+  if (task === "look") {
+    return "This photo shows an outfit the app's owner likes (it may show another person). Describe only the clothing and accessories; " +
+      "never describe or identify the person, their body or face. Reply with only JSON: " +
+      '{"name": a short name for this style, 2-4 words, ' +
+      `"styles": 1-3 values from [${STYLE_IDS.join(", ")}] closest to this look (${STYLE_DEF}), ` +
+      '"pieces": array of 4-10 piece types worn, each 1-3 plain English words with a color when useful (for example "camel duffle coat"), ' +
+      `"colors": array of up to 5 values from [${COLORS.join(", ")}], ` +
+      '"summary": one short sentence on what makes the look work}. If no clothing is visible, reply {"error": "short reason"}.';
+  }
   if (task === "check") {
     return `Assess the physical condition of this clothing item from the photo. The owner calls it "${s(b.name, 80)}" (${s(b.category, 30)}). ` +
       SCALE + '\nReply with only JSON: {"condition": 1-5, "issues": array of short visible defects, ' +
@@ -62,6 +84,7 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
   if (task === "ideas") {
     return "Help one person fill gaps in their wardrobe so they always have outfits ready for work, going out, sport, home and chores.\n\n" +
       "Their closet:\n" + s(b.closet, 12000) + "\n\nGaps (have/target):\n" + s(b.gaps, 2000) +
+      (b.style ? "\n\nPreferred style: " + s(b.style, 400) + ". Favour pieces that build this style." : "") +
       "\n\nSuggest 6 specific pieces to buy that add the most new combinations with what they already own, prioritising the gaps " +
       "and replacements for condition 1 items. No brand names. Reply with only a JSON array of objects: " +
       '{"item": string, "color": string, "occasion": one of work|out|sport|home|chores, "pairsWith": array of up to 3 item names from their closet, "why": one short sentence}.';
@@ -70,7 +93,7 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
 }
 
 // Requests per person per day (UTC). Only enforced once supabase/limits.sql has been run; until then, no limit.
-const DAILY_LIMIT: Record<string, number> = { tag: 80, box: 80, graphic: 80, check: 30, ideas: 10 };
+const DAILY_LIMIT: Record<string, number> = { tag: 80, box: 80, graphic: 80, style: 150, look: 20, check: 30, ideas: 10 };
 
 function supabaseKeys(): { base: string; apikey: string } {
   const base = Deno.env.get("SUPABASE_URL") ?? "";
@@ -133,14 +156,14 @@ Deno.serve(async (req) => {
   if (!base) return json({ error: "unknown_task" }, 400);
   // The app's language: free-text values come back in it; JSON keys and listed values stay in English.
   const langName = LANGS[String(body.lang ?? "en")];
-  const text = langName && (task === "tag" || task === "check" || task === "ideas")
+  const text = langName && (task === "tag" || task === "check" || task === "ideas" || task === "look")
     ? base + `\nWrite every free-text value (name, issues, summary, item, color, why) in ${langName}. ` +
-      "Keep JSON keys and every value chosen from a list above (category, colors, occasions, occasion, recommendation, confidence) exactly in English."
+      "Keep JSON keys, kind, pieces and every value chosen from a list above (category, colors, occasions, occasion, recommendation, confidence, pattern, material, styles) exactly in English."
     : base;
   if (!(await withinLimit(req, task))) return json({ error: "daily_limit" }, 429);
 
   const content: unknown[] = [];
-  if (task === "tag" || task === "box" || task === "graphic" || task === "check") {
+  if (task === "tag" || task === "box" || task === "graphic" || task === "style" || task === "look" || task === "check") {
     const image = String(body.image ?? "");
     if (!image || image.length > 6_000_000) return json({ error: "image_missing_or_too_large" }, 400);
     content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: image } });
@@ -154,7 +177,7 @@ Deno.serve(async (req) => {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
-    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 1500 : task === "box" || task === "graphic" ? 120 : 700, messages: [{ role: "user", content }] }),
+    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 1500 : task === "box" || task === "graphic" ? 120 : task === "style" ? 200 : 700, messages: [{ role: "user", content }] }),
   });
 
   if (res.status === 429) return json({ error: "rate_limited" }, 429);
