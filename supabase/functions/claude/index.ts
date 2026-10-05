@@ -28,6 +28,8 @@ const SCALE = "Condition scale: 5 = like new; 4 = good, no visible wear; 3 = vis
   "stretched collar, fine for home; 2 = worn out with stains, small holes or broken stitching, only for chores; " +
   "1 = unusable or beyond repair.";
 
+const LANGS: Record<string, string> = { es: "Spanish", fr: "Canadian French", tl: "Filipino (Tagalog)", hi: "Hindi", ja: "Japanese", ko: "Korean" };
+
 function prompt(task: string, b: Record<string, unknown>): string | null {
   const s = (v: unknown, n: number) => String(v ?? "").slice(0, n);
   if (task === "tag") {
@@ -127,8 +129,14 @@ Deno.serve(async (req) => {
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
 
   const task = String(body.task ?? "");
-  const text = prompt(task, body);
-  if (!text) return json({ error: "unknown_task" }, 400);
+  const base = prompt(task, body);
+  if (!base) return json({ error: "unknown_task" }, 400);
+  // The app's language: free-text values come back in it; JSON keys and listed values stay in English.
+  const langName = LANGS[String(body.lang ?? "en")];
+  const text = langName && (task === "tag" || task === "check" || task === "ideas")
+    ? base + `\nWrite every free-text value (name, issues, summary, item, color, why) in ${langName}. ` +
+      "Keep JSON keys and every value chosen from a list above (category, colors, occasions, occasion, recommendation, confidence) exactly in English."
+    : base;
   if (!(await withinLimit(req, task))) return json({ error: "daily_limit" }, 429);
 
   const content: unknown[] = [];

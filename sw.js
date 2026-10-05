@@ -1,8 +1,8 @@
 /* Service worker: keeps the app shell available offline. Data and photos come from Supabase. */
-const VERSION = 'wearcycle-v1.21.0';
+const VERSION = 'wearcycle-v1.22.0';
 // Kept across app updates: the background-removal model (about 100 MB, downloaded once) and saved cut-outs.
 const KEEP = ['wearcycle-bgr-1', 'wearcycle-cutouts'];
-const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'app.js', 'config.js', 'vendor/supabase.js',
+const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'i18n.js', 'app.js', 'config.js', 'vendor/supabase.js',
   'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/logo-icon.svg'];
 
 self.addEventListener('install', e => {

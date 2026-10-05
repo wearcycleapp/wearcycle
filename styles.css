@@ -543,3 +543,4 @@ a.lirow{text-decoration:none;color:inherit}
 .li a.btn.primary{color:var(--accent-ink)}
 .photo .pv.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
 .photo .pv img.cut{padding:6px;box-sizing:border-box;filter:drop-shadow(0 3px 5px rgba(50,35,20,.2))}
+.langsel{min-height:40px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--raised);color:var(--ink);max-width:150px}

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.21.0';
+const APP_VERSION='1.22.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -100,7 +100,7 @@ function removePhoto(path){ if(path&&sb) sb.storage.from('photos').remove([path]
 /* ---------- Claude (through the Supabase Edge Function) ---------- */
 async function callClaude(task,payload){
   if(!canWrite()) throw {friendly:'You are offline. Claude needs a connection.'};
-  const {data,error}=await sb.functions.invoke('claude',{body:Object.assign({task},payload)});
+  const {data,error}=await sb.functions.invoke('claude',{body:Object.assign({task,lang:I18N.lang},payload)});
   if(error){
     let status=error.context&&error.context.status, detail='';
     try{ const j=await error.context.json(); detail=j&&j.error||''; }catch(e){}
@@ -437,7 +437,7 @@ function renderWx(){
   const wet=d.snow?' · snow':d.rain?' · rain':'';
   box.innerHTML=`<button class="wxpill" data-wx="edit" aria-label="Weather: ${tdeg(d.tempMin)} to ${tdeg(d.tempMax)}, ${esc(d.sky)}. Change">${WX_ICON}<span>${tdeg(d.tempMin).replace(/[CF]$/,'')}–${tdeg(d.tempMax)}${wet}</span></button>`;
 }
-function greeting(){ const h=new Date().getHours(); const d=new Date().toLocaleDateString(undefined,{weekday:'long'}); return esc(d)+`<small>${h<12?'Good morning':h<18?'Good afternoon':'Good evening'}</small>`; }
+function greeting(){ const h=new Date().getHours(); const d=new Date().toLocaleDateString(I18N.locale,{weekday:'long'}); return esc(d)+`<small>${h<12?'Good morning':h<18?'Good afternoon':'Good evening'}</small>`; }
 function adviceText(){
   const w=wxForScore(), d=WXC.data; if(!w||!d) return '';
   const {lo,hi}=wxFeel(w); const out=[];
@@ -458,7 +458,7 @@ function washSince(it){ return it.dirtyOn||it.lastWorn||null; }
 function washAge(it){ const d=washSince(it); if(!d) return Infinity; return Math.floor((new Date(todayISO()+'T12:00')-new Date(d+'T12:00'))/864e5); }
 function washDue(){ return allItems().filter(i=>isActive(i)&&i.dirty&&!isEx(i)&&washAge(i)>=washDays()); }
 function sinceLabel(d){ if(!d) return 'a while'; const dt=new Date(d+'T12:00'); const age=Math.floor((new Date(todayISO()+'T12:00')-dt)/864e5);
-  return age<7?dt.toLocaleDateString(undefined,{weekday:'long'}):dt.toLocaleDateString(undefined,{month:'short',day:'numeric'}); }
+  return age<7?dt.toLocaleDateString(I18N.locale,{weekday:'long'}):dt.toLocaleDateString(I18N.locale,{month:'short',day:'numeric'}); }
 function washCard(){
   if(!laundryOn()||S.settings.washAuto) return ''; const due=washDue(); if(!due.length) return '';
   let snooze=''; try{ snooze=localStorage.getItem('wearcycle.washSnooze')||''; }catch(e){}
@@ -827,6 +827,7 @@ function settingRow(k){
     <button type="button" class="stepbtn" data-step="${k}" data-d="1" aria-label="Increase">+</button></div>
     <div class="presets">${d.presets.map(p=>`<button type="button" class="chip" data-preset="${k}" data-v="${p}" aria-pressed="${p===v}">${d.unit(p)}</button>`).join('')}</div></div>`;
 }
+function langSelect(id){ return `<select id="${id}" class="langsel" data-notr aria-label="Language">${I18N.langs.map(([c,n])=>`<option value="${c}" ${c===I18N.lang?'selected':''}>${n}</option>`).join('')}</select>`; }
 function themeGet(){ try{ return localStorage.getItem('wearcycle.theme')||'auto'; }catch(e){ return 'auto'; } }
 function themeSet(t){ try{ localStorage.setItem('wearcycle.theme',t); }catch(e){}
   const r=document.documentElement; if(t==='auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme',t);
@@ -838,7 +839,8 @@ function openSettings(){
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
    <h3>Appearance</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Light or dark</b><span>Auto follows your phone's setting.</span>
-     <div class="chips" style="margin-top:8px">${[['auto','Auto'],['light','Light'],['dark','Dark']].map(([k,l])=>`<button type="button" class="chip" data-theme-set="${k}" aria-pressed="${themeGet()===k}">${l}</button>`).join('')}</div></div></div></div>
+     <div class="chips" style="margin-top:8px">${[['auto','Auto'],['light','Light mode'],['dark','Dark mode']].map(([k,l])=>`<button type="button" class="chip" data-theme-set="${k}" aria-pressed="${themeGet()===k}">${l}</button>`).join('')}</div></div></div>
+   <div class="li"><div class="txt"><b>Language</b><span>Item names you typed stay as they are.</span></div><div class="acts">${langSelect('langSel')}</div></div></div>
    <h3>Style</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(PALETTES[S.settings.palette||'any'].label)}</b><span>${esc(PALETTES[S.settings.palette||'any'].desc)}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
    <h3>Weather</h3>
@@ -923,7 +925,7 @@ function openWipe(){
 const REGION_CUR={CA:'CAD',US:'USD',GB:'GBP',AU:'AUD',NZ:'NZD',MX:'MXN',BR:'BRL',IN:'INR',JP:'JPY',CH:'CHF',FR:'EUR',DE:'EUR',ES:'EUR',IT:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',IE:'EUR',AT:'EUR',FI:'EUR'};
 function laundryOn(){ return S.settings.laundry!==false; }
 function currency(){ return S.settings.currency||REGION_CUR[((navigator.language||'').split('-')[1]||'').toUpperCase()]||'USD'; }
-function money(v){ try{ return new Intl.NumberFormat(undefined,{style:'currency',currency:currency(),maximumFractionDigits:v<10?2:0}).format(v); }catch(e){ return '$'+v.toFixed(2); } }
+function money(v){ try{ return new Intl.NumberFormat(I18N.locale,{style:'currency',currency:currency(),maximumFractionDigits:v<10?2:0}).format(v); }catch(e){ return '$'+v.toFixed(2); } }
 
 /* ---------- outfit diary: calendar of logged outfits, with undo ---------- */
 let DI=null;
@@ -948,12 +950,12 @@ function drawDiary(){
   const cells=[]; for(let k=0;k<lead;k++) cells.push('<span></span>');
   for(let d=1;d<=days;d++){ const k=key(d), n=(byDay[k]||[]).length; cells.push(`<button class="cal-d ${k===todayISO()?'today':''}" data-dday="${k}" aria-pressed="${DI.day===k}" aria-label="${k}${n?', '+n+' outfit'+(n>1?'s':''):''}">${d}${n?'<i></i>':''}</button>`); }
   const es=byDay[DI.day]||[];
-  const title=first.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  const title=first.toLocaleDateString(I18N.locale,{month:'long',year:'numeric'});
   openSheet(sheetHead('Outfit diary')+`
    <div class="cal-h"><button class="iconbtn" data-dmonth="-1" aria-label="Previous month">‹</button><b>${esc(title)}</b><button class="iconbtn" data-dmonth="1" aria-label="Next month">›</button></div>
    <p class="hint" style="text-align:center">${monthCount} outfit${monthCount===1?'':'s'} logged this month</p>
    <div class="cal">${['Mo','Tu','We','Th','Fr','Sa','Su'].map(w=>`<span class="cal-w">${w}</span>`).join('')}${cells.join('')}</div>
-   <h3>${esc(new Date(DI.day+'T12:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))}</h3>
+   <h3>${esc(new Date(DI.day+'T12:00').toLocaleDateString(I18N.locale,{weekday:'long',month:'long',day:'numeric'}))}</h3>
    ${es.length?es.map((e,k)=>{ const o=outfitFromIds(e.items||[]); return `<div class="dentry">${miniBoard(o)}<div class="dtxt"><b>${esc(OCC[e.occ]?.label||e.occ)}</b><span>${esc(coreOf(o).map(i=>i.name).join(', '))}</span><button class="btn sm ghost" data-dremove="${k}">Remove this log</button></div></div>`; }).join('')
      :'<p class="hint">Nothing logged on this day.</p>'}`);
   setTimeout(hydrateCuts,0);
@@ -1003,9 +1005,9 @@ async function shareOutfit(){
   const bg=g.createRadialGradient(W/2,H*0.42,80,W/2,H*0.45,H*0.8); bg.addColorStop(0,'#f7f4ef'); bg.addColorStop(0.7,'#efe9e0'); bg.addColorStop(1,'#e5dccf');
   g.fillStyle=bg; g.fillRect(0,0,W,H);
   g.fillStyle='#1b2433'; g.font='800 84px "Big Shoulders Display", Impact, sans-serif'; g.textBaseline='alphabetic';
-  g.fillText(OCC[S.occ].label.toUpperCase(),72,190);
+  g.fillText(I18N.tr(OCC[S.occ].label).toUpperCase(),72,190);
   g.font='500 38px Figtree, system-ui, sans-serif'; g.fillStyle='#5b6270';
-  g.fillText(new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}),72,250);
+  g.fillText(new Date().toLocaleDateString(I18N.locale,{weekday:'long',month:'long',day:'numeric'}),72,250);
   const bx=40,by=300,bw=W-80,bh=Math.round(bw*1.25);
   for(const c of flCells(o)){
     const p=await pieceImage(c.it); if(!p) continue;
@@ -1018,14 +1020,14 @@ async function shareOutfit(){
   const cols=coreOf(o).map(primary).filter(c=>COLORS[c]); let x=72; const yy=by+bh+90;
   for(const c of cols){ g.beginPath(); g.arc(x+28,yy,28,0,7); g.fillStyle=COLORS[c].hex; g.fill(); g.lineWidth=4; g.strokeStyle='#f7f4ef'; g.stroke(); x+=48; }
   g.fillStyle='#1b2433'; g.font='600 34px Figtree, system-ui, sans-serif';
-  g.fillText(WardrobeLogic.harmony(cols).why,72,yy+90);
+  g.fillText(I18N.tr(WardrobeLogic.harmony(cols).why),72,yy+90);
   const logo=await loadImg('icons/logo-icon.svg'); if(logo) g.drawImage(logo,72,H-150,72,72);
   g.font='800 52px "Big Shoulders Display", Impact, sans-serif'; g.fillText('WEARCYCLE',164,H-95);
   const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
   $('#toastRoot').innerHTML='';
   if(!blob){ toast('Could not make the image.'); return; }
   const file=new File([blob],'wearcycle-outfit.png',{type:'image/png'});
-  try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:'My outfit',text:'Picked with Wearcycle'}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
+  try{ if(navigator.canShare&&navigator.canShare({files:[file]})){ await navigator.share({files:[file],title:I18N.tr('My outfit'),text:I18N.tr('Picked with Wearcycle')}); return; } }catch(e){ if(e&&e.name==='AbortError') return; }
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='wearcycle-outfit.png'; document.body.appendChild(a); a.click(); a.remove();
   toast('Image saved to your downloads.');
 }
@@ -1337,7 +1339,7 @@ document.addEventListener('pointerup',e=>{ if(!SW0) return; const dx=e.clientX-S
   if(quick&&Math.abs(dx)>60&&Math.abs(dy)<50&&S.fits.length>1){ S.sel=(S.sel+(dx<0?1:S.fits.length-1))%S.fits.length; if(S.sel) guard(); swiped=Date.now(); renderOutfits(); } },{passive:true});
 let swiped=0;
 document.addEventListener('toggle',e=>{ if(ED&&e.target.matches&&e.target.matches('details.more')) ED.more=e.target.open; },true);
-document.addEventListener('change',e=>{ if(e.target&&e.target.id==='f-repair'&&ED){ readEditorFields(); drawEditor(); return; } if(e.target&&e.target.dataset&&e.target.dataset.wflag){ const w=S.settings.work=Object.assign({code:'casual'},S.settings.work||{}); w[e.target.dataset.wflag]=e.target.checked; setDressCode(w); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); return; }
+document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e.target.id==='g-lang')){ I18N.setLang(e.target.value); return; } if(e.target&&e.target.id==='f-repair'&&ED){ readEditorFields(); drawEditor(); return; } if(e.target&&e.target.dataset&&e.target.dataset.wflag){ const w=S.settings.work=Object.assign({code:'casual'},S.settings.work||{}); w[e.target.dataset.wflag]=e.target.checked; setDressCode(w); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); return; }
   if(e.target&&e.target.id==='washAutoT'){ S.settings.washAuto=e.target.checked; saveCache(); queueSettingsSave(); if(e.target.checked) autoWash(); return; }
   if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
   if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); } });
@@ -1380,7 +1382,7 @@ function showLogin(msg,mode){
     ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back" style="margin:0">Back to sign in</button>'
       :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'':'<button class="linkbtn" id="g-forgot" style="margin:0">Forgot password?</button>'}`}
     <p class="hint">By continuing you agree to how your data is handled: <a href="privacy.html" target="_blank" rel="noopener">privacy</a>.</p></div>
-    ${FIXED_SERVER?'':'<button class="btn ghost sm" id="g-server" style="align-self:flex-start">Server settings</button>'}<p class="hint">Wearcycle v${APP_VERSION}</p>`);
+    ${FIXED_SERVER?'':'<button class="btn ghost sm" id="g-server" style="align-self:flex-start">Server settings</button>'}<div class="row" style="justify-content:space-between;align-items:center"><p class="hint">Wearcycle v${APP_VERSION}</p>${langSelect('g-lang')}</div>`);
   const creds=()=>({email:$('#g-email').value.trim(),password:($('#g-pass')||{}).value||''});
   $('#g-mode-up').onclick=()=>showLogin('','up'); $('#g-mode-in').onclick=()=>showLogin('','in');
   if($('#g-in')) $('#g-in').onclick=async()=>{ const c=creds(); if(!c.email||!c.password){ $('#g-err').textContent='Enter your email and password.'; return; }
