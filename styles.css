@@ -451,3 +451,14 @@ header.top .iconbtn{margin-left:auto}
 .alt2-l .sws{display:none}
 .greet{font-size:24px}
 .wxpill{padding:0 12px;height:38px}
+
+/* v1.11 background job bar and studio closet cards */
+.jobbar{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow);font-size:13px;max-width:560px;margin:0 auto}
+.jobbar .jt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jobbar .jp{width:64px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
+.jobbar .jp i{display:block;height:100%;background:var(--coral);border-radius:3px}
+.jobbar .spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--coral);flex:none}
+@media (prefers-reduced-motion:no-preference){.jobbar .spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}}
+.card .vis.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
+.card .vis.studio img.cut{object-fit:contain;padding:10px;filter:drop-shadow(0 4px 6px rgba(50,35,20,.2))}
+body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}

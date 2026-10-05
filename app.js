@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.11.0';
+const APP_VERSION='1.12.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -246,19 +246,35 @@ async function makeCut(it,onp){
   return false;
 }
 function needsCut(it){ return it&&!isEx(it)&&it.photo&&!it.cut&&isActive(it); }
-async function makeCuts(list){
-  list=list.filter(needsCut); if(!list.length){ toast('All these pieces already have cut-outs.'); return; }
-  if(CUT.busy) return; if(!canWrite()){ toast('You are offline. Cut-outs need a connection the first time.'); return; }
-  CUT.busy=true; closeSheet(); let n=0, fail=0, lastErr='';
-  for(const it of list){
-    const label='Cut-out '+(n+fail+1)+' of '+list.length+' ('+it.name+')';
-    toast(label+'…',0);
-    try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) toast('First time only: downloading the cut-out tool, '+Math.round(100*p.cur/p.tot)+'% of about 100 MB…',0); else if(p&&/compute|inference/.test(p.k)) toast(label+': working…',0); }); n++; renderOutfits(); }
-    catch(e){ fail++; lastErr=String(e&&e.message||e); }
-  }
-  CUT.busy=false; renderAll();
-  toast('Made '+n+' cut-out'+(n===1?'':'s')+'.'+(fail?' '+fail+' failed'+(lastErr?' ('+lastErr.slice(0,80)+')':'')+'.':''),7000);
+/* Background job bar (above the tab bar): shows long-running work without blocking the screen. */
+function job(text,pct){ const r=$('#jobRoot'); if(!r) return; document.body.classList.toggle('hasjob',!!text); if(!text){ r.innerHTML=''; return; }
+  r.innerHTML=`<div class="jobbar" role="status"><span class="spin" aria-hidden="true"></span><span class="jt">${esc(text)}</span>${pct!=null?`<span class="jp"><i style="width:${Math.max(4,Math.min(100,pct))}%"></i></span>`:''}</div>`; }
+// Cut-outs run one at a time from a queue, so adding more photos while it works simply extends the queue.
+CUT.queue=[];
+function makeCuts(list,opts){
+  opts=opts||{};
+  const add=list.filter(needsCut).filter(it=>!CUT.queue.includes(it.id)); 
+  if(!add.length){ if(!opts.auto&&!CUT.busy) toast('All these pieces already have cut-outs.'); return; }
+  if(!canWrite()){ if(!opts.auto) toast('You are offline. Cut-outs need a connection the first time.'); return; }
+  CUT.queue.push(...add.map(it=>it.id)); if(!opts.auto) closeSheet();
+  if(!CUT.busy) runCuts();
 }
+async function runCuts(){
+  CUT.busy=true; let n=0, fail=0, lastErr=''; renderOutfits();
+  while(CUT.queue.length){
+    const id=CUT.queue[0], it=byId(id); const total=n+fail+CUT.queue.length;
+    if(it&&needsCut(it)){
+      const label='Cut-out '+(n+fail+1)+' of '+total;
+      job(label+' · '+it.name,(n+fail)/total*100);
+      try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) job('One-time download of the cut-out tool',100*p.cur/p.tot); else if(p&&/compute|inference/.test(p.k)) job(label+' · '+it.name,(n+fail+0.5)/total*100); }); n++; renderOutfits(); renderCloset(); }
+      catch(e){ fail++; lastErr=String(e&&e.message||e); }
+    }
+    CUT.queue.shift();
+  }
+  CUT.busy=false; job(''); renderAll();
+  if(n||fail) toast('Made '+n+' cut-out'+(n===1?'':'s')+'.'+(fail?' '+fail+' failed'+(lastErr?' ('+lastErr.slice(0,80)+')':'')+'.':''),5000);
+}
+function autoCuts(list){ if(S.settings.autoCut===false) return; makeCuts(list,{auto:true}); }
 
 /* ---------- persistence ---------- */
 async function writeItem(it){
@@ -357,20 +373,21 @@ function pickFiles(multiple){
 async function addPhotos(blobs){
   if(!blobs.length) return;
   if(!canWrite()){ toast('You are offline. Adding clothes needs a connection.'); return; }
-  S.busy=true; let done=0, aiFail=0, aiStop='';
+  S.busy=true; let done=0, aiFail=0, aiStop=''; const added=[];
   const list=blobs.slice(0,40);
   for(const b of list){
-    toast('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Claude is reading it')+'…',0);
+    job('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Claude is reading it'),done/list.length*100);
     let p; try{ p=await prepare(b); }catch(e){ continue; }
     const now=todayISO();
     const it={id:uuid(),name:'New item '+(done+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
     const path=await uploadPhoto(p.full); if(path) it.photo=path;
     if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else aiFail++; }catch(e){ aiFail++; if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
-    if(await writeItem(it)) done++;
+    if(await writeItem(it)){ done++; added.push(it); }
   }
-  S.busy=false; renderAll();
+  S.busy=false; job(''); renderAll();
   toast('Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'+(aiStop?' '+aiStop:(aiFail?' Claude could not read '+aiFail+'.':'')),7000);
   goTab('closet');
+  autoCuts(added.map(it=>byId(it.id)).filter(Boolean));
 }
 
 /* ---------- rendering ---------- */
@@ -542,7 +559,7 @@ function altRow(f,i){
     <span class="flatlay mini">${cells}<span class="rank">#${f.rank}</span></span>
     <span class="alt2-l"><span class="sws">${sws}</span><span class="ml">${m.label}</span>${bars(m.bars)}</span></button>`;
 }
-function renderCloset(){
+function renderCloset(){ setTimeout(hydrateCuts,0);
   const items=allItems().filter(isActive);
   const counts={}; for(const it of items) counts[it.cat]=(counts[it.cat]||0)+1;
   const cats=[{id:'all',label:'All'}].concat(CATS.filter(c=>counts[c.id]));
@@ -556,7 +573,7 @@ function renderCloset(){
   box.innerHTML=(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what Claude filled in. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
    (S.examples.length?`<div class="row" style="margin-bottom:12px"><span class="hint">Items marked <span class="ex">Example</span> are not saved.</span><span class="spacer"></span><button class="btn sm ghost" data-act="clearEx">Remove examples</button></div>`:'')+
    '<div class="grid">'+list.map(it=>{ const fl=careFlags(it,now,S.settings); const bad=fl.some(f=>f.kind==='retire'); return `<button class="card" data-edit="${esc(it.id)}">
-    <div class="vis">${visual(it)}</div><div class="body"><div class="name">${esc(it.name)}</div>
+    <div class="vis ${it.cut?'studio':''}">${it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}" class="${it.box?'fitted':'cover'}">`:visual(it)}</div><div class="body"><div class="name">${esc(it.name)}</div>
     <div class="meta">${condTag(it)}${fl.length?`<span class="dot ${bad?'bad':''}" title="Needs attention"></span>`:''}${isEx(it)?'<span class="ex">Example</span>':''}${it.review?'<span class="ex">Review</span>':''}</div>
     <div class="meta">${(effectiveOccasions(it).map(o=>OCC[o].label).join(' · '))||'No occasion fits'}</div></div></button>`; }).join('')+'</div>';
 }
@@ -671,7 +688,7 @@ async function saveEditor(){
   if(!it.name){ toast('Give the item a name.'); $('#f-name')?.focus(); return; }
   if(!it.colors||!it.colors.length){ toast('Pick at least one color.'); return; }
   if(!isEx(it)&&!canWrite()){ toast('You are offline. Changes need a connection.'); return; }
-  ED.busy=true; drawEditor();
+  ED.busy=true; const ED_hadBlob=!!ED.blob; drawEditor();
   const now=todayISO(); let oldPhoto=null;
   if(!ED.id){ it.id=uuid(); it.created=now; it.status='active'; it.worn=0; it.wearsSinceCheck=0; it.lastCheck=now; }
   if(ED.blob&&it.cut){ removePhoto(it.cut); it.cut=null; }
@@ -682,7 +699,7 @@ async function saveEditor(){
   }
   delete it.review;
   const ok=await writeItem(it);
-  if(ok){ if(oldPhoto) removePhoto(oldPhoto); closeSheet(); toast('Saved'); }
+  if(ok){ if(oldPhoto) removePhoto(oldPhoto); closeSheet(); toast('Saved'); if(ED_hadBlob) autoCuts([byId(it.id)].filter(Boolean)); }
   else if(ED){ ED.busy=false; drawEditor(); }
 }
 async function deleteItem(){
@@ -747,7 +764,8 @@ function openSettings(){
    <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(PALETTES[S.settings.palette||'any'].label)}</b><span>${esc(PALETTES[S.settings.palette||'any'].desc)}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
    <h3>Photos</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
-   <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div></div>
+   <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div>
+   <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
    <h3>Reminders</h3>
    ${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}
    <p class="hint" id="set-status">Changes save automatically.</p>
@@ -1092,6 +1110,7 @@ document.addEventListener('pointerdown',e=>{ const b=e.target.closest('[data-swi
 document.addEventListener('pointerup',e=>{ if(!SW0) return; const dx=e.clientX-SW0.x, dy=e.clientY-SW0.y; const quick=Date.now()-SW0.t<700; SW0=null;
   if(quick&&Math.abs(dx)>60&&Math.abs(dy)<50&&S.fits.length>1){ S.sel=(S.sel+(dx<0?1:S.fits.length-1))%S.fits.length; if(S.sel) guard(); swiped=Date.now(); renderOutfits(); } },{passive:true});
 let swiped=0;
+document.addEventListener('change',e=>{ if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
