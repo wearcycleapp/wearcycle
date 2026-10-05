@@ -1,9 +1,9 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.16.0';
+const APP_VERSION='1.17.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
-  warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH}=WardrobeLogic;
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -20,7 +20,7 @@ const CFG=(()=>{ const c=window.WARDROBE_CONFIG||{}; const saved=LS.get('wardrob
 let sb=null, UID=null, EMAIL='';
 
 /* ---------- state ---------- */
-const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:25,checkDays:180,unusedDays:365,wx:{on:false}},
+const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:30,checkDays:365,unusedDays:730,wx:{on:false}},
   occ:'work',layerMode:'auto',sel:0,view:(LS.get('wearcycle.view')||'board'),fits:[],fitKey:'',seed:Date.now()%100000,cat:'all',tab:'outfits',
   loaded:false,online:navigator.onLine,fromCache:false,busy:false,installEvt:null};
 function allItems(){ return [...S.items.values(),...S.examples]; }
@@ -127,6 +127,7 @@ function applyAi(it,res){
   const oc=(res.occasions||[]).filter(o=>OCC[o]); if(oc.length) it.occ=oc;
   if(res.condition>=1&&res.condition<=5) it.cond=Math.round(res.condition);
   if(res.warmth>=1&&res.warmth<=3) it.warmth=Math.round(res.warmth);
+  if(typeof res.graphic==='boolean') it.graphic=res.graphic;
   if(typeof res.waterproof==='boolean') it.rain=res.waterproof;
 }
 async function applyBox(it,blob,box){ if(!validBox(box)) return false; try{ it.thumb=await cropThumb(blob,box); it.box=box.map(v=>Math.round(v*1000)/1000); return true; }catch(e){ return false; } }
@@ -295,11 +296,11 @@ async function loadRemote(){
   const err=it.error||we.error||se.error;
   if(err){ S.fromCache=true; renderAll(); if(S.online) toast('Could not load from the server: '+(err.message||'unknown error'),5000); return; }
   S.items=new Map(it.data.map(r=>[r.id,Object.assign({},r.body,{id:r.id})]));
-  S.log=we.data||[]; if(se.data&&se.data.body) Object.assign(S.settings,se.data.body);
+  S.log=we.data||[]; if(se.data&&se.data.body) Object.assign(S.settings,se.data.body); settingsLoaded();
   S.fromCache=false; S.loaded=true; saveCache(); renderAll(); loadWeather(); refreshGps();
 }
 function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
-  S.items=new Map((c.items||[]).map(r=>[r.id,r])); S.log=c.log||[]; if(c.settings) Object.assign(S.settings,c.settings);
+  S.items=new Map((c.items||[]).map(r=>[r.id,r])); S.log=c.log||[]; if(c.settings) Object.assign(S.settings,c.settings); settingsLoaded();
   S.loaded=true; S.fromCache=true; return true; }
 
 /* ---------- camera ---------- */
@@ -412,7 +413,7 @@ function emptyCloset(){
     <div class="row"><button class="btn primary" data-act="camBatch">Take photos</button><button class="btn" data-act="bulk">Choose from gallery</button>${S.examples.length?'':'<button class="btn ghost" data-act="examples">Example closet</button>'}</div>
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
-function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&needsLayer(wxForScore())); }
+function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
 function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
@@ -465,7 +466,9 @@ function renderOutfits(){
   if(S.sel>=S.fits.length) S.sel=0;
   const others=S.fits.map((f,i)=>i===S.sel?'':altRow(f,i)).join('');
   setTimeout(hydrateCuts,0);
-  box.innerHTML=todayLine()+heroCard(S.fits[S.sel],S.sel)+
+  const ask=S.occ==='work'&&!S.settings.work&&!S.examples.length?`<div class="askcard"><b>What is the dress code at your work?</b><span>Wearcycle sorts your clothes for Work from it. Change it any time in Settings.</span>
+    <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}">${esc(d.label)}</button>`).join('')}</div></div>`:'';
+  box.innerHTML=ask+todayLine()+heroCard(S.fits[S.sel],S.sel)+
     `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'More options':'Only one outfit fits'}</h3><span class="spacer"></span><button class="btn sm" id="shuffleBtn">New ideas</button></div>
      ${S.fits.length>1?`<div class="altrow">${others}</div>`:`<p class="hint">Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`}</div>`;
 }
@@ -677,7 +680,10 @@ function drawEditor(){
      ${['outerwear','shoes','hat','bag'].includes(it.cat)?`<label class="row hint"><input type="checkbox" id="f-rain" ${rainReady(it)?'checked':''}> Made for rain or snow</label>`:''}
      ${it.cat==='bottom'?`<label class="row hint"><input type="checkbox" id="f-belt" ${needsBelt(it)?'checked':''}> Worn with a belt</label>`:''}
      ${it.cat==='top'?`<label class="row hint"><input type="checkbox" id="f-open" ${canOpen(it)?'checked':''}> Can be worn open over a t-shirt</label><label class="row hint"><input type="checkbox" id="f-inner" ${canUnder(it)?'checked':''}> Works as a t-shirt under an open shirt</label>`:''}</div>
-   <div class="field"><span class="lab">Occasions</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>`<button type="button" class="chip" data-occt="${o.id}" aria-pressed="${(it.occ||[]).includes(o.id)}">${o.label}</button>`).join('')}</div></div>
+   <div class="field"><span class="lab">Occasions</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>{ const rule=o.id==='work'||o.id==='formal'; const on=rule?effectiveOccasions(Object.assign({},it,{cond:Math.max(4,it.cond??4)})).includes(o.id):(it.occ||[]).includes(o.id); const ov=o.id==='work'?it.workOverride:o.id==='formal'?it.formalOverride:null;
+       return `<button type="button" class="chip" data-occt="${o.id}" aria-pressed="${on}">${o.label}${rule&&!ov?' <span class="n">auto</span>':''}</button>`; }).join('')}</div>
+     <p class="hint">Work follows your dress code (${esc(DRESS_CODES[(S.settings.work&&S.settings.work.code)||'casual'].label)}) and Formal takes suits, dress shirts and dress shoes. Tap either to override this piece.</p>
+     ${['top','outerwear','onepiece'].includes(it.cat)?`<label class="row hint"><input type="checkbox" id="f-graphic" ${it.graphic?'checked':''}> Big logo, text or print (left out of Work unless your dress code allows it)</label>`:''}</div>
    <div class="field"><div class="row"><span class="lab" style="flex:1">Condition · ${COND[it.cond??4]}</span><button type="button" class="btn sm" data-isnew="1">Brand new</button></div>${seg('cond',COND)}<p class="hint">5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.</p></div>
    <div class="row2"><div class="field"><label for="f-bought">Bought (optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
    <div class="field"><label for="f-price">Price paid (optional)</label><input type="number" inputmode="decimal" min="0" step="0.01" id="f-price" value="${it.price!=null?esc(it.price):''}" placeholder="0.00"></div></div>
@@ -692,7 +698,7 @@ function drawEditor(){
    <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
    ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`);
 }
-function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(!d) it.wearsSinceWash=0; } } if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
+function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-graphic')) it.graphic=g('#f-graphic').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(!d) it.wearsSinceWash=0; } } if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
   try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null; }
   catch(e){ toast('That image could not be opened.'); }
@@ -757,10 +763,18 @@ async function saveCheck(){
 
 // Settings use steppers and presets instead of typed numbers; months instead of days.
 const MONTH=30.42;
+// Defaults from research (2026-10): a garment kept by one owner lasts about 5.3 years and 94 wears, and is worn about
+// 30 times a year while under 2 years old (Laitala & Klepp 2021); UK clothing lasts 3.3 years on average (WRAP).
+// So: check condition after 30 wears or 12 months; suggest donating after 2 years unworn (3 for coats and formal wear).
+function settingsLoaded(){
+  const st=S.settings;
+  if(!st.v2){ if(st.checkEvery===25&&st.checkDays===180&&st.unusedDays===365){ st.checkEvery=30; st.checkDays=365; st.unusedDays=730; if(UID&&sb&&S.online) queueSettingsSave(); } st.v2=true; }
+  setDressCode(st.work);
+}
 const SETDEF={
-  checkEvery:{label:'Check condition after',unit:v=>v+' wears',min:5,max:200,step:5,presets:[15,25,40,60],get:s=>s.checkEvery,set:(s,v)=>{s.checkEvery=v;}},
-  checkDays:{label:'…or after',unit:v=>v+(v===1?' month':' months'),min:1,max:24,step:1,presets:[3,6,12],get:s=>Math.max(1,Math.round(s.checkDays/MONTH)),set:(s,v)=>{s.checkDays=Math.round(v*MONTH);}},
-  unusedDays:{label:'Suggest donating clothes not worn for',unit:v=>v+' months',min:3,max:36,step:1,presets:[6,12,18,24],get:s=>Math.max(3,Math.round(s.unusedDays/MONTH)),set:(s,v)=>{s.unusedDays=Math.round(v*MONTH);}}};
+  checkEvery:{label:'Check condition after',unit:v=>v+' wears',min:5,max:200,step:5,presets:[20,30,50,80],get:s=>s.checkEvery,set:(s,v)=>{s.checkEvery=v;}},
+  checkDays:{label:'…or after',unit:v=>v+(v===1?' month':' months'),min:1,max:36,step:1,presets:[6,12,18,24],get:s=>Math.max(1,Math.round(s.checkDays/MONTH)),set:(s,v)=>{s.checkDays=Math.round(v*MONTH);}},
+  unusedDays:{label:'Suggest donating clothes not worn for',unit:v=>v+' months',min:3,max:60,step:1,presets:[12,18,24,36],get:s=>Math.max(3,Math.round(s.unusedDays/MONTH)),set:(s,v)=>{s.unusedDays=Math.round(v*MONTH);}}};
 function settingRow(k){
   const d=SETDEF[k], v=d.get(S.settings);
   return `<div class="setting"><span class="lab">${d.label}</span>
@@ -781,6 +795,13 @@ function openSettings(){
    <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
    <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div>
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
+   <h3>Work dress code</h3>
+   <div class="panel dresspanel"><div class="li" style="flex-direction:column;align-items:stretch;gap:10px">
+     <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}" aria-pressed="${((S.settings.work||{}).code||'casual')===k}">${esc(d.label)}</button>`).join('')}</div>
+     <span class="hint">${esc(DRESS_CODES[(S.settings.work||{}).code||'casual'].desc)} Pieces are sorted into Work automatically from these rules.</span>
+     ${[['tees','T-shirts allowed'],['hoodies','Hoodies allowed'],['shorts','Shorts allowed'],['graphics','Big logos, text or prints allowed']].map(([k,l])=>`<label class="row"><input type="checkbox" data-wflag="${k}" ${(Object.assign({},DRESS_CODES[(S.settings.work||{}).code||'casual'],S.settings.work||{}))[k]?'checked':''}> ${l}</label>`).join('')}
+   </div>
+   <div class="li"><div class="txt"><b>Find logos and prints</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&['top','outerwear','onepiece'].includes(i.cat)&&typeof i.graphic!=='boolean').length;return n?'Claude looks at '+n+' top'+(n===1?'':'s')+' and jackets once (one small request each). New photos are checked when Claude reads them.':'All tops and jackets are checked.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanGraphics">Check</button></div></div></div>
    <h3>Laundry</h3>
    <div class="panel"><label class="li"><div class="txt"><b>Track what's in the wash</b><span>Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.</span></div><input type="checkbox" id="laundryT" ${laundryOn()?'checked':''}></label></div>
    <h3>Reminders</h3>
@@ -799,6 +820,8 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
     <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.</p>
     <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
+    <p><b>Work dress code.</b> Casual: t-shirts, hoodies, jeans and casual jackets (dress levels 2 to 3), no shorts, no big logos. Business casual: shirts, polos, knits and chinos (levels 3 to 4), no t-shirts or hoodies. Suits: levels 4 to 5, and a jacket is added automatically. Each rule can be switched in Settings, and any piece can be overridden in its editor. Formal (interviews, weddings, graduations) takes pieces at level 4 or above and always adds a jacket.</p>
+    <p><b>Reminders.</b> A garment kept by one owner lasts about 5.3 years and 94 wears, and is worn about 30 times a year while under 2 years old (Laitala and Klepp, Oslo Metropolitan University, 2021); UK clothing lasts 3.3 years on average (WRAP). So condition is checked after 30 wears or 12 months, and donating is suggested after 2 years unworn, 3 years for coats and formal wear, which can sit out a whole season or wait for the next wedding.</p>
     <p><b>Laundry.</b> Each wear counts toward a piece's wash point; when it is reached the piece goes to the wash and leaves suggestions until you mark it clean. Defaults follow laundry experts quoted by Reviewed and Scripps/KSHB: t-shirts, tank tops and socks after every wear; other shirts after 2; sweaters and knits after 5; jeans after 5; smart trousers after 4; shorts and joggers after 2. Anything worn for Sport goes straight to the wash. Jackets, shoes and accessories never go on their own. Change any piece in its More details.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
@@ -1000,6 +1023,17 @@ async function wxAction(k){
 }
 async function photoBlob(path){ const {data,error}=await sb.storage.from('photos').download(path); if(error||!data) throw {friendly:'Could not load the photo.'}; return data; }
 async function aiBox(blob){ return callClaude('box',{image:await blobToBase64(await shrink(blob,768))}); }
+async function scanGraphics(){
+  if(S.busy) return; if(!canWrite()){ toast('You are offline.'); return; }
+  const list=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&['top','outerwear','onepiece'].includes(i.cat)&&typeof i.graphic!=='boolean');
+  if(!list.length){ toast('All tops and jackets are already checked.'); return; }
+  closeSheet(); S.busy=true; let n=0, found=0;
+  for(const it of list){ job('Checking for logos '+(n+1)+' of '+list.length,n/list.length*100);
+    try{ const blob=await photoBlob(it.photo); const r=await callClaude('graphic',{image:await blobToBase64(await shrink(blob,768))});
+      if(r&&typeof r.graphic==='boolean'){ await patchItem(it.id,{graphic:r.graphic}); if(r.graphic) found++; } n++; }
+    catch(e){ S.busy=false; job(''); toast(aiMsg(e),6000); return; } }
+  S.busy=false; job(''); S.fitKey=''; renderAll(); toast('Checked '+n+'. '+found+' with a big logo, text or print; they are left out of Work unless your dress code allows it.',7000);
+}
 async function cropAll(){
   if(S.busy) return; if(!canWrite()){ toast('You are offline.'); return; }
   const list=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box); if(!list.length){ toast('All photos are already cropped.'); return; }
@@ -1090,6 +1124,7 @@ function loadExamples(){
     mk(19,'Teal swim shorts','bottom',['teal'],1,['sport'],4,420), mk(20,'Plaid button-up shirt','top',['red','navy'],2,['out'],5,10),
     mk(21,'White t-shirt','top',['white'],1,['out','home'],5,7), mk(22,'Black t-shirt','top',['black'],1,['out','home'],4,4),
     mk(23,'Navy dress socks','socks',['navy'],3,['work','out'],4,3), mk(24,'Brown dress socks','socks',['brown'],3,['work','out'],4,6),
+    mk(28,'White dress shirt','top',['white'],4,['formal'],5,40), mk(29,'Navy suit trousers','bottom',['navy'],5,['formal'],5,40), mk(30,'Black oxford shoes','shoes',['black'],5,['formal'],5,40),
     mk(25,'White athletic socks','socks',['white'],1,['sport','home','chores'],3,2), mk(26,'Burgundy patterned socks','socks',['burgundy','navy'],2,['out'],5,15)];
   renderAll(); toast('Example closet loaded. It is not saved.');
 }
@@ -1136,6 +1171,7 @@ document.addEventListener('click',async e=>{
     if(ds.dmonth){ let m=DI.m+(+ds.dmonth), y=DI.y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} DI.y=y; DI.m=m; drawDiary(); return; }
     if(ds.dremove!==undefined){ const es=allLog().filter(e=>e.date===DI.day); const e=es[+ds.dremove]; if(e){ if(ds.confirm==='1'||t.dataset.armed){ removeWear(e); } else { t.dataset.armed='1'; t.textContent='Tap again to remove'; } } return; }
   }
+  if(ds.wcode){ S.settings.work={code:ds.wcode}; setDressCode(S.settings.work); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); if($('#sheetRoot').innerHTML&&document.querySelector('.dresspanel')) openSettings(); else closeSheet(); toast('Work dress code: '+DRESS_CODES[ds.wcode].label+'. Your closet was re-sorted.'); return; }
   if(ds.pal){ S.settings.palette=ds.pal; saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast(ds.pal==='any'?'No palette preference.':'Ranking now favors '+PALETTES[ds.pal].label.toLowerCase()+'.'); return; }
   if(ds.view){ S.view=ds.view; LS.set('wearcycle.view',S.view); renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
@@ -1160,6 +1196,7 @@ document.addEventListener('click',async e=>{
     case 'adjust': openAdjust(); return;
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
+    case 'scanGraphics': scanGraphics(); return;
     case 'allClean': { const ds=allItems().filter(i=>isActive(i)&&i.dirty); for(const it of ds) await patchItem(it.id,{dirty:false,wearsSinceWash:0}); S.cat='all'; renderAll(); toast(ds.length+' piece'+(ds.length===1?'':'s')+' back in rotation.'); return; }
     case 'diary': DI=null; openDiary(); return;
     case 'stats': openStats(); return;
@@ -1197,7 +1234,10 @@ document.addEventListener('click',async e=>{
     if(ds.seg){ readEditorFields(); ED.it[ds.seg]=+ds.v; drawEditor(); return; }
     if(ds.washev!==undefined){ readEditorFields(); ED.it.washEvery=+ds.washev; drawEditor(); return; }
     if(ds.isnew){ readEditorFields(); ED.it.cond=5; ED.it.bought=todayISO().slice(0,7); drawEditor(); toast('Set to Like new, bought '+ED.it.bought+'.'); return; }
-    if(ds.occt){ readEditorFields(); const o=ED.it.occ=(ED.it.occ||[]).slice(); const ix=o.indexOf(ds.occt); if(ix>=0) o.splice(ix,1); else o.push(ds.occt); drawEditor(); return; }
+    if(ds.occt){ readEditorFields();
+      if(ds.occt==='work'||ds.occt==='formal'){ const k=ds.occt==='work'?'workOverride':'formalOverride'; const on=effectiveOccasions(Object.assign({},ED.it,{cond:Math.max(4,ED.it.cond??4)})).includes(ds.occt);
+        const auto=ds.occt==='work'?workOk(ED.it):formalOk(ED.it); const want=!on; ED.it[k]=(want===auto)?undefined:(want?'yes':'no'); if(ED.it[k]===undefined) delete ED.it[k]; drawEditor(); return; }
+      const o=ED.it.occ=(ED.it.occ||[]).slice(); const ix=o.indexOf(ds.occt); if(ix>=0) o.splice(ix,1); else o.push(ds.occt); drawEditor(); return; }
     if(ds.photo){ readEditorFields(); if(ds.photo==='cam'){ const [b]=await openCamera('single'); if(b) editorSetPhoto(b); } else { const [f]=await pickFiles(false); if(f) editorSetPhoto(f); } return; }
     if(ds.ai==='tag'){ readEditorFields(); ED.busy=true; ED.ai=null; drawEditor();
       try{ const res=await aiTag(ED.blob); if(!ED) return;
@@ -1237,7 +1277,8 @@ document.addEventListener('pointerup',e=>{ if(!SW0) return; const dx=e.clientX-S
   if(quick&&Math.abs(dx)>60&&Math.abs(dy)<50&&S.fits.length>1){ S.sel=(S.sel+(dx<0?1:S.fits.length-1))%S.fits.length; if(S.sel) guard(); swiped=Date.now(); renderOutfits(); } },{passive:true});
 let swiped=0;
 document.addEventListener('toggle',e=>{ if(ED&&e.target.matches&&e.target.matches('details.more')) ED.more=e.target.open; },true);
-document.addEventListener('change',e=>{ if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
+document.addEventListener('change',e=>{ if(e.target&&e.target.dataset&&e.target.dataset.wflag){ const w=S.settings.work=Object.assign({code:'casual'},S.settings.work||{}); w[e.target.dataset.wflag]=e.target.checked; setDressCode(w); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); return; }
+  if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
   if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });

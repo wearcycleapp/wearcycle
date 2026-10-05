@@ -1,5 +1,5 @@
 // Supabase Edge Function "claude": the only place that holds your Anthropic API key.
-// The app sends a task ("tag", "box", "check" or "ideas"); prompts are built here so the key
+// The app sends a task ("tag", "box", "graphic", "check" or "ideas"); prompts are built here so the key
 // cannot be used as a general-purpose Claude proxy.
 // The function checks the caller's sign-in itself (see requireUser), so in the dashboard turn
 // "Verify JWT with legacy secret" OFF, as Supabase recommends for projects using the new API keys.
@@ -35,15 +35,20 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
       `Reply with only JSON in this shape: {"name": string (2-4 words), "category": one of [${CATEGORIES.join(", ")}], ` +
       `"colors": array of 1-3 values from [${COLORS.join(", ")}], dominant first, ` +
       '"formality": 1-5 (1 athletic or lounge, 2 casual, 3 smart casual, 4 business, 5 formal), ' +
-      '"occasions": subset of [work, out, sport, home, chores] where wearing it would be appropriate, ' +
+      '"occasions": subset of [work, out, sport, home, chores, formal] where wearing it would be appropriate, ' +
       '"condition": 1-5, "issues": array of short visible defects (empty if none), ' +
       '"warmth": 1-3 (1 light such as a t-shirt, shorts or sandals; 2 medium such as a shirt, jeans or a light jacket; 3 warm such as a sweater, wool coat or boots), ' +
-      '"waterproof": true if it is made for rain or snow, ' + BOX + ', "confidence": "low" | "medium" | "high"}.\n' +
+      '"waterproof": true if it is made for rain or snow, "graphic": true if it shows a big logo, text or picture print (small brand marks do not count), ' + BOX + ', "confidence": "low" | "medium" | "high"}.\n' +
       SCALE + '\nJudge only what is visible. If the photo does not show clothing or an accessory, reply {"error": "short reason"}.';
   }
   if (task === "box") {
     return "Find the clothing item or accessory in this photo. Reply with only JSON: {" + BOX +
       '}. If several items are visible, box the largest one. If there is no clothing, reply {"error": "short reason"}.';
+  }
+  if (task === "graphic") {
+    return 'Look at this clothing item. Reply with only JSON: {"graphic": true or false}. true means it shows a big logo, ' +
+      "large text, or a picture or graphic print that would look out of place in a casual office. Small brand marks, plain colors, " +
+      "stripes, checks and plaid are false.";
   }
   if (task === "check") {
     return `Assess the physical condition of this clothing item from the photo. The owner calls it "${s(b.name, 80)}" (${s(b.category, 30)}). ` +
@@ -63,7 +68,7 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
 }
 
 // Requests per person per day (UTC). Only enforced once supabase/limits.sql has been run; until then, no limit.
-const DAILY_LIMIT: Record<string, number> = { tag: 80, box: 80, check: 30, ideas: 10 };
+const DAILY_LIMIT: Record<string, number> = { tag: 80, box: 80, graphic: 80, check: 30, ideas: 10 };
 
 function supabaseKeys(): { base: string; apikey: string } {
   const base = Deno.env.get("SUPABASE_URL") ?? "";
@@ -127,7 +132,7 @@ Deno.serve(async (req) => {
   if (!(await withinLimit(req, task))) return json({ error: "daily_limit" }, 429);
 
   const content: unknown[] = [];
-  if (task === "tag" || task === "box" || task === "check") {
+  if (task === "tag" || task === "box" || task === "graphic" || task === "check") {
     const image = String(body.image ?? "");
     if (!image || image.length > 6_000_000) return json({ error: "image_missing_or_too_large" }, 400);
     content.push({ type: "image", source: { type: "base64", media_type: "image/jpeg", data: image } });
@@ -141,7 +146,7 @@ Deno.serve(async (req) => {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
-    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 1500 : task === "box" ? 120 : 700, messages: [{ role: "user", content }] }),
+    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 1500 : task === "box" || task === "graphic" ? 120 : 700, messages: [{ role: "user", content }] }),
   });
 
   if (res.status === 429) return json({ error: "rate_limited" }, 429);

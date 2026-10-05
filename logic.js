@@ -13,7 +13,8 @@ const OCCASIONS=[
   {id:'out',label:'Going out',min:4,formality:3},
   {id:'sport',label:'Sport',min:3,formality:1},
   {id:'home',label:'Home',min:3,formality:1},
-  {id:'chores',label:'Chores',min:2,formality:1}];
+  {id:'chores',label:'Chores',min:2,formality:1},
+  {id:'formal',label:'Formal',min:4,formality:4.5}];
 const OCC=Object.fromEntries(OCCASIONS.map(o=>[o.id,o]));
 const COND={5:'Like new',4:'Good',3:'Worn',2:'Worn out',1:'Retire'};
 const FORM={1:'Athletic / lounge',2:'Casual',3:'Smart casual',4:'Business',5:'Formal'};
@@ -31,13 +32,14 @@ const PALETTES={
   earth:{label:'Earth tones',colors:['beige','khaki','brown','olive','white','burgundy','denim'],desc:'Cream, tan, brown, olive and rust-like warmth.'},
   mono:{label:'Monochrome',colors:['black','white','grey'],desc:'Black, white and grey only.'},
   navy:{label:'Navy and white',colors:['navy','white','denim','lightblue','grey','beige'],desc:'Nautical: navy, white, light blue and soft neutrals.'}};
-const TARGETS={work:{top:5,bottom:3,shoes:2},out:{top:3,bottom:2,shoes:1},sport:{top:3,bottom:2,shoes:1},home:{top:3,bottom:2,shoes:1},chores:{top:2,bottom:1,shoes:1}};
+const TARGETS={work:{top:5,bottom:3,shoes:2},out:{top:3,bottom:2,shoes:1},sport:{top:3,bottom:2,shoes:1},home:{top:3,bottom:2,shoes:1},chores:{top:2,bottom:1,shoes:1},formal:{top:1,bottom:1,shoes:1}};
 const IDEAS={
   work:{top:'button-up shirt or knit polo',bottom:'chinos or trousers',shoes:'leather shoes or clean minimal sneakers'},
   out:{top:'casual shirt or fine knit',bottom:'dark jeans or chinos',shoes:'clean sneakers or boots'},
   sport:{top:'moisture-wicking t-shirt',bottom:'athletic shorts or joggers',shoes:'training or running shoes'},
   home:{top:'soft t-shirt',bottom:'lounge pants',shoes:'slippers'},
-  chores:{top:'durable t-shirt',bottom:'work pants',shoes:'work boots or sturdy sneakers'}};
+  chores:{top:'durable t-shirt',bottom:'work pants',shoes:'work boots or sturdy sneakers'},
+  formal:{top:'white or light blue dress shirt',bottom:'suit trousers in navy or charcoal',shoes:'black or dark brown oxford shoes'}};
 const SHOP_COLORS={top:['white','lightblue','navy','grey','black','olive','burgundy'],bottom:['navy','khaki','grey','black','denim','olive','beige'],shoes:['brown','black','white','grey','navy']};
 const DAY=86400000;
 
@@ -47,10 +49,34 @@ function primary(it){ return (it.colors||[])[0]; }
 function hueDist(a,b){ const d=Math.abs(a-b)%360; return Math.min(d,360-d); }
 function group(list){ const g={}; for(const it of list){ (g[it.cat]=g[it.cat]||[]).push(it); } return g; }
 
+/* ---------- work dress code ----------
+   Work and Formal are decided by rules rather than per-item tags, so every new photo is classified the same way.
+   A piece can still be forced in or out in its editor (workOverride / formalOverride: 'yes' | 'no'). */
+const DRESS_CODES={
+  casual:{label:'Casual',desc:'T-shirts, hoodies, jeans, casual jackets.',target:2,minF:2,maxF:3,shorts:false,tees:true,hoodies:true,graphics:false},
+  smart:{label:'Business casual',desc:'Shirts, polos, knits, chinos; no t-shirts or hoodies.',target:3,minF:3,maxF:4,shorts:false,tees:false,hoodies:false,graphics:false},
+  suits:{label:'Suits',desc:'Suit, dress shirt and dress shoes.',target:4.5,minF:4,maxF:5,shorts:false,tees:false,hoodies:false,graphics:false}};
+let DRESS=Object.assign({code:'casual'},DRESS_CODES.casual);
+function setDressCode(w){ const base=DRESS_CODES[(w&&w.code)||'casual']||DRESS_CODES.casual; DRESS=Object.assign({code:(w&&w.code)||'casual'},base,w||{}); OCC.work.formality=base.target; }
+const SHORTS_RX=/\bshorts\b/i, HOODIE_RX=/\b(hoodies?|hooded sweatshirt|zip-?up)\b/i;
+function workOk(it,w){
+  w=w||DRESS; const f=it.formality??3, n=String(it.name||'');
+  if(it.graphic&&!w.graphics) return false;
+  if(['top','bottom','onepiece','outerwear','shoes'].includes(it.cat)){
+    if(it.cat==='bottom'&&SHORTS_RX.test(n)&&!w.shorts) return false;
+    if(it.cat==='top'&&UNDER_RX.test(n)&&!w.tees) return false;
+    if((it.cat==='top'||it.cat==='outerwear')&&HOODIE_RX.test(n)) return !!w.hoodies;
+    return f>=w.minF&&f<=w.maxF;
+  }
+  return f>=w.minF-1&&f<=w.maxF; // socks, belts, watches, bags: one level of slack
+}
+function formalOk(it){ const f=it.formality??3; return ['top','bottom','onepiece','outerwear','shoes'].includes(it.cat)?f>=4:f>=3&&!it.graphic; }
 function effectiveOccasions(it){
   const c=it.cond??4; if(c<=1) return [];
   const set=new Set();
-  for(const o of (it.occ||[])) if(OCC[o] && c>=OCC[o].min) set.add(o);
+  for(const o of (it.occ||[])) if(OCC[o] && o!=='work' && o!=='formal' && c>=OCC[o].min) set.add(o);
+  if(c>=OCC.work.min && (it.workOverride==='yes' || (it.workOverride!=='no' && workOk(it)))) set.add('work');
+  if(c>=OCC.formal.min && (it.formalOverride==='yes' || (it.formalOverride!=='no' && formalOk(it)))) set.add('formal');
   // Worn garments that were casual enough move down to home and chores instead of being thrown out
   if((c===3||c===2) && GARMENT.includes(it.cat) && (it.formality??3)<=3){ if(c>=OCC.home.min) set.add('home'); set.add('chores'); }
   return [...set];
@@ -293,7 +319,8 @@ function careFlags(it,now,s){
     if(ws>=s.checkEvery) f.push({kind:'check',text:'Worn '+ws+' times since the last condition check.'});
     else if(isFinite(dc) && dc>=s.checkDays) f.push({kind:'check',text:'Last checked '+dc+' days ago.'});
     const du=daysSince(it.lastWorn||it.created,now);
-    if(isFinite(du) && du>=s.unusedDays) f.push({kind:'unused',text:(it.lastWorn?'Not worn in ':'Never worn in the ')+du+' days since '+(it.lastWorn?'last use':'you added it')+'.'});
+    const special=it.cat==='outerwear'||(it.formality??3)>=4; // coats sit out a whole season; suits wait for weddings and interviews
+    if(isFinite(du) && du>=(special?Math.max(s.unusedDays,1095):s.unusedDays)) f.push({kind:'unused',text:(it.lastWorn?'Not worn in ':'Never worn in the ')+du+' days since '+(it.lastWorn?'last use':'you added it')+'.'});
   }
   return f;
 }
@@ -324,6 +351,6 @@ function gaps(items){
 
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,canOpen,canUnder,washEvery,available,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  warmthOf,rainReady,canOpen,canUnder,washEvery,DRESS_CODES,setDressCode,workOk,formalOk,available,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;
