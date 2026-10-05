@@ -538,3 +538,6 @@ a.lirow{text-decoration:none;color:inherit}
 .li.dropoff{align-items:flex-start}
 .li.dropoff a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .li.dropoff a.btn.primary{color:var(--accent-ink)}
+/* v1.20 link buttons anywhere in lists */
+.li a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+.li a.btn.primary{color:var(--accent-ink)}
