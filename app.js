@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.13.0';
+const APP_VERSION='1.14.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -289,7 +289,7 @@ async function patchItem(id,patch){ const it=byId(id); if(!it) return false; ret
 async function loadRemote(){
   const [it,we,se]=await Promise.all([
     sb.from('items').select('id,body'),
-    sb.from('wears').select('date,occ,items').order('date',{ascending:false}).limit(200),
+    sb.from('wears').select('id,date,occ,items').order('date',{ascending:false}).limit(400),
     sb.from('settings').select('body').maybeSingle()]);
   const err=it.error||we.error||se.error;
   if(err){ S.fromCache=true; renderAll(); if(S.online) toast('Could not load from the server: '+(err.message||'unknown error'),5000); return; }
@@ -630,7 +630,7 @@ async function askIdeas(){
 }
 
 /* ---------- sheets ---------- */
-function closeSheet(){ $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; }
+function closeSheet(){ $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; DI=null; }
 function openSheet(html){ guard(); $('#sheetRoot').innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; document.body.style.overflow='hidden'; }
 const sheetHead=t=>`<div class="sheet-h"><h3>${t}</h3><span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">${CLOSE_ICON}</button></div>`;
 
@@ -671,17 +671,18 @@ function drawEditor(){
      ${it.cat==='top'?`<label class="row hint"><input type="checkbox" id="f-open" ${canOpen(it)?'checked':''}> Can be worn open over a t-shirt</label><label class="row hint"><input type="checkbox" id="f-inner" ${canUnder(it)?'checked':''}> Works as a t-shirt under an open shirt</label>`:''}</div>
    <div class="field"><span class="lab">Occasions</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>`<button type="button" class="chip" data-occt="${o.id}" aria-pressed="${(it.occ||[]).includes(o.id)}">${o.label}</button>`).join('')}</div></div>
    <div class="field"><div class="row"><span class="lab" style="flex:1">Condition · ${COND[it.cond??4]}</span><button type="button" class="btn sm" data-isnew="1">Brand new</button></div>${seg('cond',COND)}<p class="hint">5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.</p></div>
-   <div class="field"><label for="f-bought">Bought (month, optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
+   <div class="row2"><div class="field"><label for="f-bought">Bought (optional)</label><input type="month" id="f-bought" value="${esc(it.bought||'')}"></div>
+   <div class="field"><label for="f-price">Price paid (optional)</label><input type="number" inputmode="decimal" min="0" step="0.01" id="f-price" value="${it.price!=null?esc(it.price):''}" placeholder="0.00"></div></div>
    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" maxlength="300" placeholder="Fit, care, where it came from">${esc(it.notes||'')}</textarea></div>
    ${hasPic||(ED.id&&ED.it.cut)?`<div class="field"><span class="lab">Photo tools</span><div class="row">
      ${hasPic?(cropped?`<button type="button" class="btn sm" data-uncrop="1" ${ED.busy?'disabled':''}>Show whole photo</button>`:`<button type="button" class="btn sm" data-ai="box" ${ED.busy?'disabled':''}>Crop to the clothes</button>`):''}
      ${ED.id&&ED.it.cut&&!ED.blob?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button><button type="button" class="btn sm ghost" data-cutdel="1">Remove cut-out</button>`:''}</div></div>`:''}
    </details>
-   ${ED.id&&!isEx(it)?`<p class="hint">Worn ${it.worn||0} times${it.lastWorn?', last on '+esc(it.lastWorn):''}.${it.lastCheck?' Last condition check '+esc(it.lastCheck)+'.':''}</p>`:''}
+   ${ED.id&&!isEx(it)?`<p class="hint">Worn ${it.worn||0} time${it.worn===1?'':'s'}${it.lastWorn?', last on '+esc(it.lastWorn):''}.${it.price!=null?' '+(it.worn?money(it.price/it.worn)+' per wear so far.':'Not worn yet, so no cost per wear.'):''}${it.lastCheck?' Last condition check '+esc(it.lastCheck)+'.':''}</p>`:''}
    <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
    ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`);
 }
-function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); }
+function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
   try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null; }
   catch(e){ toast('That image could not be opened.'); }
@@ -807,6 +808,72 @@ function queueSettingsSave(){
   },600);
 }
 
+/* ---------- money ---------- */
+const REGION_CUR={CA:'CAD',US:'USD',GB:'GBP',AU:'AUD',NZ:'NZD',MX:'MXN',BR:'BRL',IN:'INR',JP:'JPY',CH:'CHF',FR:'EUR',DE:'EUR',ES:'EUR',IT:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',IE:'EUR',AT:'EUR',FI:'EUR'};
+function currency(){ return S.settings.currency||REGION_CUR[((navigator.language||'').split('-')[1]||'').toUpperCase()]||'USD'; }
+function money(v){ try{ return new Intl.NumberFormat(undefined,{style:'currency',currency:currency(),maximumFractionDigits:v<10?2:0}).format(v); }catch(e){ return '$'+v.toFixed(2); } }
+
+/* ---------- outfit diary: calendar of logged outfits, with undo ---------- */
+let DI=null;
+function outfitFromIds(ids){
+  const o={acc:[]}; for(const it of ids.map(byId).filter(Boolean)){
+    if(it.cat==='top'){ if(!o.top) o.top=it; else if(!o.under) o.under=canUnder(it)?it:(o.under||it); }
+    else if(it.cat==='outerwear'&&!o.outer) o.outer=it; else if(it.cat==='bottom'&&!o.bottom) o.bottom=it;
+    else if(it.cat==='onepiece'&&!o.onepiece) o.onepiece=it; else if(it.cat==='shoes'&&!o.shoes) o.shoes=it;
+    else if(ACCESSORY.includes(it.cat)) o.acc.push(it); }
+  if(o.under&&o.top&&canUnder(o.top)&&!canUnder(o.under)){ const t=o.top; o.top=o.under; o.under=t; }
+  return o;
+}
+function miniBoard(o){ return `<span class="flatlay mini">${flCells(o).map(c=>`<span class="fl ${c.small?'small':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${flVisual(c.it)}</span>`).join('')}</span>`; }
+function openDiary(y,m){
+  const now=new Date(); DI={y:y??(DI?DI.y:now.getFullYear()),m:m??(DI?DI.m:now.getMonth()),day:DI&&DI.day||todayISO()}; drawDiary();
+}
+function drawDiary(){
+  const {y,m}=DI; const first=new Date(y,m,1), days=new Date(y,m+1,0).getDate(), lead=(first.getDay()+6)%7;
+  const key=d=>y+'-'+String(m+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+  const log=allLog(); const byDay={}; for(const e of log){ (byDay[e.date]=byDay[e.date]||[]).push(e); }
+  const monthCount=log.filter(e=>e.date.startsWith(key(1).slice(0,7))).length;
+  const cells=[]; for(let k=0;k<lead;k++) cells.push('<span></span>');
+  for(let d=1;d<=days;d++){ const k=key(d), n=(byDay[k]||[]).length; cells.push(`<button class="cal-d ${k===todayISO()?'today':''}" data-dday="${k}" aria-pressed="${DI.day===k}" aria-label="${k}${n?', '+n+' outfit'+(n>1?'s':''):''}">${d}${n?'<i></i>':''}</button>`); }
+  const es=byDay[DI.day]||[];
+  const title=first.toLocaleDateString(undefined,{month:'long',year:'numeric'});
+  openSheet(sheetHead('Outfit diary')+`
+   <div class="cal-h"><button class="iconbtn" data-dmonth="-1" aria-label="Previous month">‹</button><b>${esc(title)}</b><button class="iconbtn" data-dmonth="1" aria-label="Next month">›</button></div>
+   <p class="hint" style="text-align:center">${monthCount} outfit${monthCount===1?'':'s'} logged this month</p>
+   <div class="cal">${['Mo','Tu','We','Th','Fr','Sa','Su'].map(w=>`<span class="cal-w">${w}</span>`).join('')}${cells.join('')}</div>
+   <h3>${esc(new Date(DI.day+'T12:00').toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'}))}</h3>
+   ${es.length?es.map((e,k)=>{ const o=outfitFromIds(e.items||[]); return `<div class="dentry">${miniBoard(o)}<div class="dtxt"><b>${esc(OCC[e.occ]?.label||e.occ)}</b><span>${esc(coreOf(o).map(i=>i.name).join(', '))}</span><button class="btn sm ghost" data-dremove="${k}">Remove this log</button></div></div>`; }).join('')
+     :'<p class="hint">Nothing logged on this day.</p>'}`);
+  setTimeout(hydrateCuts,0);
+}
+async function removeWear(e){
+  const real=(e.items||[]).some(id=>!String(id).startsWith('ex-'));
+  if(real){ if(!canWrite()){ toast('You are offline.'); return; }
+    let q=sb.from('wears').delete(); q=e.id!=null?q.eq('id',e.id):q.eq('date',e.date).eq('occ',e.occ);
+    const {error}=await q; if(error){ toast('Could not remove: '+error.message,4500); return; } }
+  S.log=S.log.filter(x=>x!==e); S.exLog=S.exLog.filter(x=>x!==e);
+  for(const id of e.items||[]){ const it=byId(id); if(!it) continue;
+    const last=allLog().filter(x=>(x.items||[]).includes(id)).map(x=>x.date).sort().pop();
+    await patchItem(id,{worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),lastWorn:last||null}); }
+  saveCache(); S.fitKey=''; for(const f of S.fits) if(f.worn&&e.date===todayISO()) f.worn=false; renderAll(); drawDiary(); toast('Log removed.');
+}
+
+/* ---------- closet stats: wear counts and cost per wear ---------- */
+function openStats(){
+  const items=allItems().filter(isActive), now=Date.now();
+  const priced=items.filter(i=>i.price!=null), spent=priced.reduce((a,i)=>a+i.price,0);
+  const cpw=priced.filter(i=>i.worn>0).map(i=>({it:i,v:i.price/i.worn})).sort((a,b)=>a.v-b.v);
+  const most=items.filter(i=>i.worn>0).sort((a,b)=>b.worn-a.worn).slice(0,5);
+  const idle=items.filter(i=>daysSince(i.lastWorn||i.created,now)>=90);
+  const row=(it,right)=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${right}</span></div></div>`;
+  openSheet(sheetHead('Closet stats')+`
+   <div class="statgrid"><div><b>${items.length}</b><span>pieces</span></div><div><b>${allLog().length}</b><span>outfit${allLog().length===1?'':'s'} logged</span></div><div><b>${priced.length?money(spent):'–'}</b><span>spent${priced.length<items.length&&priced.length?' ('+priced.length+' priced)':''}</span></div></div>
+   <div class="panel"><div class="panel-h"><h3>Most worn</h3></div>${most.length?most.map(i=>row(i,i.worn+' wear'+(i.worn>1?'s':'')+(i.price!=null?' · '+money(i.price/i.worn)+' per wear':''))).join(''):'<div class="li"><span class="hint">Log outfits to see your favourites.</span></div>'}</div>
+   <div class="panel"><div class="panel-h"><h3>Cost per wear</h3></div>${cpw.length?cpw.slice(0,3).map(x=>row(x.it,'Best value: '+money(x.v)+' per wear')).join('')+cpw.slice(-2).reverse().filter(x=>!cpw.slice(0,3).includes(x)).map(x=>row(x.it,'Highest: '+money(x.v)+' per wear')).join(''):'<div class="li"><span class="hint">Add the price you paid in an item’s More details to see this. Price divided by times worn.</span></div>'}</div>
+   <div class="panel"><div class="panel-h"><h3>Not worn in 90+ days</h3><span class="count">${idle.length}</span></div>${idle.slice(0,6).map(i=>row(i,i.lastWorn?'Last worn '+esc(i.lastWorn):'Never worn')).join('')||'<div class="li"><span class="done">Everything is in rotation.</span></div>'}</div>`);
+  setTimeout(hydrateCuts,0);
+}
+
 /* ---------- share: the outfit as a 1080x1920 Story image ---------- */
 function loadImg(src){ return new Promise(res=>{ if(!src){ res(null); return; } const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
 async function pieceImage(it){
@@ -917,7 +984,8 @@ async function logWear(list,day,occ){
   for(const it of list){ await patchItem(it.id,{worn:(it.worn||0)+1,lastWorn:(it.lastWorn&&it.lastWorn>day)?it.lastWorn:day,wearsSinceCheck:(it.wearsSinceCheck||0)+1}); }
   const entry={date:day,occ,items:ids};
   if(!real.length) S.exLog.unshift(entry);
-  else { const {error}=await sb.from('wears').insert(entry); if(error){ toast('Could not log the outfit: '+error.message,4500); return false; } S.log.unshift(entry); saveCache(); }
+  else { const {data,error}=await sb.from('wears').insert(entry).select('id'); if(error){ toast('Could not log the outfit: '+error.message,4500); return false; }
+    const row=Array.isArray(data)?data[0]:data; if(row&&row.id!=null) entry.id=row.id; S.log.unshift(entry); saveCache(); }
   S.fitKey=fitKeyNow(); renderAll(); return true;
 }
 async function wear(i){
@@ -1022,6 +1090,11 @@ document.addEventListener('click',async e=>{
   if(ds.tabGo){ goTab(ds.tabGo); return; }
   if(ds.occ){ S.occ=ds.occ; S.seed=0; LS.set('wearcycle.occ',{day:todayISO(),occ:S.occ}); renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
+  if(DI&&$('#sheetRoot').innerHTML){
+    if(ds.dday){ DI.day=ds.dday; drawDiary(); return; }
+    if(ds.dmonth){ let m=DI.m+(+ds.dmonth), y=DI.y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} DI.y=y; DI.m=m; drawDiary(); return; }
+    if(ds.dremove!==undefined){ const es=allLog().filter(e=>e.date===DI.day); const e=es[+ds.dremove]; if(e){ if(ds.confirm==='1'||t.dataset.armed){ removeWear(e); } else { t.dataset.armed='1'; t.textContent='Tap again to remove'; } } return; }
+  }
   if(ds.pal){ S.settings.palette=ds.pal; saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast(ds.pal==='any'?'No palette preference.':'Ranking now favors '+PALETTES[ds.pal].label.toLowerCase()+'.'); return; }
   if(ds.view){ S.view=ds.view; LS.set('wearcycle.view',S.view); renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
@@ -1045,6 +1118,8 @@ document.addEventListener('click',async e=>{
     case 'palettes': openPalettes(); return;
     case 'adjust': openAdjust(); return;
     case 'help': openHelp(); return;
+    case 'diary': DI=null; openDiary(); return;
+    case 'stats': openStats(); return;
     case 'share': shareOutfit(); return;
     case 'cutOutfit': { const f=S.fits[S.sel]; if(!f) return; const o=hydrate(f.ids); makeCuts(coreOf(o).concat(o.acc)); return; }
     case 'cutAll': makeCuts([...S.items.values()]); return;

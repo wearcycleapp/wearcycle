@@ -31,14 +31,14 @@
   <div id="banner"></div>
 
   <section class="tab" id="tab-outfits">
-    <div class="todaybar"><h2 class="greet" id="greet">Today</h2><span class="spacer"></span><div id="wx"></div></div>
+    <div class="todaybar"><h2 class="greet" id="greet">Today</h2><span class="spacer"></span><div id="wx"></div><button class="iconbtn round" data-act="diary" aria-label="Outfit diary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></button></div>
     <div class="chips scrollrow" id="occChips" role="group" aria-label="Occasion"></div>
     <div id="fits"></div>
   </section>
 
   <section class="tab" id="tab-closet" hidden>
     <div>
-      <h2>Closet</h2>
+      <div class="row" style="flex-wrap:nowrap"><h2 style="flex:1">Closet</h2><button class="btn sm" data-act="stats">Stats</button></div>
       <p class="lede">Everything you own that is still in rotation. Tap an item to edit it.</p>
     </div>
     <div class="chips" id="catChips" role="group" aria-label="Category"></div>

@@ -482,3 +482,26 @@ details.more .field{margin-top:14px}
 .chev{font-size:22px;color:var(--muted)}
 .helpdoc p{margin:0 0 12px;font-size:14px;line-height:1.5;color:var(--muted)}
 .helpdoc b{color:var(--ink)}
+
+/* v1.14 diary, stats, price */
+.iconbtn.round{width:40px;height:40px;border-radius:999px}
+.todaybar{gap:8px}
+.cal-h{display:flex;align-items:center;justify-content:space-between}
+.cal-h b{font-size:16px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-w{font-size:11.5px;color:var(--muted);text-align:center;padding-bottom:2px}
+.cal-d{position:relative;height:42px;border:0;border-radius:10px;background:var(--surface);font-weight:600;font-size:14px;color:var(--ink)}
+.cal-d.today{box-shadow:inset 0 0 0 2px var(--line)}
+.cal-d[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.cal-d i{position:absolute;left:50%;bottom:5px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:var(--coral)}
+.dentry{display:flex;gap:12px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--raised)}
+.dentry .flatlay.mini{width:110px;flex:none}
+.dtxt{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:13px}
+.dtxt span{color:var(--muted)}
+.dtxt .btn{align-self:flex-start;margin-top:4px}
+.statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.statgrid div{background:var(--raised);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:2px;box-shadow:var(--shadow)}
+.statgrid b{font-family:var(--f-display);font-size:24px;line-height:1}
+.statgrid span{font-size:12px;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field input[type=number]{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
