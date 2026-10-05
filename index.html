@@ -24,20 +24,15 @@
 <div id="appRoot" hidden>
 <div class="app">
   <header class="top">
-    <img class="logo" src="icons/logo-icon.svg" alt="" width="36" height="36"><div class="brand">Wearcycle<small>WEAR · CARE · DONATE · BUY</small></div>
+    <img class="logo" src="icons/logo-icon.svg" alt="" width="36" height="36"><div class="brand">Wearcycle</div>
     <span class="status" id="status">Loading</span>
     <button class="iconbtn" id="rulesBtn" aria-label="Settings and rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
   </header>
   <div id="banner"></div>
 
   <section class="tab" id="tab-outfits">
-    <div>
-      <h2>What to wear</h2>
-      <p class="lede">Your best outfit first. Swap any piece or pick another option.</p>
-    </div>
-    <div id="wx"></div>
-    <div class="chips" id="occChips" role="group" aria-label="Occasion"></div>
-    <div class="row"><div class="chips layerseg" id="layerSeg" role="group" aria-label="Outer layer"></div></div>
+    <div class="todaybar"><h2 class="greet" id="greet">Today</h2><span class="spacer"></span><div id="wx"></div></div>
+    <div class="chips scrollrow" id="occChips" role="group" aria-label="Occasion"></div>
     <div id="fits"></div>
   </section>
 

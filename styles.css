@@ -390,3 +390,64 @@ details.rules p{margin:8px 0}
 .alt2{align-items:stretch}
 .flatlay.mini{width:100%;height:auto}
 .palopt .sws{max-width:46%;flex-wrap:wrap;row-gap:4px}
+
+/* ===== v1.11 Outfits redesign: picture first, quieter chrome ===== */
+.status.hidden{display:none}
+.todaybar{display:flex;align-items:center;gap:10px;margin-top:2px}
+.greet{font-family:var(--f-display);font-size:28px;line-height:1;text-transform:none;letter-spacing:.01em;margin:0}
+.greet small{display:block;font-family:var(--f-body);font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0;margin-top:4px}
+.wxpill{display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:var(--raised);font-weight:600;font-size:14px;color:var(--ink)}
+.wxpill svg{width:20px;height:20px;color:var(--coral)}
+.wxpill.add{color:var(--muted)}
+#occChips.scrollrow{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scroll-snap-type:x proximity}
+#occChips .chip{scroll-snap-align:start}
+.fit.hero .fit-h{padding:12px 12px 12px 14px;gap:12px;border-bottom:0}
+.fit.hero .rank{min-width:36px;height:36px;font-size:20px;border-radius:10px}
+.fit.hero .rk-l b{font-size:17px}
+.fit.hero .rk-l span{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.fit.hero .rk-l .bars i{width:5px;height:12px}
+.fit.hero .flatlay{margin:0 10px}
+.pager{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 2px}
+.pager .dot{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:var(--line)}
+.pager .dot[aria-current="true"]{background:var(--coral);width:22px;border-radius:4px}
+.pager .pg{width:36px;height:32px;border:0;background:none;color:var(--muted);font-size:22px;line-height:1}
+.fit.hero .palette{padding:12px 14px 0}
+.ctarow{display:flex;gap:10px;padding:14px 14px 0}
+.btn.cta{background:var(--coral);color:var(--coral-ink);border-color:var(--coral);height:48px;font-size:15px;font-weight:700;border-radius:12px}
+.btn.iconb{width:48px;height:48px;padding:0;border-radius:12px;flex:none}
+.btn.iconb svg{width:20px;height:20px}
+.worn-ok{flex:1;display:flex;align-items:center;justify-content:center;height:48px;border-radius:12px;background:var(--good-soft);color:var(--good)}
+.fit.hero .addunder{margin:10px 14px 0}
+details.whybox{margin:12px 14px 0;border-top:1px solid var(--line);padding-top:10px}
+details.whybox summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px;min-height:32px}
+details.whybox summary::-webkit-details-marker{display:none}
+details.whybox summary::after{content:"›";margin-left:auto;font-size:20px;color:var(--muted);transition:transform .15s}
+details.whybox[open] summary::after{transform:rotate(90deg)}
+.warnn{font-size:12px;font-weight:600;color:var(--warn);background:var(--warn-soft);padding:2px 8px;border-radius:999px}
+details.whybox .why{margin:6px 0 8px}
+.linkbtn{display:block;margin:6px 14px 14px;padding:8px 0;border:0;background:none;color:var(--muted);font-size:13.5px;text-decoration:underline;text-underline-offset:3px;text-align:left}
+.fit.hero .fit-meta{display:none}
+.alts-h h3{font-size:16px}
+.altrow{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scroll-snap-type:x mandatory}
+.altrow .alt2{flex:0 0 44%;scroll-snap-align:start}
+
+/* typography: one body font for labels, sentence case, readable sizes */
+.field>label,.field>.lab,.layerseg .lab,.tile .cap .k,.wxwhere,.panel-h .count,.ex,.tag,.beltband .blab .k,.version,.opt em,.chip .n{
+  font-family:var(--f-body)!important;text-transform:none!important;letter-spacing:0!important}
+.field>label,.field>.lab{font-size:13px;font-weight:600;color:var(--ink)}
+.tile .cap .k,.beltband .blab .k{font-size:11.5px;font-weight:600;color:var(--muted)}
+.tag{font-size:11.5px;font-weight:600;border:0;padding:0;display:inline-flex;align-items:center;gap:5px}
+.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ex{font-size:11px;font-weight:600;padding:1px 6px;border-radius:999px}
+.opt em{font-size:12.5px;font-weight:600}
+.panel-h .count{font-size:13px}
+h2{text-transform:none;letter-spacing:.01em}
+.sheet-h h3{text-transform:none;letter-spacing:.01em}
+header.top .iconbtn{margin-left:auto}
+.greet{font-size:26px;white-space:nowrap}
+.wxpill{white-space:nowrap;flex:none}
+.todaybar #wx{flex:none}
+#occChips.scrollrow{scroll-padding-inline:16px}
+.alt2-l .sws{display:none}
+.greet{font-size:24px}
+.wxpill{padding:0 12px;height:38px}
