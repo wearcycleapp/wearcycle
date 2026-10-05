@@ -519,3 +519,6 @@ details.more .field{margin-top:14px}
 .gate .card2 .btn.cta{width:100%}
 .gate a{color:inherit}
 a.lirow{text-decoration:none;color:inherit}
+.todaybar .greet{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.todaybar .greet small{overflow:hidden;text-overflow:ellipsis}
+@media (max-width:380px){.greet{font-size:21px}.wxpill{padding:0 10px;font-size:13px}.wxpill svg{width:18px;height:18px}}

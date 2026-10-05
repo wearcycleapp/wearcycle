@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.15.0';
+const APP_VERSION='1.15.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -434,7 +434,7 @@ function renderWx(){
   const wet=d.snow?' · snow':d.rain?' · rain':'';
   box.innerHTML=`<button class="wxpill" data-wx="edit" aria-label="Weather: ${tdeg(d.tempMin)} to ${tdeg(d.tempMax)}, ${esc(d.sky)}. Change">${WX_ICON}<span>${tdeg(d.tempMin).replace(/[CF]$/,'')}–${tdeg(d.tempMax)}${wet}</span></button>`;
 }
-function greeting(){ const h=new Date().getHours(); const d=new Date().toLocaleDateString(undefined,{weekday:'long'}); return (h<12?'Good morning':h<18?'Good afternoon':'Good evening')+`<small>${esc(d)}</small>`; }
+function greeting(){ const h=new Date().getHours(); const d=new Date().toLocaleDateString(undefined,{weekday:'long'}); return esc(d)+`<small>${h<12?'Good morning':h<18?'Good afternoon':'Good evening'}</small>`; }
 function adviceText(){
   const w=wxForScore(), d=WXC.data; if(!w||!d) return '';
   const {lo,hi}=wxFeel(w); const out=[];
