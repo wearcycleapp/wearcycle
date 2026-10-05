@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.20.0';
+const APP_VERSION='1.20.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -199,7 +199,7 @@ async function refreshGps(){ // keeps "my location" current when permission is a
 function saveWx(patch){ Object.assign(wxSet(),patch); saveCache(); queueSettingsSave(); S.fitKey=''; }
 
 /* ---------- flat-lay cut-outs (background removed on the phone, in a background worker) ---------- */
-const CUT={worker:null,n:0,pend:{},urls:new Map(),busy:false,failed:{}};
+const CUT={worker:null,n:0,pend:{},urls:new Map(),busy:false,failed:{},missing:new Set()};
 function bgWorker(){
   if(CUT.worker) return CUT.worker;
   CUT.worker=new Worker('vendor/bgworker.mjs',{type:'module'});
@@ -247,7 +247,8 @@ async function makeCut(it,onp){
   const old=it.cut; if(await patchItem(it.id,{cut:path})){ if(old) removePhoto(old); return true; }
   return false;
 }
-function needsCut(it){ return it&&!isEx(it)&&it.photo&&!it.cut&&isActive(it); }
+// A saved cut-out whose file cannot be loaded counts as missing, so it can be made again.
+function needsCut(it){ return it&&!isEx(it)&&it.photo&&(!it.cut||CUT.missing.has(it.id))&&isActive(it); }
 /* Background job bar (above the tab bar): shows long-running work without blocking the screen. */
 function job(text,pct){ const r=$('#jobRoot'); if(!r) return; document.body.classList.toggle('hasjob',!!text); if(!text){ r.innerHTML=''; return; }
   r.innerHTML=`<div class="jobbar" role="status"><span class="spin" aria-hidden="true"></span><span class="jt">${esc(text)}</span>${pct!=null?`<span class="jp"><i style="width:${Math.max(4,Math.min(100,pct))}%"></i></span>`:''}</div>`; }
@@ -268,7 +269,7 @@ async function runCuts(){
     if(it&&needsCut(it)){
       const label='Cut-out '+(n+fail+1)+' of '+total;
       job(label+' · '+it.name,(n+fail)/total*100);
-      try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) job('One-time download of the cut-out tool',100*p.cur/p.tot); else if(p&&/compute|inference/.test(p.k)) job(label+' · '+it.name,(n+fail+0.5)/total*100); }); n++; delete CUT.failed[id]; renderOutfits(); renderCloset(); }
+      try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) job('One-time download of the cut-out tool',100*p.cur/p.tot); else if(p&&/compute|inference/.test(p.k)) job(label+' · '+it.name,(n+fail+0.5)/total*100); }); n++; delete CUT.failed[id]; CUT.missing.delete(id); renderOutfits(); renderCloset(); }
       catch(e){ fail++; lastErr=String(e&&e.message||e); CUT.failed[id]=lastErr; }
     }
     CUT.queue.shift();
@@ -572,7 +573,8 @@ function flatlay(o,i){
 }
 function flVisual(it){ const src=thumbSrc(it); return `<img ${it.cut?`data-cut="${esc(it.id)}"`:''} src="${esc(src||'')}" alt="" ${src?'':'hidden'}>${src?'':glyph(it)}`; }
 // After each render, swap in the transparent cut-outs (loaded from the phone's cache, or downloaded once).
-function hydrateCuts(){ document.querySelectorAll('img[data-cut]').forEach(img=>{ const it=byId(img.dataset.cut); cutUrl(it).then(u=>{ if(u&&img.isConnected){ img.src=u; img.hidden=false; img.classList.add('cut'); } }); }); }
+function hydrateCuts(){ document.querySelectorAll('img[data-cut]').forEach(img=>{ const it=byId(img.dataset.cut); cutUrl(it).then(u=>{ if(u&&img.isConnected){ img.src=u; img.hidden=false; img.classList.add('cut'); CUT.missing.delete(it.id); }
+    else if(!u&&it&&it.cut&&S.online&&!CUT.missing.has(it.id)){ CUT.missing.add(it.id); if(ED&&ED.id===it.id) drawEditor(); } }); }); }
 // The belt is drawn as a band across the top of the trousers tile, where it is worn; it swaps on its own.
 function beltOn(bottom,belt,k,i){
   return `<div class="withbelt">${tile(bottom,'bottom',i)}<button class="beltband" data-swap="${i}" data-slot="acc${k}" aria-label="Belt: ${esc(belt.name)}. Tap to swap"><span class="bimg">${visual(belt)}</span><span class="blab"><span class="k">Belt</span><span class="bn">${esc(belt.name)}</span></span></button></div>`;
@@ -696,16 +698,16 @@ function openEditor(id){
   drawEditor();
   if(base&&base.photo&&canWrite()) fullPhotoUrl(base.photo).then(u=>{ if(ED&&ED.id===base.id&&u){ ED.full=u; drawEditor(); } });
 }
-function drawEditor(){
+function drawEditor(){ setTimeout(hydrateCuts,0);
   const it=ED.it; const pv=ED.cropChanged?ED.thumb:(ED.preview||ED.full||thumbSrc(it)); const hasPic=!!(ED.blob||it.photo)&&!isEx(it); const cropped=ED.cropChanged?!!ED.newBox:!!it.box;
   const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
   const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b><span>${key==='cond'?labels[n]:labels[n].split(' ')[0]}</span></button>`).join('')}</div>`;
   openSheet(sheetHead(ED.id?(it.review?'Review item':'Edit item'):'New item')+`
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
-   <div class="photo"><div class="pv">${pv?`<img src="${esc(pv)}" alt="">`:glyph(it)}</div>
+   <div class="photo"><div class="pv ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}">${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
      ${ED.blob?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
-     ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">Make cut-out</button>${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):''}
+     ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
 </div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
@@ -732,7 +734,7 @@ function drawEditor(){
    <div class="field"><label for="f-notes">Notes</label><textarea id="f-notes" maxlength="300" placeholder="Fit, care, where it came from">${esc(it.notes||'')}</textarea></div>
    ${hasPic||(ED.id&&ED.it.cut)?`<div class="field"><span class="lab">Photo tools</span><div class="row">
      ${hasPic?(cropped?`<button type="button" class="btn sm" data-uncrop="1" ${ED.busy?'disabled':''}>Show whole photo</button>`:`<button type="button" class="btn sm" data-ai="box" ${ED.busy?'disabled':''}>Crop to the clothes</button>`):''}
-     ${ED.id&&ED.it.cut&&!ED.blob?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button><button type="button" class="btn sm ghost" data-cutdel="1">Remove cut-out</button>`:''}</div></div>`:''}
+     ${ED.id&&ED.it.cut&&!ED.blob?`<button type="button" class="btn sm ghost" data-cutdel="1">Remove cut-out</button>`:''}</div></div>`:''}
    </details>
    ${ED.id&&!isEx(it)?`<p class="hint">Worn ${it.worn||0} time${it.worn===1?'':'s'}${it.lastWorn?', last on '+esc(it.lastWorn):''}.${it.price!=null?' '+(it.worn?money(it.price/it.worn)+' per wear so far.':'Not worn yet, so no cost per wear.'):''}${it.lastCheck?' Last condition check '+esc(it.lastCheck)+'.':''}</p>`:''}
    <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>

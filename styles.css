@@ -541,3 +541,5 @@ a.lirow{text-decoration:none;color:inherit}
 /* v1.20 link buttons anywhere in lists */
 .li a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .li a.btn.primary{color:var(--accent-ink)}
+.photo .pv.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
+.photo .pv img.cut{padding:6px;box-sizing:border-box;filter:drop-shadow(0 3px 5px rgba(50,35,20,.2))}
