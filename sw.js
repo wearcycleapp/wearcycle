@@ -1,5 +1,5 @@
 /* Service worker: keeps the app shell available offline. Data and photos come from Supabase. */
-const VERSION = 'wearcycle-v1.18.0';
+const VERSION = 'wearcycle-v1.18.1';
 // Kept across app updates: the background-removal model (about 100 MB, downloaded once) and saved cut-outs.
 const KEEP = ['wearcycle-bgr-1', 'wearcycle-cutouts'];
 const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'app.js', 'config.js', 'vendor/supabase.js',

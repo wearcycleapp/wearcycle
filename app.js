@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.18.0';
+const APP_VERSION='1.18.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -199,7 +199,7 @@ async function refreshGps(){ // keeps "my location" current when permission is a
 function saveWx(patch){ Object.assign(wxSet(),patch); saveCache(); queueSettingsSave(); S.fitKey=''; }
 
 /* ---------- flat-lay cut-outs (background removed on the phone, in a background worker) ---------- */
-const CUT={worker:null,n:0,pend:{},urls:new Map(),busy:false};
+const CUT={worker:null,n:0,pend:{},urls:new Map(),busy:false,failed:{}};
 function bgWorker(){
   if(CUT.worker) return CUT.worker;
   CUT.worker=new Worker('vendor/bgworker.mjs',{type:'module'});
@@ -268,8 +268,8 @@ async function runCuts(){
     if(it&&needsCut(it)){
       const label='Cut-out '+(n+fail+1)+' of '+total;
       job(label+' · '+it.name,(n+fail)/total*100);
-      try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) job('One-time download of the cut-out tool',100*p.cur/p.tot); else if(p&&/compute|inference/.test(p.k)) job(label+' · '+it.name,(n+fail+0.5)/total*100); }); n++; renderOutfits(); renderCloset(); }
-      catch(e){ fail++; lastErr=String(e&&e.message||e); }
+      try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) job('One-time download of the cut-out tool',100*p.cur/p.tot); else if(p&&/compute|inference/.test(p.k)) job(label+' · '+it.name,(n+fail+0.5)/total*100); }); n++; delete CUT.failed[id]; renderOutfits(); renderCloset(); }
+      catch(e){ fail++; lastErr=String(e&&e.message||e); CUT.failed[id]=lastErr; }
     }
     CUT.queue.shift();
   }
@@ -677,6 +677,7 @@ function drawEditor(){
    <div class="photo"><div class="pv">${pv?`<img src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
      ${ED.blob?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
+     ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">Make cut-out</button>${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):''}
 </div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
@@ -1265,6 +1266,7 @@ document.addEventListener('click',async e=>{
       catch(err){ toast(aiMsg(err)); }
       if(ED){ ED.busy=false; drawEditor(); } return; }
     if(ds.cutdel){ const it=byId(ED.id); if(it&&it.cut&&await patchItem(it.id,{cut:null})){ removePhoto(it.cut); ED.it.cut=null; drawEditor(); toast('Cut-out removed. The board shows the photo instead.'); } return; }
+    if(ds.cutmake){ const it=byId(ED.id); if(it) makeCuts([it]); return; }
     if(ds.cutredo){ const it=byId(ED.id); if(!it) return; const old=it.cut; if(await patchItem(it.id,{cut:null})){ if(old) removePhoto(old); makeCuts([byId(it.id)]); } return; }
     if(ds.save!==undefined){ saveEditor(); return; }
     if(ds.del!==undefined){ if(!ED.confirmDel){ readEditorFields(); ED.confirmDel=true; drawEditor(); return; } deleteItem(); return; }
