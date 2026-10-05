@@ -848,5 +848,10 @@ I18N.load("es",{
 "Weather.": "Clima.",
 "Light mode": "Claro",
 "Dark mode": "Oscuro",
-"Add {0}: {a}": "Agregar {0}: {a}"
+"Add {0}: {a}": "Agregar {0}: {a}",
+"Tap a piece to change it": "Toca una prenda para cambiarla",
+"You changed this outfit.": "Cambiaste este conjunto.",
+"Back to suggestion": "Volver a la sugerencia",
+"Back to the suggested outfit.": "Volviste al conjunto sugerido.",
+"Swapped in {a}.": "Cambiado por {a}."
 });

@@ -544,3 +544,10 @@ a.lirow{text-decoration:none;color:inherit}
 .photo .pv.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
 .photo .pv img.cut{padding:6px;box-sizing:border-box;filter:drop-shadow(0 3px 5px rgba(50,35,20,.2))}
 .langsel{min-height:40px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--raised);color:var(--ink);max-width:150px}
+/* v1.23 make tap-to-change obvious, and offer a way back */
+.taphint{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 0;font-size:13px;color:var(--muted)}
+.taphint .swap{position:static;display:inline-grid;width:20px;height:20px;place-items:center}
+.taphint .swap svg{width:14px;height:14px}
+.editbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 0;padding:8px 10px;border-radius:12px;background:var(--warn-soft);color:var(--ink);font-size:13.5px}
+.editbar span{flex:1;min-width:140px}
+.editbar .btn svg{width:16px;height:16px;margin-right:6px}

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.22.0';
+const APP_VERSION='1.23.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -502,6 +502,7 @@ function tile(it,slot,i,size){
   return `<button class="tile ${size||''}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to swap">${acc?'':SWAP_ICON}<div class="vis">${visual(it)}</div><div class="cap"><span class="k">${esc(slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&size==='open')?'Top, worn open':CAT[it.cat].label)}</span>${esc(it.name)}</div></button>`;
 }
 const ADJ_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
+const UNDO_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
 const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
 function heroCard(f,i){
   const o=hydrate(f.ids); const m=match(f);
@@ -515,7 +516,9 @@ function heroCard(f,i){
   const nav=n>1?`<div class="pager"><button class="pg" data-step-opt="-1" aria-label="Previous option">‹</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===i}"></button>`).join('')}<button class="pg" data-step-opt="1" aria-label="Next option">›</button></div>`:'';
   const visual=S.view==='board'?flatlay(o,i):`<div class="board2 n${core.length}">${core.map(([k,it])=>k==='bottom'&&beltK>=0?beltOn(it,o.acc[beltK],beltK,i):tile(it,k,i,k==='top'&&o.under?'open':'')).join('')}</div>
     ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}`;
-  return `<article class="fit hero">${head}${visual}${nav}${heroMeta(f,i,o,canAddUnder)}</article>`;
+  const tapbar=f.edited&&f.orig?`<div class="editbar"><span>You changed this outfit.</span><button class="btn sm" data-revert="${i}">${UNDO_ICON}Back to suggestion</button></div>`
+    :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to change it</span></p>`;
+  return `<article class="fit hero">${head}${visual}${tapbar}${nav}${heroMeta(f,i,o,canAddUnder)}</article>`;
 }
 // The outfit's color story: one swatch per main piece (in wearing order) and the harmony rule it follows.
 function paletteStrip(o){
@@ -1151,6 +1154,8 @@ function todayLine(){
   const names=[...new Set(es.flatMap(e=>e.items))].map(byId).filter(Boolean).filter(i=>!ACCESSORY.includes(i.cat)).map(i=>i.name);
   return `<p class="hint today">Logged today: ${esc(names.join(', ')||es.length+' outfit')}</p>`;
 }
+// An edited outfit remembers the suggestion it came from, so it can go back.
+function editedFit(f,o){ const r=scoreOutfit(o,S.occ,ctx()); return {ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true,orig:f.orig||f}; }
 function swap(i,slot){
   const f=S.fits[i]; if(!f) return; const o=hydrate(f.ids);
   if(slot.startsWith('acc')){
@@ -1160,11 +1165,12 @@ function swap(i,slot){
   } else {
     const cands=swapCandidates(o,slot,allItems(),S.occ,ctx()); const cur=o[slot];
     if(slot==='under'){ const k=cands.findIndex(x=>x.id===cur.id); if(k<0||k===cands.length-1){ delete o.under; toast('Worn without a t-shirt underneath. Tap + to add one back.'); } else o.under=cands[k+1];
-      const r=scoreOutfit(o,S.occ,ctx()); S.fits[i]={ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true}; renderOutfits(); return; }
+      S.fits[i]=editedFit(f,o); renderOutfits(); if(o.under) toast('Swapped in '+o.under.name+'.'); return; }
     if(cands.length<2){ toast('No other '+CAT[slot==='outer'?'outerwear':slot].label.toLowerCase()+' for this occasion.'); return; }
     o[slot]=cands[(cands.findIndex(x=>x.id===cur.id)+1)%cands.length];
   }
-  const r=scoreOutfit(o,S.occ,ctx()); S.fits[i]={ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true}; renderOutfits();
+  S.fits[i]=editedFit(f,o); renderOutfits();
+  const now=slot.startsWith('acc')?o.acc[+slot.slice(3)]:o[slot]; if(now) toast('Swapped in '+now.name+'.');
 }
 function loadExamples(){
   const d=n=>new Date(Date.now()-n*DAY).toISOString().slice(0,10);
@@ -1235,7 +1241,7 @@ document.addEventListener('click',async e=>{
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
   if(ds.sel!==undefined){ S.sel=+ds.sel; if(S.sel) guard(); renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   if(ds.addunder!==undefined){ const f=S.fits[+ds.addunder]; if(!f) return; const o=hydrate(f.ids); const c=swapCandidates(o,'under',allItems(),S.occ,ctx()); if(!c.length) return;
-    o.under=c[0]; const r=scoreOutfit(o,S.occ,ctx()); S.fits[+ds.addunder]={ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true}; renderOutfits(); return; }
+    o.under=c[0]; S.fits[+ds.addunder]=editedFit(f,o); renderOutfits(); return; }
   if(ds.stepOpt){ S.sel=(S.sel+(+ds.stepOpt)+S.fits.length)%S.fits.length; if(S.sel) guard(); renderOutfits(); return; }
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
@@ -1279,6 +1285,7 @@ document.addEventListener('click',async e=>{
     if(ds.lgsave!==undefined){ saveLog(); return; }
   }
   if(ds.themeSet){ themeSet(ds.themeSet); document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===ds.themeSet))); return; }
+  if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
   if(ds.fixed){ if(await patchItem(ds.fixed,{repair:undefined,repairNote:undefined,repairOn:undefined,repairOk:undefined})) toast('Fixed. Back in every outfit it suits.'); return; }
   if(ds.clean){ if(await patchItem(ds.clean,{dirty:false,wearsSinceWash:0,dirtyOn:undefined})){ if(!allItems().some(i=>i.dirty)) S.cat='all'; renderAll(); toast('Back in rotation.'); } return; }
   if(ds.cat){ S.cat=ds.cat; renderCloset(); return; }

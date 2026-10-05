@@ -848,5 +848,10 @@ I18N.load("hi",{
 "Weather.": "मौसम।",
 "Light mode": "लाइट",
 "Dark mode": "डार्क",
-"Add {0}: {a}": "{0} जोड़ें: {a}"
+"Add {0}: {a}": "{0} जोड़ें: {a}",
+"Tap a piece to change it": "बदलने के लिए किसी पीस पर टैप करें",
+"You changed this outfit.": "आपने यह आउटफ़िट बदला है।",
+"Back to suggestion": "सुझाव पर वापस जाएँ",
+"Back to the suggested outfit.": "सुझाए गए आउटफ़िट पर वापस।",
+"Swapped in {a}.": "{a} लगाया गया।"
 });

@@ -848,5 +848,10 @@ I18N.load("ja",{
 "Weather.": "天気。",
 "Light mode": "ライト",
 "Dark mode": "ダーク",
-"Add {0}: {a}": "{0}点追加：{a}"
+"Add {0}: {a}": "{0}点追加：{a}",
+"Tap a piece to change it": "アイテムをタップすると変更できます",
+"You changed this outfit.": "このコーデは変更されています。",
+"Back to suggestion": "おすすめに戻す",
+"Back to the suggested outfit.": "おすすめのコーデに戻しました。",
+"Swapped in {a}.": "{a}に変更しました。"
 });

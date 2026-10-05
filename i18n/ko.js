@@ -848,5 +848,10 @@ I18N.load("ko",{
 "Weather.": "날씨.",
 "Light mode": "라이트",
 "Dark mode": "다크",
-"Add {0}: {a}": "{0}개 추가: {a}"
+"Add {0}: {a}": "{0}개 추가: {a}",
+"Tap a piece to change it": "아이템을 누르면 바꿀 수 있어요",
+"You changed this outfit.": "이 코디를 바꿨어요.",
+"Back to suggestion": "추천으로 되돌리기",
+"Back to the suggested outfit.": "추천 코디로 되돌렸어요.",
+"Swapped in {a}.": "{a}(으)로 바꿨어요."
 });

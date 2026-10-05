@@ -848,5 +848,10 @@ I18N.load("tl",{
 "Weather.": "Panahon.",
 "Light mode": "Light",
 "Dark mode": "Dark",
-"Add {0}: {a}": "Magdagdag ng {0}: {a}"
+"Add {0}: {a}": "Magdagdag ng {0}: {a}",
+"Tap a piece to change it": "I-tap ang isang piraso para palitan",
+"You changed this outfit.": "Binago mo ang outfit na ito.",
+"Back to suggestion": "Ibalik sa mungkahi",
+"Back to the suggested outfit.": "Ibinalik sa mungkahing outfit.",
+"Swapped in {a}.": "Pinalitan ng {a}."
 });
