@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.15.2';
+const APP_VERSION='1.15.3';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool}=WardrobeLogic;
@@ -1261,7 +1261,7 @@ function showLogin(msg,mode){
     if(error) $('#g-err').textContent=error.message==='Invalid login credentials'?'Email or password is wrong.':error.message; };
   if($('#g-up')) $('#g-up').onclick=async()=>{ const c=creds(); if(!c.email||c.password.length<8){ $('#g-err').textContent='Enter an email and a password of at least 8 characters.'; return; }
     $('#g-up').disabled=true; const {data,error}=await sb.auth.signUp({email:c.email,password:c.password,options:{emailRedirectTo:location.origin+location.pathname}}); if($('#g-up')) $('#g-up').disabled=false;
-    if(error){ $('#g-err').textContent=/not allowed|disabled/i.test(error.message)?'New accounts are not open yet.':error.message; return; }
+    if(error){ $('#g-err').textContent=/not allowed|disabled/i.test(error.message)?'New accounts are not open yet. If someone created an account for you, use the Sign in tab.':error.message; return; }
     if(!data.session) $('#g-err').textContent='Almost there: open the confirmation email, tap the link, then sign in here.'; };
   if($('#g-forgot')) $('#g-forgot').onclick=()=>showLogin('','reset');
   if($('#g-back')) $('#g-back').onclick=()=>showLogin('','in');
