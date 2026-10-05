@@ -853,5 +853,11 @@ I18N.load("tl",{
 "You changed this outfit.": "Binago mo ang outfit na ito.",
 "Back to suggestion": "Ibalik sa mungkahi",
 "Back to the suggested outfit.": "Ibinalik sa mungkahing outfit.",
-"Swapped in {a}.": "Pinalitan ng {a}."
+"Swapped in {a}.": "Pinalitan ng {a}.",
+"Tap a piece to see it or swap it": "I-tap ang isang piraso para makita o palitan",
+"Tap to see it": "I-tap para makita",
+"Swap for another": "Palitan ng iba",
+"Open item": "Buksan ang item",
+"Worn {0} time": "Naisuot nang {0} beses",
+"Worn {0} times": "Naisuot nang {0} beses"
 });

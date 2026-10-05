@@ -853,5 +853,11 @@ I18N.load("ko",{
 "You changed this outfit.": "이 코디를 바꿨어요.",
 "Back to suggestion": "추천으로 되돌리기",
 "Back to the suggested outfit.": "추천 코디로 되돌렸어요.",
-"Swapped in {a}.": "{a}(으)로 바꿨어요."
+"Swapped in {a}.": "{a}(으)로 바꿨어요.",
+"Tap a piece to see it or swap it": "아이템을 누르면 크게 보거나 바꿀 수 있어요",
+"Tap to see it": "눌러서 크게 보기",
+"Swap for another": "다른 아이템으로 바꾸기",
+"Open item": "아이템 열기",
+"Worn {0} time": "{0}번 입음",
+"Worn {0} times": "{0}번 입음"
 });

@@ -551,3 +551,11 @@ a.lirow{text-decoration:none;color:inherit}
 .editbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 0;padding:8px 10px;border-radius:12px;background:var(--warn-soft);color:var(--ink);font-size:13.5px}
 .editbar span{flex:1;min-width:140px}
 .editbar .btn svg{width:16px;height:16px;margin-right:6px}
+/* v1.24 piece preview */
+.piecebig{width:100%;aspect-ratio:1/1;max-height:56vh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
+.piecebig.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
+.piecebig img{width:100%;height:100%;object-fit:contain}
+.piecebig img.cut{padding:16px;box-sizing:border-box;filter:drop-shadow(0 6px 10px rgba(50,35,20,.22))}
+.piecebig svg.glyph{width:55%;height:60%}
+.sheet-actions .btn .swap{position:static;display:inline-grid;width:18px;height:18px;margin-right:6px;background:none;box-shadow:none}
+.sheet-actions .btn .swap svg{width:16px;height:16px}

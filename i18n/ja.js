@@ -853,5 +853,11 @@ I18N.load("ja",{
 "You changed this outfit.": "このコーデは変更されています。",
 "Back to suggestion": "おすすめに戻す",
 "Back to the suggested outfit.": "おすすめのコーデに戻しました。",
-"Swapped in {a}.": "{a}に変更しました。"
+"Swapped in {a}.": "{a}に変更しました。",
+"Tap a piece to see it or swap it": "アイテムをタップすると拡大・変更できます",
+"Tap to see it": "タップで拡大",
+"Swap for another": "別のアイテムに変更",
+"Open item": "アイテムを開く",
+"Worn {0} time": "着用{0}回",
+"Worn {0} times": "着用{0}回"
 });

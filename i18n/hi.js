@@ -853,5 +853,11 @@ I18N.load("hi",{
 "You changed this outfit.": "आपने यह आउटफ़िट बदला है।",
 "Back to suggestion": "सुझाव पर वापस जाएँ",
 "Back to the suggested outfit.": "सुझाए गए आउटफ़िट पर वापस।",
-"Swapped in {a}.": "{a} लगाया गया।"
+"Swapped in {a}.": "{a} लगाया गया।",
+"Tap a piece to see it or swap it": "देखने या बदलने के लिए किसी पीस पर टैप करें",
+"Tap to see it": "देखने के लिए टैप करें",
+"Swap for another": "दूसरा पीस लगाएँ",
+"Open item": "आइटम खोलें",
+"Worn {0} time": "{0} बार पहना गया",
+"Worn {0} times": "{0} बार पहना गया"
 });

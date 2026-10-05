@@ -853,5 +853,11 @@ I18N.load("fr",{
 "You changed this outfit.": "Vous avez modifié cette tenue.",
 "Back to suggestion": "Revenir à la suggestion",
 "Back to the suggested outfit.": "Retour à la tenue suggérée.",
-"Swapped in {a}.": "Remplacé par {a}."
+"Swapped in {a}.": "Remplacé par {a}.",
+"Tap a piece to see it or swap it": "Touchez une pièce pour la voir ou la changer",
+"Tap to see it": "Touchez pour la voir",
+"Swap for another": "Changer pour une autre",
+"Open item": "Ouvrir la pièce",
+"Worn {0} time": "Portée {0} fois",
+"Worn {0} times": "Portée {0} fois"
 });

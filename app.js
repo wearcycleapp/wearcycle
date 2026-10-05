@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.23.0';
+const APP_VERSION='1.24.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -499,7 +499,7 @@ const SWAP_ICON='<span class="swap" aria-hidden="true"><svg viewBox="0 0 24 24" 
 function tile(it,slot,i,size){
   if(!it) return '';
   const acc=slot.startsWith('acc');
-  return `<button class="tile ${size||''}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to swap">${acc?'':SWAP_ICON}<div class="vis">${visual(it)}</div><div class="cap"><span class="k">${esc(slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&size==='open')?'Top, worn open':CAT[it.cat].label)}</span>${esc(it.name)}</div></button>`;
+  return `<button class="tile ${size||''}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to see it">${acc?'':SWAP_ICON}<div class="vis">${visual(it)}</div><div class="cap"><span class="k">${esc(slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&size==='open')?'Top, worn open':CAT[it.cat].label)}</span>${esc(it.name)}</div></button>`;
 }
 const ADJ_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
 const UNDO_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
@@ -517,7 +517,7 @@ function heroCard(f,i){
   const visual=S.view==='board'?flatlay(o,i):`<div class="board2 n${core.length}">${core.map(([k,it])=>k==='bottom'&&beltK>=0?beltOn(it,o.acc[beltK],beltK,i):tile(it,k,i,k==='top'&&o.under?'open':'')).join('')}</div>
     ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}`;
   const tapbar=f.edited&&f.orig?`<div class="editbar"><span>You changed this outfit.</span><button class="btn sm" data-revert="${i}">${UNDO_ICON}Back to suggestion</button></div>`
-    :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to change it</span></p>`;
+    :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to see it or swap it</span></p>`;
   return `<article class="fit hero">${head}${visual}${tapbar}${nav}${heroMeta(f,i,o,canAddUnder)}</article>`;
 }
 // The outfit's color story: one swatch per main piece (in wearing order) and the harmony rule it follows.
@@ -571,7 +571,7 @@ function flCells(o){
 function flatlay(o,i){
   const miss=[];
   const parts=flCells(o).map(c=>{ if(needsCut(c.it)) miss.push(c.it);
-    return `<button class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%" data-swap="${i}" data-slot="${c.slot}" aria-label="${esc(CAT[c.it.cat].label)}: ${esc(c.it.name)}. Tap to swap">${flVisual(c.it)}</button>`; });
+    return `<button class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%" data-swap="${i}" data-slot="${c.slot}" aria-label="${esc(CAT[c.it.cat].label)}: ${esc(c.it.name)}. Tap to see it">${flVisual(c.it)}</button>`; });
   const note=miss.length&&!CUT.busy?`<div class="cutnote"><span>${miss.length} piece${miss.length>1?'s':''} still on the floor photo.</span><button class="btn sm primary" data-act="cutOutfit">Make cut-outs</button></div>`:(CUT.busy?'<div class="cutnote"><span>Making cut-outs… you can keep using the app.</span></div>':'');
   return `<div class="flatlay" data-swipe="1">${parts.join('')}</div>${note}`;
 }
@@ -581,7 +581,7 @@ function hydrateCuts(){ document.querySelectorAll('img[data-cut]').forEach(img=>
     else if(!u&&it&&it.cut&&S.online&&!CUT.missing.has(it.id)){ CUT.missing.add(it.id); if(ED&&ED.id===it.id) drawEditor(); } }); }); }
 // The belt is drawn as a band across the top of the trousers tile, where it is worn; it swaps on its own.
 function beltOn(bottom,belt,k,i){
-  return `<div class="withbelt">${tile(bottom,'bottom',i)}<button class="beltband" data-swap="${i}" data-slot="acc${k}" aria-label="Belt: ${esc(belt.name)}. Tap to swap"><span class="bimg">${visual(belt)}</span><span class="blab"><span class="k">Belt</span><span class="bn">${esc(belt.name)}</span></span></button></div>`;
+  return `<div class="withbelt">${tile(bottom,'bottom',i)}<button class="beltband" data-swap="${i}" data-slot="acc${k}" aria-label="Belt: ${esc(belt.name)}. Tap to see it"><span class="bimg">${visual(belt)}</span><span class="blab"><span class="k">Belt</span><span class="bn">${esc(belt.name)}</span></span></button></div>`;
 }
 function altRow(f,i){
   const o=hydrate(f.ids); const m=match(f);
@@ -1156,6 +1156,21 @@ function todayLine(){
 }
 // An edited outfit remembers the suggestion it came from, so it can go back.
 function editedFit(f,o){ const r=scoreOutfit(o,S.occ,ctx()); return {ids:idsOf(o),score:r.score,reasons:r.reasons,rank:f.rank,edited:true,orig:f.orig||f}; }
+// Tapping a piece shows it large with its name; swapping is an explicit button (it changes the outfit).
+function pieceAt(i,slot){ const f=S.fits[i]; if(!f) return null; const o=hydrate(f.ids); return slot.startsWith('acc')?o.acc[+slot.slice(3)]:o[slot]; }
+function openPiece(i,slot,again){
+  const it=pieceAt(i,slot); if(!it) return;
+  const big=it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}">`:(thumbSrc(it)?`<img id="pv-full" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}">`:glyph(it));
+  const worn=it.worn||0;
+  const html=sheetHead(esc(it.name))+`
+   <div class="piecebig ${it.cut?'studio':''}">${big}</div>
+   <p class="hint" style="margin:0">${esc(CAT[it.cat].label)} · ${COND[it.cond??4]} · ${worn===1?'Worn 1 time':'Worn '+worn+' times'}${it.lastWorn?' · '+'Last worn '+esc(it.lastWorn):''}</p>
+   ${it.notes?`<p class="hint" style="margin:0">${esc(it.notes)}</p>`:''}
+   <div class="row sheet-actions"><button class="btn primary" data-pswap="${i}" data-slot="${esc(slot)}">${SWAP_ICON}Swap for another</button>${isEx(it)?'':`<button class="btn" data-edit="${esc(it.id)}">Open item</button>`}</div>`;
+  if(again&&$('#sheetRoot').innerHTML){ const sh=document.querySelector('#sheetRoot .sheet'); if(sh) sh.innerHTML=html; } else openSheet(html);
+  setTimeout(hydrateCuts,0);
+  if(!it.cut&&it.photo&&!isEx(it)&&sb) fullPhotoUrl(it.photo).then(u=>{ const im=$('#pv-full'); if(u&&im) im.src=u; });
+}
 function swap(i,slot){
   const f=S.fits[i]; if(!f) return; const o=hydrate(f.ids);
   if(slot.startsWith('acc')){
@@ -1291,7 +1306,9 @@ document.addEventListener('click',async e=>{
   if(ds.cat){ S.cat=ds.cat; renderCloset(); return; }
   if(ds.edit){ closeSheet(); openEditor(ds.edit); return; }
   if(ds.wear){ wear(+ds.wear); return; }
-  if(ds.swap!==undefined){ swap(+ds.swap,ds.slot); return; }
+  if(ds.swap!==undefined){ openPiece(+ds.swap,ds.slot); return; }
+  if(ds.pswap!==undefined){ const k=+ds.pswap, sl=ds.slot; const before=pieceAt(k,sl); swap(k,sl); const after=pieceAt(k,sl);
+    if(after&&before&&after.id!==before.id) openPiece(k,sl,true); return; }
   if(ds.donate){ if(await patchItem(ds.donate,{status:'donated',donatedOn:todayISO()})) toast('Marked as donated'); return; }
   if(ds.restore){ if(await patchItem(ds.restore,{status:'active'})) toast('Back in your closet'); return; }
   if(ds.check){ openCheck(ds.check); return; }
