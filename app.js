@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.20.1';
+const APP_VERSION='1.20.2';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -236,7 +236,7 @@ async function cutUrl(it){
   const u=URL.createObjectURL(blob); CUT.urls.set(it.cut,u); return u;
 }
 async function makeCut(it,onp){
-  const src=await photoBlob(it.photo);
+  const src=it.photo?await photoBlob(it.photo):await (await fetch(it.thumb)).blob();
   const png=await removeBg(src,onp);
   const out=await trimAlpha(png);
   const ext=out.type==='image/webp'?'webp':'png';
@@ -248,7 +248,8 @@ async function makeCut(it,onp){
   return false;
 }
 // A saved cut-out whose file cannot be loaded counts as missing, so it can be made again.
-function needsCut(it){ return it&&!isEx(it)&&it.photo&&(!it.cut||CUT.missing.has(it.id))&&isActive(it); }
+// Pieces whose full photo never uploaded still have the small preview, so the cut-out falls back to that.
+function needsCut(it){ return it&&!isEx(it)&&(it.photo||/^data:image/.test(it.thumb||''))&&(!it.cut||CUT.missing.has(it.id))&&isActive(it); }
 /* Background job bar (above the tab bar): shows long-running work without blocking the screen. */
 function job(text,pct){ const r=$('#jobRoot'); if(!r) return; document.body.classList.toggle('hasjob',!!text); if(!text){ r.innerHTML=''; return; }
   r.innerHTML=`<div class="jobbar" role="status"><span class="spin" aria-hidden="true"></span><span class="jt">${esc(text)}</span>${pct!=null?`<span class="jp"><i style="width:${Math.max(4,Math.min(100,pct))}%"></i></span>`:''}</div>`; }
@@ -707,7 +708,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    <div class="photo"><div class="pv ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}">${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
      ${ED.blob?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
-     ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
+     ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
 </div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
