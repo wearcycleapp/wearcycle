@@ -522,3 +522,8 @@ a.lirow{text-decoration:none;color:inherit}
 .todaybar .greet{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .todaybar .greet small{overflow:hidden;text-overflow:ellipsis}
 @media (max-width:380px){.greet{font-size:21px}.wxpill{padding:0 10px;font-size:13px}.wxpill svg{width:18px;height:18px}}
+
+/* v1.15.2: cut-outs stay inside the closet card photo area (tall jeans used to spill over the text) */
+.card .vis{position:relative;overflow:hidden}
+.card .vis img{position:absolute;inset:0;width:100%;height:100%}
+.card .vis.studio img{object-fit:contain;padding:10px;box-sizing:border-box}
