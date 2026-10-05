@@ -533,3 +533,8 @@ a.lirow{text-decoration:none;color:inherit}
 .dresspanel label.row{font-size:14px}
 .field>label.row{flex-wrap:nowrap;align-items:flex-start;gap:10px;font-weight:500;font-size:13px;color:var(--muted)}
 .field>label.row input{margin-top:2px;flex:none}
+
+/* v1.18 drop-off finder */
+.li.dropoff{align-items:flex-start}
+.li.dropoff a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+.li.dropoff a.btn.primary{color:var(--accent-ink)}
