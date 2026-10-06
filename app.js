@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.25.0';
+const APP_VERSION='1.25.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -232,13 +232,29 @@ function bgWorker(){
 }
 function removeBg(blob,onp){ return new Promise((res,rej)=>{ const id=++CUT.n; CUT.pend[id]={res,rej,onp};
   bgWorker().postMessage({id,blob,publicPath:new URL('vendor/bgr-data/',location.href).href}); }); }
-// Trims the transparent margin, caps the size at 640 px and saves as WebP (PNG if WebP is unavailable).
+// Cleans and frames a cut-out: keeps the main piece (and parts at least 8% of its size, like the second shoe of a pair),
+// drops faint haze and stray specks left by background removal, trims to the piece, caps at 640 px, saves WebP (PNG fallback).
 async function trimAlpha(png){
   const src=await decode(png); const W=src.width,H=src.height;
   const cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d'); g.drawImage(src,0,0); if(src.close) src.close();
-  const a=g.getImageData(0,0,W,H).data; let x0=W,y0=H,x1=-1,y1=-1;
-  for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2){ if(a[(y*W+x)*4+3]>24){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  const img=g.getImageData(0,0,W,H), a=img.data;
+  const cs=Math.max(1,Math.ceil(Math.max(W,H)/200)), gw=Math.ceil(W/cs), gh=Math.ceil(H/cs), on=new Uint8Array(gw*gh);
+  for(let y=0;y<H;y+=1) for(let x=0;x<W;x+=1){ if(a[(y*W+x)*4+3]>140) on[((y/cs)|0)*gw+((x/cs)|0)]=1; }
+  const lab=new Int32Array(gw*gh), sizes=[0]; let n=0;
+  for(let i=0;i<on.length;i++){ if(!on[i]||lab[i]) continue; n++; let cnt=0; const st=[i]; lab[i]=n;
+    while(st.length){ const j=st.pop(); cnt++; const jx=j%gw, jy=(j/gw)|0;
+      for(let dy=-1;dy<=1;dy++) for(let dx=-1;dx<=1;dx++){ const X=jx+dx,Y=jy+dy; if(X<0||Y<0||X>=gw||Y>=gh) continue; const k=Y*gw+X; if(on[k]&&!lab[k]){ lab[k]=n; st.push(k); } } }
+    sizes.push(cnt); }
+  if(!n) throw new Error('Nothing was found in the photo');
+  const big=Math.max(...sizes), keep=sizes.map(c=>c>=big*0.08);
+  let x0=W,y0=H,x1=-1,y1=-1;
+  for(let y=0;y<H;y++) for(let x=0;x<W;x++){ const p=(y*W+x)*4; if(!a[p+3]) continue; const l=lab[((y/cs)|0)*gw+((x/cs)|0)];
+    // pixels outside kept parts (or faint haze) become transparent; nearby edge pixels of kept parts stay
+    let k=l&&keep[l]; if(!k&&a[p+3]>40){ const cx=(x/cs)|0, cy=(y/cs)|0; for(let dy=-1;dy<=1&&!k;dy++) for(let dx=-1;dx<=1&&!k;dx++){ const X=cx+dx,Y=cy+dy; if(X>=0&&Y>=0&&X<gw&&Y<gh){ const m=lab[Y*gw+X]; if(m&&keep[m]) k=true; } } }
+    if(!k||a[p+3]<=24){ a[p+3]=0; continue; }
+    if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; }
   if(x1<0) throw new Error('Nothing was found in the photo');
+  g.putImageData(img,0,0);
   const pad=Math.round(0.02*Math.max(x1-x0,y1-y0)); x0=Math.max(0,x0-pad); y0=Math.max(0,y0-pad); x1=Math.min(W-1,x1+pad); y1=Math.min(H-1,y1+pad);
   const w=x1-x0+1,h=y1-y0+1,k=Math.min(1,640/Math.max(w,h));
   const out=document.createElement('canvas'); out.width=Math.round(w*k); out.height=Math.round(h*k);
@@ -251,8 +267,10 @@ async function cutUrl(it){
   if(!it||!it.cut) return '';
   if(CUT.urls.has(it.cut)) return CUT.urls.get(it.cut);
   let blob=null;
-  try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(cutKey(it.cut)); if(hit) blob=await hit.blob();
-    if(!blob&&sb&&S.online){ const {data}=await sb.storage.from('photos').download(it.cut); if(data){ blob=data; c.put(cutKey(it.cut),new Response(data,{headers:{'Content-Type':data.type||'image/webp'}})); } } }catch(e){}
+  try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(cutKey(it.cut)); let clean=false;
+    if(hit){ blob=await hit.blob(); clean=hit.headers.get('X-Clean')==='2'; }
+    if(!blob&&sb&&S.online){ const {data}=await sb.storage.from('photos').download(it.cut); if(data) blob=data; }
+    if(blob&&!clean){ try{ blob=await trimAlpha(blob); }catch(e){} c.put(cutKey(it.cut),new Response(blob,{headers:{'Content-Type':blob.type||'image/webp','X-Clean':'2'}})); } }catch(e){}
   if(!blob) return '';
   const u=URL.createObjectURL(blob); CUT.urls.set(it.cut,u); return u;
 }
@@ -264,7 +282,7 @@ async function makeCut(it,onp){
   const path=UID+'/'+it.id+'-cut-'+Date.now().toString(36)+'.'+ext;
   const {error}=await sb.storage.from('photos').upload(path,out,{contentType:out.type,upsert:false});
   if(error) throw new Error(error.message||'upload failed');
-  try{ const c=await caches.open('wearcycle-cutouts'); await c.put(cutKey(path),new Response(out,{headers:{'Content-Type':out.type}})); }catch(e){}
+  try{ const c=await caches.open('wearcycle-cutouts'); await c.put(cutKey(path),new Response(out,{headers:{'Content-Type':out.type,'X-Clean':'2'}})); }catch(e){}
   const old=it.cut; if(await patchItem(it.id,{cut:path})){ if(old) removePhoto(old); return true; }
   return false;
 }
