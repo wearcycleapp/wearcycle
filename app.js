@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.25.1';
+const APP_VERSION='1.25.2';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -888,10 +888,34 @@ function themeSet(t){ try{ localStorage.setItem('wearcycle.theme',t); }catch(e){
 function styleSummary(){ const st=styleSet();
   if(st.pick.length) return st.pick.map(styleName).filter(Boolean).join(', ')+(st.work?' · '+'Work: '+styleName(st.work):'');
   const l=learned(); return l.ids.length?'Auto, learned from what you wear: '+l.ids.map(k=>STYLES[k].label).join(', '):'Auto: log '+Math.max(1,5-l.days)+' more outfits to learn it, or pick one.'; }
+// Small original flat-lay for each style card: the style's typical pieces in its usual colors and patterns.
+const STYLE_ART={
+  classic:[['outerwear','#1f2e57'],['bottom','#b3a477'],['shoes','#6a4a2e'],['top','#9bbfe5','',1]],
+  heritage:[['top','#b9322e','plaid'],['bottom','#4b6589'],['shoes','#6a4a2e'],['outerwear','#b07a4a','',1]],
+  minimal:[['top','#f6f6f3'],['bottom','#1c1d20'],['shoes','#f6f6f3']],
+  street:[['top','#8b9097'],['bottom','#1c1d20'],['shoes','#f6f6f3'],['hat','#1c1d20','',1]],
+  sporty:[['top','#2e8987'],['bottom','#1c1d20'],['shoes','#d6742a']],
+  preppy:[['top','#1f2e57','stripe'],['bottom','#b3a477'],['shoes','#6a4a2e'],['top','#e29ab0','',1]]};
+function styleArt(k){
+  const look=STYLES[k]?null:looks().find(l=>l.id===k); const hex=c=>COLORS[c]?COLORS[c].hex:'#9aa3ad';
+  const parts=STYLES[k]?STYLE_ART[k]:[['top',hex((look.colors||[])[0])],['bottom',hex((look.colors||[])[1]||'denim')],['shoes',hex((look.colors||[])[2]||'brown')]];
+  const id='sa-'+String(k).replace(/[^a-z0-9]/gi,'');
+  const fill=(c,pat)=>pat?`url(#${id}-${pat})`:c;
+  const at={top:'translate(2,6) scale(1.05)',bottom:'translate(50,2) scale(0.95)',shoes:'translate(52,58) scale(0.8)'};
+  const extra={outerwear:'translate(0,46) scale(0.75)',top:'translate(4,48) scale(0.7)',hat:'translate(6,52) scale(0.65)'};
+  const main=parts.filter(p=>!p[3]), side=parts.filter(p=>p[3]);
+  const g=(key,c,pat,tr)=>`<g transform="${tr}"><g fill="${fill(c,pat)}" stroke="rgba(120,130,140,.6)" stroke-width="1.2" stroke-linejoin="round">${GLYPH[key]}</g></g>`;
+  const mainG=main.map(([key,c,pat])=>g(key,c,pat,at[key==='outerwear'?'top':key]||at.top)).join('');
+  const sideG=side.map(([key,c,pat])=>g(key,c,pat,extra[key])).join('');
+  const pc=(parts.find(p=>p[2])||[])[1]||'#b9322e';
+  return `<svg class="styleart" viewBox="0 0 96 96" aria-hidden="true"><defs>
+    <pattern id="${id}-plaid" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="${pc}"/><path d="M0 2h8M2 0v8" stroke="#1c1d20" stroke-width="2" opacity=".75"/></pattern>
+    <pattern id="${id}-stripe" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#f6f6f3"/><rect width="6" height="3" fill="${pc}"/></pattern></defs>${sideG}${mainG}</svg>`;
+}
 function styleCount(k){ return allItems().filter(i=>isActive(i)&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&(STYLES[k]?pieceStyles(i).includes(k):WardrobeLogic.lookMatch(i,looks().find(l=>l.id===k)||{}))).length; }
 function openStyles(){
   const st=styleSet(); const l=learned();
-  const card=(k,label,desc,extra)=>`<button class="stylecard" data-style-tog="${esc(k)}" aria-pressed="${st.pick.includes(k)}"><b ${extra?'data-notr':''}>${esc(label)}</b><span ${extra?'data-notr':''}>${esc(desc)}</span><em>${styleCount(k)===1?'You own 1 piece':'You own '+styleCount(k)+' pieces'}</em>${extra||''}</button>`;
+  const card=(k,label,desc,extra)=>`<button class="stylecard" data-style-tog="${esc(k)}" aria-pressed="${st.pick.includes(k)}"><span class="shead"><b ${extra?'data-notr':''}>${esc(label)}</b>${styleArt(k)}</span><span ${extra?'data-notr':''}>${esc(desc)}</span><em>${styleCount(k)===1?'You own 1 piece':'You own '+styleCount(k)+' pieces'}</em>${extra||''}</button>`;
   openSheet(sheetHead('Your style')+`
    <p class="hint">Pick up to three. Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them. With none picked, Wearcycle learns from what you wear${l.ids.length?' (now: '+esc(l.ids.map(k=>STYLES[k].label).join(', '))+')':''}.</p>
    <div class="stylegrid">${STYLE_IDS.map(k=>card(k,STYLES[k].label,STYLES[k].desc)).join('')}
