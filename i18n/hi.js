@@ -957,5 +957,11 @@ I18N.load("hi",{
 "Saved {a}. Outfits now favor it.": "{a} सेव हो गया। अब आउटफ़िट में इसे तरजीह मिलेगी।",
 "Work: {a}": "काम: {a}",
 "You own {0} pieces": "आपके पास {0} पीस हैं",
-"You own {0} piece": "आपके पास {0} पीस है"
+"You own {0} piece": "आपके पास {0} पीस है",
+"Pick any styles you like.": "जितने चाहें उतने स्टाइल चुनें।",
+"Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them.": "काम और आउटिंग के आउटफ़िट में इन स्टाइल के पीस को तरजीह मिलती है, और ख़रीदारी टैब बताता है कि इन्हें बनाने के लिए क्या चाहिए।",
+"The fewer you pick, the more they shape the ranking.": "जितने कम स्टाइल चुनेंगे, रैंकिंग पर उनका असर उतना ज़्यादा होगा।",
+"With none picked, Wearcycle learns from what you wear.": "कोई न चुनें तो Wearcycle आपके पहनावे से सीखता है।",
+"With none picked, Wearcycle learns from what you wear (now: {a}).": "कोई न चुनें तो Wearcycle आपके पहनावे से सीखता है (अभी: {a})।",
+"Pick one or more, or keep it the same as above.": "एक या ज़्यादा चुनें, या ऊपर जैसा ही रखें।"
 });

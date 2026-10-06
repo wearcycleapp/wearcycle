@@ -957,5 +957,11 @@ I18N.load("fr",{
 "Saved {a}. Outfits now favor it.": "{a} enregistré. Les tenues le favorisent maintenant.",
 "Work: {a}": "Travail : {a}",
 "You own {0} pieces": "Vous avez {0} pièces",
-"You own {0} piece": "Vous avez {0} pièce"
+"You own {0} piece": "Vous avez {0} pièce",
+"Pick any styles you like.": "Choisissez les styles que vous voulez.",
+"Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them.": "Les tenues pour le travail et les sorties privilégient les pièces de ces styles, et l’onglet Achats montre ce qui les compléterait.",
+"The fewer you pick, the more they shape the ranking.": "Moins vous en choisissez, plus ils influencent le classement.",
+"With none picked, Wearcycle learns from what you wear.": "Si vous n’en choisissez aucun, Wearcycle apprend de ce que vous portez.",
+"With none picked, Wearcycle learns from what you wear (now: {a}).": "Si vous n’en choisissez aucun, Wearcycle apprend de ce que vous portez (actuellement : {a}).",
+"Pick one or more, or keep it the same as above.": "Choisissez-en un ou plusieurs, ou gardez les mêmes qu’en haut."
 });

@@ -571,8 +571,6 @@ a.lirow{text-decoration:none;color:inherit}
 .li.ess .mark{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:700;font-size:13px;background:var(--accent-soft);color:var(--muted)}
 .li.ess.have .mark{background:var(--good-soft);color:var(--good)}
 .li.ess:not(.have) b{font-weight:500}
-/* v1.25.2 style card illustrations */
-.stylecard .shead{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-bottom:2px}
-.stylecard .shead b{min-width:0;overflow-wrap:anywhere}
-.stylecard .styleart{width:62px;height:62px;flex:none;border-radius:10px;background:#ece8e2;padding:3px}
+/* v1.26 style card illustrations: a wide strip on top of each card */
+.stylecard .styleart{display:block;width:100%;height:auto;aspect-ratio:200/64;border-radius:10px;background:#ece8e2;margin-bottom:6px}
 .stylecard b{color:var(--ink)}

@@ -957,5 +957,11 @@ I18N.load("tl",{
 "Saved {a}. Outfits now favor it.": "Na-save ang {a}. Inuuna na ito ng mga outfit.",
 "Work: {a}": "Trabaho: {a}",
 "You own {0} pieces": "May {0} piraso ka",
-"You own {0} piece": "May {0} piraso ka"
+"You own {0} piece": "May {0} piraso ka",
+"Pick any styles you like.": "Pumili ng kahit anong estilong gusto mo.",
+"Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them.": "Inuuna ng mga outfit para sa trabaho at lakad ang mga piraso sa mga estilong ito, at ipinapakita ng tab na Mamili kung ano ang bubuo sa mga ito.",
+"The fewer you pick, the more they shape the ranking.": "Mas kaunti ang pipiliin mo, mas malaki ang epekto nila sa ranggo.",
+"With none picked, Wearcycle learns from what you wear.": "Kung wala kang pipiliin, matututo ang Wearcycle mula sa mga isinusuot mo.",
+"With none picked, Wearcycle learns from what you wear (now: {a}).": "Kung wala kang pipiliin, matututo ang Wearcycle mula sa mga isinusuot mo (ngayon: {a}).",
+"Pick one or more, or keep it the same as above.": "Pumili ng isa o higit pa, o panatilihing katulad ng nasa itaas."
 });

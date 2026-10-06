@@ -957,5 +957,11 @@ I18N.load("ja",{
 "Saved {a}. Outfits now favor it.": "{a}を保存しました。今後のコーデで優先されます。",
 "Work: {a}": "仕事：{a}",
 "You own {0} pieces": "{0}点所有",
-"You own {0} piece": "{0}点所有"
+"You own {0} piece": "{0}点所有",
+"Pick any styles you like.": "好きなスタイルをいくつでも選べます。",
+"Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them.": "仕事とお出かけのコーデでは、これらのスタイルのアイテムが優先され、「買い物」タブでそろえるべきアイテムを確認できます。",
+"The fewer you pick, the more they shape the ranking.": "選ぶ数が少ないほど、順位への影響が大きくなります。",
+"With none picked, Wearcycle learns from what you wear.": "何も選ばない場合、Wearcycleが着用記録から学習します。",
+"With none picked, Wearcycle learns from what you wear (now: {a}).": "何も選ばない場合、Wearcycleが着用記録から学習します（現在：{a}）。",
+"Pick one or more, or keep it the same as above.": "1つ以上選ぶか、上と同じままにします。"
 });

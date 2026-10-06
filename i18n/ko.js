@@ -957,5 +957,11 @@ I18N.load("ko",{
 "Saved {a}. Outfits now favor it.": "{a} 저장 완료. 이제 코디에 우선 반영돼요.",
 "Work: {a}": "출근: {a}",
 "You own {0} pieces": "아이템 {0}개 보유",
-"You own {0} piece": "아이템 {0}개 보유"
+"You own {0} piece": "아이템 {0}개 보유",
+"Pick any styles you like.": "원하는 스타일을 몇 개든 고르세요.",
+"Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them.": "출근과 외출 코디에서는 이 스타일의 아이템이 우선되고, 쇼핑 탭에서 이 스타일을 갖추는 데 필요한 아이템을 볼 수 있어요.",
+"The fewer you pick, the more they shape the ranking.": "적게 고를수록 순위에 더 크게 반영돼요.",
+"With none picked, Wearcycle learns from what you wear.": "아무것도 고르지 않으면 Wearcycle가 입은 옷을 보고 배워요.",
+"With none picked, Wearcycle learns from what you wear (now: {a}).": "아무것도 고르지 않으면 Wearcycle가 입은 옷을 보고 배워요(현재: {a}).",
+"Pick one or more, or keep it the same as above.": "하나 이상 고르거나 위와 같게 두세요."
 });

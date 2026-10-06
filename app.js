@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.25.2';
+const APP_VERSION='1.26.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -32,7 +32,7 @@ function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.se
    With nothing picked, the style is learned from what was worn (5+ logged outfits in 120 days), at half weight.
    Sport, home, chores and formal follow their own rules, so no style target applies there. */
 const STYLE_OCC=['work','out'];
-function styleSet(){ const st=S.settings.style||(S.settings.style={pick:[],work:''}); st.pick=st.pick||[]; return st; }
+function styleSet(){ const st=S.settings.style||(S.settings.style={pick:[],work:[]}); st.pick=st.pick||[]; if(!Array.isArray(st.work)) st.work=st.work?[st.work]:[]; return st; }
 function looks(){ return S.settings.looks||(S.settings.looks=[]); }
 function styleName(k){ return STYLES[k]?STYLES[k].label:(looks().find(l=>l.id===k)||{}).label||''; }
 function learned(){ return learnStyles(allItems().filter(isActive),allLog(),Date.now()); }
@@ -42,7 +42,7 @@ function styleTarget(occ){
   if(!STYLE_OCC.includes(occ)) return null;
   if(S.styleToday==='none') return null;
   if(S.styleToday) return targetOf([S.styleToday],1);
-  const st=styleSet(); const keys=occ==='work'&&st.work?[st.work]:st.pick;
+  const st=styleSet(); const keys=occ==='work'&&st.work.length?st.work:st.pick;
   if(keys.length) return targetOf(keys,1);
   const l=learned(); return l.ids.length?targetOf(l.ids,0.5,true):null;
 }
@@ -711,7 +711,7 @@ function renderShop(){
   const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
      ${list?list.map(x=>`<div class="idea"><b>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${esc(OCC[x.occasion]?.label||x.occasion||'')}${x.pairsWith&&x.pairsWith.length?' · pairs with '+esc(x.pairsWith.join(', ')):''}</span><span>${esc(x.why||'')}</span></div>`).join(''):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
-  const st=styleSet(); const lr=learned(); const keys=(st.pick.length?st.pick:lr.ids).slice(0,3);
+  const st=styleSet(); const lr=learned(); const keys=[...new Set(st.pick.length?st.pick.concat(st.work):lr.ids.concat(st.work))];
   const build=keys.length?keys.map(k=>{ const ess=STYLES[k]?essentials(k,items):essentials(looks().find(l=>l.id===k)||{},items); const have=ess.filter(e=>e.have).length;
       return `<div class="panel"><div class="panel-h"><h3 ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</h3><span class="count">${have} of ${ess.length}</span></div>
        ${ess.map(e=>`<div class="li ess ${e.have?'have':''}"><span class="mark">${e.have?'✓':'+'}</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b>${e.have?`<span data-notr>${esc(e.have.name)}</span>`:''}</div></div>`).join('')}</div>`; }).join('')
@@ -885,45 +885,40 @@ function themeSet(t){ try{ localStorage.setItem('wearcycle.theme',t); }catch(e){
   const r=document.documentElement; if(t==='auto') r.removeAttribute('data-theme'); else r.setAttribute('data-theme',t);
   const dark=t==='dark'||(t==='auto'&&matchMedia('(prefers-color-scheme: dark)').matches);
   document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{ m.removeAttribute('media'); m.setAttribute('content',dark?'#12161e':'#f6f4f1'); }); }
-function styleSummary(){ const st=styleSet();
-  if(st.pick.length) return st.pick.map(styleName).filter(Boolean).join(', ')+(st.work?' · '+'Work: '+styleName(st.work):'');
-  const l=learned(); return l.ids.length?'Auto, learned from what you wear: '+l.ids.map(k=>STYLES[k].label).join(', '):'Auto: log '+Math.max(1,5-l.days)+' more outfits to learn it, or pick one.'; }
+function styleSummary(){ const st=styleSet(), l=learned();
+  const main=st.pick.length?st.pick.map(styleName).filter(Boolean).join(', ')
+    :(l.ids.length?'Auto, learned from what you wear: '+l.ids.map(k=>STYLES[k].label).join(', '):'Auto: log '+Math.max(1,5-l.days)+' more outfits to learn it, or pick one.');
+  return main+(st.work.length?' · '+'Work: '+st.work.map(styleName).filter(Boolean).join(', '):''); }
 // Small original flat-lay for each style card: the style's typical pieces in its usual colors and patterns.
 const STYLE_ART={
-  classic:[['outerwear','#1f2e57'],['bottom','#b3a477'],['shoes','#6a4a2e'],['top','#9bbfe5','',1]],
-  heritage:[['top','#b9322e','plaid'],['bottom','#4b6589'],['shoes','#6a4a2e'],['outerwear','#b07a4a','',1]],
+  classic:[['outerwear','#1f2e57'],['top','#9bbfe5'],['bottom','#b3a477'],['shoes','#6a4a2e']],
+  heritage:[['outerwear','#b07a4a'],['top','#b9322e','plaid'],['bottom','#4b6589'],['shoes','#6a4a2e']],
   minimal:[['top','#f6f6f3'],['bottom','#1c1d20'],['shoes','#f6f6f3']],
-  street:[['top','#8b9097'],['bottom','#1c1d20'],['shoes','#f6f6f3'],['hat','#1c1d20','',1]],
+  street:[['hat','#1c1d20'],['top','#8b9097'],['bottom','#1c1d20'],['shoes','#f6f6f3']],
   sporty:[['top','#2e8987'],['bottom','#1c1d20'],['shoes','#d6742a']],
-  preppy:[['top','#1f2e57','stripe'],['bottom','#b3a477'],['shoes','#6a4a2e'],['top','#e29ab0','',1]]};
+  preppy:[['top','#e29ab0'],['top','#1f2e57','stripe'],['bottom','#b3a477'],['shoes','#6a4a2e']]};
 function styleArt(k){
   const look=STYLES[k]?null:looks().find(l=>l.id===k); const hex=c=>COLORS[c]?COLORS[c].hex:'#9aa3ad';
   const parts=STYLES[k]?STYLE_ART[k]:[['top',hex((look.colors||[])[0])],['bottom',hex((look.colors||[])[1]||'denim')],['shoes',hex((look.colors||[])[2]||'brown')]];
-  const id='sa-'+String(k).replace(/[^a-z0-9]/gi,'');
-  const fill=(c,pat)=>pat?`url(#${id}-${pat})`:c;
-  const at={top:'translate(2,6) scale(1.05)',bottom:'translate(50,2) scale(0.95)',shoes:'translate(52,58) scale(0.8)'};
-  const extra={outerwear:'translate(0,46) scale(0.75)',top:'translate(4,48) scale(0.7)',hat:'translate(6,52) scale(0.65)'};
-  const main=parts.filter(p=>!p[3]), side=parts.filter(p=>p[3]);
-  const g=(key,c,pat,tr)=>`<g transform="${tr}"><g fill="${fill(c,pat)}" stroke="rgba(120,130,140,.6)" stroke-width="1.2" stroke-linejoin="round">${GLYPH[key]}</g></g>`;
-  const mainG=main.map(([key,c,pat])=>g(key,c,pat,at[key==='outerwear'?'top':key]||at.top)).join('');
-  const sideG=side.map(([key,c,pat])=>g(key,c,pat,extra[key])).join('');
-  const pc=(parts.find(p=>p[2])||[])[1]||'#b9322e';
-  return `<svg class="styleart" viewBox="0 0 96 96" aria-hidden="true"><defs>
+  const id='sa-'+String(k).replace(/[^a-z0-9]/gi,''), pc=(parts.find(p=>p[2])||[])[1]||'#b9322e';
+  const gap=4, sz=Math.min(56,(192-(parts.length-1)*gap)/parts.length), total=parts.length*sz+(parts.length-1)*gap, x0=(200-total)/2;
+  const items=parts.map(([key,c,pat],n)=>`<g transform="translate(${x0+n*(sz+gap)},${(64-sz)/2}) scale(${sz/48})"><g fill="${pat?`url(#${id}-${pat})`:c}" stroke="rgba(120,130,140,.6)" stroke-width="1.2" stroke-linejoin="round">${GLYPH[key]}</g></g>`).join('');
+  return `<svg class="styleart" viewBox="0 0 200 64" aria-hidden="true"><defs>
     <pattern id="${id}-plaid" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="${pc}"/><path d="M0 2h8M2 0v8" stroke="#1c1d20" stroke-width="2" opacity=".75"/></pattern>
-    <pattern id="${id}-stripe" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#f6f6f3"/><rect width="6" height="3" fill="${pc}"/></pattern></defs>${sideG}${mainG}</svg>`;
+    <pattern id="${id}-stripe" width="6" height="6" patternUnits="userSpaceOnUse"><rect width="6" height="6" fill="#f6f6f3"/><rect width="6" height="3" fill="${pc}"/></pattern></defs>${items}</svg>`;
 }
 function styleCount(k){ return allItems().filter(i=>isActive(i)&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&(STYLES[k]?pieceStyles(i).includes(k):WardrobeLogic.lookMatch(i,looks().find(l=>l.id===k)||{}))).length; }
 function openStyles(){
   const st=styleSet(); const l=learned();
-  const card=(k,label,desc,extra)=>`<button class="stylecard" data-style-tog="${esc(k)}" aria-pressed="${st.pick.includes(k)}"><span class="shead"><b ${extra?'data-notr':''}>${esc(label)}</b>${styleArt(k)}</span><span ${extra?'data-notr':''}>${esc(desc)}</span><em>${styleCount(k)===1?'You own 1 piece':'You own '+styleCount(k)+' pieces'}</em>${extra||''}</button>`;
+  const card=(k,label,desc,extra)=>`<button class="stylecard" data-style-tog="${esc(k)}" aria-pressed="${st.pick.includes(k)}">${styleArt(k)}<b ${extra?'data-notr':''}>${esc(label)}</b><span ${extra?'data-notr':''}>${esc(desc)}</span><em>${styleCount(k)===1?'You own 1 piece':'You own '+styleCount(k)+' pieces'}</em>${extra||''}</button>`;
   openSheet(sheetHead('Your style')+`
-   <p class="hint">Pick up to three. Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them. With none picked, Wearcycle learns from what you wear${l.ids.length?' (now: '+esc(l.ids.map(k=>STYLES[k].label).join(', '))+')':''}.</p>
+   <p class="hint">Pick any styles you like. Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them. The fewer you pick, the more they shape the ranking. With none picked, Wearcycle learns from what you wear${l.ids.length?' (now: '+esc(l.ids.map(k=>STYLES[k].label).join(', '))+')':''}.</p>
    <div class="stylegrid">${STYLE_IDS.map(k=>card(k,STYLES[k].label,STYLES[k].desc)).join('')}
    ${looks().map(x=>card(x.id,x.label,(x.summary||'')+(x.pieces&&x.pieces.length?' · '+x.pieces.join(', '):''),`<span class="lookdel" role="button" data-look-del="${esc(x.id)}">Remove</span>`)).join('')}</div>
    <button class="btn" data-act="addLook">+ Add a look you like</button>
    <p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. Claude describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
-   <div class="field"><span class="lab">For work</span><div class="chips" style="flex-wrap:wrap">${[['','Same as above'],...STYLE_IDS.map(k=>[k,STYLES[k].label]),...looks().map(x=>[x.id,x.label])].map(([k,lb])=>`<button class="chip" data-style-work="${esc(k)}" aria-pressed="${(st.work||'')===k}" ${looks().some(x=>x.id===k)?'data-notr':''}>${esc(lb)}</button>`).join('')}</div>
-   <p class="hint">Your work dress code still decides which pieces count for Work.</p></div>`);
+   <div class="field"><span class="lab">For work</span><div class="chips" style="flex-wrap:wrap">${[['','Same as above'],...STYLE_IDS.map(k=>[k,STYLES[k].label]),...looks().map(x=>[x.id,x.label])].map(([k,lb])=>`<button class="chip" data-style-work="${esc(k)}" aria-pressed="${k?st.work.includes(k):!st.work.length}" ${looks().some(x=>x.id===k)?'data-notr':''}>${esc(lb)}</button>`).join('')}</div>
+   <p class="hint">Pick one or more, or keep it the same as above. Your work dress code still decides which pieces count for Work.</p></div>`);
 }
 async function addLook(){
   if(!canWrite()){ toast('You are offline. Claude needs a connection.'); return; }
@@ -932,7 +927,7 @@ async function addLook(){
   try{ const r=await callClaude('look',{image:await blobToBase64(await shrink(f,1024))}); job('');
     if(!r||r.error||!Array.isArray(r.pieces)){ toast(r&&r.error?String(r.error):'Claude could not find clothes in that photo.',5000); return; }
     const look={id:'look-'+uuid().slice(0,8),label:String(r.name||'My look').slice(0,40),base:(r.styles||[]).filter(x=>STYLES[x]).slice(0,3),pieces:r.pieces.map(String).slice(0,10),colors:(r.colors||[]).filter(c=>COLORS[c]).slice(0,5),summary:String(r.summary||'').slice(0,160)};
-    looks().push(look); const st=styleSet(); if(st.pick.length<3) st.pick.push(look.id);
+    looks().push(look); const st=styleSet(); st.pick.push(look.id);
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); toast('Saved '+look.label+'. Outfits now favor it.',5000);
   }catch(e){ job(''); toast(aiMsg(e),6000); }
 }
@@ -1347,7 +1342,7 @@ function goTab(tab){
 
 document.addEventListener('click',async e=>{
   const del=e.target.closest('[data-look-del]');
-  if(del){ const id=del.dataset.lookDel, st=styleSet(); S.settings.looks=looks().filter(l=>l.id!==id); st.pick=st.pick.filter(k=>k!==id); if(st.work===id) st.work='';
+  if(del){ const id=del.dataset.lookDel, st=styleSet(); S.settings.looks=looks().filter(l=>l.id!==id); st.pick=st.pick.filter(k=>k!==id); st.work=st.work.filter(k=>k!==id);
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); toast('Look removed.'); return; }
   const t=e.target.closest('button,[data-scrim]'); if(!t) return;
   if(Date.now()-swiped<400 && t.closest('[data-swipe]')) return;
@@ -1428,9 +1423,9 @@ document.addEventListener('click',async e=>{
   if(ds.themeSet){ themeSet(ds.themeSet); document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===ds.themeSet))); return; }
   if(ds.pstyle){ readEditorFields(); const cur=pieceStyles(ED.it); ED.it.styles=cur.includes(ds.pstyle)?cur.filter(x=>x!==ds.pstyle):cur.concat([ds.pstyle]); if(!ED.it.styles.length) ED.it.styles=[]; drawEditor(); return; }
   if(ds.stoday!==undefined){ S.styleToday=ds.stoday||undefined; S.fitKey=''; openAdjust(); renderOutfits(); return; }
-  if(ds.styleTog){ const st=styleSet(), k=ds.styleTog; if(st.pick.includes(k)) st.pick=st.pick.filter(x=>x!==k); else { if(st.pick.length>=3){ toast('Pick up to three styles.'); return; } st.pick.push(k); }
+  if(ds.styleTog){ const st=styleSet(), k=ds.styleTog; if(st.pick.includes(k)) st.pick=st.pick.filter(x=>x!==k); else st.pick.push(k);
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
-  if(ds.styleWork!==undefined){ styleSet().work=ds.styleWork; saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
+  if(ds.styleWork!==undefined){ const st=styleSet(), k=ds.styleWork; st.work=!k?[]:(st.work.includes(k)?st.work.filter(x=>x!==k):st.work.concat([k])); saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
   if(ds.fixed){ if(await patchItem(ds.fixed,{repair:undefined,repairNote:undefined,repairOn:undefined,repairOk:undefined})) toast('Fixed. Back in every outfit it suits.'); return; }
   if(ds.clean){ if(await patchItem(ds.clean,{dirty:false,wearsSinceWash:0,dirtyOn:undefined})){ if(!allItems().some(i=>i.dirty)) S.cat='all'; renderAll(); toast('Back in rotation.'); } return; }

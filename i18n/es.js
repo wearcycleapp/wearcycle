@@ -957,5 +957,11 @@ I18N.load("es",{
 "Saved {a}. Outfits now favor it.": "{a} guardado. Ahora los conjuntos lo priorizan.",
 "Work: {a}": "Trabajo: {a}",
 "You own {0} pieces": "Tienes {0} prendas",
-"You own {0} piece": "Tienes {0} prenda"
+"You own {0} piece": "Tienes {0} prenda",
+"Pick any styles you like.": "Elige los estilos que quieras.",
+"Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them.": "Los conjuntos para trabajo y salir priorizan prendas de estos estilos, y la pestaña Compras muestra qué los construiría.",
+"The fewer you pick, the more they shape the ranking.": "Cuantos menos elijas, más influyen en el orden.",
+"With none picked, Wearcycle learns from what you wear.": "Si no eliges ninguno, Wearcycle aprende de lo que usas.",
+"With none picked, Wearcycle learns from what you wear (now: {a}).": "Si no eliges ninguno, Wearcycle aprende de lo que usas (ahora: {a}).",
+"Pick one or more, or keep it the same as above.": "Elige uno o más, o deja lo mismo que arriba."
 });

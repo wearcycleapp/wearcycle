@@ -411,7 +411,9 @@ function styleScore(o,t){
   if(t&&(t.ids.length||(t.looks||[]).length)&&core.length){
     const m=core.filter(i=>fitsTarget(i,t)).length/core.length, w=t.weight||1;
     s+=(2*m-0.5)*w;
-    const name=t.label||STYLES[t.ids[0]]?.label||'';
+    // name the picked style (or look) this outfit fits best
+    const opts=t.ids.map(id=>[STYLES[id].label,core.filter(i=>pieceStyles(i).includes(id)).length]).concat((t.looks||[]).map(l=>[l.label,core.filter(i=>lookMatch(i,l)).length]));
+    const name=(opts.sort((x,y)=>y[1]-x[1])[0]||[t.label||''])[0];
     if(m>=0.75&&name) r.push({t:'Fits your '+name+' style'});
     else if(m<0.4&&name&&!t.learned) r.push({t:'Few '+name+' pieces'}); // informational: the score already reflects it
   }
