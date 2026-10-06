@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.26.0';
+const APP_VERSION='1.26.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -61,7 +61,7 @@ const GLYPH={
   top:'<path d="M17 7 8 12l3 8 4-2v22h18V18l4 2 3-8-9-5c-1 3-4 5-7 5s-6-2-7-5Z"/>',
   bottom:'<path d="M14 6h20l2 36h-9l-3-23-3 23h-9L14 6Z"/>',
   onepiece:'<path d="M19 6h10l-1 8 8 28H12l8-28-1-8Z"/>',
-  outerwear:'<path d="M17 6 8 12v30h11V20l5 6 5-6v22h11V12l-9-6-7 8-7-8Z"/>',
+  outerwear:'<path d="M17 5 9 9 5 38h6l3-15v21h20V23l3 15h6l-4-29-8-4-7 10-7-10Z"/><path d="M17 5l3 12 4-2M31 5l-3 12-4-2M24 15v29" fill="none" stroke-width="1.4"/><circle cx="26.5" cy="26" r="1.3"/><circle cx="26.5" cy="33" r="1.3"/>',
   shoes:'<path d="M5 32c0-7 2-13 4-15h8c0 4 4 7 9 8l12 3c4 1 5 5 5 7H5v-3Z"/>',
   socks:'<path d="M16 4h13v20l9 8c3 3 1 10-5 10-2 0-4-1-5-2L15 31c-2-2-3-4-3-7V8c0-2 2-4 4-4Z"/>',
   watch:'<rect x="19" y="4" width="10" height="40" rx="3"/><circle cx="24" cy="24" r="10"/>',
