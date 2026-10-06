@@ -967,5 +967,6 @@ I18N.load("ja",{
 "Rotate": "日替わり",
 "Any style": "指定なし",
 "Rotating styles: today is {a}.": "日替わりスタイル：今日は{a}です。",
-"Not enough {a} pieces for a full outfit, so these are the closest.": "{a}のアイテムが足りないため、近いコーデを表示しています。"
+"Not enough {a} pieces for a full outfit, so these are the closest.": "{a}のアイテムが足りないため、近いコーデを表示しています。",
+"All my styles": "自分のスタイルすべて"
 });

@@ -967,5 +967,6 @@ I18N.load("fr",{
 "Rotate": "Alterner",
 "Any style": "Tout style",
 "Rotating styles: today is {a}.": "Styles en alternance : aujourd’hui, {a}.",
-"Not enough {a} pieces for a full outfit, so these are the closest.": "Pas assez de pièces {a} pour une tenue complète; voici les plus proches."
+"Not enough {a} pieces for a full outfit, so these are the closest.": "Pas assez de pièces {a} pour une tenue complète; voici les plus proches.",
+"All my styles": "Tous mes styles"
 });

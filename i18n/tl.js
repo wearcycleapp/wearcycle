@@ -967,5 +967,6 @@ I18N.load("tl",{
 "Rotate": "Salitan",
 "Any style": "Kahit anong estilo",
 "Rotating styles: today is {a}.": "Salitan ng estilo: {a} ngayong araw.",
-"Not enough {a} pieces for a full outfit, so these are the closest.": "Kulang ang mga pirasong {a} para sa buong outfit, kaya ito ang pinakamalapit."
+"Not enough {a} pieces for a full outfit, so these are the closest.": "Kulang ang mga pirasong {a} para sa buong outfit, kaya ito ang pinakamalapit.",
+"All my styles": "Lahat ng estilo ko"
 });

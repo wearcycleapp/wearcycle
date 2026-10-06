@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.27.0';
+const APP_VERSION='1.27.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -40,17 +40,18 @@ function targetOf(keys,weight,isLearned){ const ids=keys.filter(k=>STYLES[k]), l
   if(!ids.length&&!lk.length) return null; return {ids,looks:lk,weight,learned:!!isLearned,label:styleName(keys[0])}; }
 function styleTarget(occ){
   if(!STYLE_OCC.includes(occ)) return null;
-  if(S.styleToday==='none') return null;
-  if(S.styleToday==='rotate'){ const k=rotateStyle(); return k?targetOf([k],2):null; }
-  if(S.styleToday) return targetOf([S.styleToday],2);
+  const today=dayStyles(occ);
+  if(today.length>=2&&S.styleToday==='rotate'){ const k=rotateStyle(); if(k) return targetOf([k],2); }
+  if(today.length>=2&&S.styleToday&&today.includes(S.styleToday)) return targetOf([S.styleToday],2);
   const st=styleSet(); const keys=occ==='work'&&st.work.length?st.work:st.pick;
   if(keys.length) return targetOf(keys,1);
   const l=learned(); return l.ids.length?targetOf(l.ids,0.5,true):null;
 }
 // Rotate: a different style each day. Candidates are your picked styles (2+), otherwise styles you own 3+ pieces of.
 // Picks the one worn least in the last 6 days (by each logged outfit's main style); ties follow the date.
-function rotateCands(){ const st=styleSet(); const p=st.pick.filter(k=>STYLES[k]||looks().some(l=>l.id===k));
-  if(p.length>=2) return p; const own=STYLE_IDS.filter(k=>styleCount(k)>=3); return own.length>=2?own:STYLE_IDS; }
+function dayStyles(occ){ const st=styleSet(); const list=(occ||S.occ)==='work'&&st.work.length?st.work:st.pick;
+  return list.filter(k=>STYLES[k]||looks().some(l=>l.id===k)); }
+function rotateCands(){ return dayStyles(); }
 function rotateStyle(){
   const c=rotateCands(); if(!c.length) return null; const now=Date.now(), used={};
   for(const e of allLog()){ if(WardrobeLogic.daysSince(e.date,now)>6) continue; const cnt={};
@@ -62,16 +63,16 @@ function rotateStyle(){
 }
 function setStyleToday(k){ S.styleToday=k||undefined; LS.set('wearcycle.styleDay',{day:todayISO(),k:k||''}); S.fitKey=''; renderOutfits(); }
 function renderStyleChips(){
-  const box=$('#styleChips'); if(!box) return;
-  if(!STYLE_OCC.includes(S.occ)){ box.hidden=true; box.innerHTML=''; const h=$('#styleHint'); if(h) h.hidden=true; return; } box.hidden=false;
-  const st=styleSet(); const order=[...st.pick.filter(k=>STYLES[k]),...STYLE_IDS.filter(k=>!st.pick.includes(k))];
-  const cur=S.styleToday||'';
-  const chip=(k,l,notr)=>`<button class="chip ${k===''?'':'sm2'}" data-stoday="${esc(k)}" aria-pressed="${cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`;
-  const hint=$('#styleHint'); if(hint){ const r=cur==='rotate'?rotateStyle():(STYLES[cur]?cur:null);
+  const box=$('#styleChips'); if(!box) return; const hint=$('#styleHint');
+  const keys=STYLE_OCC.includes(S.occ)?dayStyles():[];
+  if(keys.length<2){ box.hidden=true; box.innerHTML=''; if(hint) hint.hidden=true; return; } box.hidden=false;
+  const cur=S.styleToday==='rotate'||keys.includes(S.styleToday)?S.styleToday:'';
+  if(hint){ const r=cur==='rotate'?rotateStyle():(STYLES[cur]?cur:null);
     const top=S.fits&&S.fits[0]; const short=r&&STYLES[r]&&top&&top.style!==r;
     const msg=(cur==='rotate'&&r?'Rotating styles: today is '+styleName(r)+'.':'')+(short?(cur==='rotate'?' ':'')+'Not enough '+STYLES[r].label+' pieces for a full outfit, so these are the closest.':'');
     hint.hidden=!msg; hint.textContent=msg; }
-  box.innerHTML=`<span class="rowlab">Style</span>`+chip('','My style')+chip('rotate','Rotate')+order.map(k=>chip(k,STYLES[k].label)).join('')+looks().map(l=>chip(l.id,l.label,1)).join('')+chip('none','Any style');
+  const chip=(k,l,notr)=>`<button class="chip" data-stoday="${esc(k)}" aria-pressed="${cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`;
+  box.innerHTML=`<span class="rowlab">Style</span>`+chip('','All my styles')+chip('rotate','Rotate')+keys.map(k=>STYLES[k]?chip(k,STYLES[k].label):chip(k,styleName(k),1)).join('');
 }
 function styleKey(){ const t=styleTarget(S.occ); return t?(t.ids.join(',')+'/'+t.looks.map(l=>l.id).join(',')+'/'+t.weight):'-'; }
 function canWrite(){ return S.online && !!sb; }

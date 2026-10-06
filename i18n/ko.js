@@ -967,5 +967,6 @@ I18N.load("ko",{
 "Rotate": "번갈아",
 "Any style": "스타일 무관",
 "Rotating styles: today is {a}.": "번갈아 입기: 오늘은 {a}예요.",
-"Not enough {a} pieces for a full outfit, so these are the closest.": "{a} 아이템이 부족해서 가장 비슷한 코디를 보여 드려요."
+"Not enough {a} pieces for a full outfit, so these are the closest.": "{a} 아이템이 부족해서 가장 비슷한 코디를 보여 드려요.",
+"All my styles": "내 스타일 전체"
 });
