@@ -963,5 +963,9 @@ I18N.load("ja",{
 "The fewer you pick, the more they shape the ranking.": "選ぶ数が少ないほど、順位への影響が大きくなります。",
 "With none picked, Wearcycle learns from what you wear.": "何も選ばない場合、Wearcycleが着用記録から学習します。",
 "With none picked, Wearcycle learns from what you wear (now: {a}).": "何も選ばない場合、Wearcycleが着用記録から学習します（現在：{a}）。",
-"Pick one or more, or keep it the same as above.": "1つ以上選ぶか、上と同じままにします。"
+"Pick one or more, or keep it the same as above.": "1つ以上選ぶか、上と同じままにします。",
+"Rotate": "日替わり",
+"Any style": "指定なし",
+"Rotating styles: today is {a}.": "日替わりスタイル：今日は{a}です。",
+"Not enough {a} pieces for a full outfit, so these are the closest.": "{a}のアイテムが足りないため、近いコーデを表示しています。"
 });

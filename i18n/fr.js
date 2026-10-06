@@ -963,5 +963,9 @@ I18N.load("fr",{
 "The fewer you pick, the more they shape the ranking.": "Moins vous en choisissez, plus ils influencent le classement.",
 "With none picked, Wearcycle learns from what you wear.": "Si vous n’en choisissez aucun, Wearcycle apprend de ce que vous portez.",
 "With none picked, Wearcycle learns from what you wear (now: {a}).": "Si vous n’en choisissez aucun, Wearcycle apprend de ce que vous portez (actuellement : {a}).",
-"Pick one or more, or keep it the same as above.": "Choisissez-en un ou plusieurs, ou gardez les mêmes qu’en haut."
+"Pick one or more, or keep it the same as above.": "Choisissez-en un ou plusieurs, ou gardez les mêmes qu’en haut.",
+"Rotate": "Alterner",
+"Any style": "Tout style",
+"Rotating styles: today is {a}.": "Styles en alternance : aujourd’hui, {a}.",
+"Not enough {a} pieces for a full outfit, so these are the closest.": "Pas assez de pièces {a} pour une tenue complète; voici les plus proches."
 });

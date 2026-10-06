@@ -963,5 +963,9 @@ I18N.load("hi",{
 "The fewer you pick, the more they shape the ranking.": "जितने कम स्टाइल चुनेंगे, रैंकिंग पर उनका असर उतना ज़्यादा होगा।",
 "With none picked, Wearcycle learns from what you wear.": "कोई न चुनें तो Wearcycle आपके पहनावे से सीखता है।",
 "With none picked, Wearcycle learns from what you wear (now: {a}).": "कोई न चुनें तो Wearcycle आपके पहनावे से सीखता है (अभी: {a})।",
-"Pick one or more, or keep it the same as above.": "एक या ज़्यादा चुनें, या ऊपर जैसा ही रखें।"
+"Pick one or more, or keep it the same as above.": "एक या ज़्यादा चुनें, या ऊपर जैसा ही रखें।",
+"Rotate": "बदलते रहें",
+"Any style": "कोई भी स्टाइल",
+"Rotating styles: today is {a}.": "स्टाइल बदलते रहेंगे: आज {a} है।",
+"Not enough {a} pieces for a full outfit, so these are the closest.": "पूरे आउटफ़िट के लिए {a} पीस काफ़ी नहीं हैं, इसलिए ये सबसे क़रीबी हैं।"
 });

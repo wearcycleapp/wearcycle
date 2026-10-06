@@ -192,7 +192,7 @@ function scoreOutfit(o,occ,ctx){
   const belt=(o.acc||[]).find(a=>a.cat==='belt'); if(belt){ const bf=beltFit(o,belt,occ); reasons.push({t:bf.why,neg:bf.neg}); }
   const sock=(o.acc||[]).find(a=>a.cat==='socks'); if(sock){ const sf=sockFit(o,sock,occ,ctx.wx); if(sf.why) reasons.push({t:sf.why,neg:sf.neg}); }
   const st=styleScore(o,ctx.style); s+=st.s; reasons.push(...st.r);
-  return {score:Math.round(s*100)/100,reasons,style:outfitStyle(o)};
+  return {score:Math.round(s*100)/100,reasons,style:outfitStyle(o,ctx.style&&ctx.style.ids)};
 }
 
 /* ---------- socks ----------
@@ -420,8 +420,10 @@ function styleScore(o,t){
   return {s,r};
 }
 // The outfit's style: the style most of its main pieces share.
-function outfitStyle(o){ const core=coreOf(o).filter(i=>i!==o.under); if(!core.length) return null; const c={};
+function outfitStyle(o,prefer){ const core=coreOf(o).filter(i=>i!==o.under); if(!core.length) return null; const c={};
   for(const i of core) for(const x of pieceStyles(i)) c[x]=(c[x]||0)+1;
+  // the style you asked for wins when most pieces fit it
+  const need=Math.ceil(core.length/2); const p=(prefer||[]).filter(k=>(c[k]||0)>=need).sort((a,b)=>c[b]-c[a])[0]; if(p) return p;
   const best=Object.entries(c).filter(([k])=>k!=='minimal'||Object.keys(c).length===1).sort((a,b)=>b[1]-a[1])[0]||Object.entries(c).sort((a,b)=>b[1]-a[1])[0];
   return best&&best[1]>=Math.ceil(core.length/2)?best[0]:null; }
 // Learned from what was worn in the last 120 days (5+ logged outfits): styles making up at least a quarter of worn pieces.

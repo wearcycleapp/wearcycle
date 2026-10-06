@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.26.1';
+const APP_VERSION='1.27.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -41,10 +41,37 @@ function targetOf(keys,weight,isLearned){ const ids=keys.filter(k=>STYLES[k]), l
 function styleTarget(occ){
   if(!STYLE_OCC.includes(occ)) return null;
   if(S.styleToday==='none') return null;
-  if(S.styleToday) return targetOf([S.styleToday],1);
+  if(S.styleToday==='rotate'){ const k=rotateStyle(); return k?targetOf([k],2):null; }
+  if(S.styleToday) return targetOf([S.styleToday],2);
   const st=styleSet(); const keys=occ==='work'&&st.work.length?st.work:st.pick;
   if(keys.length) return targetOf(keys,1);
   const l=learned(); return l.ids.length?targetOf(l.ids,0.5,true):null;
+}
+// Rotate: a different style each day. Candidates are your picked styles (2+), otherwise styles you own 3+ pieces of.
+// Picks the one worn least in the last 6 days (by each logged outfit's main style); ties follow the date.
+function rotateCands(){ const st=styleSet(); const p=st.pick.filter(k=>STYLES[k]||looks().some(l=>l.id===k));
+  if(p.length>=2) return p; const own=STYLE_IDS.filter(k=>styleCount(k)>=3); return own.length>=2?own:STYLE_IDS; }
+function rotateStyle(){
+  const c=rotateCands(); if(!c.length) return null; const now=Date.now(), used={};
+  for(const e of allLog()){ if(WardrobeLogic.daysSince(e.date,now)>6) continue; const cnt={};
+    for(const id of e.items||[]){ const it=byId(id); if(!it||!['top','bottom','onepiece','outerwear','shoes'].includes(it.cat)) continue;
+      for(const k of c) if(STYLES[k]?pieceStyles(it).includes(k):WardrobeLogic.lookMatch(it,looks().find(l=>l.id===k)||{})) cnt[k]=(cnt[k]||0)+1; }
+    const top=Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0]; if(top) used[top[0]]=(used[top[0]]||0)+1; }
+  const day=Math.floor(now/864e5);
+  return c.map((k,i)=>[k,used[k]||0,(i-day%c.length+c.length)%c.length]).sort((a,b)=>a[1]-b[1]||a[2]-b[2])[0][0];
+}
+function setStyleToday(k){ S.styleToday=k||undefined; LS.set('wearcycle.styleDay',{day:todayISO(),k:k||''}); S.fitKey=''; renderOutfits(); }
+function renderStyleChips(){
+  const box=$('#styleChips'); if(!box) return;
+  if(!STYLE_OCC.includes(S.occ)){ box.hidden=true; box.innerHTML=''; const h=$('#styleHint'); if(h) h.hidden=true; return; } box.hidden=false;
+  const st=styleSet(); const order=[...st.pick.filter(k=>STYLES[k]),...STYLE_IDS.filter(k=>!st.pick.includes(k))];
+  const cur=S.styleToday||'';
+  const chip=(k,l,notr)=>`<button class="chip ${k===''?'':'sm2'}" data-stoday="${esc(k)}" aria-pressed="${cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`;
+  const hint=$('#styleHint'); if(hint){ const r=cur==='rotate'?rotateStyle():(STYLES[cur]?cur:null);
+    const top=S.fits&&S.fits[0]; const short=r&&STYLES[r]&&top&&top.style!==r;
+    const msg=(cur==='rotate'&&r?'Rotating styles: today is '+styleName(r)+'.':'')+(short?(cur==='rotate'?' ':'')+'Not enough '+STYLES[r].label+' pieces for a full outfit, so these are the closest.':'');
+    hint.hidden=!msg; hint.textContent=msg; }
+  box.innerHTML=`<span class="rowlab">Style</span>`+chip('','My style')+chip('rotate','Rotate')+order.map(k=>chip(k,STYLES[k].label)).join('')+looks().map(l=>chip(l.id,l.label,1)).join('')+chip('none','Any style');
 }
 function styleKey(){ const t=styleTarget(S.occ); return t?(t.ids.join(',')+'/'+t.looks.map(l=>l.id).join(',')+'/'+t.weight):'-'; }
 function canWrite(){ return S.online && !!sb; }
@@ -518,6 +545,7 @@ function renderOutfits(){
   if(!S.loaded){ box.innerHTML='<p class="hint">Loading your closet…</p>'; return; }
   if(!allItems().length){ box.innerHTML=emptyCloset(); return; }
   if(S.fitKey!==fitKeyNow()) regenerate();
+  renderStyleChips();
   if(!S.fits.length){
     const names={top:'tops',bottom:'bottoms',shoes:'shoes'}; const occ=OCC[S.occ];
     box.innerHTML=washCard()+`<div class="empty"><h3>Not enough for ${esc(occ.label.toLowerCase())} yet</h3>
@@ -549,7 +577,7 @@ function heroCard(f,i){
   const canAddUnder=o.top&&!o.under&&canOpen(o.top)&&swapCandidates(o,'under',allItems(),S.occ,ctx()).length;
   const beltK=o.bottom?o.acc.findIndex(a=>a.cat==='belt'):-1; const rest=o.acc.map((a,k)=>[a,k]).filter(([a,k])=>k!==beltK);
   const title=f.edited?'Your version':i===0?'Today’s pick':'Option '+f.rank;
-  const head=`<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}">${f.rank}</span><span class="rk-l"><b>${title}</b><span>${m.label}${f.style&&STYLES[f.style]?' · '+STYLES[f.style].label:''}${bars(m.bars)}</span></span>
+  const head=`<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}">${f.rank}</span><span class="rk-l"><b>${title}${f.style&&STYLES[f.style]?`<em class="stylepill">${STYLES[f.style].label}</em>`:''}</b><span>${m.label}${bars(m.bars)}</span></span>
     <button class="iconbtn" data-act="adjust" aria-label="Adjust: outer layer, view and palette">${ADJ_ICON}</button></header>`;
   const n=S.fits.length;
   const nav=n>1?`<div class="pager"><button class="pg" data-step-opt="-1" aria-label="Previous option">‹</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===i}"></button>`).join('')}<button class="pg" data-step-opt="1" aria-label="Next option">›</button></div>`:'';
@@ -584,8 +612,6 @@ function openAdjust(){
    <div class="field"><span class="lab">Outer layer</span><div class="chips">${[['auto','Auto'+(wxForScore()?(auto?' (on today)':' (off today)'):'')],['on','Always add'],['off','None']].map(([k,l])=>`<button class="chip" data-layer="${k}" aria-pressed="${S.layerMode===k}">${l}</button>`).join('')}</div>
      <p class="hint">Auto adds a jacket or coat when it is below 15° or wet.</p></div>
    <div class="field"><span class="lab">Show outfits as</span><div class="chips"><button class="chip" data-view="board" aria-pressed="${S.view==='board'}">Flat-lay</button><button class="chip" data-view="pieces" aria-pressed="${S.view!=='board'}">Pieces</button></div></div>
-   ${STYLE_OCC.includes(S.occ)?`<div class="field"><span class="lab">Style today</span><div class="chips" style="flex-wrap:wrap">${[['','My style'],...STYLE_IDS.map(k=>[k,STYLES[k].label]),...looks().map(l=>[l.id,l.label]),['none','No style']].map(([k,l])=>`<button class="chip" data-stoday="${esc(k)}" aria-pressed="${(S.styleToday||'')===k}" ${looks().some(x=>x.id===k)?'data-notr':''}>${esc(l)}</button>`).join('')}</div>
-     <p class="hint">${(()=>{ const t=styleTarget(S.occ); return t?(t.learned?'Learned from what you wear: ':'Now favoring: ')+esc([...t.ids.map(k=>STYLES[k].label),...t.looks.map(l=>l.label)].join(', '))+'.':'No style preference for today.'; })()}</p></div>`:''}
    <div class="field"><span class="lab">Style palette</span><button class="btn" data-act="palettes" style="justify-content:space-between">${esc(pal.label)}<span class="hint">Change</span></button></div>`);
 }
 /* Flat-lay board, laid out in wearing order so every outfit reads the same way:
@@ -1422,7 +1448,7 @@ document.addEventListener('click',async e=>{
   }
   if(ds.themeSet){ themeSet(ds.themeSet); document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===ds.themeSet))); return; }
   if(ds.pstyle){ readEditorFields(); const cur=pieceStyles(ED.it); ED.it.styles=cur.includes(ds.pstyle)?cur.filter(x=>x!==ds.pstyle):cur.concat([ds.pstyle]); if(!ED.it.styles.length) ED.it.styles=[]; drawEditor(); return; }
-  if(ds.stoday!==undefined){ S.styleToday=ds.stoday||undefined; S.fitKey=''; openAdjust(); renderOutfits(); return; }
+  if(ds.stoday!==undefined){ setStyleToday(ds.stoday); return; }
   if(ds.styleTog){ const st=styleSet(), k=ds.styleTog; if(st.pick.includes(k)) st.pick=st.pick.filter(x=>x!==k); else st.pick.push(k);
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.styleWork!==undefined){ const st=styleSet(), k=ds.styleWork; st.work=!k?[]:(st.work.includes(k)?st.work.filter(x=>x!==k):st.work.concat([k])); saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
@@ -1553,6 +1579,7 @@ async function askNewPassword(){
   $('#np-save').onclick=async()=>{ const v=$('#np').value; if(v.length<8){ $('#np-err').textContent='Use at least 8 characters.'; return; }
     const {error}=await sb.auth.updateUser({password:v}); if(error){ $('#np-err').textContent=error.message; return; } closeSheet(); toast('Password updated.'); };
 }
+function defaultStyleToday(){ const v=LS.get('wearcycle.styleDay'); return v&&v.day===todayISO()&&v.k?v.k:undefined; }
 function defaultOcc(){
   const saved=LS.get('wearcycle.occ'); if(saved&&saved.day===todayISO()&&OCC[saved.occ]) return saved.occ;
   const d=new Date(), wd=d.getDay(), h=d.getHours(), weekend=wd===0||wd===6;
@@ -1560,7 +1587,7 @@ function defaultOcc(){
 }
 function startApp(session){
   if(UID===session.user.id) return;
-  UID=session.user.id; EMAIL=session.user.email||''; S.occ=defaultOcc(); LS.set('wearcycle.known',true);
+  UID=session.user.id; EMAIL=session.user.email||''; S.occ=defaultOcc(); S.styleToday=defaultStyleToday(); LS.set('wearcycle.known',true);
   $('#gate').hidden=true; $('#appRoot').hidden=false;
   loadCache(); renderAll(); loadWeather();
   if(S.online) loadRemote(); else renderAll();

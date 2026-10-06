@@ -963,5 +963,9 @@ I18N.load("tl",{
 "The fewer you pick, the more they shape the ranking.": "Mas kaunti ang pipiliin mo, mas malaki ang epekto nila sa ranggo.",
 "With none picked, Wearcycle learns from what you wear.": "Kung wala kang pipiliin, matututo ang Wearcycle mula sa mga isinusuot mo.",
 "With none picked, Wearcycle learns from what you wear (now: {a}).": "Kung wala kang pipiliin, matututo ang Wearcycle mula sa mga isinusuot mo (ngayon: {a}).",
-"Pick one or more, or keep it the same as above.": "Pumili ng isa o higit pa, o panatilihing katulad ng nasa itaas."
+"Pick one or more, or keep it the same as above.": "Pumili ng isa o higit pa, o panatilihing katulad ng nasa itaas.",
+"Rotate": "Salitan",
+"Any style": "Kahit anong estilo",
+"Rotating styles: today is {a}.": "Salitan ng estilo: {a} ngayong araw.",
+"Not enough {a} pieces for a full outfit, so these are the closest.": "Kulang ang mga pirasong {a} para sa buong outfit, kaya ito ang pinakamalapit."
 });

@@ -963,5 +963,9 @@ I18N.load("ko",{
 "The fewer you pick, the more they shape the ranking.": "적게 고를수록 순위에 더 크게 반영돼요.",
 "With none picked, Wearcycle learns from what you wear.": "아무것도 고르지 않으면 Wearcycle가 입은 옷을 보고 배워요.",
 "With none picked, Wearcycle learns from what you wear (now: {a}).": "아무것도 고르지 않으면 Wearcycle가 입은 옷을 보고 배워요(현재: {a}).",
-"Pick one or more, or keep it the same as above.": "하나 이상 고르거나 위와 같게 두세요."
+"Pick one or more, or keep it the same as above.": "하나 이상 고르거나 위와 같게 두세요.",
+"Rotate": "번갈아",
+"Any style": "스타일 무관",
+"Rotating styles: today is {a}.": "번갈아 입기: 오늘은 {a}예요.",
+"Not enough {a} pieces for a full outfit, so these are the closest.": "{a} 아이템이 부족해서 가장 비슷한 코디를 보여 드려요."
 });
