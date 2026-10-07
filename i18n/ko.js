@@ -968,5 +968,9 @@ I18N.load("ko",{
 "Any style": "스타일 무관",
 "Rotating styles: today is {a}.": "번갈아 입기: 오늘은 {a}예요.",
 "Not enough {a} pieces for a full outfit, so these are the closest.": "{a} 아이템이 부족해서 가장 비슷한 코디를 보여 드려요.",
-"All my styles": "내 스타일 전체"
+"All my styles": "내 스타일 전체",
+"{a} under {b}": "{b} 안에 {a}",
+"Nothing under {a}; add a t-shirt if you have one": "{a} 안에 아무것도 없어요. 티셔츠가 있으면 추가하세요",
+"Worn over a t-shirt (hoodies, sweatshirts, sweaters)": "티셔츠 위에 입어요(후드티, 맨투맨, 스웨터)",
+"Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with “Worn over a t-shirt” in its More details.": "후드티, 맨투맨, 스웨터에는 티셔츠가 있으면 가장 잘 어울리는 티셔츠를 항상 안에 받쳐 입어요. 아이템마다 상세 정보의 ‘티셔츠 위에 입어요’에서 바꿀 수 있어요."
 });

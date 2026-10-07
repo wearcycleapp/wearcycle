@@ -124,6 +124,10 @@ const UNDER_RX=/\b(t-?shirts?|tees?|tank( top)?|henley|undershirt)\b/i;
 function canOpen(it){ if(typeof it.open==='boolean') return it.open; return it.cat==='top' && (it.formality??3)<=3 && OPEN_RX.test(String(it.name||'')); }
 function canUnder(it){ if(typeof it.inner==='boolean') return it.inner; return it.cat==='top' && !canOpen(it) && UNDER_RX.test(String(it.name||'')); }
 const LAYER_OCC=['work','out','home','chores'];
+// Pieces worn over a t-shirt (not open): hoodies, sweatshirts, sweaters and knits. The t-shirt is a base layer.
+const MID_RX=/\b(hoodies?|hooded|sweatshirts?|sweaters?|jumpers?|pullovers?|crew ?neck knit|knit sweater|fleece|quarter[- ]zip|half[- ]zip)\b/i;
+function needsBase(it){ if(!it||it.cat!=='top') return false; if(typeof it.base==='boolean') return it.base; return !canOpen(it) && !canUnder(it) && MID_RX.test(String(it.name||'')+' '+String(it.kind||'')); }
+function layeredOver(top){ return !!top&&(canOpen(top)||needsBase(top)); }
 
 /* ---------- weather ---------- */
 // Warmth 1 light, 2 medium, 3 warm. Set by Claude or the owner; otherwise guessed from the name.
@@ -154,8 +158,8 @@ function weatherScore(o,wx){
   }
   else if(lo<16 && o.bottom && warmthOf(o.bottom)===1){ s-=1; r.push({t:o.bottom.name+' may feel cool at '+deg(lo),neg:1}); }
   if(outer && warmthOf(outer)===3 && lo>=10){ s-=1.5; r.push({t:outer.name+' is heavy for '+deg(lo)+' to '+deg(hi),neg:1}); }
-  if(o.under && hi>=24){ s-=1; r.push({t:'Two layers on top at '+deg(hi),neg:1}); }
-  else if(o.under && lo<16) { s+=0.5; r.push({t:'The t-shirt adds warmth at '+deg(lo)}); }
+  if(o.under && canOpen(o.top||{}) && hi>=24){ s-=1; r.push({t:'Two layers on top at '+deg(hi),neg:1}); }
+  else if(o.under && canOpen(o.top||{}) && lo<16) { s+=0.5; r.push({t:'The t-shirt adds warmth at '+deg(lo)}); }
   if(hi>=24){
     const heavy=body.concat(outer?[outer]:[]).filter(i=>warmthOf(i)===3);
     if(heavy.length){ s-=2*heavy.length; r.push({t:heavy.map(i=>i.name).join(' and ')+' too warm for '+deg(hi),neg:1}); }
@@ -177,8 +181,10 @@ function scoreOutfit(o,occ,ctx){
     else { s-=0.5*out.length; reasons.push({t:[...new Set(out.map(i=>primary(i)))].join(' and ')+(new Set(out.map(i=>primary(i))).size>1?' are':' is')+' outside your '+PALETTES[ctx.palette].label.toLowerCase()+' palette',neg:true}); } }
   const h=harmony(core.map(primary).filter(Boolean)); s+=h.s; reasons.push({t:h.why,neg:!!h.neg});
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
-  if(o.under) reasons.push({t:'Open '+o.top.name+' over '+o.under.name+': a relaxed layered look'});
-  const f=core.filter(i=>i!==o.under).map(i=>i===o.top&&o.under?Math.min(2,i.formality??3):(i.formality??3)); const lo=Math.min(...f), hi=Math.max(...f);
+  if(o.under&&canOpen(o.top)) reasons.push({t:'Open '+o.top.name+' over '+o.under.name+': a relaxed layered look'});
+  else if(o.under) reasons.push({t:o.under.name+' under '+o.top.name});
+  else if(needsBase(o.top)) reasons.push({t:'Nothing under '+o.top.name+'; add a t-shirt if you have one'});
+  const f=core.filter(i=>i!==o.under).map(i=>i===o.top&&o.under&&canOpen(o.top)?Math.min(2,i.formality??3):(i.formality??3)); const lo=Math.min(...f), hi=Math.max(...f);
   if(hi-lo<=1){ s+=1; reasons.push({t:'Pieces sit at the same dress level'}); }
   else { s-=(hi-lo-1); reasons.push({t:'Dress levels clash ('+FORM[lo]+' with '+FORM[hi]+')',neg:true}); }
   const avg=f.reduce((a,b)=>a+b,0)/f.length, dev=Math.abs(avg-OCC[occ].formality);
@@ -285,7 +291,10 @@ function suggest(items,occ,ctx,opts){
   if(!shoes.length){ if(needShoes) missing.push('shoes'); shoes=[null]; } else if(!needShoes) shoes=shoes.concat([null]);
   if(missing.length) return {outfits:[],missing};
   // A t-shirt worn under an open shirt only needs to be in good enough condition; it need not be tagged for the occasion.
-  const unders=LAYER_OCC.includes(occ)?items.filter(i=>available(i,occ)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min):[];
+  const allUnders=items.filter(i=>available(i,occ)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min);
+  const unders=LAYER_OCC.includes(occ)?allUnders:[];
+  const bestUnder=(b,pool)=>{ let best=null,bs=-Infinity; for(const u of pool){ if(u.id===b.top.id) continue; const r=scoreOutfit(Object.assign({},b,{under:u}),occ,ctx).score; if(r>bs){bs=r;best=u;} } return best; };
+  for(const b of bases){ if(b.top && needsBase(b.top) && allUnders.length){ const u=bestUnder(b,allUnders); if(u) b.under=u; } }
   const bases2=bases.slice(); for(const b of bases){ if(b.top && canOpen(b.top) && unders.length){
     let best=null,bs=-Infinity; for(const u of unders){ const r=scoreOutfit(Object.assign({},b,{under:u}),occ,ctx).score; if(r>bs){bs=r;best=u;} }
     bases2.push(Object.assign({},b,{under:best})); } }
@@ -310,7 +319,7 @@ function swapCandidates(o,slot,items,occ,ctx){
   const cat=slot==='outer'?'outerwear':slot==='under'?'top':slot;
   let pool=eligible(items,occ).filter(i=>i.cat===cat);
   if(slot==='under') pool=items.filter(i=>available(i,occ)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min&&(!o.top||i.id!==o.top.id));
-  if(slot==='top'&&o.under) pool=pool.filter(i=>canOpen(i));
+  if(slot==='top'&&o.under) pool=pool.filter(i=>layeredOver(i));
   return pool.map(i=>{ const t=Object.assign({},o,{[slot]:i}); return {item:i,score:scoreOutfit(t,occ,ctx).score}; }).sort((a,b)=>b.score-a.score).map(x=>x.item);
 }
 
@@ -457,6 +466,6 @@ function essentials(styleOrLook,items){
 
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,canOpen,canUnder,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  warmthOf,rainReady,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

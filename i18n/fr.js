@@ -968,5 +968,9 @@ I18N.load("fr",{
 "Any style": "Tout style",
 "Rotating styles: today is {a}.": "Styles en alternance : aujourd’hui, {a}.",
 "Not enough {a} pieces for a full outfit, so these are the closest.": "Pas assez de pièces {a} pour une tenue complète; voici les plus proches.",
-"All my styles": "Tous mes styles"
+"All my styles": "Tous mes styles",
+"{a} under {b}": "{a} sous {b}",
+"Nothing under {a}; add a t-shirt if you have one": "Rien sous {a}; ajoutez un t-shirt si vous en avez un",
+"Worn over a t-shirt (hoodies, sweatshirts, sweaters)": "Se porte par-dessus un t-shirt (chandails à capuchon, cotons ouatés, chandails)",
+"Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with “Worn over a t-shirt” in its More details.": "Les chandails à capuchon, cotons ouatés et chandails ont toujours le t-shirt le mieux assorti en dessous, si vous en avez un. Modifiez-le pour chaque pièce avec « Se porte par-dessus un t-shirt » dans Plus de détails."
 });

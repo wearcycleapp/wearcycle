@@ -968,5 +968,9 @@ I18N.load("hi",{
 "Any style": "कोई भी स्टाइल",
 "Rotating styles: today is {a}.": "स्टाइल बदलते रहेंगे: आज {a} है।",
 "Not enough {a} pieces for a full outfit, so these are the closest.": "पूरे आउटफ़िट के लिए {a} पीस काफ़ी नहीं हैं, इसलिए ये सबसे क़रीबी हैं।",
-"All my styles": "मेरे सभी स्टाइल"
+"All my styles": "मेरे सभी स्टाइल",
+"{a} under {b}": "{b} के नीचे {a}",
+"Nothing under {a}; add a t-shirt if you have one": "{a} के नीचे कुछ नहीं; हो तो एक टी-शर्ट जोड़ें",
+"Worn over a t-shirt (hoodies, sweatshirts, sweaters)": "टी-शर्ट के ऊपर पहना जाता है (हुडी, स्वेटशर्ट, स्वेटर)",
+"Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with “Worn over a t-shirt” in its More details.": "हुडी, स्वेटशर्ट और स्वेटर के नीचे हमेशा सबसे मेल खाती टी-शर्ट रखी जाती है, अगर आपके पास हो। हर पीस के लिए इसे ज़्यादा जानकारी में “टी-शर्ट के ऊपर पहना जाता है” से बदलें।"
 });

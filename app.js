@@ -1,9 +1,9 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.27.1';
+const APP_VERSION='1.27.2';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
-  warmthOf,rainReady,wxFeel,wxWet,needsLayer,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -575,14 +575,14 @@ const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 function heroCard(f,i){
   const o=hydrate(f.ids); const m=match(f);
   const core=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom],o.shoes&&['shoes',o.shoes]].filter(Boolean);
-  const canAddUnder=o.top&&!o.under&&canOpen(o.top)&&swapCandidates(o,'under',allItems(),S.occ,ctx()).length;
+  const canAddUnder=o.top&&!o.under&&layeredOver(o.top)&&swapCandidates(o,'under',allItems(),S.occ,ctx()).length;
   const beltK=o.bottom?o.acc.findIndex(a=>a.cat==='belt'):-1; const rest=o.acc.map((a,k)=>[a,k]).filter(([a,k])=>k!==beltK);
   const title=f.edited?'Your version':i===0?'Today’s pick':'Option '+f.rank;
   const head=`<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}">${f.rank}</span><span class="rk-l"><b>${title}${f.style&&STYLES[f.style]?`<em class="stylepill">${STYLES[f.style].label}</em>`:''}</b><span>${m.label}${bars(m.bars)}</span></span>
     <button class="iconbtn" data-act="adjust" aria-label="Adjust: outer layer, view and palette">${ADJ_ICON}</button></header>`;
   const n=S.fits.length;
   const nav=n>1?`<div class="pager"><button class="pg" data-step-opt="-1" aria-label="Previous option">‹</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===i}"></button>`).join('')}<button class="pg" data-step-opt="1" aria-label="Next option">›</button></div>`:'';
-  const visual=S.view==='board'?flatlay(o,i):`<div class="board2 n${core.length}">${core.map(([k,it])=>k==='bottom'&&beltK>=0?beltOn(it,o.acc[beltK],beltK,i):tile(it,k,i,k==='top'&&o.under?'open':'')).join('')}</div>
+  const visual=S.view==='board'?flatlay(o,i):`<div class="board2 n${core.length}">${core.map(([k,it])=>k==='bottom'&&beltK>=0?beltOn(it,o.acc[beltK],beltK,i):tile(it,k,i,k==='top'&&o.under&&canOpen(o.top)?'open':'')).join('')}</div>
     ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}`;
   const tapbar=f.edited&&f.orig?`<div class="editbar"><span>You changed this outfit.</span><button class="btn sm" data-revert="${i}">${UNDO_ICON}Back to suggestion</button></div>`
     :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to see it or swap it</span></p>`;
@@ -797,7 +797,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    <div class="field"><span class="lab">Warmth · ${['','Light','Medium','Warm'][warmthOf(it)]}${it.warmth?'':' (guessed)'}</span><div class="seg s3">${[[1,'Light','tee, shorts'],[2,'Medium','shirt, jeans'],[3,'Warm','sweater, coat']].map(([n,l,e])=>`<button type="button" data-seg="warmth" data-v="${n}" aria-pressed="${warmthOf(it)===n}"><b>${l}</b><span>${e}</span></button>`).join('')}</div>
      ${['outerwear','shoes','hat','bag'].includes(it.cat)?`<label class="row hint"><input type="checkbox" id="f-rain" ${rainReady(it)?'checked':''}> Made for rain or snow</label>`:''}
      ${it.cat==='bottom'?`<label class="row hint"><input type="checkbox" id="f-belt" ${needsBelt(it)?'checked':''}> Worn with a belt</label>`:''}
-     ${it.cat==='top'?`<label class="row hint"><input type="checkbox" id="f-open" ${canOpen(it)?'checked':''}> Can be worn open over a t-shirt</label><label class="row hint"><input type="checkbox" id="f-inner" ${canUnder(it)?'checked':''}> Works as a t-shirt under an open shirt</label>`:''}</div>
+     ${it.cat==='top'?`<label class="row hint"><input type="checkbox" id="f-open" ${canOpen(it)?'checked':''}> Can be worn open over a t-shirt</label><label class="row hint"><input type="checkbox" id="f-inner" ${canUnder(it)?'checked':''}> Works as a t-shirt under an open shirt</label><label class="row hint"><input type="checkbox" id="f-base" ${needsBase(it)?'checked':''}> Worn over a t-shirt (hoodies, sweatshirts, sweaters)</label>`:''}</div>
    <div class="field"><span class="lab">Occasions</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>{ const rule=o.id==='work'||o.id==='formal'; const on=rule?effectiveOccasions(Object.assign({},it,{cond:Math.max(4,it.cond??4)})).includes(o.id):(it.occ||[]).includes(o.id); const ov=o.id==='work'?it.workOverride:o.id==='formal'?it.formalOverride:null;
        return `<button type="button" class="chip" data-occt="${o.id}" aria-pressed="${on}">${o.label}${rule&&!ov?' <span class="n">auto</span>':''}</button>`; }).join('')}</div>
      <p class="hint">Work follows your dress code (${esc(DRESS_CODES[(S.settings.work&&S.settings.work.code)||'casual'].label)}) and Formal takes suits, dress shirts and dress shoes. Tap either to override this piece.</p>
@@ -820,7 +820,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
    ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`);
 }
-function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-graphic')) it.graphic=g('#f-graphic').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(d) it.dirtyOn=todayISO(); else { it.wearsSinceWash=0; delete it.dirtyOn; } } } if(g('#f-repair')){ const r=g('#f-repair').checked; if(r&&!it.repair){ it.repair=true; it.repairOn=todayISO(); } if(!r&&it.repair){ delete it.repair; delete it.repairNote; delete it.repairOn; delete it.repairOk; } } if(it.repair&&g('#f-repairNote')) it.repairNote=g('#f-repairNote').value.trim(); if(it.repair&&g('#f-repairOk')) it.repairOk=g('#f-repairOk').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
+function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-graphic')) it.graphic=g('#f-graphic').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(d) it.dirtyOn=todayISO(); else { it.wearsSinceWash=0; delete it.dirtyOn; } } } if(g('#f-repair')){ const r=g('#f-repair').checked; if(r&&!it.repair){ it.repair=true; it.repairOn=todayISO(); } if(!r&&it.repair){ delete it.repair; delete it.repairNote; delete it.repairOn; delete it.repairOk; } } if(it.repair&&g('#f-repairNote')) it.repairNote=g('#f-repairNote').value.trim(); if(it.repair&&g('#f-repairOk')) it.repairOk=g('#f-repairOk').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-base')) it.base=g('#f-base').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
   try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null; }
   catch(e){ toast('That image could not be opened.'); }
@@ -1016,6 +1016,7 @@ function openSettings(){
 function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="rules helpdoc">    <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.</p>
     <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1 and open shoes lose 1.5. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
     <p><b>Layered look.</b> Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. Which items count is guessed from their names; change it in each item's editor.</p>
+    <p>Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with \u201cWorn over a t-shirt\u201d in its More details.</p>
     <p><b>Belts.</b> Jeans, chinos, trousers and casual shorts always get a belt if you own one, even one not tagged for the occasion; joggers and athletic wear don't. With leather dress shoes the belt should match them (black with black, brown with brown) and a casual belt is flagged; with sneakers any belt that keeps the colors in harmony. If your only belt doesn't fit the rule it is still shown, with a warning. Change whether a bottom takes a belt in its editor.</p>
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
     <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.</p>
@@ -1325,6 +1326,7 @@ function swap(i,slot){
       S.fits[i]=editedFit(f,o); renderOutfits(); if(o.under) toast('Swapped in '+o.under.name+'.'); return; }
     if(cands.length<2){ toast('No other '+CAT[slot==='outer'?'outerwear':slot].label.toLowerCase()+' for this occasion.'); return; }
     o[slot]=cands[(cands.findIndex(x=>x.id===cur.id)+1)%cands.length];
+    if(slot==='top'&&needsBase(o.top)&&!o.under){ const u=swapCandidates(o,'under',allItems(),S.occ,ctx())[0]; if(u) o.under=u; }
   }
   S.fits[i]=editedFit(f,o); renderOutfits();
   const now=slot.startsWith('acc')?o.acc[+slot.slice(3)]:o[slot]; if(now) toast('Swapped in '+now.name+'.');

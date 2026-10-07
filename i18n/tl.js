@@ -968,5 +968,9 @@ I18N.load("tl",{
 "Any style": "Kahit anong estilo",
 "Rotating styles: today is {a}.": "Salitan ng estilo: {a} ngayong araw.",
 "Not enough {a} pieces for a full outfit, so these are the closest.": "Kulang ang mga pirasong {a} para sa buong outfit, kaya ito ang pinakamalapit.",
-"All my styles": "Lahat ng estilo ko"
+"All my styles": "Lahat ng estilo ko",
+"{a} under {b}": "{a} sa ilalim ng {b}",
+"Nothing under {a}; add a t-shirt if you have one": "Walang nasa ilalim ng {a}; magdagdag ng t-shirt kung mayroon ka",
+"Worn over a t-shirt (hoodies, sweatshirts, sweaters)": "Isinusuot sa ibabaw ng t-shirt (hoodie, sweatshirt, sweater)",
+"Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with “Worn over a t-shirt” in its More details.": "Laging may pinakabagay na t-shirt sa ilalim ang mga hoodie, sweatshirt at sweater, kung mayroon ka. Baguhin ito sa bawat piraso gamit ang “Isinusuot sa ibabaw ng t-shirt” sa Iba pang detalye."
 });

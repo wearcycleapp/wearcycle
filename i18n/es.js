@@ -968,5 +968,9 @@ I18N.load("es",{
 "Any style": "Cualquier estilo",
 "Rotating styles: today is {a}.": "Estilos rotativos: hoy toca {a}.",
 "Not enough {a} pieces for a full outfit, so these are the closest.": "No hay suficientes prendas {a} para un conjunto completo; estas son las más cercanas.",
-"All my styles": "Todos mis estilos"
+"All my styles": "Todos mis estilos",
+"{a} under {b}": "{a} debajo de {b}",
+"Nothing under {a}; add a t-shirt if you have one": "Nada debajo de {a}; agrega una camiseta si tienes",
+"Worn over a t-shirt (hoodies, sweatshirts, sweaters)": "Se usa sobre una camiseta (sudaderas, suéteres)",
+"Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with “Worn over a t-shirt” in its More details.": "Las sudaderas y los suéteres siempre llevan debajo la camiseta que mejor combine, si tienes una. Cámbialo en cada prenda con “Se usa sobre una camiseta” en Más detalles."
 });

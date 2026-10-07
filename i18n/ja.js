@@ -968,5 +968,9 @@ I18N.load("ja",{
 "Any style": "指定なし",
 "Rotating styles: today is {a}.": "日替わりスタイル：今日は{a}です。",
 "Not enough {a} pieces for a full outfit, so these are the closest.": "{a}のアイテムが足りないため、近いコーデを表示しています。",
-"All my styles": "自分のスタイルすべて"
+"All my styles": "自分のスタイルすべて",
+"{a} under {b}": "{b}の下に{a}",
+"Nothing under {a}; add a t-shirt if you have one": "{a}の下に何もありません。Tシャツがあれば追加してください",
+"Worn over a t-shirt (hoodies, sweatshirts, sweaters)": "Tシャツの上に着る（パーカー、スウェット、セーター）",
+"Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with “Worn over a t-shirt” in its More details.": "パーカー、スウェット、セーターには、手持ちがあれば最も合うTシャツを必ず中に合わせます。アイテムごとに「詳細」の「Tシャツの上に着る」で変更できます。"
 });
