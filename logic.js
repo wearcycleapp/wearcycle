@@ -43,6 +43,8 @@ const IDEAS={
 const SHOP_COLORS={top:['white','lightblue','navy','grey','black','olive','burgundy'],bottom:['navy','khaki','grey','black','denim','olive','beige'],shoes:['brown','black','white','grey','navy']};
 const DAY=86400000;
 
+// Whole local days between a YYYY-MM-DD date and now (0 = today, 1 = yesterday).
+function localDayGap(iso,now){ if(!iso) return Infinity; const d=new Date(String(iso).slice(0,10)+'T00:00'); if(isNaN(d)) return Infinity; const t=new Date(now); t.setHours(0,0,0,0); return Math.round((t-d)/DAY); }
 function daysSince(iso,now){ if(!iso) return Infinity; const t=Date.parse(iso); return isNaN(t)?Infinity:Math.floor((now-t)/DAY); }
 function isActive(it){ return (it.status||'active')==='active'; }
 function primary(it){ return (it.colors||[])[0]; }
@@ -191,7 +193,11 @@ function scoreOutfit(o,occ,ctx){
   if(dev>1){ s-=(dev-1); reasons.push({t:(avg>target?'Dressier':'More casual')+' than usual for '+(ctx.theme?ctx.theme.label:OCC[occ].label.toLowerCase()),neg:true}); }
   const rest=core.map(i=>Math.min(14,daysSince(i.lastWorn,now)));
   const avgRest=rest.reduce((a,b)=>a+b,0)/rest.length; s+=avgRest/14*1.5;
-  if(rest.some(d=>d<=1)){ s-=1; reasons.push({t:'Includes something worn in the last day',neg:true}); }
+  // Shoes need a day to dry out between wears (NHS: do not wear the same shoes 2 days in a row), so a pair worn
+  // today or yesterday costs 3 points, enough to rotate to another pair that fits. Days count in local time.
+  const shoeGap=o.shoes?localDayGap(o.shoes.lastWorn,now):Infinity;
+  if(shoeGap<=1&&ctx.shoeAlt!==false){ s-=3; reasons.push({t:o.shoes.name+' were worn '+(shoeGap===0?'today':'yesterday')+'; give them a day to dry out',neg:true}); }
+  if(core.some((i,k)=>i!==o.shoes&&rest[k]<=1)){ s-=1; reasons.push({t:'Includes something worn in the last day',neg:true}); }
   else if(avgRest>=5) reasons.push({t:'Pieces have rested '+Math.round(avgRest)+(avgRest>=14?'+':'')+' days on average'});
   if(o.top && o.bottom && log.some(e=>daysSince(e.date,now)<7 && (e.items||[]).includes(o.top.id) && (e.items||[]).includes(o.bottom.id))){
     s-=2; reasons.push({t:'Same top and bottom already worn together this week',neg:true}); }
@@ -291,6 +297,7 @@ function suggest(items,occ,ctx,opts){
   const needShoes=occ!=='home'; let shoes=by.shoes||[];
   if(!shoes.length){ if(needShoes) missing.push('shoes'); shoes=[null]; } else if(!needShoes) shoes=shoes.concat([null]);
   if(missing.length) return {outfits:[],missing};
+  ctx=Object.assign({},ctx,{shoeAlt:shoes.filter(Boolean).length>1});
   // A t-shirt worn under an open shirt only needs to be in good enough condition; it need not be tagged for the occasion.
   const allUnders=items.filter(i=>available(i,occ)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min);
   const unders=LAYER_OCC.includes(occ)?allUnders:[];
@@ -305,9 +312,14 @@ function suggest(items,occ,ctx,opts){
   const scored=combos.map(c=>{
     if(outers.length){ let best=null,bs=-Infinity; for(const ow of outers){ const r=scoreOutfit(Object.assign({},c,{outer:ow}),occ,ctx); if(r.score>bs){bs=r.score;best=ow;} } c.outer=best; }
     const r=scoreOutfit(c,occ,ctx); return {o:c,...r,rank:r.score+(rnd()-.5)*jitter}; }).sort((a,b)=>b.rank-a.rank);
-  const out=[], seen=new Set();
-  for(const c of scored){
-    const key=c.o.onepiece?'o'+c.o.onepiece.id:c.o.top.id+'|'+c.o.bottom.id+(c.o.under?'|u':''); if(seen.has(key)) continue; seen.add(key);
+  // One outfit per top and bottom. Among its shoe options, a pair already used higher in the list loses 0.75 per use,
+  // so the list shows different shoes when another pair scores close to the best.
+  const keyOf=c=>c.o.onepiece?'o'+c.o.onepiece.id:c.o.top.id+'|'+c.o.bottom.id+(c.o.under?'|u':'');
+  const groups=new Map(); for(const c of scored){ const k=keyOf(c); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(c); }
+  const out=[], used=new Map();
+  for(const list of groups.values()){
+    let c=list[0], best=-Infinity; for(const x of list){ const v=x.rank-0.75*(x.o.shoes?(used.get(x.o.shoes.id)||0):0); if(v>best){best=v;c=x;} }
+    if(c.o.shoes) used.set(c.o.shoes.id,(used.get(c.o.shoes.id)||0)+1);
     const o=c.o;
     o.acc=pickAccessories(o,by,occ,ctx.now,ctx.wx,items);
     const r=scoreOutfit(o,occ,ctx); out.push({o,score:r.score,reasons:r.reasons,style:r.style});
@@ -542,7 +554,7 @@ function themeScore(o,th){
 }
 
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
-  daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
+  daysSince,localDayGap,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;
