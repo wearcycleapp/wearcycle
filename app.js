@@ -1,9 +1,9 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.27.2';
+const APP_VERSION='1.28.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
-  warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -26,7 +26,40 @@ const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:30,che
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
 function byId(id){ return S.items.get(id)||S.examples.find(e=>e.id===id); }
-function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',style:styleTarget(S.occ)}; }
+function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',style:styleTarget(S.occ),theme:themeNow()}; }
+/* ---------- seasons and holidays ---------- */
+// Country for country-specific holidays: the weather place's country, else the phone's time zone, else the language region.
+const CA_TZ=/^America\/(Toronto|Montreal|Vancouver|Edmonton|Winnipeg|Regina|Halifax|St_Johns|Moncton|Glace_Bay|Goose_Bay|Whitehorse|Dawson|Dawson_Creek|Fort_Nelson|Creston|Iqaluit|Rankin_Inlet|Resolute|Cambridge_Bay|Inuvik|Yellowknife|Swift_Current|Atikokan|Blanc-Sablon|Nipigon|Thunder_Bay|Rainy_River|Pangnirtung)$/;
+function region(){ const w=wxSet(); if(w.on&&w.cc) return String(w.cc).toUpperCase();
+  let tz=''; try{ tz=Intl.DateTimeFormat().resolvedOptions().timeZone||''; }catch(e){}
+  if(CA_TZ.test(tz)) return 'CA'; if(/^(America\/(New_York|Chicago|Denver|Phoenix|Los_Angeles|Anchorage|Detroit|Boise|Indiana|Kentucky)|Pacific\/Honolulu)/.test(tz)) return 'US';
+  return (((navigator.language||'').split('-')[1])||'').toUpperCase(); }
+function holidaysOff(){ return S.settings.holidaysOff||[]; }
+function holidaysSoon(days){ return upcomingHolidays(Date.now(),days,region(),holidaysOff()); }
+function themeNow(){ if(!S.theme) return null; const h=holidaysSoon(30).find(x=>x.id===S.theme); return h?{label:h.label,colors:h.colors,formality:h.formality}:null; }
+function fmtDay(iso){ return new Date(iso+'T12:00').toLocaleDateString(I18N.locale,{month:'long',day:'numeric'}); }
+function whenLabel(n){ return n===0?'Today':n===1?'Tomorrow':'In '+n+' days'; }
+function miniBoard(o){ const cells=flCells(o).map(c=>`<span class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${flVisual(c.it)}</span>`).join('');
+  return `<span class="flatlay mini">${cells}</span>`; }
+function comingUp(items){
+  const out=[]; const w=wxSet(); const plan=seasonPlan(Date.now(),wxOn()?w.lat:NaN);
+  if(plan){ const se=SEASONS[plan.id]; const list=seasonChecklist(plan.id,items); const ok=list.filter(x=>x.have.length>=x.need).length;
+    const rot=seasonRotation(plan.id,items,Date.now());
+    const prev=['work','out'].map(occ=>{ const c=Object.assign(ctx(),{wx:se.wx,style:styleTarget(occ),theme:null}); const r=suggest(items,occ,c,{n:1,layer:true}); const f=r.outfits[0];
+      return f?`<div class="seaprev">${miniBoard(f.o)}<span>${OCC[occ].label}</span></div>`:''; }).join('');
+    out.push(`<div><h3 style="margin:0">${plan.upcoming?'Coming up: '+se.label:se.label}</h3><p class="hint" style="margin:4px 0 0">${plan.upcoming?'Starts '+fmtDay(plan.start)+'. ':''}${se.desc}</p></div>
+     <div class="panel"><div class="panel-h"><h3>${'Ready for '+se.label.toLowerCase()+'?'}</h3><span class="count">${ok} of ${list.length}</span></div>
+      ${list.map(x=>{ const done=x.have.length>=x.need; return `<div class="li ess ${done?'have':''}"><span class="mark">${done?'✓':'+'}</span><div class="txt"><b>${x.label}</b><span>${x.have.length} of ${x.need}</span><span data-notr>${x.have.length?' · ':''}${esc(x.have.slice(0,3).map(i=>i.name).join(', '))}</span></div></div>`; }).join('')}
+      ${prev?`<div class="li"><div class="txt"><b>${'What you would wear on a '+se.label.toLowerCase()+' day'}</b><div class="seaprevs">${prev}</div></div></div>`:''}
+      ${rot.bringOut.length?`<div class="li"><div class="txt"><b>Bring these out</b><span data-notr>${esc(rot.bringOut.slice(0,8).map(i=>i.name).join(', '))}</span></div></div>`:''}
+      ${rot.store.length?`<div class="li"><div class="txt"><b>Can go into storage</b><span data-notr>${esc(rot.store.slice(0,8).map(i=>i.name).join(', '))}</span></div></div>`:''}
+     </div>`); }
+  const hs=holidaysSoon(30);
+  if(hs.length){ out.push(`<div class="panel"><div class="panel-h"><h3>Holidays coming up</h3><span class="count">${hs.length}</span></div>
+    ${hs.map(h=>{ const own=h.colors.map(c=>[c,items.filter(i=>isActive(i)&&primary(i)===c).length]);
+      return `<div class="li hol"><span class="sws">${h.colors.slice(0,4).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><div class="txt"><b>${h.label} · ${fmtDay(h.date)}</b><span>${h.tip}</span><span>${'You own: '+own.map(([c,n])=>I18N.t(c)+' '+n).join(' · ')}</span></div><div class="acts"><button class="btn sm" data-theme-go="${h.id}">See outfits</button></div></div>`; }).join('')}</div>`); }
+  return out.join('');
+}
 /* ---------- styles ----------
    Picked styles (up to three, plus looks learned from photos) guide Work and Going out; Work can have its own.
    With nothing picked, the style is learned from what was worn (5+ logged outfits in 120 days), at half weight.
@@ -483,7 +516,7 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
-function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+styleKey()+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 function regenerate(){
@@ -541,7 +574,9 @@ async function autoWash(){
 }
 function renderOutfits(){
   renderWx(); const g=$('#greet'); if(g) g.innerHTML=greeting();
-  $('#occChips').innerHTML=OCCASIONS.map(o=>`<button class="chip" data-occ="${o.id}" aria-pressed="${S.occ===o.id}">${o.label}</button>`).join('');
+  const hol=holidaysSoon(14); if(S.theme&&!themeNow()) S.theme=undefined;
+  $('#occChips').innerHTML=hol.map(h=>`<button class="chip holchip" data-theme-occ="${h.id}" aria-pressed="${S.theme===h.id}">${h.label}</button>`).join('')+OCCASIONS.map(o=>`<button class="chip" data-occ="${o.id}" aria-pressed="${S.occ===o.id&&!S.theme}">${o.label}</button>`).join('');
+  const th=$('#themeHint'); if(th){ const h=S.theme&&hol.concat(holidaysSoon(30)).find(x=>x.id===S.theme); th.hidden=!h; th.textContent=h?h.label+': '+whenLabel(h.inDays).toLowerCase()+'. '+h.tip:''; }
   const box=$('#fits');
   if(!S.loaded){ box.innerHTML='<p class="hint">Loading your closet…</p>'; return; }
   if(!allItems().length){ box.innerHTML=emptyCloset(); return; }
@@ -744,7 +779,7 @@ function renderShop(){
        ${ess.map(e=>`<div class="li ess ${e.have?'have':''}"><span class="mark">${e.have?'✓':'+'}</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b>${e.have?`<span data-notr>${esc(e.have.name)}</span>`:''}</div></div>`).join('')}</div>`; }).join('')
     :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
   const buildH=`<div><h3 style="margin:0">Build toward a style</h3><p class="hint" style="margin:4px 0 0">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p></div>`;
-  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+repl+blocks.join('')+(keys.length?buildH:'')+build+ai+'</div>';
+  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+comingUp(items)+repl+blocks.join('')+(keys.length?buildH:'')+build+ai+'</div>';
 }
 async function askIdeas(){
   if(ideasState.busy) return; ideasState={busy:true,list:ideasState.list,err:''}; renderShop();
@@ -752,7 +787,8 @@ async function askIdeas(){
   const closet=items.map(it=>`- ${it.name} | ${it.cat} | colors: ${(it.colors||[]).join('/')} | formality ${it.formality??3} | condition ${it.cond??4} | for: ${effectiveOccasions(it).join(', ')||'none'}`).join('\n').slice(0,12000);
   const gapText=gaps(items).map(x=>`${x.occ}: `+(x.needs.map(n=>`${n.slot} ${n.have}/${n.target}`).join(', ')||'covered')).join('\n');
   const st=styleSet(); const t=(st.pick.length?st.pick:learned().ids).map(k=>STYLES[k]?STYLES[k].label+' ('+STYLES[k].desc+')':(()=>{ const l=looks().find(x=>x.id===k); return l?l.label+' ('+l.pieces.join(', ')+')':''; })()).filter(Boolean).join('; ');
-  try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],err:Array.isArray(r)?'':'No ideas came back. Try again.'}; }
+  const pl=seasonPlan(Date.now(),wxOn()?wxSet().lat:NaN); const season=[pl?SEASONS[pl.id].label+' ('+SEASONS[pl.id].desc+')':'',...holidaysSoon(30).map(h=>h.label+' on '+h.date+' ('+h.tip+')')].filter(Boolean).join('; ');
+  try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t,season}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],err:Array.isArray(r)?'':'No ideas came back. Try again.'}; }
   catch(e){ ideasState={busy:false,list:ideasState.list,err:aiMsg(e)}; }
   renderShop();
 }
@@ -993,6 +1029,9 @@ function openSettings(){
    <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
    <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div>
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
+   <h3>Holidays</h3>
+   <div class="panel"><div class="li"><div class="txt"><b>Themed outfits</b><span>Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.</span>
+     <div class="chips" style="flex-wrap:wrap;margin-top:8px">${Object.entries(HOLIDAYS).filter(([k,h])=>!h.region||h.region===region()).map(([k,h])=>`<button type="button" class="chip" data-hol-tog="${k}" aria-pressed="${!holidaysOff().includes(k)}">${h.label}</button>`).join('')}</div></div></div></div>
    <h3>Work dress code</h3>
    <div class="panel dresspanel"><div class="li" style="flex-direction:column;align-items:stretch;gap:10px">
      <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}" aria-pressed="${((S.settings.work||{}).code||'casual')===k}">${esc(d.label)}</button>`).join('')}</div>
@@ -1390,7 +1429,9 @@ document.addEventListener('click',async e=>{
   if(ds.tab){ goTab(ds.tab); return; }
   if(ds.tabGo){ goTab(ds.tabGo); return; }
   if(ds.laundryGo){ S.cat='laundry'; goTab('closet'); renderCloset(); return; }
-  if(ds.occ){ S.occ=ds.occ; S.seed=0; LS.set('wearcycle.occ',{day:todayISO(),occ:S.occ}); renderOutfits(); return; }
+  if(ds.themeOcc||ds.themeGo){ S.theme=ds.themeOcc||ds.themeGo; S.occ='out'; S.seed=0; S.fitKey=''; if(ds.themeGo) goTab('outfits'); renderOutfits(); window.scrollTo(0,0); return; }
+  if(ds.holTog){ const off=holidaysOff(), k=ds.holTog; S.settings.holidaysOff=off.includes(k)?off.filter(x=>x!==k):off.concat([k]); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); const b_=document.querySelector(`[data-hol-tog="${k}"]`); if(b_) b_.setAttribute('aria-pressed',String(!S.settings.holidaysOff.includes(k))); return; }
+  if(ds.occ){ S.theme=undefined; S.occ=ds.occ; S.seed=0; LS.set('wearcycle.occ',{day:todayISO(),occ:S.occ}); renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
   if(DI&&$('#sheetRoot').innerHTML){
     if(ds.dday){ DI.day=ds.dday; drawDiary(); return; }

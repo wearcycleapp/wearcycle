@@ -584,3 +584,15 @@ a.lirow{text-decoration:none;color:inherit}
 #styleChips.scrollrow::-webkit-scrollbar{display:none}
 #styleChips .chip{flex:none}
 .rk-l b .stylepill{vertical-align:2px}
+/* v1.28 coming up: season and holidays */
+.seaprevs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.seaprev{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);text-align:center}
+.seaprev .flatlay.mini{width:100%}
+.li.hol{align-items:flex-start}
+.li.hol .txt b{white-space:normal}
+.li.hol .txt span{display:block}
+.li.ess .txt b{white-space:normal}
+.li.hol .sws{display:flex;flex:none;margin-top:3px}
+.li.hol .sws .sw{width:16px;height:16px;border-radius:50%;margin-right:-4px;border:2px solid var(--raised)}
+.chip.holchip{border-color:var(--coral)}
+.chip.holchip[aria-pressed="true"]{background:var(--coral);color:var(--coral-ink);border-color:var(--coral)}

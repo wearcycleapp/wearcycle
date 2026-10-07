@@ -187,8 +187,8 @@ function scoreOutfit(o,occ,ctx){
   const f=core.filter(i=>i!==o.under).map(i=>i===o.top&&o.under&&canOpen(o.top)?Math.min(2,i.formality??3):(i.formality??3)); const lo=Math.min(...f), hi=Math.max(...f);
   if(hi-lo<=1){ s+=1; reasons.push({t:'Pieces sit at the same dress level'}); }
   else { s-=(hi-lo-1); reasons.push({t:'Dress levels clash ('+FORM[lo]+' with '+FORM[hi]+')',neg:true}); }
-  const avg=f.reduce((a,b)=>a+b,0)/f.length, dev=Math.abs(avg-OCC[occ].formality);
-  if(dev>1){ s-=(dev-1); reasons.push({t:(avg>OCC[occ].formality?'Dressier':'More casual')+' than usual for '+OCC[occ].label.toLowerCase(),neg:true}); }
+  const target=ctx.theme?ctx.theme.formality:OCC[occ].formality; const avg=f.reduce((a,b)=>a+b,0)/f.length, dev=Math.abs(avg-target);
+  if(dev>1){ s-=(dev-1); reasons.push({t:(avg>target?'Dressier':'More casual')+' than usual for '+(ctx.theme?ctx.theme.label:OCC[occ].label.toLowerCase()),neg:true}); }
   const rest=core.map(i=>Math.min(14,daysSince(i.lastWorn,now)));
   const avgRest=rest.reduce((a,b)=>a+b,0)/rest.length; s+=avgRest/14*1.5;
   if(rest.some(d=>d<=1)){ s-=1; reasons.push({t:'Includes something worn in the last day',neg:true}); }
@@ -198,6 +198,7 @@ function scoreOutfit(o,occ,ctx){
   const belt=(o.acc||[]).find(a=>a.cat==='belt'); if(belt){ const bf=beltFit(o,belt,occ); reasons.push({t:bf.why,neg:bf.neg}); }
   const sock=(o.acc||[]).find(a=>a.cat==='socks'); if(sock){ const sf=sockFit(o,sock,occ,ctx.wx); if(sf.why) reasons.push({t:sf.why,neg:sf.neg}); }
   const st=styleScore(o,ctx.style); s+=st.s; reasons.push(...st.r);
+  if(ctx.theme){ const th=themeScore(o,ctx.theme); s+=th.s; reasons.push(...th.r); }
   return {score:Math.round(s*100)/100,reasons,style:outfitStyle(o,ctx.style&&ctx.style.ids)};
 }
 
@@ -464,8 +465,84 @@ function essentials(styleOrLook,items){
     if(it) used.add(it); return {label:p,have:it||null}; });
 }
 
+/* ---------- seasons ----------
+   Meteorological seasons (winter Dec-Feb in the north, flipped in the south). Near the equator (|lat| < 23.5)
+   seasons are not about temperature, so no season list is shown. The "typical day" temperatures are rough
+   temperate values (St. Catharines normals, Environment Canada 1981-2010: January 0 / -7 °C, July 27 / 17 °C). */
+const SEASONS={
+  winter:{label:'Winter',wx:{feelMin:-10,feelMax:-2,rain:false,snow:true,off:0},desc:'Typical winter day: about -10° to -2° feels-like, with snow.'},
+  spring:{label:'Spring',wx:{feelMin:3,feelMax:13,rain:true,snow:false,off:0},desc:'Typical spring day: about 3° to 13°, often wet.'},
+  summer:{label:'Summer',wx:{feelMin:17,feelMax:28,rain:false,snow:false,off:0},desc:'Typical summer day: about 17° to 28°.'},
+  fall:{label:'Fall',wx:{feelMin:4,feelMax:13,rain:true,snow:false,off:0},desc:'Typical fall day: about 4° to 13°, often wet.'}};
+const SEASON_ORDER=['winter','spring','summer','fall'];
+function seasonOf(month,south){ const n=month===11||month<=1?'winter':month<=4?'spring':month<=7?'summer':'fall'; return south?SEASON_ORDER[(SEASON_ORDER.indexOf(n)+2)%4]:n; }
+// The season to plan for: the next one when it starts within 60 days, otherwise the current one.
+function seasonPlan(now,lat){
+  if(isFinite(lat)&&Math.abs(lat)<23.5) return null;
+  const south=isFinite(lat)&&lat<0, d=new Date(now), m=d.getMonth();
+  const cur=seasonOf(m,south), next=seasonOf((m+3)%12,south), y=d.getFullYear();
+  const firstM=[2,5,8,11].find(x=>x>m)??2; const start=new Date(firstM>m?y:y+1,firstM,1); // first month of the next meteorological season
+  const days=Math.round((start-d)/864e5);
+  return days<=60?{id:next,current:cur,startsIn:days,start:start.toISOString().slice(0,10),upcoming:true}:{id:cur,current:cur,startsIn:0,upcoming:false};
+}
+const isShorts=i=>/\bshorts?\b/i.test(String(i.name||''));
+const SEASON_NEEDS={
+  winter:[['Warm coat or parka',1,i=>i.cat==='outerwear'&&warmthOf(i)===3],['Waterproof or insulated boots',1,i=>i.cat==='shoes'&&(rainReady(i)||/boot/i.test(i.name||''))],
+    ['Warm knits, hoodies or fleeces',3,i=>i.cat==='top'&&warmthOf(i)===3],['Warm trousers or jeans',3,i=>i.cat==='bottom'&&warmthOf(i)>=2&&!isShorts(i)],
+    ['Hat or beanie',1,i=>i.cat==='hat'],['Scarf',1,i=>/scarf|snood/i.test(i.name||'')],['Gloves or mittens',1,i=>/glove|mitt/i.test(i.name||'')],['Warm socks',2,i=>i.cat==='socks'&&/wool|merino|thermal|warm|hiking/i.test(i.name||'')]],
+  spring:[['Rain jacket or shell',1,i=>i.cat==='outerwear'&&rainReady(i)],['Light jacket',1,i=>i.cat==='outerwear'&&warmthOf(i)<=2],['Mid layers (knits, overshirts)',3,i=>i.cat==='top'&&warmthOf(i)>=2],
+    ['Shoes for wet days',1,i=>i.cat==='shoes'&&(rainReady(i)||/boot/i.test(i.name||''))],['Long trousers or jeans',3,i=>i.cat==='bottom'&&!isShorts(i)]],
+  summer:[['Light tops (tees, polos, linen)',5,i=>i.cat==='top'&&warmthOf(i)===1],['Shorts',2,i=>i.cat==='bottom'&&isShorts(i)],['Light trousers (linen, chinos)',1,i=>i.cat==='bottom'&&!isShorts(i)&&warmthOf(i)===1],
+    ['Breathable shoes (sneakers, loafers, sandals)',1,i=>i.cat==='shoes'&&warmthOf(i)<=2&&!/boot/i.test(i.name||'')],['Cap or sun hat',1,i=>i.cat==='hat']],
+  fall:[['Rain jacket or shell',1,i=>i.cat==='outerwear'&&rainReady(i)],['Warm jacket',1,i=>i.cat==='outerwear'&&warmthOf(i)>=2],['Knits, hoodies or overshirts',3,i=>i.cat==='top'&&warmthOf(i)>=2],
+    ['Shoes for wet days',1,i=>i.cat==='shoes'&&(rainReady(i)||/boot/i.test(i.name||''))],['Long trousers or jeans',3,i=>i.cat==='bottom'&&!isShorts(i)]]};
+function seasonChecklist(id,items){ const own=items.filter(i=>isActive(i)&&(i.cond??4)>=2);
+  return (SEASON_NEEDS[id]||[]).map(([label,need,test])=>{ const have=own.filter(test); return {label,need,have}; }); }
+// Pieces to bring out for the coming season (fit it, not worn for 4+ months) and pieces that can be stored.
+function seasonRotation(id,items,now){
+  const own=items.filter(i=>isActive(i)&&GARMENT.concat(['hat']).includes(i.cat));
+  const fits={winter:i=>warmthOf(i)===3||(i.cat==='shoes'&&/boot/i.test(i.name||'')),summer:i=>warmthOf(i)===1||isShorts(i),spring:i=>rainReady(i)||warmthOf(i)===2,fall:i=>rainReady(i)||warmthOf(i)>=2}[id]||(()=>false);
+  const off={winter:i=>isShorts(i)||/sandal|flip|slide|linen|tank/i.test(i.name||''),summer:i=>warmthOf(i)===3&&['outerwear','top'].includes(i.cat),spring:()=>false,fall:i=>/sandal|flip|slide|tank/i.test(i.name||'')}[id]||(()=>false);
+  return {bringOut:own.filter(i=>fits(i)&&daysSince(i.lastWorn||i.created,now)>=120),store:own.filter(i=>off(i)&&!fits(i))};
+}
+
+/* ---------- holidays ----------
+   Themed looks for upcoming holidays: color sets and a dress level. Dates: fixed, nth weekday, or tables checked
+   against published calendars (Lunar New Year, Diwali); Easter by the Gregorian computus. */
+const nthWeekday=(y,m,wd,n)=>{ const d=new Date(y,m,1); let c=0; for(;;){ if(d.getDay()===wd&&++c===n) return d; d.setDate(d.getDate()+1); } };
+function easterDate(y){ const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1; return new Date(y,mo-1,da); }
+const TABLE=(t)=>y=>t[y]?new Date(t[y]+'T12:00'):null;
+const HOLIDAYS={
+  halloween:{label:'Halloween',colors:['black','orange','purple','green'],formality:2,date:y=>new Date(y,9,31),tip:'Black base with an orange or purple accent.'},
+  thanksgiving_ca:{label:'Thanksgiving (Canada)',colors:['brown','orange','burgundy','olive','beige','khaki'],formality:3,date:y=>nthWeekday(y,9,1,2),region:'CA',tip:'Warm earth tones and a cozy knit.'},
+  thanksgiving_us:{label:'Thanksgiving (US)',colors:['brown','orange','burgundy','olive','beige','khaki'],formality:3,date:y=>nthWeekday(y,10,4,4),region:'US',tip:'Warm earth tones and a cozy knit.'},
+  diwali:{label:'Diwali',colors:['orange','yellow','red','pink','purple','green'],formality:4,date:TABLE({2026:'2026-11-08',2027:'2027-10-29',2028:'2028-10-17'}),tip:'Bright, festive colors, dressed up.'},
+  christmas:{label:'Christmas',colors:['red','green','white','burgundy'],formality:3,date:y=>new Date(y,11,25),tip:'Red or green, ideally with a festive knit.'},
+  nye:{label:'New Year’s Eve',colors:['black','white','navy','burgundy'],formality:4,date:y=>new Date(y,11,31),tip:'Dress up: dark tones and a sharp layer.'},
+  lunar:{label:'Lunar New Year',colors:['red','burgundy','yellow'],formality:3,date:TABLE({2027:'2027-02-06',2028:'2028-01-26'}),tip:'Red is the traditional color for luck.'},
+  valentines:{label:'Valentine’s Day',colors:['red','pink','burgundy','white'],formality:3,date:y=>new Date(y,1,14),tip:'A touch of red or pink.'},
+  stpatricks:{label:'St. Patrick’s Day',colors:['green','olive','teal'],formality:2,date:y=>new Date(y,2,17),tip:'Wear something green.'},
+  easter:{label:'Easter',colors:['pink','lightblue','yellow','white','beige'],formality:3,date:easterDate,tip:'Light, soft colors.'},
+  canada_day:{label:'Canada Day',colors:['red','white'],formality:2,date:y=>new Date(y,6,1),region:'CA',tip:'Red and white.'},
+  july4:{label:'Independence Day (US)',colors:['red','white','navy','blue'],formality:2,date:y=>new Date(y,6,4),region:'US',tip:'Red, white and blue.'}};
+// Holidays within the next `days` days (including today), soonest first.
+function upcomingHolidays(now,days,region,off){
+  const t0=new Date(now); t0.setHours(0,0,0,0); const out=[];
+  for(const [id,h] of Object.entries(HOLIDAYS)){ if((off||[]).includes(id)) continue; if(h.region&&region&&h.region!==region) continue;
+    for(const y of [t0.getFullYear(),t0.getFullYear()+1]){ const d=h.date(y); if(!d) continue; d.setHours(0,0,0,0);
+      const n=Math.round((d-t0)/864e5); if(n>=0&&n<=days){ out.push({id,label:h.label,colors:h.colors,formality:h.formality,tip:h.tip,date:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),inDays:n}); break; } } }
+  return out.sort((a,b)=>a.inDays-b.inDays);
+}
+function themeScore(o,th){
+  const core=coreOf(o).filter(i=>i!==o.under), acc=(o.acc||[]);
+  const hit=core.concat(acc).filter(i=>th.colors.includes(primary(i))); const r=[]; let s=0;
+  if(hit.length){ s+=1+Math.min(2,(hit.length-1)*0.6); r.push({t:th.label+' colors: '+[...new Set(hit.map(primary))].join(', ')}); }
+  else { s-=1.5; r.push({t:'No '+th.label+' colors yet: '+th.colors.slice(0,3).join(', '),neg:1}); }
+  return {s,r};
+}
+
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
   daysSince,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  warmthOf,rainReady,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;
