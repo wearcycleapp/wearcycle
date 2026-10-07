@@ -1104,5 +1104,7 @@ I18N.load("ko",{
 "No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.": "선택한 상황 없음: 이 아이템은 복장 규정에서 허용하는 경우에만 출근용으로 추천돼요. 그대로 두려면 저장을 다시 누르세요.",
 "Done. Open any piece in Closet to add more details, like dress level and condition.": "완료. 격식 단계, 상태 같은 정보를 더 추가하려면 옷장에서 아이템을 여세요.",
 "Added {0} items.": "아이템 {0}개를 추가했어요.",
-"Added {0} item.": "아이템 {0}개를 추가했어요."
+"Added {0} item.": "아이템 {0}개를 추가했어요.",
+"Shop ›": "쇼핑 ›",
+"Shop {a} ›": "{a} 쇼핑 ›"
 });

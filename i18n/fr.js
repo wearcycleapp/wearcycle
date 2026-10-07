@@ -1104,5 +1104,7 @@ I18N.load("fr",{
 "No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.": "Aucune occasion choisie : cette pièce sera suggérée seulement pour le Travail, si votre code vestimentaire le permet. Touchez Enregistrer de nouveau pour la garder ainsi.",
 "Done. Open any piece in Closet to add more details, like dress level and condition.": "Terminé. Ouvrez une pièce dans Garde-robe pour ajouter d’autres détails, comme le niveau d’habillement et l’état.",
 "Added {0} items.": "{0} articles ajoutés.",
-"Added {0} item.": "{0} article ajouté."
+"Added {0} item.": "{0} article ajouté.",
+"Shop ›": "Magasiner ›",
+"Shop {a} ›": "Magasiner {a} ›"
 });

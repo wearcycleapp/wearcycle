@@ -1104,5 +1104,7 @@ I18N.load("hi",{
 "No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.": "कोई मौका नहीं चुना: यह पीस सिर्फ़ काम के लिए सुझाया जाएगा, अगर आपका ड्रेस कोड इसकी इजाज़त दे। ऐसे ही रखने के लिए फिर से सेव करें पर टैप करें।",
 "Done. Open any piece in Closet to add more details, like dress level and condition.": "हो गया। ड्रेस लेवल और हालत जैसी और जानकारी जोड़ने के लिए अलमारी में कोई भी पीस खोलें।",
 "Added {0} items.": "{0} आइटम जोड़े गए।",
-"Added {0} item.": "{0} आइटम जोड़ा गया।"
+"Added {0} item.": "{0} आइटम जोड़ा गया।",
+"Shop ›": "खरीदें ›",
+"Shop {a} ›": "{a} खरीदें ›"
 });

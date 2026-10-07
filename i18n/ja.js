@@ -1104,5 +1104,7 @@ I18N.load("ja",{
 "No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.": "シーンが未選択です：このアイテムは服装規定で許可されている場合に限り、仕事にのみ提案されます。このままにするには、もう一度「保存」をタップしてください。",
 "Done. Open any piece in Closet to add more details, like dress level and condition.": "完了。きちんと度や状態などの詳細を追加するには、クローゼットでアイテムを開いてください。",
 "Added {0} items.": "{0}点を追加しました。",
-"Added {0} item.": "{0}点を追加しました。"
+"Added {0} item.": "{0}点を追加しました。",
+"Shop ›": "探す ›",
+"Shop {a} ›": "{a}を探す ›"
 });

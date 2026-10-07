@@ -1104,5 +1104,7 @@ I18N.load("tl",{
 "No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.": "Walang napiling okasyon: imumungkahi lang ang pirasong ito para sa Trabaho, kung pinapayagan ng dress code mo. I-tap ulit ang I-save para panatilihin itong ganoon.",
 "Done. Open any piece in Closet to add more details, like dress level and condition.": "Tapos na. Buksan ang anumang piraso sa Closet para magdagdag ng iba pang detalye, tulad ng pormalidad at kondisyon.",
 "Added {0} items.": "Nagdagdag ng {0} item.",
-"Added {0} item.": "Nagdagdag ng {0} item."
+"Added {0} item.": "Nagdagdag ng {0} item.",
+"Shop ›": "Mamili ›",
+"Shop {a} ›": "Mamili ng {a} ›"
 });

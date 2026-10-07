@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.30.0';
+const APP_VERSION='1.31.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -49,7 +49,8 @@ function comingUp(items){
       return f?`<div class="seaprev">${miniBoard(f.o)}<span>${OCC[occ].label}</span></div>`:''; }).join('');
     out.push(`<div><h3 style="margin:0">${plan.upcoming?'Coming up: '+se.label:se.label}</h3><p class="hint" style="margin:4px 0 0">${plan.upcoming?'Starts '+fmtDay(plan.start)+'. ':''}${se.desc}</p></div>
      <div class="panel"><div class="panel-h"><h3>${'Ready for '+se.label.toLowerCase()+'?'}</h3><span class="count">${ok} of ${list.length}</span></div>
-      ${list.map(x=>{ const done=x.have.length>=x.need; return `<div class="li ess ${done?'have':''}"><span class="mark">${done?'✓':'+'}</span><div class="txt"><b>${x.label}</b><span>${x.have.length} of ${x.need}</span><span data-notr>${x.have.length?' · ':''}${esc(x.have.slice(0,3).map(i=>i.name).join(', '))}</span></div></div>`; }).join('')}
+      ${list.map(x=>{ const done=x.have.length>=x.need; const inner=`<span class="mark">${done?'✓':'+'}</span><div class="txt"><b>${x.label}</b><span>${x.have.length} of ${x.need}</span><span data-notr>${x.have.length?' · ':''}${esc(x.have.slice(0,3).map(i=>i.name).join(', '))}</span></div>`;
+        return done?`<div class="li ess have">${inner}</div>`:`<a class="li lirow ess shop" href="${shopUrl(shopQ(x.label))}" target="_blank" rel="noopener">${inner}${SHOP_GO}</a>`; }).join('')}
       ${prev?`<div class="li"><div class="txt"><b>${'What you would wear on a '+se.label.toLowerCase()+' day'}</b><div class="seaprevs">${prev}</div></div></div>`:''}
       ${rot.bringOut.length?`<div class="li"><div class="txt"><b>Bring these out</b><span data-notr>${esc(rot.bringOut.slice(0,8).map(i=>i.name).join(', '))}</span></div></div>`:''}
       ${rot.store.length?`<div class="li"><div class="txt"><b>Can go into storage</b><span data-notr>${esc(rot.store.slice(0,8).map(i=>i.name).join(', '))}</span></div></div>`:''}
@@ -731,6 +732,10 @@ function careRow(it,f,acts){
 }
 // Drop-off finder. Opens a Google Maps search (Maps URLs need no API key and open the Maps app on Android).
 // Near the weather place when one is set, otherwise "near me" so Maps uses the phone's own location.
+// Google search on the Shopping tab (udm=28), in the app's language; opens only when tapped.
+function shopQ(...parts){ return parts.filter(Boolean).map(p=>I18N.lang==='en'?p:I18N.tr(String(p))).join(' '); }
+function shopUrl(q){ return 'https://www.google.com/search?udm=28&q='+encodeURIComponent(q); }
+const SHOP_GO='<span class="go">Shop ›</span>';
 function mapsSearch(what){ const w=wxSet(); const where=(w.on&&w.mode==='place'&&w.label)?' near '+w.label:' near me';
   return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(what+where); }
 function dropOffRow(worn){
@@ -769,20 +774,22 @@ function renderShop(){
     const o=OCC[x.occ];
     const body=x.needs.length?x.needs.map(n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
       <div class="opt">Add ${n.target-n.have}: ${esc(n.idea)}</div>
-      <div class="opt">${n.colors.map(c=>`<span><span class="swatch" style="background:${COLORS[c.color].hex}"></span>${c.color} <em>${c.adds?'+'+c.adds+' outfit'+(c.adds===1?'':'s'):'pairs widely'}</em></span>`).join(' &nbsp;or&nbsp; ')}</div></div>`).join('')
+      <div class="opt">${n.colors.map(c=>`<a class="shopc" href="${shopUrl(shopQ(c.color,n.idea))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[c.color].hex}"></span>${c.color} <em>${c.adds?'+'+c.adds+' outfit'+(c.adds===1?'':'s'):'pairs widely'}</em></a>`).join(' &nbsp;or&nbsp; ')}</div>
+      <div class="opt"><a class="shoplink" href="${shopUrl(shopQ(n.idea))}" target="_blank" rel="noopener">Shop ${esc(n.idea)} ›</a></div></div>`).join('')
       :`<div class="need"><span class="done">Covered: ${x.have.top} tops, ${x.have.bottom} bottoms, ${x.have.shoes} shoes ready.</span></div>`;
     return `<div class="panel"><div class="panel-h"><h3>${o.label}</h3><span class="count">${x.needs.length?x.needs.length+' gap'+(x.needs.length>1?'s':''):'ready'}</span></div>${body}</div>`;
   });
   const retire=items.filter(it=>(it.cond??4)<=1);
-  const repl=retire.length?`<div class="panel"><div class="panel-h"><h3>Replace</h3><span class="count">${retire.length}</span></div>${retire.map(it=>`<div class="li stripe-retire">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>Replace with a ${esc(primary(it)||'')} ${esc(CAT[it.cat].label.toLowerCase())} for ${esc((it.occ||[]).map(o=>OCC[o]?.label.toLowerCase()).filter(Boolean).join(', ')||'the same use')}.</span></div></div>`).join('')}</div>`:'';
+  const repl=retire.length?`<div class="panel"><div class="panel-h"><h3>Replace</h3><span class="count">${retire.length}</span></div>${retire.map(it=>`<div class="li stripe-retire">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>Replace with a ${esc(primary(it)||'')} ${esc(CAT[it.cat].label.toLowerCase())} for ${esc((it.occ||[]).map(o=>OCC[o]?.label.toLowerCase()).filter(Boolean).join(', ')||'the same use')}.</span></div><div class="acts"><a class="btn sm" href="${shopUrl(shopQ(primary(it),CAT[it.cat].label.toLowerCase()))}" target="_blank" rel="noopener">Shop</a></div></div>`).join('')}</div>`:'';
   const list=ideasState.list;
   const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
-     ${list?list.map(x=>`<div class="idea"><b>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${esc(OCC[x.occasion]?.label||x.occasion||'')}${x.pairsWith&&x.pairsWith.length?' · pairs with '+esc(x.pairsWith.join(', ')):''}</span><span>${esc(x.why||'')}</span></div>`).join(''):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
+     ${list?list.map(x=>`<a class="idea shop" href="${shopUrl([x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?(COLORS[x.color]?shopQ(x.color):x.color):'',x.item].filter(Boolean).join(' '))}" target="_blank" rel="noopener"><b>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${esc(OCC[x.occasion]?.label||x.occasion||'')}${x.pairsWith&&x.pairsWith.length?' · pairs with '+esc(x.pairsWith.join(', ')):''}</span><span>${esc(x.why||'')}</span>${SHOP_GO}</a>`).join(''):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
   const st=styleSet(); const lr=learned(); const keys=[...new Set(st.pick.length?st.pick.concat(st.work):lr.ids.concat(st.work))];
   const build=keys.length?keys.map(k=>{ const ess=STYLES[k]?essentials(k,items):essentials(looks().find(l=>l.id===k)||{},items); const have=ess.filter(e=>e.have).length;
       return `<div class="panel"><div class="panel-h"><h3 ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</h3><span class="count">${have} of ${ess.length}</span></div>
-       ${ess.map(e=>`<div class="li ess ${e.have?'have':''}"><span class="mark">${e.have?'✓':'+'}</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b>${e.have?`<span data-notr>${esc(e.have.name)}</span>`:''}</div></div>`).join('')}</div>`; }).join('')
+       ${ess.map(e=>e.have?`<button class="li lirow ess have" data-edit="${esc(e.have.id)}"><span class="mark">✓</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b><span data-notr>${esc(e.have.name)}</span></div><span class="chev">›</span></button>`
+         :`<a class="li lirow ess shop" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener"><span class="mark">+</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></div>${SHOP_GO}</a>`).join('')}</div>`; }).join('')
     :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
   const buildH=`<div><h3 style="margin:0">Build toward a style</h3><p class="hint" style="margin:4px 0 0">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p></div>`;
   box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+comingUp(items)+repl+blocks.join('')+(keys.length?buildH:'')+build+ai+'</div>';

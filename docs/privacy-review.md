@@ -14,7 +14,7 @@ Reviewed October 7, 2026, for v1.29.0. This is an engineering review against pub
 | Rounded coordinates / postal code | Open-Meteo, Zippopotam.us | Third-party servers | Only with weather on |
 | Sign-in emails | Gmail SMTP | Google | Sign-up, password reset |
 | IP and browser details (access logs) | GitHub Pages | GitHub | Every app open |
-| Search text | Google Maps | Google | Only when a "find a place" link is tapped |
+| Search text | Google Maps, Google Search (Shopping tab) | Google | Only when a "find a place" or "Shop" link is tapped |
 | Cut-out processing, scoring, fonts | On the phone / served by Wearcycle | Device | Always |
 
 Fonts used to load from Google Fonts on every open. Since v1.29 they are served from `fonts/` (Fontsource packages, SIL Open Font License), so Google no longer receives a request each time the app opens.
