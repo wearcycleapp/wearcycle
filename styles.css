@@ -602,3 +602,9 @@ a.lirow{text-decoration:none;color:inherit}
 .consent input{margin-top:2px;flex:none;width:18px;height:18px}
 .consent a{color:var(--ink)}
 .plist{margin:0 0 10px;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
+
+/* quick details (Claude off) */
+.qd{display:flex;gap:12px;align-items:flex-start;margin:6px 0 12px}
+.qd .pv{width:88px;height:88px;flex:none;border-radius:12px;overflow:hidden;background:var(--raised);display:grid;place-items:center}
+.qd .pv img{width:100%;height:100%;object-fit:cover}
+.chip .sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid var(--line)}

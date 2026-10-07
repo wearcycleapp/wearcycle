@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.29.1';
+const APP_VERSION='1.30.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -480,7 +480,7 @@ function pickFiles(multiple){
 async function addPhotos(blobs){
   if(!blobs.length) return;
   if(!canWrite()){ toast('You are offline. Adding clothes needs a connection.'); return; }
-  S.busy=true; let done=0, aiFail=0, aiStop=claudeOn()?'':'Claude features are off, so fill in the details yourself.'; const added=[];
+  S.busy=true; let done=0, aiFail=0, aiStop=claudeOn()?'':'off'; const added=[];
   const list=blobs.slice(0,40);
   for(const b of list){
     job('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Claude is reading it'),done/list.length*100);
@@ -488,13 +488,16 @@ async function addPhotos(blobs){
     const now=todayISO();
     const it={id:uuid(),name:'New item '+(done+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
     const path=await uploadPhoto(p.full); if(path) it.photo=path;
+    if(!claudeOn()){ try{ const g=await guessColors(p.full); if(g.length){ it.colors=[g[0]]; it.colorGuess=g; } }catch(e){} }
     if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else aiFail++; }catch(e){ aiFail++; if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
     if(await writeItem(it)){ done++; added.push(it); }
   }
   S.busy=false; job(''); renderAll();
-  toast('Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'+(aiStop?' '+aiStop:(aiFail?' Claude could not read '+aiFail+'.':'')),7000);
+  if(claudeOn()) toast('Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'+(aiStop?' '+aiStop:(aiFail?' Claude could not read '+aiFail+'.':'')),7000);
+  else toast('Added '+done+' item'+(done===1?'':'s')+'.',2500);
   goTab('closet');
   autoCuts(added.map(it=>byId(it.id)).filter(Boolean));
+  if(!claudeOn()&&added.length) openQuick(added.map(it=>it.id));
 }
 
 /* ---------- rendering ---------- */
@@ -824,7 +827,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
    <div class="photo"><div class="pv ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}">${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
-     ${ED.blob?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
+     ${ED.blob&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
      ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
 </div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
@@ -861,7 +864,8 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
 }
 function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-graphic')) it.graphic=g('#f-graphic').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(d) it.dirtyOn=todayISO(); else { it.wearsSinceWash=0; delete it.dirtyOn; } } } if(g('#f-repair')){ const r=g('#f-repair').checked; if(r&&!it.repair){ it.repair=true; it.repairOn=todayISO(); } if(!r&&it.repair){ delete it.repair; delete it.repairNote; delete it.repairOn; delete it.repairOk; } } if(it.repair&&g('#f-repairNote')) it.repairNote=g('#f-repairNote').value.trim(); if(it.repair&&g('#f-repairOk')) it.repairOk=g('#f-repairOk').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-base')) it.base=g('#f-base').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
-  try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null; }
+  try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null;
+    if(!claudeOn()&&!(ED.it.colors||[]).length){ const g=await guessColors(p.full).catch(()=>[]); if(ED&&g.length){ ED.it.colors=[g[0]]; ED.ai='Main color guessed on your phone: '+g[0]+(g.length>1?' (or maybe '+g.slice(1).join(', ')+')':'')+'. Check it, then set the category and occasions.'; } } }
   catch(e){ toast('That image could not be opened.'); }
   if(ED) drawEditor();
 }
@@ -1053,7 +1057,7 @@ function openSettings(){
    <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev">›</span></button></div>
    <h3>Privacy and your data</h3>
    <div class="panel"><a class="li lirow" href="privacy.html" target="_blank" rel="noopener"><div class="txt"><b>Privacy notice</b><span>What is stored, where, who processes it, and your rights.</span></div><span class="chev">›</span></a>
-   <label class="li"><div class="txt"><b>Claude features</b><span>Claude reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you fill in details yourself.</span></div><input type="checkbox" id="claudeT" ${claudeOn()?'checked':''}></label>
+   <label class="li"><div class="txt"><b>Claude features</b><span>Claude reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.</span></div><input type="checkbox" id="claudeT" ${claudeOn()?'checked':''}></label>
    <button class="li lirow" data-act="export"><div class="txt"><b>Download my data</b><span>Your clothes, outfit log and settings as a file, plus your photos, in one .zip.</span></div><span class="chev">›</span></button>
    <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data and account</b><span>Removes your clothes, photos, outfit log and settings from the server, and closes your account.</span></div><span class="chev">›</span></button></div>
    <div class="row">${FIXED_SERVER?'':'<button class="linkbtn" data-act="server" style="margin:0">Server settings</button>'}<span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
@@ -1131,10 +1135,11 @@ function privacyCheck(){
     <li>Data processed in another country can be accessed by that country's courts and authorities under its laws.</li>
     <li>You can download or delete everything, or turn Claude off, at any time in Settings.</li></ul>
    <p class="hint"><a href="privacy.html" target="_blank" rel="noopener">Read the full privacy notice</a></p>
-   <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn ghost" data-act="privacyNoClaude">Agree, but turn Claude off</button></div>`);
+   <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn ghost" data-act="privacyNoClaude">Agree, but turn Claude off</button></div>
+   <p class="hint">Without Claude, you set each piece's category, colors and occasions yourself, about 20 seconds per piece. Outfits are only as good as those details.</p>`);
 }
 function privacyAgree(claude){ S.settings.consent={v:PRIVACY_V,at:new Date().toISOString(),how:'notice'}; if(!claude) S.settings.claude=false;
-  saveCache(); queueSettingsSave(); closeSheet(); toast(claude?'Thanks. You can change this in Settings.':'Claude features are off. Turn them on any time in Settings.',4000); }
+  saveCache(); queueSettingsSave(); closeSheet(); toast(claude?'Thanks. You can change this in Settings.':'Claude features are off. When you add clothes, you will set their category, colors and occasions. Turn Claude on any time in Settings.',6000); }
 
 // A plain .zip (stored, not compressed: photos are already JPEG/PNG) so no library is needed.
 const CRC_T=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
@@ -1172,6 +1177,66 @@ async function exportData(){
     job(''); toast('Downloaded: '+items.data.length+' pieces, '+wears.length+' outfits, '+(paths.length-miss)+' photos.'+(miss?' '+miss+' photos could not be read.':''),6000);
   }catch(e){ job(''); toast('Could not download your data: '+(e&&e.message||'unknown error'),5000); }
 }
+
+/* ---------- without Claude: color guess on the phone and quick details ----------
+   Colors: the middle of the photo (where the piece usually is) at 48 px, pixels close to the border color
+   (the background) left out, each remaining pixel matched to the nearest app color in CIELAB.
+   Returns up to 3 candidates (8%+ of the piece), most pixels first. Tested on 9 of the owner's photos: the first
+   guess matched the piece's name for 3, and the right color was among the 3 for 6, so only the first is
+   preselected and the others are offered as one-tap suggestions. Shadows on dark pieces often read as black. */
+function rgb2lab(r,g,b){ const f=c=>{ c/=255; return c<=0.04045?c/12.92:Math.pow((c+0.055)/1.055,2.4); };
+  const R=f(r),G=f(g),B=f(b); let x=(R*0.4124+G*0.3576+B*0.1805)/0.95047, y=R*0.2126+G*0.7152+B*0.0722, z=(R*0.0193+G*0.1192+B*0.9505)/1.08883;
+  const h=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116; x=h(x); y=h(y); z=h(z); return [116*y-16,500*(x-y),200*(y-z)]; }
+let COLOR_LAB=null;
+function nearestColor(lab){ if(!COLOR_LAB) COLOR_LAB=Object.entries(COLORS).map(([k,v])=>[k,rgb2lab(parseInt(v.hex.slice(1,3),16),parseInt(v.hex.slice(3,5),16),parseInt(v.hex.slice(5,7),16))]);
+  let best=null,bd=Infinity; for(const [k,c] of COLOR_LAB){ const d=(c[0]-lab[0])**2+(c[1]-lab[1])**2+(c[2]-lab[2])**2; if(d<bd){bd=d;best=k;} } return best; }
+async function guessColors(blob){
+  const src=await decode(blob); const N=48, c=document.createElement('canvas'); c.width=N; c.height=N; const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(src,0,0,N,N); if(src.close) src.close(); const d=x.getImageData(0,0,N,N).data;
+  const px=(i,j)=>{ const o=(j*N+i)*4; return [d[o],d[o+1],d[o+2]]; };
+  const border=[]; for(let k=0;k<N;k++){ border.push(px(k,0),px(k,N-1),px(0,k),px(N-1,k)); }
+  const bl=border.map(p=>rgb2lab(...p)); const bg=[0,1,2].map(q=>bl.map(v=>v[q]).sort((a,b)=>a-b)[bl.length>>1]);
+  const counts={}; let total=0;
+  for(let j=Math.round(N*0.15);j<Math.round(N*0.85);j++) for(let i=Math.round(N*0.2);i<Math.round(N*0.8);i++){
+    const lab=rgb2lab(...px(i,j)); if((lab[0]-bg[0])**2+(lab[1]-bg[1])**2+(lab[2]-bg[2])**2<15*15) continue;
+    const k=nearestColor(lab); counts[k]=(counts[k]||0)+1; total++; }
+  if(total<40) return [];
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]);
+  return top.filter(([k,n])=>n/total>=0.08).slice(0,3).map(([k])=>k);
+}
+const QD={ids:[],i:0,it:null};
+const QD_CATS=['top','bottom','outerwear','onepiece','shoes','socks','belt','watch','hat','bag','other'];
+function openQuick(ids){ QD.ids=ids; QD.i=0; quickStep(); }
+function quickStep(){
+  const id=QD.ids[QD.i]; const src=id&&byId(id); if(!src){ closeSheet(); toast('Done. Open any piece in Closet to add more details, like dress level and condition.',5000); return; }
+  if(!(QD.it&&QD.it.id===id)){ QD.it=JSON.parse(JSON.stringify(src)); if(/^New item \d+$/.test(QD.it.name||'')) QD.it.cat=null; } const it=QD.it;
+  const garment=!it.cat||GARMENT.includes(it.cat);
+  openSheet(sheetHead('What is this?')+`<p class="hint" style="margin-top:-4px">${QD.i+1} of ${QD.ids.length} · Claude is off, so these details come from you. Outfits use them to pick and match pieces.</p>
+   <div class="qd"><div class="pv">${visual(it)}</div><div class="field" style="flex:1;margin:0"><label for="qd-name">Name (optional)</label><input type="text" id="qd-name" value="${/^New item \d+$/.test(it.name)?'':esc(it.name)}" placeholder="e.g. Navy flannel shirt" maxlength="60">${I18N.lang==='en'?'<span class="hint">Words like flannel, hoodie or linen help Wearcycle guess style and warmth.</span>':''}</div></div>
+   <div class="field"><span class="lab">Category</span><div class="chips" style="flex-wrap:wrap">${QD_CATS.map(c=>`<button type="button" class="chip" data-qdcat="${c}" aria-pressed="${it.cat===c}">${CAT[c].label}</button>`).join('')}</div></div>
+   <div class="field"><span class="lab">Colors · main color first</span>${(it.colorGuess||[]).length?`<div class="chips" style="flex-wrap:wrap;margin:0 0 8px"><span class="hint" style="align-self:center">Looks like:</span>${it.colorGuess.map(k=>`<button type="button" class="chip" data-qdcol="${k}" aria-pressed="${(it.colors||[]).includes(k)}"><span class="sw" style="background:${COLORS[k].hex}"></span>${k}</button>`).join('')}</div>`:''}<div class="colors">${Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-qdcol="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('')}</div></div>
+   ${garment||['belt','watch','hat','bag','socks'].includes(it.cat)?`<div class="field"><span class="lab">Where would you wear it?</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.filter(o=>o.id!=='work'&&o.id!=='formal').map(o=>`<button type="button" class="chip" data-qdocc="${o.id}" aria-pressed="${(it.occ||[]).includes(o.id)}">${o.label}</button>`).join('')}</div>
+     <p class="hint">Work and Formal follow your dress code automatically; change them in the piece's details.</p></div>`:''}
+   <p class="err" id="qd-err"></p>
+   <div class="row sheet-actions"><button class="btn primary" data-qd="save">${QD.i+1<QD.ids.length?'Save and next':'Save'}</button><button class="btn ghost" data-qd="skip">Skip for now</button></div>`);
+}
+async function quickSave(){
+  const it=QD.it; if(!it.cat){ $('#qd-err').textContent='Pick a category.'; return; }
+  const nm=($('#qd-name')||{}).value; const c0=(it.colors||[])[0]; it.name=(nm||'').trim()||(I18N.lang==='en'?(c0+' '+CAT[it.cat].label.toLowerCase()).replace(/^./,c=>c.toUpperCase()):I18N.tr(CAT[it.cat].label)+' ('+I18N.tr(c0)+')');
+  if(!(it.colors||[]).length){ $('#qd-err').textContent='Pick at least one color.'; return; }
+  if(GARMENT.includes(it.cat)&&!(it.occ||[]).length&&!$('#qd-err').dataset.warned){ $('#qd-err').dataset.warned='1'; $('#qd-err').textContent='No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.'; return; }
+  delete it._typed; delete it.colorGuess; it.review=false;
+  if(await writeItem(it)){ QD.i++; QD.it=null; quickStep(); }
+}
+document.addEventListener('click',e=>{ const b=e.target.closest('[data-qdcat],[data-qdcol],[data-qdocc],[data-qd]'); if(!b||!QD.it) return;
+  const it=QD.it, keepName=()=>{ const n=$('#qd-name'); if(n) it._typed=n.value; };
+  if(b.dataset.qd==='save'){ quickSave(); return; }
+  if(b.dataset.qd==='skip'){ QD.i++; QD.it=null; quickStep(); return; }
+  keepName();
+  if(b.dataset.qdcat) it.cat=b.dataset.qdcat;
+  if(b.dataset.qdcol){ const k=b.dataset.qdcol, c=it.colors||(it.colors=[]); const ix=c.indexOf(k); if(ix>=0) c.splice(ix,1); else if(c.length<3) c.push(k); }
+  if(b.dataset.qdocc){ const o=b.dataset.qdocc, c=it.occ||(it.occ=[]); const ix=c.indexOf(o); if(ix>=0) c.splice(ix,1); else c.push(o); }
+  const y=$('.sheet')?$('.sheet').scrollTop:0; quickStep(); const n=$('#qd-name'); if(n&&it._typed!=null) n.value=it._typed; if($('.sheet')) $('.sheet').scrollTop=y; });
 
 /* ---------- money ---------- */
 const REGION_CUR={CA:'CAD',US:'USD',GB:'GBP',AU:'AUD',NZ:'NZD',MX:'MXN',BR:'BRL',IN:'INR',JP:'JPY',CH:'CHF',FR:'EUR',DE:'EUR',ES:'EUR',IT:'EUR',PT:'EUR',NL:'EUR',BE:'EUR',IE:'EUR',AT:'EUR',FI:'EUR'};
@@ -1633,7 +1698,7 @@ document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e
   if(e.target&&e.target.id==='washAutoT'){ S.settings.washAuto=e.target.checked; saveCache(); queueSettingsSave(); if(e.target.checked) autoWash(); return; }
   if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
   if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); return; }
-  if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic.',4000); } });
+  if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.',6000); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
