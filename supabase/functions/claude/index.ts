@@ -121,16 +121,68 @@ async function withinLimit(req: Request, task: string): Promise<boolean> {
   } catch { return true; }
 }
 
-// Confirms the request comes from a signed-in user by asking Supabase Auth about the token.
-async function requireUser(req: Request): Promise<boolean> {
+// Confirms the request comes from a signed-in user by asking Supabase Auth about the token. Returns the user id.
+async function requireUser(req: Request): Promise<string | null> {
   const auth = req.headers.get("Authorization") ?? "";
-  if (!auth.startsWith("Bearer ")) return false;
+  if (!auth.startsWith("Bearer ")) return null;
   const { base, apikey } = supabaseKeys();
-  if (!base || !apikey) return false;
+  if (!base || !apikey) return null;
   const res = await fetch(`${base}/auth/v1/user`, { headers: { Authorization: auth, apikey } });
-  if (!res.ok) return false;
+  if (!res.ok) return null;
   const user = await res.json().catch(() => null);
-  return !!(user && user.id && user.role === "authenticated");
+  return user && user.id && user.role === "authenticated" ? String(user.id) : null;
+}
+
+// Admin access for closing an account. New secret keys go on the apikey header only; the legacy service-role key
+// (a JWT) also goes on Authorization. Both are provided to Edge Functions by Supabase; nothing to configure.
+function adminHeaders(): Record<string, string> | null {
+  try {
+    const keys = JSON.parse(Deno.env.get("SUPABASE_SECRET_KEYS") ?? "{}");
+    const k = keys.default ?? Object.values(keys)[0];
+    if (k) return { apikey: String(k) };
+  } catch { /* fall back to the legacy key */ }
+  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+  return legacy ? { apikey: legacy, Authorization: `Bearer ${legacy}` } : null;
+}
+
+// Closes the caller's own account: removes every file in their photo folder, then the sign-in account.
+// Their rows in items, wears, settings and ai_usage go with it (each references auth.users with on delete cascade).
+async function deleteAccount(uid: string): Promise<Response> {
+  const base = Deno.env.get("SUPABASE_URL") ?? "";
+  const h = adminHeaders();
+  if (!base || !h || !/^[0-9a-f-]{36}$/i.test(uid)) return json({ error: "not_configured" }, 500);
+  const paths: string[] = [];
+  const list = async (prefix: string, depth: number): Promise<void> => {
+    for (let offset = 0; ; offset += 1000) {
+      const r = await fetch(`${base}/storage/v1/object/list/photos`, {
+        method: "POST", headers: { ...h, "content-type": "application/json" },
+        body: JSON.stringify({ prefix, limit: 1000, offset }),
+      });
+      if (!r.ok) throw new Error(`list_${r.status}`);
+      const rows = (await r.json()) as { name: string; id: string | null }[];
+      for (const o of rows) {
+        if (o.id === null) { if (depth < 3) await list(`${prefix}/${o.name}`, depth + 1); }
+        else paths.push(`${prefix}/${o.name}`);
+      }
+      if (rows.length < 1000) break;
+    }
+  };
+  try {
+    await list(uid, 0);
+    for (let i = 0; i < paths.length; i += 500) {
+      const r = await fetch(`${base}/storage/v1/object/photos`, {
+        method: "DELETE", headers: { ...h, "content-type": "application/json" },
+        body: JSON.stringify({ prefixes: paths.slice(i, i + 500) }),
+      });
+      if (!r.ok) throw new Error(`remove_${r.status}`);
+    }
+    const r = await fetch(`${base}/auth/v1/admin/users/${uid}`, { method: "DELETE", headers: h });
+    if (!r.ok) throw new Error(`auth_${r.status}`);
+  } catch (e) {
+    console.error("delete_account failed", String(e));
+    return json({ error: "delete_failed" }, 502);
+  }
+  return json({ result: { deleted: true, files: paths.length } });
 }
 
 function extractJson(text: string): unknown {
@@ -146,13 +198,15 @@ function extractJson(text: string): unknown {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
-  if (!(await requireUser(req))) return json({ error: "not_signed_in" }, 401);
-  if (!API_KEY) return json({ error: "missing_api_key" }, 500);
+  const uid = await requireUser(req);
+  if (!uid) return json({ error: "not_signed_in" }, 401);
 
   let body: Record<string, unknown>;
   try { body = await req.json(); } catch { return json({ error: "bad_json" }, 400); }
 
   const task = String(body.task ?? "");
+  if (task === "delete_account") return deleteAccount(uid);
+  if (!API_KEY) return json({ error: "missing_api_key" }, 500);
   const base = prompt(task, body);
   if (!base) return json({ error: "unknown_task" }, 400);
   // The app's language: free-text values come back in it; JSON keys and listed values stay in English.

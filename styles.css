@@ -596,3 +596,9 @@ a.lirow{text-decoration:none;color:inherit}
 .li.hol .sws .sw{width:16px;height:16px;border-radius:50%;margin-right:-4px;border:2px solid var(--raised)}
 .chip.holchip{border-color:var(--coral)}
 .chip.holchip[aria-pressed="true"]{background:var(--coral);color:var(--coral-ink);border-color:var(--coral)}
+
+/* privacy */
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--muted);margin:2px 0 4px}
+.consent input{margin-top:2px;flex:none;width:18px;height:18px}
+.consent a{color:var(--ink)}
+.plist{margin:0 0 10px;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}

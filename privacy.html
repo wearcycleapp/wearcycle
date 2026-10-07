@@ -7,33 +7,58 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
 main{max-width:680px;margin:0 auto;padding:32px 16px 64px}
 h1{font-size:28px;margin:0 0 4px}h2{font-size:18px;margin:28px 0 6px}p,li{color:var(--muted)}b{color:var(--ink)}
-a{color:inherit}
+a{color:inherit}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-top:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;color:var(--muted)}th{color:var(--ink)}
 </style></head><body><main>
 <h1>Privacy at Wearcycle</h1>
-<p>Last updated October 4, 2026. Wearcycle is a personal wardrobe app. This page says what it stores, where, and who processes it.</p>
+<p>Last updated October 7, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).</p>
 
-<h2>What is stored</h2>
+<h2>Who is responsible</h2>
+<p>The Wearcycle owner is accountable for your information. Questions, requests and complaints: <a href="mailto:wearcycle.app@gmail.com">wearcycle.app@gmail.com</a>. You will get an answer within 30 days.</p>
+
+<h2>What is collected and why</h2>
+<table>
+<tr><th>Information</th><th>Why</th></tr>
+<tr><td>Email address and password (stored hashed, never readable)</td><td>To sign you in and send sign-in emails (confirmation, password reset).</td></tr>
+<tr><td>Photos of your clothes, cut-outs, and the details you or Claude fill in (name, category, colours, condition, notes, price paid if you add it)</td><td>To show your closet and build outfits from it.</td></tr>
+<tr><td>Outfit log (what you wore and when) and your settings (style, dress code, reminders, holidays, language)</td><td>To rotate outfits, spot unworn pieces and remind you about care and laundry.</td></tr>
+<tr><td>Approximate location, only if you turn on weather: coordinates rounded to about 1 km, or the first three characters of a Canadian postal code</td><td>To get the forecast.</td></tr>
+<tr><td>A record of when you agreed to this notice, and a daily count of Claude requests</td><td>To show consent was given, and to cap costs.</td></tr>
+</table>
+<p>Wearcycle does not collect anything else: no ads, no tracking or analytics, no selling or sharing for marketing.</p>
+
+<h2>Who processes it, and where</h2>
 <ul>
-<li><b>Your account:</b> email address and a hashed password, managed by Supabase Auth.</li>
-<li><b>Your clothes:</b> photos, cut-outs and the details you or Claude fill in (name, category, colours, condition, price paid if you add it).</li>
-<li><b>Your outfit log and settings:</b> what you wore and when, reminders, style palette, and, if you turn on weather, an approximate location rounded to about 1 km (or the first three characters of a Canadian postal code).</li>
+<li><b>Supabase, Inc.</b> (a US company) hosts your account, database, photos and the small server function that talks to Claude. Row-level security means only your signed-in account can read your rows and files. Supabase also keeps sign-in and server logs, which include your IP address.</li>
+<li><b>Anthropic (Claude), United States.</b> When Claude reads a photo you add, checks a piece's condition, learns a look from a photo, or suggests what to buy, that photo or a text list of your clothes is sent to Anthropic's API. Anthropic states that it deletes API inputs and outputs within 30 days (longer only if a request is flagged for breaking its usage policy) and does not train its models on them. You can turn Claude features off in Settings.</li>
+<li><b>Open-Meteo</b> (forecast) receives rounded coordinates, and <b>Zippopotam.us</b> receives a postal code you type. Only if you turn on weather.</li>
+<li><b>Google (Gmail)</b> delivers sign-in emails to your address.</li>
+<li><b>GitHub Pages</b> serves the app's files; like any web host it receives your IP address and browser details when you open the app.</li>
+<li><b>Google Maps</b> opens only when you tap a link to find a donation drop-off, tailor or repair shop; Google then receives that search.</li>
+<li>Done on your phone, sent nowhere: background removal for cut-outs, outfit scoring, and fonts (served from Wearcycle itself).</li>
 </ul>
-<p>Everything is kept in a Supabase database and private storage bucket protected by row-level security, so only your signed-in account can read your rows and files.</p>
+<p><b>Outside Canada.</b> Your information is processed by these providers in the United States and possibly other countries. While it is there, it can be accessed by the courts, law enforcement and national security authorities of those countries under their laws. Each provider is bound by its own terms and privacy commitments to protect it.</p>
 
-<h2>Who processes your data</h2>
+<h2>Photos of other people</h2>
+<p>When you teach Wearcycle a look from a photo, use a photo of yourself or one you may use. That photo is sent to Claude to name the pieces and is not saved; only the description is kept.</p>
+
+<h2>How long it is kept</h2>
+<p>Your information is kept while you have an account. Delete anything at any time; deleting your account removes your clothes, photos, outfit log, settings and sign-in. The copy kept on your phone for offline use is removed when you sign out or delete your data. Copies in providers' backups and logs are removed on their own schedules.</p>
+
+<h2>Your rights and choices</h2>
 <ul>
-<li><b>Anthropic (Claude):</b> when you add a photo, ask for a condition check or shopping ideas, that photo or a text summary of your closet is sent to Anthropic's API to fill in details. Anthropic <a href="https://privacy.claude.com/en/articles/7996868-is-my-data-used-for-model-training" target="_blank" rel="noopener">states</a> that, by default, it does not use inputs or outputs from its commercial products, including the API, to train its models.</li>
-<li><b>Open-Meteo</b> receives rounded coordinates to return the forecast; <b>Zippopotam.us</b> receives the postal code you type to find its area. Both only if you turn on weather.</li>
-<li><b>Background removal</b> for flat-lay cut-outs runs on your phone; those photos are not sent anywhere for that step.</li>
+<li><b>Access and copy:</b> Settings › Privacy and your data › Download my data gives you everything in one .zip (a JSON file plus your photos).</li>
+<li><b>Correct:</b> edit any piece, outfit or setting in the app, or ask us.</li>
+<li><b>Withdraw consent:</b> turn off Claude features or weather at any time; delete your data and account in Settings. Without an account the app cannot store a closet for you.</li>
+<li><b>Complain:</b> write to <a href="mailto:wearcycle.app@gmail.com">wearcycle.app@gmail.com</a> first. If you are not satisfied, you can complain to the <a href="https://www.priv.gc.ca/" target="_blank" rel="noopener">Office of the Privacy Commissioner of Canada</a>.</li>
 </ul>
 
-<h2>What Wearcycle does not do</h2>
-<p>No ads, no selling or sharing of your data, no tracking analytics.</p>
+<h2>Safeguards and breaches</h2>
+<p>Connections use HTTPS, photos sit in a private storage bucket, each account can read only its own rows, passwords are hashed by Supabase Auth, and server keys never reach the app. If a breach creates a real risk of significant harm, we will tell you and the Privacy Commissioner as soon as feasible, and every breach is recorded and the record kept for 24 months, as Canadian law requires.</p>
 
-<h2>Your choices</h2>
-<ul>
-<li><b>Delete my data</b> in Settings removes your clothes, photos, cut-outs, outfit log and settings from the server.</li>
-<li>To close the sign-in account itself, email <a href="mailto:wearcycle.app@gmail.com">wearcycle.app@gmail.com</a> from your account address.</li>
-</ul>
+<h2>Children</h2>
+<p>Wearcycle is not meant for children under 13, and they should not create an account.</p>
+
+<h2>Changes</h2>
+<p>If this notice changes in a way that matters, the app shows a short summary and asks again before carrying on.</p>
 <p><a href="./">Back to Wearcycle</a></p>
 </main></body></html>

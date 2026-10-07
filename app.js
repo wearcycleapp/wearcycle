@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.28.0';
+const APP_VERSION='1.29.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -179,7 +179,10 @@ async function uploadPhoto(blob){
 function removePhoto(path){ if(path&&sb) sb.storage.from('photos').remove([path]).catch(()=>{}); }
 
 /* ---------- Claude (through the Supabase Edge Function) ---------- */
+const PRIVACY_V='2026-10-07'; // bump when the privacy notice changes in a way people should see again
+function claudeOn(){ return S.settings.claude!==false; }
 async function callClaude(task,payload){
+  if(!claudeOn()) throw {friendly:'Claude features are off. Turn them on in Settings, under Privacy and your data.'};
   if(!canWrite()) throw {friendly:'You are offline. Claude needs a connection.'};
   const {data,error}=await sb.functions.invoke('claude',{body:Object.assign({task,lang:I18N.lang},payload)});
   if(error){
@@ -399,7 +402,7 @@ async function loadRemote(){
   if(err){ S.fromCache=true; renderAll(); if(S.online) toast('Could not load from the server: '+(err.message||'unknown error'),5000); return; }
   S.items=new Map(it.data.map(r=>[r.id,Object.assign({},r.body,{id:r.id})]));
   S.log=we.data||[]; if(se.data&&se.data.body) Object.assign(S.settings,se.data.body); settingsLoaded();
-  S.fromCache=false; S.loaded=true; saveCache(); renderAll(); loadWeather(); refreshGps(); autoWash();
+  S.fromCache=false; S.loaded=true; saveCache(); renderAll(); loadWeather(); refreshGps(); autoWash(); privacyCheck();
 }
 function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
   S.items=new Map((c.items||[]).map(r=>[r.id,r])); S.log=c.log||[]; if(c.settings) Object.assign(S.settings,c.settings); settingsLoaded();
@@ -477,7 +480,7 @@ function pickFiles(multiple){
 async function addPhotos(blobs){
   if(!blobs.length) return;
   if(!canWrite()){ toast('You are offline. Adding clothes needs a connection.'); return; }
-  S.busy=true; let done=0, aiFail=0, aiStop=''; const added=[];
+  S.busy=true; let done=0, aiFail=0, aiStop=claudeOn()?'':'Claude features are off, so fill in the details yourself.'; const added=[];
   const list=blobs.slice(0,40);
   for(const b of list){
     job('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Claude is reading it'),done/list.length*100);
@@ -1048,8 +1051,11 @@ function openSettings(){
    <p class="hint" id="set-status">Changes save automatically.</p>
    <h3>Help</h3>
    <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev">›</span></button></div>
-   <div class="panel"><a class="li lirow" href="privacy.html" target="_blank" rel="noopener"><div class="txt"><b>Privacy</b><span>What is stored, where, and who processes it.</span></div><span class="chev">›</span></a>
-   <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data</b><span>Removes your clothes, photos, outfit log and settings from the server.</span></div><span class="chev">›</span></button></div>
+   <h3>Privacy and your data</h3>
+   <div class="panel"><a class="li lirow" href="privacy.html" target="_blank" rel="noopener"><div class="txt"><b>Privacy notice</b><span>What is stored, where, who processes it, and your rights.</span></div><span class="chev">›</span></a>
+   <label class="li"><div class="txt"><b>Claude features</b><span>Claude reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you fill in details yourself.</span></div><input type="checkbox" id="claudeT" ${claudeOn()?'checked':''}></label>
+   <button class="li lirow" data-act="export"><div class="txt"><b>Download my data</b><span>Your clothes, outfit log and settings as a file, plus your photos, in one .zip.</span></div><span class="chev">›</span></button>
+   <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data and account</b><span>Removes your clothes, photos, outfit log and settings from the server, and closes your account.</span></div><span class="chev">›</span></button></div>
    <div class="row">${FIXED_SERVER?'':'<button class="linkbtn" data-act="server" style="margin:0">Server settings</button>'}<span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
 }
 function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="rules helpdoc">    <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.</p>
@@ -1091,10 +1097,10 @@ function queueSettingsSave(){
 
 /* ---------- delete my data ---------- */
 function openWipe(){
-  openSheet(sheetHead('Delete my data')+`<p>This permanently deletes your ${S.items.size} pieces, their photos and cut-outs, your outfit log and settings. It cannot be undone.</p>
+  openSheet(sheetHead('Delete my data')+`<p>This permanently deletes your ${S.items.size} pieces, their photos and cut-outs, your outfit log and settings. It cannot be undone. To keep a copy, use Download my data first.</p>
+   <label class="row" style="margin:0 0 12px"><input type="checkbox" id="wipe-acct" checked> Also close my account (your email and password are deleted)</label>
    <div class="field"><label for="wipe-t">Type DELETE to confirm</label><input type="text" id="wipe-t" autocomplete="off"></div><p class="err" id="wipe-err"></p>
-   <div class="row sheet-actions"><button class="btn danger" id="wipe-go">Delete everything</button><button class="btn ghost" data-close>Cancel</button></div>
-   <p class="hint">To also close the sign-in account itself, email wearcycle.app@gmail.com from your account address.</p>`);
+   <div class="row sheet-actions"><button class="btn danger" id="wipe-go">Delete everything</button><button class="btn ghost" data-close>Cancel</button></div>`);
   $('#wipe-go').onclick=async()=>{ if($('#wipe-t').value.trim()!=='DELETE'){ $('#wipe-err').textContent='Type DELETE in capitals.'; return; }
     if(!canWrite()){ $('#wipe-err').textContent='You are offline.'; return; }
     $('#wipe-go').disabled=true; $('#wipe-err').textContent='Deleting…';
@@ -1103,7 +1109,68 @@ function openWipe(){
     const r=await Promise.all([sb.from('items').delete().eq('user_id',UID),sb.from('wears').delete().eq('user_id',UID),sb.from('settings').delete().eq('user_id',UID)]);
     const err=r.find(x=>x.error); if(err){ $('#wipe-err').textContent='Could not finish: '+err.error.message; $('#wipe-go').disabled=false; return; }
     try{ await caches.delete('wearcycle-cutouts'); }catch(e){}
-    LS.del(cacheKey()); closeSheet(); await sb.auth.signOut(); };
+    let closed=false;
+    if($('#wipe-acct').checked){ $('#wipe-err').textContent='Closing your account…';
+      try{ const {data,error}=await sb.functions.invoke('claude',{body:{task:'delete_account'}}); closed=!error&&data&&data.result&&data.result.deleted; }catch(e){} }
+    LS.del(cacheKey()); try{ localStorage.removeItem('wearcycle.consent'); }catch(e){}
+    if($('#wipe-acct').checked&&!closed){ $('#wipe-err').textContent='Your data is deleted, but the account could not be closed automatically. Email wearcycle.app@gmail.com from your account address and it will be closed.'; $('#wipe-go').hidden=true; return; }
+    closeSheet(); await sb.auth.signOut().catch(()=>{}); if(closed) toast('Your data and account are deleted.',5000); };
+}
+
+/* ---------- privacy: consent record and data download ----------
+   PIPEDA asks for meaningful consent that names what is collected, who it is shared with (Supabase, Anthropic),
+   and that it may be processed outside Canada. Consent is recorded once per notice version in settings. */
+function privacyCheck(){
+  const c=S.settings.consent; if(c&&c.v===PRIVACY_V) return;
+  let at=null; try{ at=localStorage.getItem('wearcycle.consent'); }catch(e){}
+  if(at){ S.settings.consent={v:PRIVACY_V,at,how:'sign-up'}; saveCache(); queueSettingsSave(); return; }
+  if($('#sheetRoot').innerHTML) return; // ask on a later open rather than over another screen
+  openSheet(sheetHead('Your data and privacy')+`<ul class="plist">
+    <li>Your clothes, photos, outfit log and settings are kept in your private Wearcycle account, hosted by Supabase. Only you can read them.</li>
+    <li>When Claude reads a photo, checks condition or suggests what to buy, the photo or a text list of your clothes goes to Anthropic in the United States. Anthropic deletes it within 30 days and does not train on it.</li>
+    <li>Data processed in another country can be accessed by that country's courts and authorities under its laws.</li>
+    <li>You can download or delete everything, or turn Claude off, at any time in Settings.</li></ul>
+   <p class="hint"><a href="privacy.html" target="_blank" rel="noopener">Read the full privacy notice</a></p>
+   <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn ghost" data-act="privacyNoClaude">Agree, but turn Claude off</button></div>`);
+}
+function privacyAgree(claude){ S.settings.consent={v:PRIVACY_V,at:new Date().toISOString(),how:'notice'}; if(!claude) S.settings.claude=false;
+  saveCache(); queueSettingsSave(); closeSheet(); toast(claude?'Thanks. You can change this in Settings.':'Claude features are off. Turn them on any time in Settings.',4000); }
+
+// A plain .zip (stored, not compressed: photos are already JPEG/PNG) so no library is needed.
+const CRC_T=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
+function crc32(u8){ let c=0xFFFFFFFF; for(let i=0;i<u8.length;i++) c=CRC_T[(c^u8[i])&255]^(c>>>8); return (c^0xFFFFFFFF)>>>0; }
+function makeZip(files){ // files: [{name, data:Uint8Array}]
+  const enc=new TextEncoder(), parts=[], central=[]; let off=0;
+  const d=new Date(), dt=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1)), dd=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate());
+  for(const f of files){ const nm=enc.encode(f.name), crc=crc32(f.data), n=f.data.length;
+    const h=new DataView(new ArrayBuffer(30)); h.setUint32(0,0x04034b50,true); h.setUint16(4,20,true); h.setUint16(6,0x0800,true); h.setUint16(8,0,true);
+    h.setUint16(10,dt,true); h.setUint16(12,dd,true); h.setUint32(14,crc,true); h.setUint32(18,n,true); h.setUint32(22,n,true); h.setUint16(26,nm.length,true); h.setUint16(28,0,true);
+    parts.push(new Uint8Array(h.buffer),nm,f.data);
+    const c=new DataView(new ArrayBuffer(46)); c.setUint32(0,0x02014b50,true); c.setUint16(4,20,true); c.setUint16(6,20,true); c.setUint16(8,0x0800,true); c.setUint16(10,0,true);
+    c.setUint16(12,dt,true); c.setUint16(14,dd,true); c.setUint32(16,crc,true); c.setUint32(20,n,true); c.setUint32(24,n,true); c.setUint16(28,nm.length,true); c.setUint32(42,off,true);
+    central.push(new Uint8Array(c.buffer),nm); off+=30+nm.length+n; }
+  const csize=central.reduce((a,b)=>a+b.length,0), e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true); e.setUint16(8,files.length,true); e.setUint16(10,files.length,true); e.setUint32(12,csize,true); e.setUint32(16,off,true);
+  return new Blob([...parts,...central,new Uint8Array(e.buffer)],{type:'application/zip'}); }
+async function exportData(){
+  if(!canWrite()){ toast('You are offline. Downloading your data needs a connection.'); return; }
+  job('Gathering your data…',5);
+  try{
+    const items=await sb.from('items').select('id,body,updated_at'); if(items.error) throw items.error;
+    const wears=[]; for(let from=0;;from+=1000){ const r=await sb.from('wears').select('date,occ,items,created_at').order('date',{ascending:true}).range(from,from+999); if(r.error) throw r.error; wears.push(...r.data); if(r.data.length<1000) break; }
+    const se=await sb.from('settings').select('body').maybeSingle(); if(se.error) throw se.error;
+    const files=[], enc=new TextEncoder(), paths=[...new Set(items.data.flatMap(r=>[r.body.photo,r.body.cut]).filter(Boolean))]; let miss=0;
+    for(let k=0;k<paths.length;k++){ job('Adding photos '+(k+1)+' of '+paths.length,10+85*k/Math.max(1,paths.length));
+      const {data}=await sb.storage.from('photos').download(paths[k]); if(!data){ miss++; continue; }
+      files.push({name:'photos/'+paths[k].split('/').pop(),data:new Uint8Array(await data.arrayBuffer())}); }
+    const doc={app:'Wearcycle',version:APP_VERSION,exported:new Date().toISOString(),account:{email:EMAIL,id:UID},
+      note:'Photo paths in items point to files in the photos folder of this zip (same file name).',
+      items:items.data.map(r=>Object.assign({id:r.id,updated_at:r.updated_at},r.body)),outfitLog:wears,settings:se.data?se.data.body:{}};
+    files.unshift({name:'wearcycle-data.json',data:enc.encode(JSON.stringify(doc,null,1))});
+    const blob=makeZip(files), a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='wearcycle-data-'+todayISO()+'.zip';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(a.href),60000);
+    job(''); toast('Downloaded: '+items.data.length+' pieces, '+wears.length+' outfits, '+(paths.length-miss)+' photos.'+(miss?' '+miss+' photos could not be read.':''),6000);
+  }catch(e){ job(''); toast('Could not download your data: '+(e&&e.message||'unknown error'),5000); }
 }
 
 /* ---------- money ---------- */
@@ -1466,6 +1533,9 @@ document.addEventListener('click',async e=>{
     case 'adjust': openAdjust(); return;
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
+    case 'export': exportData(); return;
+    case 'privacyOk': privacyAgree(true); return;
+    case 'privacyNoClaude': privacyAgree(false); return;
     case 'scanGraphics': scanGraphics(); return;
     case 'washSnooze': { try{ localStorage.setItem('wearcycle.washSnooze',todayISO()); }catch(e){} renderOutfits(); toast('I will ask again tomorrow.'); return; }
     case 'allClean': { const ds=allItems().filter(i=>isActive(i)&&i.dirty); for(const it of ds) await patchItem(it.id,{dirty:false,wearsSinceWash:0,dirtyOn:undefined}); S.cat='all'; renderAll(); toast(ds.length+' piece'+(ds.length===1?'':'s')+' back in rotation.'); return; }
@@ -1481,7 +1551,7 @@ document.addEventListener('click',async e=>{
     else toast('To install, open Chrome\u2019s menu and choose Install app or Add to Home screen.',6000);
     return;
     case 'installNo': LS.set('wardrobe.installDismissed',true); renderStatus(); return;
-    case 'signout': closeSheet(); await sb.auth.signOut(); return;
+    case 'signout': closeSheet(); LS.del(cacheKey()); try{ await caches.delete('wearcycle-cutouts'); }catch(e){} await sb.auth.signOut(); return;
     case 'server': closeSheet(); showSetup(true); return;
   }
   if(LG && $('#sheetRoot').innerHTML){
@@ -1562,7 +1632,8 @@ document.addEventListener('toggle',e=>{ if(ED&&e.target.matches&&e.target.matche
 document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e.target.id==='g-lang')){ I18N.setLang(e.target.value); return; } if(e.target&&e.target.id==='f-repair'&&ED){ readEditorFields(); drawEditor(); return; } if(e.target&&e.target.dataset&&e.target.dataset.wflag){ const w=S.settings.work=Object.assign({code:'casual'},S.settings.work||{}); w[e.target.dataset.wflag]=e.target.checked; setDressCode(w); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); return; }
   if(e.target&&e.target.id==='washAutoT'){ S.settings.washAuto=e.target.checked; saveCache(); queueSettingsSave(); if(e.target.checked) autoWash(); return; }
   if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
-  if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); } });
+  if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); return; }
+  if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic.',4000); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
@@ -1598,10 +1669,12 @@ function showLogin(msg,mode){
    <div class="card2"><div class="seg2" role="tablist"><button role="tab" aria-selected="${up}" id="g-mode-up">Create account</button><button role="tab" aria-selected="${!up}" id="g-mode-in">Sign in</button></div>
     <div class="field"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email"></div>
     ${reset?'':`<div class="field"><label for="g-pass">Password${up?' (8+ characters)':''}</label><input type="password" id="g-pass" autocomplete="${up?'new-password':'current-password'}" minlength="8"></div>`}
+    ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and Claude (Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
+      :'<p class="hint">How your data is handled: <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</p>'}
     <p class="err" id="g-err">${esc(msg||'')}</p>
     ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back" style="margin:0">Back to sign in</button>'
       :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'':'<button class="linkbtn" id="g-forgot" style="margin:0">Forgot password?</button>'}`}
-    <p class="hint">By continuing you agree to how your data is handled: <a href="privacy.html" target="_blank" rel="noopener">privacy</a>.</p></div>
+</div>
     ${FIXED_SERVER?'':'<button class="btn ghost sm" id="g-server" style="align-self:flex-start">Server settings</button>'}<div class="row" style="justify-content:space-between;align-items:center"><p class="hint">Wearcycle v${APP_VERSION}</p>${langSelect('g-lang')}</div>`);
   const creds=()=>({email:$('#g-email').value.trim(),password:($('#g-pass')||{}).value||''});
   $('#g-mode-up').onclick=()=>showLogin('','up'); $('#g-mode-in').onclick=()=>showLogin('','in');
@@ -1609,6 +1682,8 @@ function showLogin(msg,mode){
     $('#g-in').disabled=true; const {error}=await sb.auth.signInWithPassword(c); if($('#g-in')) $('#g-in').disabled=false;
     if(error) $('#g-err').textContent=error.message==='Invalid login credentials'?'Email or password is wrong.':error.message; };
   if($('#g-up')) $('#g-up').onclick=async()=>{ const c=creds(); if(!c.email||c.password.length<8){ $('#g-err').textContent='Enter an email and a password of at least 8 characters.'; return; }
+    if(!$('#g-agree').checked){ $('#g-err').textContent='Check the box to agree to the privacy notice first.'; return; }
+    try{ localStorage.setItem('wearcycle.consent',new Date().toISOString()); }catch(e){}
     $('#g-up').disabled=true; const {data,error}=await sb.auth.signUp({email:c.email,password:c.password,options:{emailRedirectTo:location.origin+location.pathname}}); if($('#g-up')) $('#g-up').disabled=false;
     if(error){ $('#g-err').textContent=/not allowed|disabled/i.test(error.message)?'New accounts are not open yet. If someone created an account for you, use the Sign in tab.':error.message; return; }
     if(!data.session) $('#g-err').textContent='Almost there: open the confirmation email, tap the link, then sign in here.'; };
