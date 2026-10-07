@@ -1079,5 +1079,8 @@ I18N.load("fr",{
 "Downloaded: {0} pieces, {1} outfits, {2} photos.": "Téléchargé : {0} pièces, {1} tenues, {2} photos.",
 "{0} photos could not be read.": "{0} photos n’ont pas pu être lues.",
 "Could not download your data: {a}": "Impossible de télécharger vos données : {a}",
-"Saved.": "Enregistré."
+"Saved.": "Enregistré.",
+"+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.": "+2 pour une palette toute neutre ou des neutres avec une seule couleur d’accent, +1 pour deux accents analogues ou complémentaires, -2 ou -3 pour des accents qui se font concurrence. +1 quand toutes les pièces sont au même niveau d’habillement, moins un point pour chaque niveau d’écart supplémentaire. Jusqu’à +1,5 pour des pièces au repos depuis deux semaines, -1 si une pièce a été portée hier (chaussures portées aujourd’hui ou hier : -3, pour leur laisser une journée pour sécher, comme le conseille le NHS; la liste répartit aussi vos autres paires parmi les suggestions), -2 si le même haut et le même bas ont été portés ensemble cette semaine.",
+"{a} were worn today; give them a day to dry out": "Vous avez porté {a} aujourd’hui; laissez-les sécher une journée",
+"{a} were worn yesterday; give them a day to dry out": "Vous avez porté {a} hier; laissez-les sécher une journée"
 });

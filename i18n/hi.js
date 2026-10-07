@@ -1079,5 +1079,8 @@ I18N.load("hi",{
 "Downloaded: {0} pieces, {1} outfits, {2} photos.": "डाउनलोड हुआ: {0} पीस, {1} आउटफ़िट, {2} फ़ोटो।",
 "{0} photos could not be read.": "{0} फ़ोटो पढ़ी नहीं जा सकीं।",
 "Could not download your data: {a}": "आपका डेटा डाउनलोड नहीं हो सका: {a}",
-"Saved.": "सेव हो गया।"
+"Saved.": "सेव हो गया।",
+"+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.": "पूरी तरह न्यूट्रल पैलेट या न्यूट्रल के साथ एक एक्सेंट रंग पर +2, दो मिलते-जुलते या पूरक एक्सेंट पर +1, आपस में टकराते एक्सेंट पर -2 या -3। सभी पीस एक ही ड्रेस लेवल पर हों तो +1, और हर अतिरिक्त लेवल के अंतर पर एक पॉइंट कम। दो हफ़्ते आराम कर चुके पीस के लिए +1.5 तक, कल पहना कुछ हो तो -1 (आज या कल पहने गए जूतों पर -3, ताकि उन्हें सूखने के लिए एक दिन मिले, जैसी NHS की सलाह है; सूची आपके बाकी जोड़ों को भी सुझावों में बाँट देती है), और इस हफ़्ते वही टॉप और बॉटम साथ पहने गए हों तो -2।",
+"{a} were worn today; give them a day to dry out": "{a} आज पहने गए हैं; उन्हें सूखने के लिए एक दिन दें",
+"{a} were worn yesterday; give them a day to dry out": "{a} कल पहने गए थे; उन्हें सूखने के लिए एक दिन दें"
 });

@@ -1079,5 +1079,8 @@ I18N.load("ko",{
 "Downloaded: {0} pieces, {1} outfits, {2} photos.": "다운로드 완료: 아이템 {0}개, 코디 {1}개, 사진 {2}장.",
 "{0} photos could not be read.": "사진 {0}장을 읽지 못했어요.",
 "Could not download your data: {a}": "데이터를 다운로드하지 못했어요: {a}",
-"Saved.": "저장됨."
+"Saved.": "저장됨.",
+"+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.": "모두 뉴트럴 색상이거나 뉴트럴에 포인트 색 하나를 더하면 +2, 유사색 또는 보색 포인트 두 개는 +1, 서로 부딪히는 포인트 색은 -2 또는 -3. 모든 아이템이 한 격식 단계 안에 있으면 +1, 단계가 하나씩 더 벌어질 때마다 1점 감점. 2주 동안 쉰 아이템은 최대 +1.5, 어제 입은 아이템이 있으면 -1(오늘이나 어제 신은 신발은 -3, NHS 권고대로 하루 동안 말릴 수 있도록 함. 목록은 다른 신발들도 추천 전반에 골고루 나눠 배치), 이번 주에 같은 상의와 하의를 함께 입었다면 -2.",
+"{a} were worn today; give them a day to dry out": "{a}: 오늘 신었어요. 하루 말려 주세요",
+"{a} were worn yesterday; give them a day to dry out": "{a}: 어제 신었어요. 하루 말려 주세요"
 });

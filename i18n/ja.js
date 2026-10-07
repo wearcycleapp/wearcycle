@@ -1079,5 +1079,8 @@ I18N.load("ja",{
 "Downloaded: {0} pieces, {1} outfits, {2} photos.": "ダウンロード完了：アイテム{0}点、コーデ{1}件、写真{2}枚。",
 "{0} photos could not be read.": "{0}枚の写真を読み込めませんでした。",
 "Could not download your data: {a}": "データをダウンロードできませんでした：{a}",
-"Saved.": "保存しました。"
+"Saved.": "保存しました。",
+"+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.": "すべてニュートラルカラー、またはニュートラルにアクセントカラー1色で+2、類似色または補色のアクセント2色で+1、競合するアクセントは-2または-3。すべてのアイテムが同じきちんと度なら+1、1段階離れるごとに1点減点。2週間休ませたアイテムは最大+1.5、昨日着たものがあれば-1(今日または昨日履いた靴は-3。NHSの推奨どおり、1日乾かすためです。リストではほかの靴も候補全体に振り分けます)、同じトップスとボトムスを今週すでに組み合わせていれば-2。",
+"{a} were worn today; give them a day to dry out": "{a}は今日履いたので、1日乾かしましょう",
+"{a} were worn yesterday; give them a day to dry out": "{a}は昨日履いたので、1日乾かしましょう"
 });

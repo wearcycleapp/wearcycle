@@ -1079,5 +1079,8 @@ I18N.load("tl",{
 "Downloaded: {0} pieces, {1} outfits, {2} photos.": "Na-download: {0} piraso, {1} outfit, {2} litrato.",
 "{0} photos could not be read.": "Hindi mabasa ang {0} litrato.",
 "Could not download your data: {a}": "Hindi ma-download ang data mo: {a}",
-"Saved.": "Na-save."
+"Saved.": "Na-save.",
+"+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.": "+2 kapag puro neutral ang palette o neutral at isang accent na kulay, +1 sa dalawang analogous o complementary na accent, -2 o -3 sa mga accent na nagbabanggaan. +1 kapag nasa iisang antas ng pormalidad ang lahat ng piraso, bawas isang puntos sa bawat dagdag na antas ng pagitan. Hanggang +1.5 sa mga pirasong dalawang linggo nang nakapahinga, -1 kung may isinuot kahapon (sapatos na isinuot ngayon o kahapon: -3, para magkaroon sila ng isang araw para matuyo, ayon sa payo ng NHS; ipinapamahagi rin ng listahan ang iba mo pang pares sa mga pinili), -2 kung pinagsabay na ngayong linggo ang parehong pang-itaas at pang-ibaba.",
+"{a} were worn today; give them a day to dry out": "Isinuot ang {a} ngayon; hayaan muna itong matuyo nang isang araw",
+"{a} were worn yesterday; give them a day to dry out": "Isinuot ang {a} kahapon; hayaan muna itong matuyo nang isang araw"
 });
