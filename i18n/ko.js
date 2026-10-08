@@ -1163,5 +1163,7 @@ I18N.load("ko",{
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "사진이 어두워서 밝게 보정했어요. 더 정확한 색을 원하면 위쪽 조명 버튼을 누르세요.",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "사진이 어두워서 밝게 보정했어요. 창가나 조명 아래처럼 밝은 곳에서 찍으면 색이 더 정확해요.",
 "The light could not be turned on with this camera.": "이 카메라에서는 조명을 켤 수 없어요.",
-"Flashlight": "손전등"
+"Flashlight": "손전등",
+"Looking for the camera with the light…": "조명이 있는 카메라를 찾고 있어요…",
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "이 휴대폰은 웹 앱에서 조명을 쓸 수 없게 되어 있어요. 램프나 창가의 빛을 이용하세요. 어두운 사진은 자동으로 밝게 보정돼요."
 });

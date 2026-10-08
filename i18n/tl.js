@@ -1163,5 +1163,7 @@ I18N.load("tl",{
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "Madilim ang litratong iyon, kaya pinaliwanag ito. I-tap ang button ng ilaw sa itaas para mas totoo ang kulay.",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "Madilim ang litratong iyon, kaya pinaliwanag ito. Mas totoo ang kulay kapag may mas maraming liwanag (bintana o lampara).",
 "The light could not be turned on with this camera.": "Hindi mabuksan ang ilaw sa camera na ito.",
-"Flashlight": "Flashlight"
+"Flashlight": "Flashlight",
+"Looking for the camera with the light…": "Hinahanap ang camera na may ilaw…",
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "Hindi pinapayagan ng teleponong ito ang mga web app na gamitin ang ilaw nito. Gumamit ng lampara o liwanag mula sa bintana; awtomatikong pinaliliwanag ang madidilim na litrato."
 });

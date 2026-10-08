@@ -1163,5 +1163,7 @@ I18N.load("ja",{
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "写真が暗かったため明るく補正しました。より正確な色にするには、上のライトボタンをタップしてください。",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "写真が暗かったため明るく補正しました。窓際やランプなど、明るい場所で撮ると色がより正確になります。",
 "The light could not be turned on with this camera.": "このカメラではライトをオンにできませんでした。",
-"Flashlight": "ライト"
+"Flashlight": "ライト",
+"Looking for the camera with the light…": "ライト付きのカメラを探しています…",
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "このスマートフォンでは、ウェブアプリからライトを使えません。ランプや窓の光を使ってください。暗い写真は自動で明るく補正されます。"
 });

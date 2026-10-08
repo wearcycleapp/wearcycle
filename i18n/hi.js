@@ -1163,5 +1163,7 @@ I18N.load("hi",{
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "वह फ़ोटो अंधेरी थी, इसलिए उसे रोशन किया गया। सही रंगों के लिए ऊपर लाइट बटन पर टैप करें।",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "वह फ़ोटो अंधेरी थी, इसलिए उसे रोशन किया गया। ज़्यादा रोशनी (खिड़की या लैंप) से रंग ज़्यादा सही आते हैं।",
 "The light could not be turned on with this camera.": "इस कैमरे से लाइट चालू नहीं हो सकी।",
-"Flashlight": "टॉर्च"
+"Flashlight": "टॉर्च",
+"Looking for the camera with the light…": "लाइट वाला कैमरा ढूँढा जा रहा है…",
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "यह फ़ोन वेब ऐप्स को अपनी लाइट इस्तेमाल नहीं करने देता। लैंप या खिड़की की रोशनी का इस्तेमाल करें; अंधेरी फ़ोटो अपने आप रोशन की जाती हैं।"
 });

@@ -1163,5 +1163,7 @@ I18N.load("fr",{
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "Cette photo était sombre, elle a donc été éclaircie. Touchez le bouton de lumière en haut pour des couleurs plus fidèles.",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "Cette photo était sombre, elle a donc été éclaircie. Plus de lumière (une fenêtre ou une lampe) donne des couleurs plus fidèles.",
 "The light could not be turned on with this camera.": "Impossible d’allumer la lumière avec cette caméra.",
-"Flashlight": "Lampe de poche"
+"Flashlight": "Lampe de poche",
+"Looking for the camera with the light…": "Recherche de la caméra qui a la lumière…",
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "Ce téléphone ne permet pas aux applications web d’utiliser sa lumière. Utilisez une lampe ou la lumière d’une fenêtre; les photos sombres sont éclaircies automatiquement."
 });

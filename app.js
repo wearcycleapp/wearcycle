@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.33.1';
+const APP_VERSION='1.33.2';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -435,7 +435,7 @@ function drawCamera(msg){
   $('#camRoot').innerHTML=`<div class="cam" role="dialog" aria-label="Camera">
     ${msg?`<div class="msg">${msg}</div>`:`<video id="camVideo" playsinline muted autoplay></video><div class="guide" aria-hidden="true"></div><div class="flash" id="camFlash"></div>`}
     <div class="top"><span>${CAM.mode==='batch'?'One piece per photo, plain background':'Fill the frame with the item'}</span>
-      <span class="camtools"><button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
+      <span class="camtools"><button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk||CAM.torchMaybe?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
       <button class="side" data-cam="flip" style="width:44px;height:36px" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></span></div>
     <div class="bar">
       <button class="side" data-cam="cancel">Cancel</button>
@@ -448,7 +448,10 @@ async function startStream(){
   stopStream();
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ cameraFallback('This browser cannot show the camera inside the app.'); return; }
   try{
-    CAM.stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:CAM.facing},width:{ideal:1920},height:{ideal:1440}}});
+    let saved=null; try{ saved=localStorage.getItem('wearcycle.camId'); }catch(e){}
+    const vid={width:{ideal:1920},height:{ideal:1440}};
+    if(saved&&CAM.facing==='environment'){ try{ CAM.stream=await navigator.mediaDevices.getUserMedia({audio:false,video:Object.assign({deviceId:{exact:saved}},vid)}); }catch(e){ CAM.stream=null; } }
+    if(!CAM.stream) CAM.stream=await navigator.mediaDevices.getUserMedia({audio:false,video:Object.assign({facingMode:{ideal:CAM.facing}},vid)});
     if(!CAM.resolve){ stopStream(); return; }
     const v=$('#camVideo'); if(v){ v.srcObject=CAM.stream; v.play().catch(()=>{}); } else drawCamera();
     setupTorch();
@@ -461,20 +464,46 @@ async function startStream(){
 /* Light: the phone's flashlight, kept on while the camera is open (MediaStreamTrack "torch" constraint).
    Shown only when the camera reports it can do it (Chrome on Android with the back camera, usually);
    the last choice is remembered on this device. */
+// Phones with several back cameras often give the light to only one of them, so when the chosen camera has none,
+// the button still shows on the back camera and tapping it looks for the back camera that has the light.
+async function trackHasTorch(t){
+  if(!t||!t.getCapabilities) return false;
+  try{ if(window.ImageCapture) await new ImageCapture(t).getPhotoCapabilities(); }catch(e){} // some Android builds report torch only after this
+  for(let k=0;k<3;k++){ let c={}; try{ c=t.getCapabilities()||{}; }catch(e){} if(c.torch) return true; await new Promise(r=>setTimeout(r,350)); }
+  return false;
+}
 async function setupTorch(){
-  CAM.torchOk=false; CAM.torchOn=false; const t=CAM.stream&&CAM.stream.getVideoTracks()[0]; if(!t||!t.getCapabilities) return;
-  let caps={}; for(let k=0;k<3&&!caps.torch;k++){ try{ caps=t.getCapabilities()||{}; }catch(e){} if(!caps.torch) await new Promise(r=>setTimeout(r,400)); }
-  if(!caps.torch||!CAM.stream) return; CAM.torchOk=true;
+  CAM.torchOk=false; CAM.torchMaybe=false; CAM.torchOn=false; const t=CAM.stream&&CAM.stream.getVideoTracks()[0]; if(!t) return;
+  const has=await trackHasTorch(t); if(!CAM.stream) return;
+  if(!has){ CAM.torchMaybe=CAM.facing==='environment'&&!CAM.noTorch; paintTorch(); return; }
+  CAM.torchOk=true;
   let want=false; try{ want=localStorage.getItem('wearcycle.torch')==='1'; }catch(e){}
   if(want) await setTorch(true); else paintTorch();
 }
+async function findTorchCamera(){
+  let devs=[]; try{ devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); }catch(e){}
+  const cur=CAM.stream&&CAM.stream.getVideoTracks()[0]&&CAM.stream.getVideoTracks()[0].getSettings().deviceId;
+  const back=devs.filter(d=>d.deviceId!==cur&&!/front|user|facetime/i.test(d.label||'')).sort((a,b)=>(/\b0\b/.test(b.label)?1:0)-(/\b0\b/.test(a.label)?1:0));
+  stopStream();
+  for(const d of back){
+    let st=null; try{ st=await navigator.mediaDevices.getUserMedia({audio:false,video:{deviceId:{exact:d.deviceId},width:{ideal:1920},height:{ideal:1440}}}); }catch(e){ continue; }
+    if(!CAM.resolve){ st.getTracks().forEach(x=>x.stop()); return false; }
+    if(await trackHasTorch(st.getVideoTracks()[0])){ CAM.stream=st; try{ localStorage.setItem('wearcycle.camId',d.deviceId); }catch(e){}
+      const v=$('#camVideo'); if(v){ v.srcObject=st; v.play().catch(()=>{}); } return true; }
+    st.getTracks().forEach(x=>x.stop());
+  }
+  CAM.noTorch=true; await startStream(); return false;
+}
 async function setTorch(on){
+  if(on&&!CAM.torchOk&&CAM.torchMaybe){ toast('Looking for the camera with the light…',3000);
+    if(await findTorchCamera()){ CAM.torchOk=true; CAM.torchMaybe=false; }
+    else { CAM.noTorch=true; CAM.torchMaybe=false; paintTorch(); toast('This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.',7000); return; } }
   const t=CAM.stream&&CAM.stream.getVideoTracks()[0]; if(!t) return;
   try{ await t.applyConstraints({advanced:[{torch:on}]}); CAM.torchOn=on; try{ localStorage.setItem('wearcycle.torch',on?'1':'0'); }catch(e){} }
   catch(e){ CAM.torchOn=false; toast('The light could not be turned on with this camera.'); }
   paintTorch();
 }
-function paintTorch(){ const b=$('#camTorch'); if(!b) return; b.hidden=!CAM.torchOk; b.setAttribute('aria-pressed',String(!!CAM.torchOn)); const p=b.querySelector('svg'); if(p) p.setAttribute('fill',CAM.torchOn?'currentColor':'none'); }
+function paintTorch(){ const b=$('#camTorch'); if(!b) return; b.hidden=!(CAM.torchOk||CAM.torchMaybe); b.setAttribute('aria-pressed',String(!!CAM.torchOn)); const p=b.querySelector('svg'); if(p) p.setAttribute('fill',CAM.torchOn?'currentColor':'none'); }
 // Dark photos: lift the brightness with a gamma curve on each channel (keeps the hue) so the average reaches about 45%.
 function brighten(c){
   const x=c.getContext('2d',{willReadFrequently:true}), im=x.getImageData(0,0,c.width,c.height), d=im.data; let sum=0,n=0;
