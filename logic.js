@@ -40,6 +40,18 @@ const IDEAS={
   home:{top:'soft t-shirt',bottom:'lounge pants',shoes:'slippers'},
   chores:{top:'durable t-shirt',bottom:'work pants',shoes:'work boots or sturdy sneakers'},
   formal:{top:'white or light blue dress shirt',bottom:'suit trousers in navy or charcoal',shoes:'black or dark brown oxford shoes'}};
+// Women's department versions of the buying ideas (common womenswear conventions, not standards).
+const IDEAS_W={
+  work:{top:'blouse or fine knit',bottom:'tailored trousers or a midi skirt',shoes:'loafers, flats or low block heels'},
+  out:{top:'blouse, bodysuit or fine knit',bottom:'dark jeans or a skirt',shoes:'clean sneakers, ankle boots or flats'},
+  sport:{top:'moisture-wicking top or sports bra',bottom:'leggings or athletic shorts',shoes:'training or running shoes'},
+  home:{top:'soft t-shirt',bottom:'lounge pants or leggings',shoes:'slippers'},
+  chores:{top:'durable t-shirt',bottom:'work pants or sturdy leggings',shoes:'sturdy sneakers or work boots'},
+  formal:{top:'silk blouse or shell top (or a dress)',bottom:'tailored trousers or a skirt',shoes:'pumps or dressy flats'}};
+// Department the person shops in: men, women or any. Changes buying ideas, style essentials and searches, not outfit scoring.
+let DEPT='any';
+function setDept(d){ DEPT=d==='men'||d==='women'?d:'any'; }
+function ideaFor(occ,slot){ return ((DEPT==='women'?IDEAS_W:IDEAS)[occ]||{})[slot]||''; }
 const SHOP_COLORS={top:['white','lightblue','navy','grey','black','olive','burgundy'],bottom:['navy','khaki','grey','black','denim','olive','beige'],shoes:['brown','black','white','grey','navy']};
 const DAY=86400000;
 
@@ -369,7 +381,7 @@ function gaps(items){
       const t=TARGETS[o.id][slot]; if(have[slot]>=t) continue;
       const owned=c=>pool.filter(i=>(i.cat===slot||(slot!=='shoes'&&i.cat==='onepiece'))&&primary(i)===c).length;
       const opts=SHOP_COLORS[slot].map(c=>({color:c,owned:owned(c),adds:combosWith({id:'__h',cat:slot,colors:[c],formality:o.formality,occ:[o.id],cond:5},pool,o.id)})).sort((a,b)=>b.adds-a.adds||a.owned-b.owned);
-      needs.push({slot,have:have[slot],target:t,idea:IDEAS[o.id][slot],colors:opts.slice(0,2)});
+      needs.push({slot,have:have[slot],target:t,idea:ideaFor(o.id,slot),colors:opts.slice(0,2)});
     }
     out.push({occ:o.id,have,needs});
   }
@@ -387,13 +399,21 @@ const STYLES={
   street:{label:'Street',desc:'Hoodies, graphic tees, joggers, sneakers, caps.'},
   sporty:{label:'Sporty',desc:'Technical fabrics, track pieces, running shoes.'},
   preppy:{label:'Preppy',desc:'Polos, cable knits, stripes, boat shoes.'}};
+const STYLES_W={
+  classic:'Button-up shirts, tailored trousers, knits, blazers, flats or pumps.',
+  heritage:'Flannel, denim, corduroy, wool coats, ankle boots, leather.',
+  minimal:'Plain neutrals, no patterns, clean sneakers, simple shapes.',
+  street:'Hoodies, graphic tees, cargo pants, chunky sneakers, caps.',
+  sporty:'Technical fabrics, leggings, track pieces, running shoes.',
+  preppy:'Polos, cable knits, stripes, pleated skirts, loafers.'};
+function styleDesc(k){ return DEPT==='women'&&STYLES_W[k]?STYLES_W[k]:(STYLES[k]||{}).desc||''; }
 const STYLE_IDS=Object.keys(STYLES);
 const STYLE_RX={
-  classic:/\b(oxford|dress shirt|button[- ]?(down|up)|chinos?|khakis?|trousers?|slacks|blazers?|sport coat|suit|loafers?|derby|derbies|brogues?|dress shoes?|leather shoes?|cardigan|merino|fine knit|overcoat|trench)\b/i,
-  heritage:/\b(flannel|plaid|check(ed)?|buffalo|tartan|jeans|denim|chore|field jacket|duffle|duffel|pea ?coat|waxed|work boots?|boots?|henley|corduroy|cords|suede|canvas|shacket|overshirt|chambray|selvedge|moc toe|wool|leather)\b/i,
-  street:/\b(hoodies?|hooded|sweatshirts?|graphic|joggers?|sweatpants|cargo|bomber|puffer|varsity|coach jacket|caps?|beanie|high-?tops?|oversized|streetwear)\b/i,
-  sporty:/\b(athletic|running|training|gym|track|technical|performance|moisture|leggings|windbreaker|trainers?|sport|swim|fleece|quarter[- ]zip|half[- ]zip)\b/i,
-  preppy:/\b(polo|cable|stripes?|striped|rugby|boat shoes?|deck shoes?|loafers?|quarter[- ]zip|v-?neck|madras|button[- ]?down|seersucker|blazer)\b/i};
+  classic:/\b(oxford|dress shirt|button[- ]?(down|up)|chinos?|khakis?|trousers?|slacks|blazers?|sport coat|suit|loafers?|derby|derbies|brogues?|dress shoes?|leather shoes?|cardigan|merino|fine knit|overcoat|trench|blouse|pencil skirt|sheath|pumps?|ballet flats?|kitten heels?)\b/i,
+  heritage:/\b(flannel|plaid|check(ed)?|buffalo|tartan|jeans|denim|chore|field jacket|duffle|duffel|pea ?coat|waxed|work boots?|boots?|henley|corduroy|cords|suede|canvas|shacket|overshirt|chambray|selvedge|moc toe|wool|leather|prairie|ankle boots?)\b/i,
+  street:/\b(hoodies?|hooded|sweatshirts?|graphic|joggers?|sweatpants|cargo|bomber|puffer|varsity|coach jacket|caps?|beanie|high-?tops?|oversized|streetwear|crop(ped)? tops?|bucket hat|chunky sneakers?)\b/i,
+  sporty:/\b(athletic|running|training|gym|track|technical|performance|moisture|leggings|windbreaker|trainers?|sport|swim|fleece|quarter[- ]zip|half[- ]zip|sports? bra|yoga|bike shorts)\b/i,
+  preppy:/\b(polo|cable|stripes?|striped|rugby|boat shoes?|deck shoes?|loafers?|quarter[- ]zip|v-?neck|madras|button[- ]?down|seersucker|blazer|pleated|breton|tennis skirt|ballet flats?|headband)\b/i};
 const NEUTRALS=['black','white','grey','navy','beige','khaki','brown','denim','olive'];
 function itemText(it){ return [it.name,it.kind,it.material,it.pattern].filter(Boolean).join(' '); }
 function pieceStyles(it){
@@ -465,10 +485,17 @@ const ESSENTIALS={
   street:[['Hoodie','top',/hood/],['Graphic tee','top',/^(?!.*(hood|sweat|crew ?neck|jumper|sweater|cardigan)).*(graphic|print)/],['Joggers or cargo pants','bottom',/jogger|cargo|sweatpant/],['Relaxed jeans','bottom',/jeans|denim/],['Bomber or puffer jacket','outerwear',/bomber|puffer|varsity|coach/],['Statement sneakers','shoes',/sneaker|trainer|high-?top/],['Cap or beanie','hat',/./],['Crossbody bag','bag',/./]],
   sporty:[['Technical t-shirt','top',/technical|performance|moisture|athletic|training|running|gym|dri/],['Track or quarter-zip top','top',/track|quarter[- ]zip|half[- ]zip|zip-?up/],['Joggers or track pants','bottom',/jogger|track|sweatpant/],['Athletic shorts','bottom',/short/],['Windbreaker or shell','outerwear',/windbreaker|shell|anorak|rain/],['Running shoes','shoes',/running|trainer|training|sneaker/],['Sport watch','watch',/./],['Cap','hat',/./]],
   preppy:[['Polo shirt','top',/polo/],['Oxford button-down','top',/oxford|button[- ]?down/],['Cable or V-neck knit','top',/cable|v-?neck|sweater|cardigan|quarter[- ]zip/],['Striped shirt or tee','top',/stripe/],['Chinos','bottom',/chino|khaki/],['Navy blazer','outerwear',/blazer/],['Boat shoes or loafers','shoes',/boat|loafer|deck/],['Leather or webbing belt','belt',/./]]};
+const ESSENTIALS_W={
+  classic:[['White button-up shirt','top',/button|oxford|shirt|blouse/,['white','lightblue']],['Fine knit sweater or cardigan','top',/merino|knit|sweater|jumper|cardigan/],['Navy or black blazer','outerwear',/blazer|suit jacket/],['Tailored trousers','bottom',/trouser|slack|dress pant|pant/],['Pencil or A-line skirt','bottom',/skirt/],['Sheath or little black dress','onepiece',/dress/],['Ballet flats or loafers','shoes',/flat|loafer/],['Pumps','shoes',/pump|heel/],['Trench coat','outerwear',/trench|overcoat|wool coat/]],
+  heritage:[['Flannel or check shirt','top',/flannel|plaid|check|buffalo|tartan/],['Chunky or cable knit','top',/wool|knit|sweater|cable|jumper/],['Dark jeans','bottom',/jeans|denim/],['Corduroy skirt or trousers','bottom',/cord/],['Denim or chore jacket','outerwear',/chore|field|denim jacket|trucker|shacket|overshirt/],['Wool or waxed coat','outerwear',/wool coat|waxed|duffle|duffel|pea ?coat/],['Leather ankle boots','shoes',/boot/],['Leather belt','belt',/./]],
+  minimal:[['Plain white tee','top',/t-?shirt|\btee/,['white']],['Plain black or grey tee','top',/t-?shirt|\btee/,['black','grey']],['Grey or camel crewneck knit','top',/knit|sweater|crew|jumper/],['Black or navy trousers','bottom',/trouser|pant/,['black','navy','grey']],['Simple slip or shift dress','onepiece',/dress/],['Clean white sneakers','shoes',/sneaker|trainer/,['white']],['Simple long coat','outerwear',/coat|overcoat/],['Simple tote bag','bag',/./]],
+  street:[['Hoodie','top',/hood/],['Graphic tee','top',/^(?!.*(hood|sweat|crew ?neck|jumper|sweater|cardigan)).*(graphic|print)/],['Cargo pants or joggers','bottom',/jogger|cargo|sweatpant/],['Relaxed jeans','bottom',/jeans|denim/],['Bomber or puffer jacket','outerwear',/bomber|puffer|varsity|coach/],['Chunky sneakers','shoes',/sneaker|trainer|high-?top/],['Cap or beanie','hat',/./],['Crossbody bag','bag',/./]],
+  sporty:[['Technical top','top',/technical|performance|moisture|athletic|training|running|gym|dri|tank/],['Sports bra','top',/bra/],['Leggings','bottom',/legging|tights/],['Track or quarter-zip top','top',/track|quarter[- ]zip|half[- ]zip|zip-?up/],['Windbreaker or shell','outerwear',/windbreaker|shell|anorak|rain/],['Running shoes','shoes',/running|trainer|training|sneaker/],['Sport watch','watch',/./],['Cap','hat',/./]],
+  preppy:[['Polo shirt','top',/polo/],['Oxford button-down','top',/oxford|button[- ]?down/],['Cable knit or cardigan','top',/cable|v-?neck|sweater|cardigan|quarter[- ]zip/],['Striped or Breton top','top',/stripe|breton/],['Chinos','bottom',/chino|khaki/],['Pleated or A-line skirt','bottom',/skirt/],['Navy blazer','outerwear',/blazer/],['Loafers or ballet flats','shoes',/loafer|flat|boat|deck/]]};
 function essentials(styleOrLook,items){
   const own=items.filter(isActive);
   if(typeof styleOrLook==='string'){ const used=new Set();
-    return (ESSENTIALS[styleOrLook]||[]).map(([label,cat,rx,cols])=>{ const it=own.find(i=>!used.has(i)&&i.cat===cat&&rx.test(itemText(i).toLowerCase())&&(!cols||cols.includes(primary(i))));
+    return ((DEPT==='women'?ESSENTIALS_W:ESSENTIALS)[styleOrLook]||[]).map(([label,cat,rx,cols])=>{ const it=own.find(i=>!used.has(i)&&i.cat===cat&&rx.test(itemText(i).toLowerCase())&&(!cols||cols.includes(primary(i))));
       if(it) used.add(it); return {label,cat,have:it||null}; }); }
   const look=styleOrLook, used=new Set();
   return (look.pieces||[]).slice(0,10).map(p=>{
@@ -553,7 +580,7 @@ function themeScore(o,th){
   return {s,r};
 }
 
-return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,SHOP_COLORS,DAY,
+return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
   daysSince,localDayGap,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();

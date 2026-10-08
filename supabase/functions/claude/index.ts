@@ -85,6 +85,7 @@ function prompt(task: string, b: Record<string, unknown>): string | null {
     return "Help one person fill gaps in their wardrobe so they always have outfits ready for work, going out, sport, home and chores.\n\n" +
       "Their closet:\n" + s(b.closet, 12000) + "\n\nGaps (have/target):\n" + s(b.gaps, 2000) +
       (b.style ? "\n\nPreferred style: " + s(b.style, 400) + ". Favour pieces that build this style." : "") +
+      (b.dept === "men" || b.dept === "women" ? "\n\nThey shop in the " + b.dept + "'s department: suggest pieces from it." : "") +
       (b.season ? "\n\nPlan ahead for: " + s(b.season, 600) + ". Include pieces for it that work with what they own." : "") +
       "\n\nSuggest 6 specific pieces to buy that add the most new combinations with what they already own, prioritising the gaps " +
       "and replacements for condition 1 items. No brand names. Reply with only a JSON array of objects: " +
