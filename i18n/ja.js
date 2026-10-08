@@ -210,7 +210,7 @@ I18N.load("ja",{
 "Laundry tracking off. Pieces already in the wash stay there until you mark them clean.": "洗濯の記録をオフにしました。すでに洗濯中のアイテムは、洗濯済みにするまでそのままです。",
 "Layer": "アウター",
 "Layered look.": "重ね着。",
-"Light": "薄手",
+"Light": "ライト",
 "Light blue shirt": "水色のシャツ",
 "Light or dark": "ライトまたはダーク",
 "Light, breathable pieces ranked first.": "軽くて通気性のよいアイテムを優先します。",
@@ -1159,5 +1159,8 @@ I18N.load("ja",{
 "Cable knit or cardigan": "ケーブルニットまたはカーディガン",
 "Striped or Breton top": "ストライプまたはバスクシャツ",
 "Pleated or A-line skirt": "プリーツまたはAラインのスカート",
-"Loafers or ballet flats": "ローファーまたはバレエシューズ"
+"Loafers or ballet flats": "ローファーまたはバレエシューズ",
+"That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "写真が暗かったため明るく補正しました。より正確な色にするには、上のライトボタンをタップしてください。",
+"That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "写真が暗かったため明るく補正しました。窓際やランプなど、明るい場所で撮ると色がより正確になります。",
+"The light could not be turned on with this camera.": "このカメラではライトをオンにできませんでした。"
 });

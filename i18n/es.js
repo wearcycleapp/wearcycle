@@ -210,7 +210,7 @@ I18N.load("es",{
 "Laundry tracking off. Pieces already in the wash stay there until you mark them clean.": "Seguimiento del lavado desactivado. Las prendas que ya están en el lavado siguen ahí hasta que las marques como limpias.",
 "Layer": "Capa",
 "Layered look.": "Look en capas.",
-"Light": "Ligero",
+"Light": "Luz",
 "Light blue shirt": "Camisa celeste",
 "Light or dark": "Claro u oscuro",
 "Light, breathable pieces ranked first.": "Prendas ligeras y transpirables primero.",
@@ -1159,5 +1159,8 @@ I18N.load("es",{
 "Cable knit or cardigan": "Suéter de trenzas o cárdigan",
 "Striped or Breton top": "Top a rayas o marinero",
 "Pleated or A-line skirt": "Falda plisada o en A",
-"Loafers or ballet flats": "Mocasines o bailarinas"
+"Loafers or ballet flats": "Mocasines o bailarinas",
+"That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "Esa foto estaba oscura, así que se aclaró. Toca el botón de luz de arriba para colores más fieles.",
+"That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "Esa foto estaba oscura, así que se aclaró. Con más luz (una ventana o una lámpara) los colores salen más fieles.",
+"The light could not be turned on with this camera.": "No se pudo encender la luz con esta cámara."
 });

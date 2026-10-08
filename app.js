@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.32.0';
+const APP_VERSION='1.33.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -426,7 +426,7 @@ window.addEventListener('popstate',()=>{
 function openCamera(mode){
   guard();
   return new Promise(resolve=>{
-    CAM.mode=mode; CAM.shots=[]; CAM.resolve=resolve;
+    CAM.mode=mode; CAM.shots=[]; CAM.resolve=resolve; CAM.darkTold=false;
     drawCamera(); startStream();
   });
 }
@@ -435,7 +435,8 @@ function drawCamera(msg){
   $('#camRoot').innerHTML=`<div class="cam" role="dialog" aria-label="Camera">
     ${msg?`<div class="msg">${msg}</div>`:`<video id="camVideo" playsinline muted autoplay></video><div class="guide" aria-hidden="true"></div><div class="flash" id="camFlash"></div>`}
     <div class="top"><span>${CAM.mode==='batch'?'One piece per photo, plain background':'Fill the frame with the item'}</span>
-      <button class="side" data-cam="flip" style="width:44px;height:36px" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></div>
+      <span class="camtools"><button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Light" title="Light"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
+      <button class="side" data-cam="flip" style="width:44px;height:36px" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></span></div>
     <div class="bar">
       <button class="side" data-cam="cancel">Cancel</button>
       ${msg?'<span></span>':'<button class="shutter" data-cam="shoot" aria-label="Take photo"></button>'}
@@ -450,11 +451,38 @@ async function startStream(){
     CAM.stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:CAM.facing},width:{ideal:1920},height:{ideal:1440}}});
     if(!CAM.resolve){ stopStream(); return; }
     const v=$('#camVideo'); if(v){ v.srcObject=CAM.stream; v.play().catch(()=>{}); } else drawCamera();
+    setupTorch();
   }catch(e){
     const name=e&&e.name;
     cameraFallback(name==='NotAllowedError'?'Camera access is blocked. Allow it in Chrome: tap the icon left of the address, then Permissions, then Camera.'
       :name==='NotFoundError'?'No camera was found on this device.':'The camera could not start ('+esc(name||'unknown')+').');
   }
+}
+/* Light: the phone's flashlight, kept on while the camera is open (MediaStreamTrack "torch" constraint).
+   Shown only when the camera reports it can do it (Chrome on Android with the back camera, usually);
+   the last choice is remembered on this device. */
+async function setupTorch(){
+  CAM.torchOk=false; CAM.torchOn=false; const t=CAM.stream&&CAM.stream.getVideoTracks()[0]; if(!t||!t.getCapabilities) return;
+  let caps={}; for(let k=0;k<3&&!caps.torch;k++){ try{ caps=t.getCapabilities()||{}; }catch(e){} if(!caps.torch) await new Promise(r=>setTimeout(r,400)); }
+  if(!caps.torch||!CAM.stream) return; CAM.torchOk=true;
+  let want=false; try{ want=localStorage.getItem('wearcycle.torch')==='1'; }catch(e){}
+  if(want) await setTorch(true); else paintTorch();
+}
+async function setTorch(on){
+  const t=CAM.stream&&CAM.stream.getVideoTracks()[0]; if(!t) return;
+  try{ await t.applyConstraints({advanced:[{torch:on}]}); CAM.torchOn=on; try{ localStorage.setItem('wearcycle.torch',on?'1':'0'); }catch(e){} }
+  catch(e){ CAM.torchOn=false; toast('The light could not be turned on with this camera.'); }
+  paintTorch();
+}
+function paintTorch(){ const b=$('#camTorch'); if(!b) return; b.hidden=!CAM.torchOk; b.setAttribute('aria-pressed',String(!!CAM.torchOn)); const p=b.querySelector('svg'); if(p) p.setAttribute('fill',CAM.torchOn?'currentColor':'none'); }
+// Dark photos: lift the brightness with a gamma curve on each channel (keeps the hue) so the average reaches about 45%.
+function brighten(c){
+  const x=c.getContext('2d',{willReadFrequently:true}), im=x.getImageData(0,0,c.width,c.height), d=im.data; let sum=0,n=0;
+  for(let i=0;i<d.length;i+=16){ sum+=0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]; n++; }
+  const mean=sum/n/255; if(mean>=0.33||mean<0.02) return {mean,lifted:false};
+  const g=Math.max(0.45,Math.log(0.45)/Math.log(mean)); const lut=new Uint8ClampedArray(256); for(let v=0;v<256;v++) lut[v]=Math.round(255*Math.pow(v/255,g));
+  for(let i=0;i<d.length;i+=4){ d[i]=lut[d[i]]; d[i+1]=lut[d[i+1]]; d[i+2]=lut[d[i+2]]; }
+  x.putImageData(im,0,0); return {mean,lifted:true};
 }
 function cameraFallback(text){
   drawCamera(`<p>${text}</p><button class="btn primary" data-cam="gallery">Choose photos instead</button>`);
@@ -463,8 +491,10 @@ function stopStream(){ if(CAM.stream){ CAM.stream.getTracks().forEach(t=>t.stop(
 function closeCamera(result){ stopStream(); $('#camRoot').innerHTML=''; const r=CAM.resolve; CAM.resolve=null; if(r) r(result||[]); }
 async function shoot(){
   const v=$('#camVideo'); if(!v||!v.videoWidth||CAM.busy) return; CAM.busy=true;
-  const blob=await new Promise(r=>drawScaled(v,1280).toBlob(r,'image/jpeg',0.86));
+  const cv=drawScaled(v,1280); const br=brighten(cv);
+  const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.86));
   CAM.busy=false; if(!blob) return;
+  if(br.lifted&&!CAM.darkTold){ CAM.darkTold=true; toast(CAM.torchOk&&!CAM.torchOn?'That photo was dark, so it was brightened. Tap the light button at the top for truer colors.':'That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.',6000); }
   if(CAM.mode==='single'){ closeCamera([blob]); return; }
   CAM.shots.push(blob); if(CAM.lastUrl) URL.revokeObjectURL(CAM.lastUrl); CAM.lastUrl=URL.createObjectURL(blob);
   const f=$('#camFlash'); if(f){ f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
@@ -1565,6 +1595,7 @@ document.addEventListener('click',async e=>{
     else if(ds.cam==='done') closeCamera(CAM.shots);
     else if(ds.cam==='cancel') closeCamera(CAM.mode==='batch'?CAM.shots:[]);
     else if(ds.cam==='flip'){ CAM.facing=CAM.facing==='environment'?'user':'environment'; startStream(); }
+    else if(ds.cam==='torch') setTorch(!CAM.torchOn);
     else if(ds.cam==='gallery'){ const mode=CAM.mode; closeCamera(CAM.shots); const files=await pickFiles(mode==='batch'); if(mode==='batch') addPhotos(files); else if(files[0]) (ED?editorSetPhoto:checkSetPhoto)(files[0]); }
     return;
   }
