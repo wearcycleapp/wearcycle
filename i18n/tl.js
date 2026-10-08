@@ -210,7 +210,7 @@ I18N.load("tl",{
 "Laundry tracking off. Pieces already in the wash stay there until you mark them clean.": "Naka-off ang pagsubaybay sa labada. Mananatili sa labahan ang mga pirasong naroon na hanggang markahan mo silang malinis.",
 "Layer": "Patong",
 "Layered look.": "Patong-patong na look.",
-"Light": "Ilaw",
+"Light": "Manipis",
 "Light blue shirt": "Light blue na shirt",
 "Light or dark": "Light o dark",
 "Light, breathable pieces ranked first.": "Inuna ang mga magaan at preskong piraso.",
@@ -1162,5 +1162,6 @@ I18N.load("tl",{
 "Loafers or ballet flats": "Loafers o ballet flats",
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "Madilim ang litratong iyon, kaya pinaliwanag ito. I-tap ang button ng ilaw sa itaas para mas totoo ang kulay.",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "Madilim ang litratong iyon, kaya pinaliwanag ito. Mas totoo ang kulay kapag may mas maraming liwanag (bintana o lampara).",
-"The light could not be turned on with this camera.": "Hindi mabuksan ang ilaw sa camera na ito."
+"The light could not be turned on with this camera.": "Hindi mabuksan ang ilaw sa camera na ito.",
+"Flashlight": "Flashlight"
 });

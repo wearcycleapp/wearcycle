@@ -210,7 +210,7 @@ I18N.load("ko",{
 "Laundry tracking off. Pieces already in the wash stay there until you mark them clean.": "세탁 관리를 껐어요. 이미 세탁 중인 아이템은 세탁 완료로 표시할 때까지 그대로 있어요.",
 "Layer": "겉옷",
 "Layered look.": "레이어드 룩.",
-"Light": "조명",
+"Light": "얇은 편",
 "Light blue shirt": "하늘색 셔츠",
 "Light or dark": "라이트/다크 모드",
 "Light, breathable pieces ranked first.": "가볍고 통기성 좋은 아이템을 먼저 추천해요.",
@@ -1162,5 +1162,6 @@ I18N.load("ko",{
 "Loafers or ballet flats": "로퍼나 발레 플랫",
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "사진이 어두워서 밝게 보정했어요. 더 정확한 색을 원하면 위쪽 조명 버튼을 누르세요.",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "사진이 어두워서 밝게 보정했어요. 창가나 조명 아래처럼 밝은 곳에서 찍으면 색이 더 정확해요.",
-"The light could not be turned on with this camera.": "이 카메라에서는 조명을 켤 수 없어요."
+"The light could not be turned on with this camera.": "이 카메라에서는 조명을 켤 수 없어요.",
+"Flashlight": "손전등"
 });

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.33.0';
+const APP_VERSION='1.33.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -435,7 +435,7 @@ function drawCamera(msg){
   $('#camRoot').innerHTML=`<div class="cam" role="dialog" aria-label="Camera">
     ${msg?`<div class="msg">${msg}</div>`:`<video id="camVideo" playsinline muted autoplay></video><div class="guide" aria-hidden="true"></div><div class="flash" id="camFlash"></div>`}
     <div class="top"><span>${CAM.mode==='batch'?'One piece per photo, plain background':'Fill the frame with the item'}</span>
-      <span class="camtools"><button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Light" title="Light"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
+      <span class="camtools"><button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
       <button class="side" data-cam="flip" style="width:44px;height:36px" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></span></div>
     <div class="bar">
       <button class="side" data-cam="cancel">Cancel</button>

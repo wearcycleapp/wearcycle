@@ -210,7 +210,7 @@ I18N.load("hi",{
 "Laundry tracking off. Pieces already in the wash stay there until you mark them clean.": "धुलाई ट्रैकिंग बंद। जो पीस पहले से धुलाई में हैं, वे तब तक वहीं रहेंगे जब तक आप उन्हें साफ़ मार्क नहीं करते।",
 "Layer": "लेयर",
 "Layered look.": "लेयर वाला लुक।",
-"Light": "लाइट",
+"Light": "हल्का",
 "Light blue shirt": "हल्की नीली शर्ट",
 "Light or dark": "हल्का या गहरा",
 "Light, breathable pieces ranked first.": "हल्के, हवादार पीस पहले रखे गए हैं।",
@@ -1162,5 +1162,6 @@ I18N.load("hi",{
 "Loafers or ballet flats": "लोफ़र या बैले फ़्लैट्स",
 "That photo was dark, so it was brightened. Tap the light button at the top for truer colors.": "वह फ़ोटो अंधेरी थी, इसलिए उसे रोशन किया गया। सही रंगों के लिए ऊपर लाइट बटन पर टैप करें।",
 "That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.": "वह फ़ोटो अंधेरी थी, इसलिए उसे रोशन किया गया। ज़्यादा रोशनी (खिड़की या लैंप) से रंग ज़्यादा सही आते हैं।",
-"The light could not be turned on with this camera.": "इस कैमरे से लाइट चालू नहीं हो सकी।"
+"The light could not be turned on with this camera.": "इस कैमरे से लाइट चालू नहीं हो सकी।",
+"Flashlight": "टॉर्च"
 });
