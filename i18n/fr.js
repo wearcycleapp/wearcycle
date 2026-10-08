@@ -1165,5 +1165,12 @@ I18N.load("fr",{
 "The light could not be turned on with this camera.": "Impossible d’allumer la lumière avec cette caméra.",
 "Flashlight": "Lampe de poche",
 "Looking for the camera with the light…": "Recherche de la caméra qui a la lumière…",
-"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "Ce téléphone ne permet pas aux applications web d’utiliser sa lumière. Utilisez une lampe ou la lumière d’une fenêtre; les photos sombres sont éclaircies automatiquement."
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "Ce téléphone ne permet pas aux applications web d’utiliser sa lumière. Utilisez une lampe ou la lumière d’une fenêtre; les photos sombres sont éclaircies automatiquement.",
+"I did not wear it today: remove it from today's log": "Je ne l’ai pas porté aujourd’hui : le retirer du registre du jour",
+"Not wearing it: leave it out of this outfit": "Je ne le porte pas : le laisser hors de cette tenue",
+"{a} left out. Wear this logs only the pieces shown; Back to suggestion brings it back.": "{a} est laissé de côté. « Porter cette tenue » note seulement les pièces affichées; « Revenir à la suggestion » le remet.",
+"Logged today": "Noté aujourd’hui",
+"Remove anything you did not wear. Its wear count and last-worn date are corrected.": "Retirez ce que vous n’avez pas porté. Son nombre de port et sa date de dernier port sont corrigés.",
+"{a} removed from today’s log.": "{a} a été retiré du registre du jour.",
+"Could not change the log: {a}": "Impossible de modifier le registre : {a}"
 });

@@ -1165,5 +1165,12 @@ I18N.load("ja",{
 "The light could not be turned on with this camera.": "このカメラではライトをオンにできませんでした。",
 "Flashlight": "ライト",
 "Looking for the camera with the light…": "ライト付きのカメラを探しています…",
-"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "このスマートフォンでは、ウェブアプリからライトを使えません。ランプや窓の光を使ってください。暗い写真は自動で明るく補正されます。"
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "このスマートフォンでは、ウェブアプリからライトを使えません。ランプや窓の光を使ってください。暗い写真は自動で明るく補正されます。",
+"I did not wear it today: remove it from today's log": "今日は着ていない：今日の記録から外す",
+"Not wearing it: leave it out of this outfit": "着ない：このコーデから外す",
+"{a} left out. Wear this logs only the pieces shown; Back to suggestion brings it back.": "{a}を外しました。「これを着る」は表示中のアイテムだけを記録します。「おすすめに戻す」で元に戻せます。",
+"Logged today": "今日の記録",
+"Remove anything you did not wear. Its wear count and last-worn date are corrected.": "着なかったものを削除してください。着用回数と最終着用日が修正されます。",
+"{a} removed from today’s log.": "{a}を今日の記録から外しました。",
+"Could not change the log: {a}": "記録を変更できませんでした：{a}"
 });

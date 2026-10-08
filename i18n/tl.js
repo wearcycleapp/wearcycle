@@ -1165,5 +1165,12 @@ I18N.load("tl",{
 "The light could not be turned on with this camera.": "Hindi mabuksan ang ilaw sa camera na ito.",
 "Flashlight": "Flashlight",
 "Looking for the camera with the light…": "Hinahanap ang camera na may ilaw…",
-"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "Hindi pinapayagan ng teleponong ito ang mga web app na gamitin ang ilaw nito. Gumamit ng lampara o liwanag mula sa bintana; awtomatikong pinaliliwanag ang madidilim na litrato."
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "Hindi pinapayagan ng teleponong ito ang mga web app na gamitin ang ilaw nito. Gumamit ng lampara o liwanag mula sa bintana; awtomatikong pinaliliwanag ang madidilim na litrato.",
+"I did not wear it today: remove it from today's log": "Hindi ko ito isinuot ngayon: alisin sa tala ngayong araw",
+"Not wearing it: leave it out of this outfit": "Hindi ko ito isusuot: huwag isama sa outfit na ito",
+"{a} left out. Wear this logs only the pieces shown; Back to suggestion brings it back.": "Hindi isinama ang {a}. Ang ‘Isuot ito’ ay magtatala lang ng mga nakikitang piraso; ibabalik ito ng ‘Ibalik sa mungkahi’.",
+"Logged today": "Naitala ngayon",
+"Remove anything you did not wear. Its wear count and last-worn date are corrected.": "Alisin ang hindi mo isinuot. Itatama ang bilang ng pagsuot at petsa ng huling pagsuot nito.",
+"{a} removed from today’s log.": "Inalis ang {a} sa tala ngayong araw.",
+"Could not change the log: {a}": "Hindi mabago ang tala: {a}"
 });

@@ -622,3 +622,7 @@ a.idea.shop .go{align-self:flex-end;margin-top:4px}
 .cam .camtools{display:flex;gap:8px}
 .cam .side[aria-pressed="true"]{background:#fff;color:#000;border-color:#fff}
 .cam .side[hidden]{display:none}
+
+/* today's log (v1.34) */
+button.hint.today.linkish{display:block;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:var(--muted);cursor:pointer}
+button.hint.today.linkish .chev{color:var(--ink)}

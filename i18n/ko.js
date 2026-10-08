@@ -1165,5 +1165,12 @@ I18N.load("ko",{
 "The light could not be turned on with this camera.": "이 카메라에서는 조명을 켤 수 없어요.",
 "Flashlight": "손전등",
 "Looking for the camera with the light…": "조명이 있는 카메라를 찾고 있어요…",
-"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "이 휴대폰은 웹 앱에서 조명을 쓸 수 없게 되어 있어요. 램프나 창가의 빛을 이용하세요. 어두운 사진은 자동으로 밝게 보정돼요."
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "이 휴대폰은 웹 앱에서 조명을 쓸 수 없게 되어 있어요. 램프나 창가의 빛을 이용하세요. 어두운 사진은 자동으로 밝게 보정돼요.",
+"I did not wear it today: remove it from today's log": "오늘 입지 않았어요: 오늘 기록에서 빼기",
+"Not wearing it: leave it out of this outfit": "안 입을래요: 이 코디에서 빼기",
+"{a} left out. Wear this logs only the pieces shown; Back to suggestion brings it back.": "{a}을(를) 뺐어요. ‘이 코디 입기’는 보이는 아이템만 기록해요. ‘추천으로 되돌리기’로 다시 넣을 수 있어요.",
+"Logged today": "오늘 기록",
+"Remove anything you did not wear. Its wear count and last-worn date are corrected.": "입지 않은 것은 삭제하세요. 착용 횟수와 마지막 착용일이 수정돼요.",
+"{a} removed from today’s log.": "{a}을(를) 오늘 기록에서 뺐어요.",
+"Could not change the log: {a}": "기록을 바꿀 수 없어요: {a}"
 });

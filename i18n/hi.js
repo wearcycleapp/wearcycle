@@ -1165,5 +1165,12 @@ I18N.load("hi",{
 "The light could not be turned on with this camera.": "इस कैमरे से लाइट चालू नहीं हो सकी।",
 "Flashlight": "टॉर्च",
 "Looking for the camera with the light…": "लाइट वाला कैमरा ढूँढा जा रहा है…",
-"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "यह फ़ोन वेब ऐप्स को अपनी लाइट इस्तेमाल नहीं करने देता। लैंप या खिड़की की रोशनी का इस्तेमाल करें; अंधेरी फ़ोटो अपने आप रोशन की जाती हैं।"
+"This phone does not let web apps use its light. Use a lamp or window light; dark photos are brightened automatically.": "यह फ़ोन वेब ऐप्स को अपनी लाइट इस्तेमाल नहीं करने देता। लैंप या खिड़की की रोशनी का इस्तेमाल करें; अंधेरी फ़ोटो अपने आप रोशन की जाती हैं।",
+"I did not wear it today: remove it from today's log": "मैंने इसे आज नहीं पहना: आज के रिकॉर्ड से हटाएँ",
+"Not wearing it: leave it out of this outfit": "यह नहीं पहन रहा: इसे इस आउटफ़िट से बाहर रखें",
+"{a} left out. Wear this logs only the pieces shown; Back to suggestion brings it back.": "{a} बाहर रखा गया। “यह पहनें” सिर्फ़ दिख रहे कपड़े दर्ज करता है; “सुझाव पर वापस जाएँ” इसे वापस लाता है।",
+"Logged today": "आज दर्ज",
+"Remove anything you did not wear. Its wear count and last-worn date are corrected.": "जो नहीं पहना उसे हटाएँ। उसकी पहनने की गिनती और आख़िरी बार पहनने की तारीख़ ठीक कर दी जाती है।",
+"{a} removed from today’s log.": "{a} आज के रिकॉर्ड से हटाया गया।",
+"Could not change the log: {a}": "रिकॉर्ड नहीं बदला जा सका: {a}"
 });
