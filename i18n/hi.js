@@ -1172,5 +1172,15 @@ I18N.load("hi",{
 "Logged today": "आज दर्ज",
 "Remove anything you did not wear. Its wear count and last-worn date are corrected.": "जो नहीं पहना उसे हटाएँ। उसकी पहनने की गिनती और आख़िरी बार पहनने की तारीख़ ठीक कर दी जाती है।",
 "{a} removed from today’s log.": "{a} आज के रिकॉर्ड से हटाया गया।",
-"Could not change the log: {a}": "रिकॉर्ड नहीं बदला जा सका: {a}"
+"Could not change the log: {a}": "रिकॉर्ड नहीं बदला जा सका: {a}",
+"Correct what I wore": "जो पहना उसे ठीक करें",
+"Shows what you logged. Tap pieces to add or remove them, then save. Wear counts are corrected.": "यहाँ आपका दर्ज किया हुआ दिखता है। कपड़े जोड़ने या हटाने के लिए टैप करें, फिर सेव करें। पहनने की गिनती ठीक हो जाती है।",
+"Save changes": "बदलाव सेव करें",
+"Correct": "ठीक करें",
+"Log updated: {0} pieces.": "रिकॉर्ड अपडेट हुआ: {0} कपड़े।",
+"Log updated: {0} piece.": "रिकॉर्ड अपडेट हुआ: {0} कपड़ा।",
+"Wearing today": "आज पहना है",
+"Edit": "बदलें",
+"Tap what else you are wearing today, then log it.": "आज और क्या पहना है, उस पर टैप करें, फिर दर्ज करें।",
+"Add something I'm wearing": "जो पहना है वह जोड़ें"
 });

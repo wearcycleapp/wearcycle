@@ -1172,5 +1172,15 @@ I18N.load("ja",{
 "Logged today": "今日の記録",
 "Remove anything you did not wear. Its wear count and last-worn date are corrected.": "着なかったものを削除してください。着用回数と最終着用日が修正されます。",
 "{a} removed from today’s log.": "{a}を今日の記録から外しました。",
-"Could not change the log: {a}": "記録を変更できませんでした：{a}"
+"Could not change the log: {a}": "記録を変更できませんでした：{a}",
+"Correct what I wore": "着たものを修正",
+"Shows what you logged. Tap pieces to add or remove them, then save. Wear counts are corrected.": "記録した内容が表示されます。アイテムをタップして追加・削除し、保存してください。着用回数も修正されます。",
+"Save changes": "変更を保存",
+"Correct": "修正",
+"Log updated: {0} pieces.": "記録を更新しました：{0}点。",
+"Log updated: {0} piece.": "記録を更新しました：{0}点。",
+"Wearing today": "今日の服",
+"Edit": "編集",
+"Tap what else you are wearing today, then log it.": "今日ほかに着ているものをタップして記録してください。",
+"Add something I'm wearing": "着ているものを追加"
 });

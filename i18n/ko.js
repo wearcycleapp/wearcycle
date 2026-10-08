@@ -1172,5 +1172,15 @@ I18N.load("ko",{
 "Logged today": "오늘 기록",
 "Remove anything you did not wear. Its wear count and last-worn date are corrected.": "입지 않은 것은 삭제하세요. 착용 횟수와 마지막 착용일이 수정돼요.",
 "{a} removed from today’s log.": "{a}을(를) 오늘 기록에서 뺐어요.",
-"Could not change the log: {a}": "기록을 바꿀 수 없어요: {a}"
+"Could not change the log: {a}": "기록을 바꿀 수 없어요: {a}",
+"Correct what I wore": "입은 옷 수정",
+"Shows what you logged. Tap pieces to add or remove them, then save. Wear counts are corrected.": "기록한 내용이 보여요. 아이템을 눌러 추가하거나 빼고 저장하세요. 착용 횟수도 수정돼요.",
+"Save changes": "변경 사항 저장",
+"Correct": "수정",
+"Log updated: {0} pieces.": "기록을 수정했어요: 아이템 {0}개.",
+"Log updated: {0} piece.": "기록을 수정했어요: 아이템 {0}개.",
+"Wearing today": "오늘 입은 옷",
+"Edit": "편집",
+"Tap what else you are wearing today, then log it.": "오늘 더 입은 것을 눌러 기록하세요.",
+"Add something I'm wearing": "입은 옷 추가"
 });

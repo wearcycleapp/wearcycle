@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.34.0';
+const APP_VERSION='1.34.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -700,7 +700,7 @@ function heroMeta(f,i,o,canAddUnder){
   const hw=WardrobeLogic.harmony(coreOf(o).map(primary).filter(c=>COLORS[c])).why;
   const rs=f.reasons.filter(r=>r.t!==hw); const warn=rs.filter(r=>r.neg).length;
   return `${paletteStrip(o)}
-    <div class="ctarow">${f.worn?'<span class="worn-ok">✓ Logged as worn today</span>':`<button class="btn cta grow" data-wear="${i}">Wear this</button>`}
+    <div class="ctarow">${f.worn?'<button class="worn-ok linkish" data-act="todaylog">✓ Logged as worn today · Correct</button>':`<button class="btn cta grow" data-wear="${i}">Wear this</button>`}
       <button class="btn iconb" data-act="share" aria-label="Share this outfit">${SHARE_ICON}</button></div>
     ${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}
     <details class="whybox"><summary>Why this outfit?${warn?` <span class="warnn">${warn} note${warn>1?'s':''}</span>`:''}</summary>
@@ -1344,7 +1344,7 @@ function drawDiary(){
    <p class="hint" style="text-align:center">${monthCount} outfit${monthCount===1?'':'s'} logged this month</p>
    <div class="cal">${['Mo','Tu','We','Th','Fr','Sa','Su'].map(w=>`<span class="cal-w">${w}</span>`).join('')}${cells.join('')}</div>
    <h3>${esc(new Date(DI.day+'T12:00').toLocaleDateString(I18N.locale,{weekday:'long',month:'long',day:'numeric'}))}</h3>
-   ${es.length?es.map((e,k)=>{ const o=outfitFromIds(e.items||[]); return `<div class="dentry">${miniBoard(o)}<div class="dtxt"><b>${esc(OCC[e.occ]?.label||e.occ)}</b><span>${esc(coreOf(o).map(i=>i.name).join(', '))}</span><button class="btn sm ghost" data-dremove="${k}">Remove this log</button></div></div>`; }).join('')
+   ${es.length?es.map((e,k)=>{ const o=outfitFromIds(e.items||[]); return `<div class="dentry">${miniBoard(o)}<div class="dtxt"><b>${esc(OCC[e.occ]?.label||e.occ)}</b><span>${esc(coreOf(o).map(i=>i.name).join(', '))}</span><div class="row" style="gap:6px;flex-wrap:wrap"><button class="btn sm" data-dedit="${k}">Correct</button><button class="btn sm ghost" data-dremove="${k}">Remove this log</button></div></div></div>`; }).join('')
      :'<p class="hint">Nothing logged on this day.</p>'}`);
   setTimeout(hydrateCuts,0);
 }
@@ -1493,15 +1493,25 @@ async function cropAll(){
 }
 
 /* ---------- actions ---------- */
-async function logWear(list,day,occ){
-  const ids=list.map(x=>x.id); const real=ids.filter(id=>!String(id).startsWith('ex-'));
-  if(real.length&&!canWrite()){ toast('You are offline. Logging needs a connection.'); return false; }
+// Adds one wear to each piece (count, last worn, laundry); used when logging and when pieces are added to a log.
+async function countWears(list,day,occ){
   const washed=[];
   for(const it of list){ const p={worn:(it.worn||0)+1,lastWorn:(it.lastWorn&&it.lastWorn>day)?it.lastWorn:day,wearsSinceCheck:(it.wearsSinceCheck||0)+1,wearsSinceWash:(it.wearsSinceWash||0)+1};
     const we=washEvery(it);
     if(laundryOn()&&we>0&&!it.dirty&&(p.wearsSinceWash>=we||(occ==='sport'&&!NOWASH.includes(it.cat)))){ p.dirty=true; p.dirtyOn=day; washed.push(it.name); }
     await patchItem(it.id,p); }
   if(washed.length) setTimeout(()=>toast('To the wash: '+washed.join(', ')+'. They return to suggestions when you mark them clean in Closet.',6500),900);
+}
+// Takes one wear off a piece that was logged but not worn (count, last worn, laundry if that wear sent it to the wash).
+async function uncountWear(it,day){
+  const wsw=Math.max(0,(it.wearsSinceWash||0)-1); const undirty=it.dirty&&it.dirtyOn===day&&wsw<washEvery(it);
+  const last=allLog().filter(x=>(x.items||[]).includes(it.id)).map(x=>x.date).sort().pop();
+  await patchItem(it.id,Object.assign({worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),wearsSinceWash:wsw,lastWorn:last||null},undirty?{dirty:false,dirtyOn:undefined}:{}));
+}
+async function logWear(list,day,occ){
+  const ids=list.map(x=>x.id); const real=ids.filter(id=>!String(id).startsWith('ex-'));
+  if(real.length&&!canWrite()){ toast('You are offline. Logging needs a connection.'); return false; }
+  await countWears(list,day,occ);
   const entry={date:day,occ,items:ids};
   if(!real.length) S.exLog.unshift(entry);
   else { const {data,error}=await sb.from('wears').insert(entry).select('id'); if(error){ toast('Could not log the outfit: '+error.message,4500); return false; }
@@ -1516,18 +1526,18 @@ async function wear(i){
 /* Log any combination: starts from the outfit on screen, then pick or unpick pieces from the closet. */
 let LG=null;
 function yesterdayISO(){ const d=new Date(Date.now()-DAY); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
-function openLog(){
-  const f=S.fits[S.sel]; const o=f?hydrate(f.ids):null;
-  LG={day:todayISO(),occ:S.occ,sel:new Set(o?coreOf(o).concat(o.acc).map(x=>x.id):[])}; LG.first=new Set(LG.sel); drawLog();
+function openLog(empty){
+  const f=S.fits[S.sel]; const o=f&&!empty?hydrate(f.ids):null;
+  LG={day:todayISO(),occ:S.occ,sel:new Set(o?coreOf(o).concat(o.acc).map(x=>x.id):[]),adding:!!empty}; LG.first=new Set(LG.sel); drawLog();
 }
 function drawLog(){
   const items=allItems().filter(isActive); const groups=CATS.map(c=>[c,items.filter(i=>i.cat===c.id)]).filter(([c,l])=>l.length);
-  openSheet(sheetHead('What I wore')+`
-   <p class="hint">Starts with the outfit on screen. Tap pieces to add or remove them, then log.</p>
-   <div class="field"><span class="lab">Day</span><div class="chips"><button class="chip" data-lgday="${todayISO()}" aria-pressed="${LG.day===todayISO()}">Today</button><button class="chip" data-lgday="${yesterdayISO()}" aria-pressed="${LG.day===yesterdayISO()}">Yesterday</button></div></div>
+  openSheet(sheetHead(LG.edit?'Correct what I wore':'What I wore')+`
+   <p class="hint">${LG.edit?'Shows what you logged. Tap pieces to add or remove them, then save. Wear counts are corrected.':LG.adding?'Tap what else you are wearing today, then log it.':'Starts with the outfit on screen. Tap pieces to add or remove them, then log.'}</p>
+   ${LG.edit?'':`<div class="field"><span class="lab">Day</span><div class="chips"><button class="chip" data-lgday="${todayISO()}" aria-pressed="${LG.day===todayISO()}">Today</button><button class="chip" data-lgday="${yesterdayISO()}" aria-pressed="${LG.day===yesterdayISO()}">Yesterday</button></div></div>`}
    <div class="field"><span class="lab">Occasion</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>`<button class="chip" data-lgocc="${o.id}" aria-pressed="${LG.occ===o.id}">${o.label}</button>`).join('')}</div></div>
    ${groups.map(([c,l])=>`<div class="field"><span class="lab">${esc(c.label)}</span><div class="pickrow">${l.slice().sort((a,b)=>(LG.first.has(b.id)?1:0)-(LG.first.has(a.id)?1:0)).map(it=>`<button class="pick" data-lgit="${esc(it.id)}" aria-pressed="${LG.sel.has(it.id)}" aria-label="${esc(it.name)}"><span class="mini">${visual(it)}</span><span class="pn">${esc(it.name)}</span></button>`).join('')}</div></div>`).join('')}
-   <div class="row sheet-actions"><button class="btn primary" data-lgsave ${LG.sel.size?'':'disabled'}>Log ${LG.sel.size} piece${LG.sel.size===1?'':'s'}</button><button class="btn ghost" data-close>Cancel</button></div>`);
+   <div class="row sheet-actions">${LG.edit?`<button class="btn primary" data-lgsave>${LG.sel.size?'Save changes':'Remove this log'}</button>`:`<button class="btn primary" data-lgsave ${LG.sel.size?'':'disabled'}>Log ${LG.sel.size} piece${LG.sel.size===1?'':'s'}</button>`}<button class="btn ghost" data-close>Cancel</button></div>`);
 }
 async function saveLog(){
   const list=[...LG.sel].map(byId).filter(Boolean); if(!list.length) return;
@@ -1537,7 +1547,10 @@ async function saveLog(){
 function todayLine(){
   const es=allLog().filter(e=>e.date===todayISO()); if(!es.length) return '';
   const names=[...new Set(es.flatMap(e=>e.items))].map(byId).filter(Boolean).filter(i=>!ACCESSORY.includes(i.cat)).map(i=>i.name);
-  return `<button class="hint today linkish" data-act="todaylog">Logged today: ${esc(names.join(', ')||es.length+' outfit')} <span class="chev">›</span></button>`;
+  const all=[...new Set(es.flatMap(e=>e.items))].map(byId).filter(Boolean);
+  return `<div class="todaycard"><div class="tc-h"><b>Wearing today</b><button class="btn sm" data-act="todaylog">Edit</button></div>
+    <button class="tc-row" data-act="todaylog" aria-label="Logged today: ${esc(names.join(', '))}">${all.slice(0,8).map(it=>`<span class="tc-th">${visual(it)}</span>`).join('')}</button>
+    <span class="hint">Logged today: ${esc(names.join(', ')||es.length+' outfit')}</span></div>`;
 }
 // An edited outfit remembers the suggestion it came from, so it can go back.
 function editedFit(f,o){ const r=scoreOutfit(o,S.occ,ctx()); return {ids:idsOf(o),score:r.score,reasons:r.reasons,style:r.style,rank:f.rank,edited:true,orig:f.orig||f}; }
@@ -1568,11 +1581,22 @@ function dropPiece(i,slot){
   toast(gone.name+' left out. Wear this logs only the pieces shown; Back to suggestion brings it back.',5500);
 }
 // Today's log as a list: tap Remove on anything you did not actually wear (a bag, a scarf...).
-function openTodayLog(){
-  const ids=[...new Set(allLog().filter(e=>e.date===todayISO()).flatMap(e=>e.items||[]))]; const list=ids.map(byId).filter(Boolean);
-  if(!list.length){ closeSheet(); return; }
-  openSheet(sheetHead('Logged today')+`<p class="hint">Remove anything you did not wear. Its wear count and last-worn date are corrected.</p>
-   <div class="panel">${list.map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${esc(CAT[it.cat].label)}</span></div><div class="acts"><button class="btn sm ghost" data-punlog="${esc(it.id)}">Remove</button></div></div>`).join('')}</div>`);
+// Today's log opens the "What I wore" picker with what was logged: tap to add or remove, then save.
+function openTodayLog(){ const e=allLog().find(x=>x.date===todayISO()); if(e) openLogEdit(e); else closeSheet(); }
+function openLogEdit(e){ LG={day:e.date,occ:e.occ,sel:new Set(e.items||[]),first:new Set(e.items||[]),edit:e}; drawLog(); }
+async function saveLogEdit(){
+  const e=LG.edit, items=[...LG.sel].filter(id=>byId(id)), before=new Set(e.items||[]);
+  const added=items.filter(id=>!before.has(id)).map(byId), removed=[...before].filter(id=>!LG.sel.has(id)).map(byId).filter(Boolean);
+  const real=items.concat([...before]).some(id=>!String(id).startsWith('ex-'));
+  if(real){ if(!canWrite()){ toast('You are offline.'); return; }
+    let q=items.length?sb.from('wears').update({items,occ:LG.occ}):sb.from('wears').delete(); q=e.id!=null?q.eq('id',e.id):q.eq('date',e.date).eq('occ',e.occ);
+    const {error}=await q; if(error){ toast('Could not change the log: '+error.message,4500); return; } }
+  const day=e.date, occ=LG.occ; closeSheet();
+  if(items.length){ e.items=items; e.occ=occ; } else { S.log=S.log.filter(x=>x!==e); S.exLog=S.exLog.filter(x=>x!==e); for(const f of S.fits) if(f.worn&&day===todayISO()) f.worn=false; }
+  for(const it of removed) await uncountWear(byId(it.id),day);
+  if(added.length) await countWears(added,day,e.occ);
+  saveCache(); S.fitKey=fitKeyNow(); renderAll();
+  toast(items.length?'Log updated: '+items.length+' piece'+(items.length===1?'':'s')+'.':'Log removed.');
 }
 function loggedToday(id){ return allLog().some(e=>e.date===todayISO()&&(e.items||[]).includes(id)); }
 // Takes one piece out of today's log (it was suggested and logged, but not worn): fixes the entry and the piece's counts.
@@ -1583,9 +1607,7 @@ async function unlogPiece(id){
     let q=items.length?sb.from('wears').update({items}):sb.from('wears').delete(); q=e.id!=null?q.eq('id',e.id):q.eq('date',e.date).eq('occ',e.occ);
     const {error}=await q; if(error){ toast('Could not change the log: '+error.message,4500); return; } }
   if(items.length) e.items=items; else { S.log=S.log.filter(x=>x!==e); S.exLog=S.exLog.filter(x=>x!==e); }
-  const wsw=Math.max(0,(it.wearsSinceWash||0)-1); const undirty=it.dirty&&it.dirtyOn===todayISO()&&wsw<washEvery(it);
-  const last=allLog().filter(x=>(x.items||[]).includes(id)).map(x=>x.date).sort().pop();
-  await patchItem(id,Object.assign({worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),wearsSinceWash:wsw,lastWorn:last||null},undirty?{dirty:false,dirtyOn:undefined}:{}));
+  await uncountWear(it,todayISO());
   saveCache(); renderAll(); if(document.querySelector('#sheetRoot [data-punlog]')&&allLog().some(x=>x.date===todayISO())) openTodayLog(); else closeSheet(); toast(it.name+' removed from today\u2019s log.');
 }
 function swap(i,slot){
@@ -1672,6 +1694,7 @@ document.addEventListener('click',async e=>{
   if(DI&&$('#sheetRoot').innerHTML){
     if(ds.dday){ DI.day=ds.dday; drawDiary(); return; }
     if(ds.dmonth){ let m=DI.m+(+ds.dmonth), y=DI.y; if(m<0){m=11;y--;} if(m>11){m=0;y++;} DI.y=y; DI.m=m; drawDiary(); return; }
+    if(ds.dedit!==undefined){ const e=allLog().filter(x=>x.date===DI.day)[+ds.dedit]; if(e){ DI=null; openLogEdit(e); } return; }
     if(ds.dremove!==undefined){ const es=allLog().filter(e=>e.date===DI.day); const e=es[+ds.dremove]; if(e){ if(ds.confirm==='1'||t.dataset.armed){ removeWear(e); } else { t.dataset.armed='1'; t.textContent='Tap again to remove'; } } return; }
   }
   if(ds.dept){ S.settings.dept=ds.dept; setDept(ds.dept); saveCache(); queueSettingsSave(); ideasState.list=null; renderAll(); document.querySelectorAll('[data-dept]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dept===ds.dept)); return; }
@@ -1704,6 +1727,7 @@ document.addEventListener('click',async e=>{
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
     case 'todaylog': openTodayLog(); return;
+    case 'todayadd': openTodayLog(); return;
     case 'export': exportData(); return;
     case 'privacyOk': privacyAgree(true); return;
     case 'privacyNoClaude': privacyAgree(false); return;
@@ -1729,7 +1753,7 @@ document.addEventListener('click',async e=>{
     if(ds.lgday){ LG.day=ds.lgday; drawLog(); return; }
     if(ds.lgocc){ LG.occ=ds.lgocc; drawLog(); return; }
     if(ds.lgit){ const sc=document.querySelector('.sheet')?.scrollTop||0; LG.sel.has(ds.lgit)?LG.sel.delete(ds.lgit):LG.sel.add(ds.lgit); drawLog(); const sh=document.querySelector('.sheet'); if(sh) sh.scrollTop=sc; return; }
-    if(ds.lgsave!==undefined){ saveLog(); return; }
+    if(ds.lgsave!==undefined){ if(LG&&LG.edit) saveLogEdit(); else saveLog(); return; }
   }
   if(ds.themeSet){ themeSet(ds.themeSet); document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===ds.themeSet))); return; }
   if(ds.pstyle){ readEditorFields(); const cur=pieceStyles(ED.it); ED.it.styles=cur.includes(ds.pstyle)?cur.filter(x=>x!==ds.pstyle):cur.concat([ds.pstyle]); if(!ED.it.styles.length) ED.it.styles=[]; drawEditor(); return; }

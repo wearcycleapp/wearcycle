@@ -1172,5 +1172,15 @@ I18N.load("es",{
 "Logged today": "Registrado hoy",
 "Remove anything you did not wear. Its wear count and last-worn date are corrected.": "Quita lo que no usaste. Se corrigen sus veces usado y la fecha de último uso.",
 "{a} removed from today’s log.": "{a} se quitó del registro de hoy.",
-"Could not change the log: {a}": "No se pudo cambiar el registro: {a}"
+"Could not change the log: {a}": "No se pudo cambiar el registro: {a}",
+"Correct what I wore": "Corregir lo que usé",
+"Shows what you logged. Tap pieces to add or remove them, then save. Wear counts are corrected.": "Muestra lo que registraste. Toca prendas para agregarlas o quitarlas y luego guarda. Se corrigen las veces usado.",
+"Save changes": "Guardar cambios",
+"Correct": "Corregir",
+"Log updated: {0} pieces.": "Registro actualizado: {0} prendas.",
+"Log updated: {0} piece.": "Registro actualizado: {0} prenda.",
+"Wearing today": "Hoy llevo",
+"Edit": "Editar",
+"Tap what else you are wearing today, then log it.": "Toca lo demás que llevas hoy y regístralo.",
+"Add something I'm wearing": "Agregar algo que llevo puesto"
 });

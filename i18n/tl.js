@@ -1172,5 +1172,15 @@ I18N.load("tl",{
 "Logged today": "Naitala ngayon",
 "Remove anything you did not wear. Its wear count and last-worn date are corrected.": "Alisin ang hindi mo isinuot. Itatama ang bilang ng pagsuot at petsa ng huling pagsuot nito.",
 "{a} removed from today’s log.": "Inalis ang {a} sa tala ngayong araw.",
-"Could not change the log: {a}": "Hindi mabago ang tala: {a}"
+"Could not change the log: {a}": "Hindi mabago ang tala: {a}",
+"Correct what I wore": "Itama ang isinuot ko",
+"Shows what you logged. Tap pieces to add or remove them, then save. Wear counts are corrected.": "Ipinapakita ang naitala mo. I-tap ang mga piraso para idagdag o alisin, saka i-save. Itatama ang bilang ng pagsuot.",
+"Save changes": "I-save ang mga pagbabago",
+"Correct": "Itama",
+"Log updated: {0} pieces.": "Na-update ang tala: {0} piraso.",
+"Log updated: {0} piece.": "Na-update ang tala: {0} piraso.",
+"Wearing today": "Suot ngayon",
+"Edit": "I-edit",
+"Tap what else you are wearing today, then log it.": "I-tap ang iba pang suot mo ngayon, saka itala.",
+"Add something I'm wearing": "Magdagdag ng suot ko"
 });

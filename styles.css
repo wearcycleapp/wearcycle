@@ -626,3 +626,12 @@ a.idea.shop .go{align-self:flex-end;margin-top:4px}
 /* today's log (v1.34) */
 button.hint.today.linkish{display:block;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:var(--muted);cursor:pointer}
 button.hint.today.linkish .chev{color:var(--ink)}
+
+/* wearing today card (v1.34.1) */
+.todaycard{background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.todaycard .tc-h{display:flex;align-items:center;justify-content:space-between}
+.todaycard .tc-row{display:flex;gap:6px;overflow-x:auto;background:none;border:0;padding:0;cursor:pointer}
+.todaycard .tc-th{width:44px;height:44px;flex:none;border-radius:8px;overflow:hidden;background:var(--bg);display:grid;place-items:center}
+.todaycard .tc-th img{width:100%;height:100%;object-fit:cover}
+.todaycard .tc-th svg{width:26px;height:26px}
+button.worn-ok.linkish{background:none;border:0;font:inherit;cursor:pointer;padding:0}
