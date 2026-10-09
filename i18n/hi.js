@@ -1193,5 +1193,7 @@ I18N.load("hi",{
 "It has no occasions set, so it is never suggested. Add some in its details.": "इसके लिए कोई मौका तय नहीं है, इसलिए यह कभी सुझाया नहीं जाता। इसकी ज़्यादा जानकारी में कुछ मौके जोड़ें।",
 "It is not set for {a} (it is for {b}).": "यह {a} के लिए तय नहीं है (यह {b} के लिए है)।",
 "It is also in today’s picks for {a}.": "यह {a} के लिए आज के सुझावों में भी है।",
-"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "यह {a} के लिए ठीक है, लेकिन आज दूसरे पीस का स्कोर ज़्यादा है। इसे क्या पीछे रखता है, यह देखने के लिए “यह आउटफ़िट क्यों?” खोलें।"
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "यह {a} के लिए ठीक है, लेकिन आज दूसरे पीस का स्कोर ज़्यादा है। इसे क्या पीछे रखता है, यह देखने के लिए “यह आउटफ़िट क्यों?” खोलें।",
+"Enhance how photos look": "फ़ोटो को बेहतर दिखाएँ",
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "स्क्रीन पर ज़्यादा रोशन और साफ़ फ़ोटो, हर कपड़े की रोशनी उसके मुख्य रंग के हिसाब से। आपकी सेव की हुई फ़ोटो नहीं बदलतीं।"
 });

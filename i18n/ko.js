@@ -1193,5 +1193,7 @@ I18N.load("ko",{
 "It has no occasions set, so it is never suggested. Add some in its details.": "설정된 상황이 없어 추천되지 않아요. '상세 정보'에서 상황을 추가해 주세요.",
 "It is not set for {a} (it is for {b}).": "{a}용으로 설정되어 있지 않아요 ({b}용이에요).",
 "It is also in today’s picks for {a}.": "오늘의 {a} 추천에도 들어 있어요.",
-"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}에 어울리지만 오늘은 다른 아이템 점수가 더 높아요. ‘이 코디를 고른 이유’를 열어 무엇 때문인지 확인해 보세요."
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}에 어울리지만 오늘은 다른 아이템 점수가 더 높아요. ‘이 코디를 고른 이유’를 열어 무엇 때문인지 확인해 보세요.",
+"Enhance how photos look": "사진 보기 좋게 보정",
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "화면의 사진을 더 밝고 선명하게 보여 줘요. 아이템마다 밝기를 주요 색에 맞춰요. 저장된 사진은 바뀌지 않아요."
 });

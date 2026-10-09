@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.35.0';
+const APP_VERSION='1.36.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -133,7 +133,44 @@ const GLYPH={
   other:'<circle cx="24" cy="24" r="13"/>'};
 function glyph(it){ const c=COLORS[primary(it)]?.hex||'#9aa3ad'; return `<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true" fill="${c}" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round">${GLYPH[it.cat]||GLYPH.other}</svg>`; }
 function thumbSrc(it){ return it.thumb||it._localUrl||''; }
-function visual(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="${esc(it.name)}" loading="lazy" class="${it.box?'fitted':'cover'}">`:glyph(it); }
+function visual(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="${esc(it.name)}" loading="lazy" class="${it.box?'fitted':'cover'}"${enhanceOn()&&it.thumb?` data-enh="${esc(it.id)}"`:''}>`:glyph(it); }
+/* Photo enhancement, on screen only (stored photos are never changed; Claude and color detection see the originals).
+   Cut-outs: exposure is corrected toward the brightness of the piece's own main color (a black tee stays black,
+   a white shirt becomes white instead of grey), gain limited to 0.85x to 1.6x, then a gentle S-curve for contrast and
+   +8% saturation. Photos with a background (thumbnails): levels stretched from the 1st to 99th percentile, with the
+   black point capped at 25 and the white point at 215 so nothing is pushed hard, then the same contrast curve. */
+function enhanceOn(){ return S.settings.enhance!==false; }
+const ENH=new Map();
+function colorLum(name){ const c=COLORS[name]; if(!c) return null; const h=c.hex, v=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)); return (0.2126*v[0]+0.7152*v[1]+0.0722*v[2])/255; }
+function enhanceData(d,opts){
+  const lum=i=>0.2126*d[i]+0.7152*d[i+1]+0.0722*d[i+2]; const hist=new Uint32Array(256); let n=0;
+  for(let i=0;i<d.length;i+=4){ if(opts.mask&&d[i+3]<128) continue; hist[Math.round(lum(i))]++; n++; }
+  if(n<50) return false;
+  const pct=q=>{ let acc=0; for(let v=0;v<256;v++){ acc+=hist[v]; if(acc>=n*q) return v; } return 255; };
+  const lut=new Float32Array(256);
+  if(opts.mask){ const med=pct(0.5)/255, target=opts.target;
+    const gain=target!=null&&med>0.02?Math.min(1.6,Math.max(0.85,target/med)):(med<0.3?Math.min(1.3,0.38/Math.max(med,0.05)):1);
+    for(let v=0;v<256;v++) lut[v]=Math.min(1,v/255*gain); }
+  else { const lo=Math.min(25,pct(0.01)), hi=Math.max(215,pct(0.99)); for(let v=0;v<256;v++) lut[v]=Math.min(1,Math.max(0,(v-lo)/(hi-lo))); }
+  for(let v=0;v<256;v++){ const x=lut[v]; lut[v]=255*(x+0.12*(x-0.5)*(1-Math.abs(2*x-1))); } // gentle S-curve: midtone contrast +12%, black and white points unchanged
+  for(let i=0;i<d.length;i+=4){ if(opts.mask&&d[i+3]===0) continue;
+    let r=lut[d[i]],g=lut[d[i+1]],b=lut[d[i+2]]; const y=0.2126*r+0.7152*g+0.0722*b;
+    d[i]=y+(r-y)*1.08; d[i+1]=y+(g-y)*1.08; d[i+2]=y+(b-y)*1.08; }
+  return true;
+}
+async function enhanceBlob(blob,opts){
+  const src=await decode(blob); const c=document.createElement('canvas'); c.width=src.width; c.height=src.height; const x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(src,0,0); if(src.close) src.close(); const im=x.getImageData(0,0,c.width,c.height);
+  if(!enhanceData(im.data,opts)) return blob; x.putImageData(im,0,0);
+  return await new Promise(r=>c.toBlob(b=>r(b||blob),opts.mask?'image/webp':'image/jpeg',0.9));
+}
+async function enhanceImg(img){
+  const it=byId(img.dataset.enh); if(!it||!it.thumb||img.dataset.enhDone) return; img.dataset.enhDone='1';
+  const key=it.id+'|'+it.thumb.length+'|'+it.thumb.slice(-24);
+  let u=ENH.get(key); if(!u){ try{ const b=await (await fetch(it.thumb)).blob(); u=URL.createObjectURL(await enhanceBlob(b,{mask:false})); ENH.set(key,u); }catch(e){ return; } }
+  if(img.isConnected&&!img.classList.contains('cut')) img.src=u;
+}
+new MutationObserver(()=>{ if(!enhanceOn()) return; document.querySelectorAll('img[data-enh]:not([data-enh-done])').forEach(enhanceImg); }).observe(document.documentElement,{childList:true,subtree:true});
 function condTag(it){ const c=it.cond??4; return `<span class="tag c${c}" title="Condition ${c} of 5">${COND[c]}</span>`; }
 
 /* ---------- images ---------- */
@@ -337,6 +374,7 @@ async function cutUrl(it){
     if(!blob&&sb&&S.online){ const {data}=await sb.storage.from('photos').download(it.cut); if(data) blob=data; }
     if(blob&&!clean){ try{ blob=await trimAlpha(blob); }catch(e){} c.put(cutKey(it.cut),new Response(blob,{headers:{'Content-Type':blob.type||'image/webp','X-Clean':'2'}})); } }catch(e){}
   if(!blob) return '';
+  if(enhanceOn()){ try{ blob=await enhanceBlob(blob,{mask:true,target:colorLum((it.colors||[])[0])}); }catch(e){} }
   const u=URL.createObjectURL(blob); CUT.urls.set(it.cut,u); return u;
 }
 async function makeCut(it,onp){
@@ -1125,6 +1163,7 @@ function openSettings(){
    <h3>Photos</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
    <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div>
+   <label class="li"><div class="txt"><b>Enhance how photos look</b><span>Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.</span></div><input type="checkbox" id="enhanceT" ${enhanceOn()?'checked':''}></label>
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
    <h3>Holidays</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Themed outfits</b><span>Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.</span>
@@ -1851,6 +1890,7 @@ document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e
   if(e.target&&e.target.id==='washAutoT'){ S.settings.washAuto=e.target.checked; saveCache(); queueSettingsSave(); if(e.target.checked) autoWash(); return; }
   if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
   if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); return; }
+  if(e.target&&e.target.id==='enhanceT'){ S.settings.enhance=e.target.checked; saveCache(); queueSettingsSave(); for(const u of CUT.urls.values()) URL.revokeObjectURL(u); CUT.urls.clear(); ENH.clear(); renderAll(); return; }
   if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.',6000); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });

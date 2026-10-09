@@ -1193,5 +1193,7 @@ I18N.load("tl",{
 "It has no occasions set, so it is never suggested. Add some in its details.": "Wala itong nakatakdang okasyon, kaya hindi ito kailanman imumungkahi. Magdagdag sa Iba pang detalye nito.",
 "It is not set for {a} (it is for {b}).": "Hindi ito nakatakda para sa {a} (para ito sa {b}).",
 "It is also in today’s picks for {a}.": "Kasama rin ito sa mga mungkahi ngayon para sa {a}.",
-"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Bagay ito sa {a}, pero mas mataas ang score ng ibang piraso ngayon. Buksan ang ‘Bakit ang outfit na ito?’ para makita kung ano ang pumipigil dito."
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Bagay ito sa {a}, pero mas mataas ang score ng ibang piraso ngayon. Buksan ang ‘Bakit ang outfit na ito?’ para makita kung ano ang pumipigil dito.",
+"Enhance how photos look": "Pagandahin ang itsura ng mga litrato",
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Mas maliwanag at malinaw na litrato sa screen, na ang liwanag ng bawat piraso ay itinutugma sa pangunahing kulay nito. Hindi binabago ang mga naka-save mong litrato."
 });

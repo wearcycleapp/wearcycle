@@ -1193,5 +1193,7 @@ I18N.load("ja",{
 "It has no occasions set, so it is never suggested. Add some in its details.": "シーンが設定されていないため、提案されません。「詳細」でシーンを追加してください。",
 "It is not set for {a} (it is for {b}).": "{a}には設定されていません（{b}用です）。",
 "It is also in today’s picks for {a}.": "今日の{a}のおすすめにも入っています。",
-"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}には合いますが、今日はほかのアイテムのスコアが上です。「このコーデの理由は？」を開くと、何が影響しているか確認できます。"
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}には合いますが、今日はほかのアイテムのスコアが上です。「このコーデの理由は？」を開くと、何が影響しているか確認できます。",
+"Enhance how photos look": "写真の見た目を補正",
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "画面上の写真を明るく、くっきり表示します。各アイテムの明るさはメインの色に合わせて調整されます。保存された写真は変更されません。"
 });

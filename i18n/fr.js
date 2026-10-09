@@ -1193,5 +1193,7 @@ I18N.load("fr",{
 "It has no occasions set, so it is never suggested. Add some in its details.": "Aucune occasion n’est définie pour elle, donc elle n’est jamais suggérée. Ajoutez-en dans « Plus de détails ».",
 "It is not set for {a} (it is for {b}).": "Elle n’est pas prévue pour « {a} » (elle est prévue pour « {b} »).",
 "It is also in today’s picks for {a}.": "Elle fait aussi partie des suggestions du jour pour « {a} ».",
-"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Elle convient pour « {a} », mais d’autres pièces ont un meilleur score aujourd’hui. Ouvrez « Pourquoi cette tenue? » pour voir ce qui la désavantage."
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Elle convient pour « {a} », mais d’autres pièces ont un meilleur score aujourd’hui. Ouvrez « Pourquoi cette tenue? » pour voir ce qui la désavantage.",
+"Enhance how photos look": "Améliorer l’apparence des photos",
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Des photos plus claires et nettes à l’écran, avec la luminosité de chaque pièce ajustée à sa couleur principale. Vos photos enregistrées ne sont pas modifiées."
 });
