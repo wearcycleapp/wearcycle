@@ -1182,5 +1182,16 @@ I18N.load("es",{
 "Wearing today": "Hoy llevo",
 "Edit": "Editar",
 "Tap what else you are wearing today, then log it.": "Toca lo demás que llevas hoy y regístralo.",
-"Add something I'm wearing": "Agregar algo que llevo puesto"
+"Add something I'm wearing": "Agregar algo que llevo puesto",
+"See outfits with this": "Ver conjuntos con esta prenda",
+"Outfits with": "Conjuntos con",
+"Show all outfits": "Mostrar todos los conjuntos",
+"It is marked as donated or retired, so it is never suggested.": "Está marcada como donada o retirada, así que nunca se sugiere.",
+"It is in the wash, so it is left out of suggestions until you mark it clean.": "Está en el lavado, así que no se incluye en las sugerencias hasta que la marques como limpia.",
+"Condition 1 puts it on the donate list, so it is left out.": "El estado 1 la pone en la lista para donar, así que no se incluye.",
+"It is marked as needing repair, so it is only suggested for sport, home and chores.": "Está marcada como que necesita arreglo, así que solo se sugiere para deporte, casa y quehaceres.",
+"It has no occasions set, so it is never suggested. Add some in its details.": "No tiene ocasiones asignadas, así que nunca se sugiere. Agrega algunas en sus Más detalles.",
+"It is not set for {a} (it is for {b}).": "No está asignada para {a} (es para {b}).",
+"It is also in today’s picks for {a}.": "También está en las sugerencias de hoy para {a}.",
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Sirve para {a}, pero hoy otras prendas tienen mejor puntaje. Abre «¿Por qué este conjunto?» para ver qué la frena."
 });

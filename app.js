@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.34.1';
+const APP_VERSION='1.35.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -582,11 +582,29 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
-function fitKeyNow(){ const w=wxForScore(); return S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return (S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
+/* "See outfits with this": the Outfits screen builds every outfit around one piece, and says why that piece
+   is not in the usual picks (wash, repair, condition, occasions, dress code, or simply other pieces score higher). */
+function pinWhy(it){
+  if(!isActive(it)) return 'It is marked as donated or retired, so it is never suggested.';
+  if(it.dirty) return 'It is in the wash, so it is left out of suggestions until you mark it clean.';
+  if((it.cond??4)<=1) return 'Condition 1 puts it on the donate list, so it is left out.';
+  const occs=effectiveOccasions(it);
+  if(it.repair&&!repairOk(it,S.occ)) return 'It is marked as needing repair, so it is only suggested for sport, home and chores.';
+  if(!occs.length) return 'It has no occasions set, so it is never suggested. Add some in its details.';
+  if(!occs.includes(S.occ)) return 'It is not set for '+OCC[S.occ].label.toLowerCase()+' (it is for '+occs.map(o=>OCC[o].label.toLowerCase()).join(', ')+').';
+  const r=suggest(allItems(),S.occ,ctx(),{n:4,layer:layerOn()}); const inTop=r.outfits.some(f=>coreOf(f.o).concat(f.o.acc||[]).some(x=>x.id===it.id));
+  return inTop?'It is also in today\u2019s picks for '+OCC[S.occ].label.toLowerCase()+'.':'It fits '+OCC[S.occ].label.toLowerCase()+', but other pieces score higher today. Open Why this outfit? to see what holds it back.';
+}
+function pinCard(){ const it=S.pin&&byId(S.pin); if(!it) return '';
+  return `<div class="pincard"><span class="pv">${visual(it)}</span><div class="txt"><b>Outfits with <span data-notr>${esc(it.name)}</span></b><span>${esc(pinWhy(it))}</span></div><button class="iconbtn" data-unpin aria-label="Show all outfits">✕</button></div>`; }
+function pinSee(id){ const it=byId(id); if(!it) return; S.pin=id; const occs=effectiveOccasions(it);
+  if(occs.length&&!occs.includes(S.occ)){ S.occ=occs[0]; S.theme=undefined; } S.sel=0; S.seed=0; S.fitKey=''; closeSheet(); goTab('outfits'); renderOutfits(); window.scrollTo(0,0); }
 function regenerate(){
-  const r=suggest(allItems(),S.occ,ctx(),{n:4,jitter:S.seed?1.2:0,rng:makeRng(S.seed),layer:layerOn()});
+  const pin=S.pin&&byId(S.pin); if(S.pin&&!pin) S.pin=null;
+  const r=suggest(allItems(),S.occ,ctx(),{n:4,jitter:S.seed?1.2:0,rng:makeRng(S.seed),layer:layerOn(),pin:pin||undefined});
   S.fits=r.outfits.map(f=>({ids:idsOf(f.o),score:f.score,reasons:f.reasons,style:f.style})).sort((a,b)=>b.score-a.score); S.fits.forEach((f,k)=>{f.rank=k+1;}); S.missing=r.missing; S.fitKey=fitKeyNow(); S.sel=0;
 }
 // Match label from the score (see "How Wearcycle decides"); bars give a quick visual of the same thing.
@@ -660,7 +678,7 @@ function renderOutfits(){
   setTimeout(hydrateCuts,0);
   const ask=S.occ==='work'&&!S.settings.work&&!S.examples.length?`<div class="askcard"><b>What is the dress code at your work?</b><span>Wearcycle sorts your clothes for Work from it. Change it any time in Settings.</span>
     <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}">${esc(d.label)}</button>`).join('')}</div></div>`:'';
-  box.innerHTML=ask+washCard()+todayLine()+heroCard(S.fits[S.sel],S.sel)+
+  box.innerHTML=ask+pinCard()+washCard()+todayLine()+heroCard(S.fits[S.sel],S.sel)+
     `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'More options':'Only one outfit fits'}</h3><span class="spacer"></span><button class="btn sm" id="shuffleBtn">New ideas</button></div>
      ${S.fits.length>1?`<div class="altrow">${others}</div>`:`<p class="hint">Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`}</div>`;
 }
@@ -901,6 +919,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
      ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
 </div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
+   ${ED.id&&!ED.blob&&it.cat!=='socks'?`<button type="button" class="btn sm" data-pinsee="${esc(it.id)}" style="align-self:flex-start;margin:0 0 10px">See outfits with this</button>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
    <div class="field"><label for="f-cat">Category</label><select id="f-cat">${CATS.map(c=>`<option value="${c.id}" ${it.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select></div>
    <div class="field"><span class="lab">Colors · tap in order, main color first</span><div class="colors">${colorBtns}</div></div>
@@ -1689,6 +1708,8 @@ document.addEventListener('click',async e=>{
   if(ds.laundryGo){ S.cat='laundry'; goTab('closet'); renderCloset(); return; }
   if(ds.themeOcc||ds.themeGo){ S.theme=ds.themeOcc||ds.themeGo; S.occ='out'; S.seed=0; S.fitKey=''; if(ds.themeGo) goTab('outfits'); renderOutfits(); window.scrollTo(0,0); return; }
   if(ds.holTog){ const off=holidaysOff(), k=ds.holTog; S.settings.holidaysOff=off.includes(k)?off.filter(x=>x!==k):off.concat([k]); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); const b_=document.querySelector(`[data-hol-tog="${k}"]`); if(b_) b_.setAttribute('aria-pressed',String(!S.settings.holidaysOff.includes(k))); return; }
+  if(ds.pinsee){ pinSee(ds.pinsee); return; }
+  if(ds.unpin!==undefined){ S.pin=null; S.fitKey=''; renderOutfits(); return; }
   if(ds.occ){ S.theme=undefined; S.occ=ds.occ; S.seed=0; LS.set('wearcycle.occ',{day:todayISO(),occ:S.occ}); renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
   if(DI&&$('#sheetRoot').innerHTML){

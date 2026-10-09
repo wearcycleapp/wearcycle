@@ -1182,5 +1182,16 @@ I18N.load("ko",{
 "Wearing today": "오늘 입은 옷",
 "Edit": "편집",
 "Tap what else you are wearing today, then log it.": "오늘 더 입은 것을 눌러 기록하세요.",
-"Add something I'm wearing": "입은 옷 추가"
+"Add something I'm wearing": "입은 옷 추가",
+"See outfits with this": "이 아이템으로 만든 코디 보기",
+"Outfits with": "이 아이템으로 만든 코디:",
+"Show all outfits": "모든 코디 보기",
+"It is marked as donated or retired, so it is never suggested.": "기부 완료 또는 정리로 표시되어 있어 추천되지 않아요.",
+"It is in the wash, so it is left out of suggestions until you mark it clean.": "세탁 중이라서 세탁 완료로 표시할 때까지 추천에서 빠져요.",
+"Condition 1 puts it on the donate list, so it is left out.": "상태 1점이면 기부 목록에 들어가서 추천에서 빠져요.",
+"It is marked as needing repair, so it is only suggested for sport, home and chores.": "수선 필요로 표시되어 있어 운동, 실내, 집안일에만 추천돼요.",
+"It has no occasions set, so it is never suggested. Add some in its details.": "설정된 상황이 없어 추천되지 않아요. '상세 정보'에서 상황을 추가해 주세요.",
+"It is not set for {a} (it is for {b}).": "{a}용으로 설정되어 있지 않아요 ({b}용이에요).",
+"It is also in today’s picks for {a}.": "오늘의 {a} 추천에도 들어 있어요.",
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}에 어울리지만 오늘은 다른 아이템 점수가 더 높아요. ‘이 코디를 고른 이유’를 열어 무엇 때문인지 확인해 보세요."
 });

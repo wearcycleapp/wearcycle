@@ -1182,5 +1182,16 @@ I18N.load("fr",{
 "Wearing today": "Porté aujourd’hui",
 "Edit": "Modifier",
 "Tap what else you are wearing today, then log it.": "Touchez ce que vous portez d’autre aujourd’hui, puis notez-le.",
-"Add something I'm wearing": "Ajouter une pièce que je porte"
+"Add something I'm wearing": "Ajouter une pièce que je porte",
+"See outfits with this": "Voir les tenues avec cette pièce",
+"Outfits with": "Tenues avec",
+"Show all outfits": "Afficher toutes les tenues",
+"It is marked as donated or retired, so it is never suggested.": "Elle est marquée comme donnée ou retirée, donc elle n’est jamais suggérée.",
+"It is in the wash, so it is left out of suggestions until you mark it clean.": "Elle est au lavage, donc elle est exclue des suggestions jusqu’à ce que vous la marquiez propre.",
+"Condition 1 puts it on the donate list, so it is left out.": "L’état 1 la place sur la liste des dons, donc elle est exclue.",
+"It is marked as needing repair, so it is only suggested for sport, home and chores.": "Elle est marquée comme nécessitant une réparation, donc elle n’est suggérée que pour le sport, la maison et les corvées.",
+"It has no occasions set, so it is never suggested. Add some in its details.": "Aucune occasion n’est définie pour elle, donc elle n’est jamais suggérée. Ajoutez-en dans « Plus de détails ».",
+"It is not set for {a} (it is for {b}).": "Elle n’est pas prévue pour « {a} » (elle est prévue pour « {b} »).",
+"It is also in today’s picks for {a}.": "Elle fait aussi partie des suggestions du jour pour « {a} ».",
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Elle convient pour « {a} », mais d’autres pièces ont un meilleur score aujourd’hui. Ouvrez « Pourquoi cette tenue? » pour voir ce qui la désavantage."
 });

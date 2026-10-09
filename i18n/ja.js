@@ -1182,5 +1182,16 @@ I18N.load("ja",{
 "Wearing today": "今日の服",
 "Edit": "編集",
 "Tap what else you are wearing today, then log it.": "今日ほかに着ているものをタップして記録してください。",
-"Add something I'm wearing": "着ているものを追加"
+"Add something I'm wearing": "着ているものを追加",
+"See outfits with this": "このアイテムのコーデを見る",
+"Outfits with": "このアイテムを使ったコーデ：",
+"Show all outfits": "すべてのコーデを表示",
+"It is marked as donated or retired, so it is never suggested.": "寄付済みまたは処分済みになっているため、提案されません。",
+"It is in the wash, so it is left out of suggestions until you mark it clean.": "洗濯中のため、洗濯済みにするまで提案から外れます。",
+"Condition 1 puts it on the donate list, so it is left out.": "状態1は寄付リストに入るため、提案から外れます。",
+"It is marked as needing repair, so it is only suggested for sport, home and chores.": "要修理になっているため、スポーツ、家、家事にのみ提案されます。",
+"It has no occasions set, so it is never suggested. Add some in its details.": "シーンが設定されていないため、提案されません。「詳細」でシーンを追加してください。",
+"It is not set for {a} (it is for {b}).": "{a}には設定されていません（{b}用です）。",
+"It is also in today’s picks for {a}.": "今日の{a}のおすすめにも入っています。",
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}には合いますが、今日はほかのアイテムのスコアが上です。「このコーデの理由は？」を開くと、何が影響しているか確認できます。"
 });

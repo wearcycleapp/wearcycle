@@ -635,3 +635,11 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .todaycard .tc-th img{width:100%;height:100%;object-fit:cover}
 .todaycard .tc-th svg{width:26px;height:26px}
 button.worn-ok.linkish{background:none;border:0;font:inherit;cursor:pointer;padding:0}
+
+/* outfits around one piece (v1.35) */
+.pincard{display:flex;gap:12px;align-items:center;background:var(--raised);border:1px solid var(--coral);border-radius:14px;padding:10px 12px;margin-bottom:12px}
+.pincard .pv{width:52px;height:52px;flex:none;border-radius:10px;overflow:hidden;background:var(--bg);display:grid;place-items:center}
+.pincard .pv img{width:100%;height:100%;object-fit:cover}
+.pincard .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.pincard .txt span{font-size:13px;color:var(--muted)}
+.pincard .txt b span{font-size:inherit;color:inherit}

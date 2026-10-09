@@ -1182,5 +1182,16 @@ I18N.load("tl",{
 "Wearing today": "Suot ngayon",
 "Edit": "I-edit",
 "Tap what else you are wearing today, then log it.": "I-tap ang iba pang suot mo ngayon, saka itala.",
-"Add something I'm wearing": "Magdagdag ng suot ko"
+"Add something I'm wearing": "Magdagdag ng suot ko",
+"See outfits with this": "Tingnan ang mga outfit na kasama ito",
+"Outfits with": "Mga outfit na may",
+"Show all outfits": "Ipakita lahat ng outfit",
+"It is marked as donated or retired, so it is never suggested.": "Minarkahan itong na-donate o iniretiro, kaya hindi ito kailanman imumungkahi.",
+"It is in the wash, so it is left out of suggestions until you mark it clean.": "Nasa labahan ito, kaya hindi ito isasama sa mga mungkahi hanggang markahan mo itong malinis.",
+"Condition 1 puts it on the donate list, so it is left out.": "Dahil Kondisyon 1 ito, nasa listahan ito ng ido-donate, kaya hindi ito isinasama.",
+"It is marked as needing repair, so it is only suggested for sport, home and chores.": "Minarkahan itong kailangang ayusin, kaya imumungkahi lang ito para sa sports, bahay at gawaing-bahay.",
+"It has no occasions set, so it is never suggested. Add some in its details.": "Wala itong nakatakdang okasyon, kaya hindi ito kailanman imumungkahi. Magdagdag sa Iba pang detalye nito.",
+"It is not set for {a} (it is for {b}).": "Hindi ito nakatakda para sa {a} (para ito sa {b}).",
+"It is also in today’s picks for {a}.": "Kasama rin ito sa mga mungkahi ngayon para sa {a}.",
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Bagay ito sa {a}, pero mas mataas ang score ng ibang piraso ngayon. Buksan ang ‘Bakit ang outfit na ito?’ para makita kung ano ang pumipigil dito."
 });

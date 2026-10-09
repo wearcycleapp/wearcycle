@@ -302,6 +302,12 @@ function makeRng(seed){ let x=(seed>>>0)||1; return ()=>{ x^=x<<13; x>>>=0; x^=x
 function suggest(items,occ,ctx,opts){
   opts=opts||{}; const n=opts.n||4, jitter=opts.jitter||0, rnd=opts.rng||Math.random;
   const pool=eligible(items,occ); const by=group(pool);
+  // Pinned piece (from "See outfits with this"): every outfit is built around it, even if it is not normally
+  // picked for this occasion; the app explains why separately.
+  const pin=opts.pin;
+  if(pin){ const c=pin.cat;
+    if(c==='top') by.top=[pin]; else if(c==='bottom'){ by.bottom=[pin]; by.onepiece=[]; } else if(c==='onepiece'){ by.onepiece=[pin]; by.top=[]; by.bottom=[]; }
+    else if(c==='shoes') by.shoes=[pin]; else if(c==='outerwear'){ by.outerwear=[pin]; opts=Object.assign({},opts,{layer:true}); } }
   const tops=by.top||[], bottoms=by.bottom||[], ones=by.onepiece||[];
   const missing=[];
   const bases=[]; for(const t of tops) for(const b of bottoms) bases.push({top:t,bottom:b}); for(const o of ones) bases.push({onepiece:o});
@@ -334,6 +340,7 @@ function suggest(items,occ,ctx,opts){
     if(c.o.shoes) used.set(c.o.shoes.id,(used.get(c.o.shoes.id)||0)+1);
     const o=c.o;
     o.acc=pickAccessories(o,by,occ,ctx.now,ctx.wx,items);
+    if(pin&&ACCESSORY.includes(pin.cat)) o.acc=o.acc.filter(a=>a.cat!==pin.cat).concat([pin]);
     const r=scoreOutfit(o,occ,ctx); out.push({o,score:r.score,reasons:r.reasons,style:r.style});
     if(out.length>=n) break;
   }

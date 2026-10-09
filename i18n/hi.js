@@ -1182,5 +1182,16 @@ I18N.load("hi",{
 "Wearing today": "आज पहना है",
 "Edit": "बदलें",
 "Tap what else you are wearing today, then log it.": "आज और क्या पहना है, उस पर टैप करें, फिर दर्ज करें।",
-"Add something I'm wearing": "जो पहना है वह जोड़ें"
+"Add something I'm wearing": "जो पहना है वह जोड़ें",
+"See outfits with this": "इसके साथ आउटफ़िट देखें",
+"Outfits with": "आउटफ़िट, जिनमें शामिल है:",
+"Show all outfits": "सभी आउटफ़िट दिखाएँ",
+"It is marked as donated or retired, so it is never suggested.": "इसे दान किया गया या हटाया गया मार्क किया गया है, इसलिए यह कभी सुझाया नहीं जाता।",
+"It is in the wash, so it is left out of suggestions until you mark it clean.": "यह धुलाई में है, इसलिए जब तक आप इसे साफ़ मार्क नहीं करते, यह सुझावों में शामिल नहीं होगा।",
+"Condition 1 puts it on the donate list, so it is left out.": "हालत 1 होने से यह दान सूची में है, इसलिए इसे शामिल नहीं किया जाता।",
+"It is marked as needing repair, so it is only suggested for sport, home and chores.": "इसे मरम्मत चाहिए मार्क किया गया है, इसलिए यह सिर्फ़ स्पोर्ट्स, घर और घर के काम के लिए सुझाया जाता है।",
+"It has no occasions set, so it is never suggested. Add some in its details.": "इसके लिए कोई मौका तय नहीं है, इसलिए यह कभी सुझाया नहीं जाता। इसकी ज़्यादा जानकारी में कुछ मौके जोड़ें।",
+"It is not set for {a} (it is for {b}).": "यह {a} के लिए तय नहीं है (यह {b} के लिए है)।",
+"It is also in today’s picks for {a}.": "यह {a} के लिए आज के सुझावों में भी है।",
+"It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "यह {a} के लिए ठीक है, लेकिन आज दूसरे पीस का स्कोर ज़्यादा है। इसे क्या पीछे रखता है, यह देखने के लिए “यह आउटफ़िट क्यों?” खोलें।"
 });
