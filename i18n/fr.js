@@ -1195,5 +1195,15 @@ I18N.load("fr",{
 "It is also in today’s picks for {a}.": "Elle fait aussi partie des suggestions du jour pour « {a} ».",
 "It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Elle convient pour « {a} », mais d’autres pièces ont un meilleur score aujourd’hui. Ouvrez « Pourquoi cette tenue? » pour voir ce qui la désavantage.",
 "Enhance how photos look": "Améliorer l’apparence des photos",
-"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Des photos plus claires et nettes à l’écran, avec la luminosité de chaque pièce ajustée à sa couleur principale. Vos photos enregistrées ne sont pas modifiées."
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Des photos plus claires et nettes à l’écran, avec la luminosité de chaque pièce ajustée à sa couleur principale. Vos photos enregistrées ne sont pas modifiées.",
+"Not getting picked": "Jamais retenues",
+"Pieces that are in none of the top suggestions for any occasion right now, and why.": "Pièces qui ne figurent actuellement dans aucune des meilleures suggestions, quelle que soit l’occasion, et pourquoi.",
+"In the wash: it returns to suggestions when you mark it clean.": "Au lavage : elle revient dans les suggestions quand vous la marquez propre.",
+"Marked as needing repair.": "Marquée comme nécessitant une réparation.",
+"No occasions set, so it is never suggested. Open it and pick where you would wear it.": "Aucune occasion définie, donc elle n’est jamais suggérée. Ouvrez-la et choisissez où vous la porteriez.",
+"No color set, so it cannot be matched. Open it and pick its color.": "Aucune couleur définie, donc elle ne peut pas être agencée. Ouvrez-la et choisissez sa couleur.",
+"Set for {a}, but nothing to pair it with there yet.": "Associée à « {a} », mais il n’y a encore rien avec quoi l’agencer de ce côté.",
+"Set for {a}; other pieces score higher.": "Associée à « {a} »; d’autres pièces ont un meilleur score.",
+"Set for {a}; other pieces score higher. Best outfit with it: {b}.": "Associée à « {a} »; d’autres pièces ont un meilleur score. Meilleure tenue avec elle : {b}.",
+"Includes something new: {a}": "Inclut une nouveauté : {a}"
 });

@@ -1195,5 +1195,15 @@ I18N.load("hi",{
 "It is also in today’s picks for {a}.": "यह {a} के लिए आज के सुझावों में भी है।",
 "It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "यह {a} के लिए ठीक है, लेकिन आज दूसरे पीस का स्कोर ज़्यादा है। इसे क्या पीछे रखता है, यह देखने के लिए “यह आउटफ़िट क्यों?” खोलें।",
 "Enhance how photos look": "फ़ोटो को बेहतर दिखाएँ",
-"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "स्क्रीन पर ज़्यादा रोशन और साफ़ फ़ोटो, हर कपड़े की रोशनी उसके मुख्य रंग के हिसाब से। आपकी सेव की हुई फ़ोटो नहीं बदलतीं।"
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "स्क्रीन पर ज़्यादा रोशन और साफ़ फ़ोटो, हर कपड़े की रोशनी उसके मुख्य रंग के हिसाब से। आपकी सेव की हुई फ़ोटो नहीं बदलतीं।",
+"Not getting picked": "जो चुने नहीं जा रहे",
+"Pieces that are in none of the top suggestions for any occasion right now, and why.": "वे पीस जो अभी किसी भी मौके के टॉप सुझावों में नहीं हैं, और क्यों।",
+"In the wash: it returns to suggestions when you mark it clean.": "धुलाई में: साफ़ मार्क करने पर यह सुझावों में लौट आएगा।",
+"Marked as needing repair.": "मरम्मत चाहिए के रूप में मार्क है।",
+"No occasions set, so it is never suggested. Open it and pick where you would wear it.": "कोई मौका सेट नहीं है, इसलिए यह कभी सुझाया नहीं जाता। इसे खोलें और चुनें कि आप इसे कहाँ पहनेंगे।",
+"No color set, so it cannot be matched. Open it and pick its color.": "कोई रंग सेट नहीं है, इसलिए इसका मेल नहीं बिठाया जा सकता। इसे खोलें और इसका रंग चुनें।",
+"Set for {a}, but nothing to pair it with there yet.": "{a} के लिए सेट है, लेकिन वहाँ अभी इसके साथ पहनने को कुछ नहीं है।",
+"Set for {a}; other pieces score higher.": "{a} के लिए सेट है; दूसरे पीस का स्कोर ज़्यादा है।",
+"Set for {a}; other pieces score higher. Best outfit with it: {b}.": "{a} के लिए सेट है; दूसरे पीस का स्कोर ज़्यादा है। इसके साथ सबसे अच्छा आउटफ़िट: {b}।",
+"Includes something new: {a}": "इसमें कुछ नया है: {a}"
 });

@@ -1195,5 +1195,15 @@ I18N.load("es",{
 "It is also in today’s picks for {a}.": "También está en las sugerencias de hoy para {a}.",
 "It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Sirve para {a}, pero hoy otras prendas tienen mejor puntaje. Abre «¿Por qué este conjunto?» para ver qué la frena.",
 "Enhance how photos look": "Mejorar cómo se ven las fotos",
-"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Fotos más claras y nítidas en pantalla, con el brillo de cada prenda ajustado a su color principal. Tus fotos guardadas no cambian."
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Fotos más claras y nítidas en pantalla, con el brillo de cada prenda ajustado a su color principal. Tus fotos guardadas no cambian.",
+"Not getting picked": "No se eligen",
+"Pieces that are in none of the top suggestions for any occasion right now, and why.": "Prendas que ahora mismo no están en ninguna de las mejores sugerencias para ninguna ocasión, y por qué.",
+"In the wash: it returns to suggestions when you mark it clean.": "En el lavado: vuelve a las sugerencias cuando la marques como limpia.",
+"Marked as needing repair.": "Marcada como que necesita arreglo.",
+"No occasions set, so it is never suggested. Open it and pick where you would wear it.": "No tiene ocasiones, así que nunca se sugiere. Ábrela y elige dónde la usarías.",
+"No color set, so it cannot be matched. Open it and pick its color.": "No tiene color, así que no se puede combinar. Ábrela y elige su color.",
+"Set for {a}, but nothing to pair it with there yet.": "Asignada a {a}, pero aún no hay con qué combinarla ahí.",
+"Set for {a}; other pieces score higher.": "Asignada a {a}; otras prendas tienen mejor puntaje.",
+"Set for {a}; other pieces score higher. Best outfit with it: {b}.": "Asignada a {a}; otras prendas tienen mejor puntaje. Mejor conjunto con ella: {b}.",
+"Includes something new: {a}": "Incluye algo nuevo: {a}"
 });

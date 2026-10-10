@@ -1195,5 +1195,15 @@ I18N.load("tl",{
 "It is also in today’s picks for {a}.": "Kasama rin ito sa mga mungkahi ngayon para sa {a}.",
 "It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "Bagay ito sa {a}, pero mas mataas ang score ng ibang piraso ngayon. Buksan ang ‘Bakit ang outfit na ito?’ para makita kung ano ang pumipigil dito.",
 "Enhance how photos look": "Pagandahin ang itsura ng mga litrato",
-"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Mas maliwanag at malinaw na litrato sa screen, na ang liwanag ng bawat piraso ay itinutugma sa pangunahing kulay nito. Hindi binabago ang mga naka-save mong litrato."
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "Mas maliwanag at malinaw na litrato sa screen, na ang liwanag ng bawat piraso ay itinutugma sa pangunahing kulay nito. Hindi binabago ang mga naka-save mong litrato.",
+"Not getting picked": "Hindi napipili",
+"Pieces that are in none of the top suggestions for any occasion right now, and why.": "Mga pirasong wala ngayon sa alinman sa mga nangungunang mungkahi para sa anumang okasyon, at kung bakit.",
+"In the wash: it returns to suggestions when you mark it clean.": "Nasa labahan: babalik ito sa mga mungkahi kapag minarkahan mo itong malinis.",
+"Marked as needing repair.": "Minarkahang kailangang ayusin.",
+"No occasions set, so it is never suggested. Open it and pick where you would wear it.": "Walang nakatakdang okasyon, kaya hindi ito kailanman imumungkahi. Buksan ito at piliin kung saan mo ito isusuot.",
+"No color set, so it cannot be matched. Open it and pick its color.": "Walang nakatakdang kulay, kaya hindi ito maitutugma. Buksan ito at piliin ang kulay nito.",
+"Set for {a}, but nothing to pair it with there yet.": "Nakatakda para sa {a}, pero wala pa itong maipapares doon.",
+"Set for {a}; other pieces score higher.": "Nakatakda para sa {a}; mas mataas ang score ng ibang piraso.",
+"Set for {a}; other pieces score higher. Best outfit with it: {b}.": "Nakatakda para sa {a}; mas mataas ang score ng ibang piraso. Pinakamagandang outfit kasama ito: {b}.",
+"Includes something new: {a}": "May kasamang bago: {a}"
 });

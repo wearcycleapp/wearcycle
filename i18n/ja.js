@@ -1195,5 +1195,15 @@ I18N.load("ja",{
 "It is also in today’s picks for {a}.": "今日の{a}のおすすめにも入っています。",
 "It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}には合いますが、今日はほかのアイテムのスコアが上です。「このコーデの理由は？」を開くと、何が影響しているか確認できます。",
 "Enhance how photos look": "写真の見た目を補正",
-"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "画面上の写真を明るく、くっきり表示します。各アイテムの明るさはメインの色に合わせて調整されます。保存された写真は変更されません。"
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "画面上の写真を明るく、くっきり表示します。各アイテムの明るさはメインの色に合わせて調整されます。保存された写真は変更されません。",
+"Not getting picked": "選ばれないアイテム",
+"Pieces that are in none of the top suggestions for any occasion right now, and why.": "現在、どのシーンでも上位の提案に入っていないアイテムとその理由です。",
+"In the wash: it returns to suggestions when you mark it clean.": "洗濯中：洗濯済みにすると提案に戻ります。",
+"Marked as needing repair.": "要修理に設定されています。",
+"No occasions set, so it is never suggested. Open it and pick where you would wear it.": "シーンが設定されていないため、提案されません。開いて、着るシーンを選んでください。",
+"No color set, so it cannot be matched. Open it and pick its color.": "色が設定されていないため、組み合わせられません。開いて色を選んでください。",
+"Set for {a}, but nothing to pair it with there yet.": "{a}に設定されていますが、まだ合わせられるアイテムがありません。",
+"Set for {a}; other pieces score higher.": "{a}に設定されていますが、ほかのアイテムのほうがスコアが高いです。",
+"Set for {a}; other pieces score higher. Best outfit with it: {b}.": "{a}に設定されていますが、ほかのアイテムのほうがスコアが高いです。このアイテムを使ったベストコーデ：{b}。",
+"Includes something new: {a}": "新しいアイテム入り：{a}"
 });

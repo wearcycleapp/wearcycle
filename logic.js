@@ -211,6 +211,9 @@ function scoreOutfit(o,occ,ctx){
   if(shoeGap<=1&&ctx.shoeAlt!==false){ s-=3; reasons.push({t:o.shoes.name+' were worn '+(shoeGap===0?'today':'yesterday')+'; give them a day to dry out',neg:true}); }
   if(core.some((i,k)=>i!==o.shoes&&rest[k]<=1)){ s-=1; reasons.push({t:'Includes something worn in the last day',neg:true}); }
   else if(avgRest>=5) reasons.push({t:'Pieces have rested '+Math.round(avgRest)+(avgRest>=14?'+':'')+' days on average'});
+  // New pieces get a nudge so they enter the rotation: never worn and added in the last 30 days, +0.5 once.
+  const fresh=core.find(i=>!(i.worn>0)&&!i.lastWorn&&i.created&&daysSince(i.created,now)<=30);
+  if(fresh){ s+=0.5; reasons.push({t:'Includes something new: '+fresh.name}); }
   if(o.top && o.bottom && log.some(e=>daysSince(e.date,now)<7 && (e.items||[]).includes(o.top.id) && (e.items||[]).includes(o.bottom.id))){
     s-=2; reasons.push({t:'Same top and bottom already worn together this week',neg:true}); }
   const belt=(o.acc||[]).find(a=>a.cat==='belt'); if(belt){ const bf=beltFit(o,belt,occ); reasons.push({t:bf.why,neg:bf.neg}); }
@@ -347,6 +350,15 @@ function suggest(items,occ,ctx,opts){
   return {outfits:out,missing:[]};
 }
 
+/* Pieces that never make the picks: for each occasion a piece is set for, the top `n` suggestions are built
+   (with the same context the app uses); garments that appear in none of them are returned, each with the
+   occasions it is set for. Pieces in the wash, needing repair, retired or with no occasions are reported too. */
+function notPicked(items,ctxFor,opts){
+  opts=opts||{}; const n=opts.n||8, seen=new Set(), garments=['top','bottom','onepiece','outerwear','shoes'];
+  for(const o of OCCASIONS.map(x=>x.id)){ const r=suggest(items,o,ctxFor(o),{n,layer:true});
+    for(const f of r.outfits) for(const i of coreOf(f.o)) seen.add(i.id); }
+  return items.filter(i=>isActive(i)&&garments.includes(i.cat)&&!seen.has(i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
+}
 function swapCandidates(o,slot,items,occ,ctx){
   const cat=slot==='outer'?'outerwear':slot==='under'?'top':slot;
   let pool=eligible(items,occ).filter(i=>i.cat===cat);
@@ -457,8 +469,11 @@ function styleScore(o,t){
   const only=(it,grp)=>{ const st=pieceStyles(it).filter(x=>x!=='minimal'); return st.length>0 && st.every(x=>grp.includes(x)); };
   const a=core.find(i=>only(i,CASUALX)), b=core.find(i=>only(i,SMART));
   if(a&&b){ s-=1; r.push({t:a.name+' with '+b.name+' mixes casual and smart styles',neg:1}); }
-  if(t&&(t.ids.length||(t.looks||[]).length)&&core.length){
-    const m=core.filter(i=>fitsTarget(i,t)).length/core.length, w=t.weight||1;
+  // Pieces with no recognisable style (no style words, not neutral, no styles from Claude) count as neutral:
+  // they neither help nor hurt, so a new piece is not held back just because its style is unknown.
+  const known=t?core.filter(i=>pieceStyles(i).length||fitsTarget(i,t)):[];
+  if(t&&(t.ids.length||(t.looks||[]).length)&&known.length){
+    const m=known.filter(i=>fitsTarget(i,t)).length/known.length, w=(t.weight||1)*known.length/core.length;
     s+=(2*m-0.5)*w;
     // name the picked style (or look) this outfit fits best
     const opts=t.ids.map(id=>[STYLES[id].label,core.filter(i=>pieceStyles(i).includes(id)).length]).concat((t.looks||[]).map(l=>[l.label,core.filter(i=>lookMatch(i,l)).length]));
@@ -588,7 +603,7 @@ function themeScore(o,th){
 }
 
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
-  daysSince,localDayGap,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
+  daysSince,localDayGap,notPicked,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

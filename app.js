@@ -1,8 +1,8 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.36.0';
+const APP_VERSION='1.37.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
-  daysSince,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
+  daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
@@ -636,6 +636,26 @@ function pinWhy(it){
   const r=suggest(allItems(),S.occ,ctx(),{n:4,layer:layerOn()}); const inTop=r.outfits.some(f=>coreOf(f.o).concat(f.o.acc||[]).some(x=>x.id===it.id));
   return inTop?'It is also in today\u2019s picks for '+OCC[S.occ].label.toLowerCase()+'.':'It fits '+OCC[S.occ].label.toLowerCase()+', but other pieces score higher today. Open Why this outfit? to see what holds it back.';
 }
+// Care: pieces that never make the suggestions, with the most likely reason and a way to see outfits with them.
+let NP={key:'',list:[]};
+function ctxFor(o){ return Object.assign(ctx(),{style:styleTarget(o),theme:null}); }
+function notPickedReason(it,occs){
+  if(it.dirty) return 'In the wash: it returns to suggestions when you mark it clean.';
+  if(it.repair&&!occs.some(o=>repairOk(it,o))) return 'Marked as needing repair.';
+  if(!occs.length) return 'No occasions set, so it is never suggested. Open it and pick where you would wear it.';
+  if(!(it.colors||[]).length) return 'No color set, so it cannot be matched. Open it and pick its color.';
+  const o=occs[0]; const r=suggest(allItems(),o,ctxFor(o),{n:1,layer:layerOn(),pin:it}); const f=r.outfits[0];
+  if(!f) return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+', but nothing to pair it with there yet.';
+  const neg=(f.reasons||[]).filter(x=>x.neg).map(x=>x.t)[0];
+  return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+'; other pieces score higher'+(neg?'. Best outfit with it: '+neg.charAt(0).toLowerCase()+neg.slice(1):'')+'.';
+}
+function notPickedPanel(items){
+  const act=items.filter(isActive); const key=fitKeyNow()+'|'+allLog().length; if(NP.key!==key){ NP={key,list:notPicked(allItems(),ctxFor,{n:8})}; }
+  const extra=act.filter(i=>(i.cond??4)>1&&(i.dirty||!effectiveOccasions(i).length)&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&!NP.list.some(x=>x.item.id===i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
+  const list=NP.list.filter(x=>(x.item.cond??4)>1).concat(extra).slice(0,12); if(!list.length) return '';
+  return `<div class="panel"><div class="panel-h"><h3>Not getting picked</h3><span class="count">${list.length}</span></div><div class="panel-h"><p>Pieces that are in none of the top suggestions for any occasion right now, and why.</p></div>
+    ${list.map(({item:it,occs})=>`<div class="li care">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${esc(notPickedReason(it,occs))}</span></div><div class="acts">${occs.length&&!it.dirty?`<button class="btn sm" data-pinsee="${esc(it.id)}">See outfits</button>`:''}<button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button></div></div>`).join('')}</div>`;
+}
 function pinCard(){ const it=S.pin&&byId(S.pin); if(!it) return '';
   return `<div class="pincard"><span class="pv">${visual(it)}</span><div class="txt"><b>Outfits with <span data-notr>${esc(it.name)}</span></b><span>${esc(pinWhy(it))}</span></div><button class="iconbtn" data-unpin aria-label="Show all outfits">✕</button></div>`; }
 function pinSee(id){ const it=byId(id); if(!it) return; S.pin=id; const occs=effectiveOccasions(it);
@@ -874,6 +894,7 @@ function renderCare(){
   for(const it of items) for(const f of careFlags(it,now,S.settings)) groups[f.kind].push([it,f]);
   const panel=(title,desc,rows,n)=>`<div class="panel"><div class="panel-h"><h3>${title}</h3><span class="count">${n??rows.length}</span></div>${desc?`<div class="panel-h"><p>${desc}</p></div>`:''}${rows.join('')}</div>`;
   const out=[]; const rp=repairPanel(items); if(rp) out.push(rp);
+  const np=notPickedPanel(items); if(np) out.push(np);
   const donate=groups.retire.concat(groups.unused.filter(([it])=>!groups.retire.some(([r])=>r.id===it.id)));
   out.push(donate.length?panel('Donate or recycle','Retired items and anything not worn for '+Math.round(S.settings.unusedDays/MONTH)+'+ months.',donate.map(([it,f])=>careRow(it,f,`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)).concat([dropOffRow(groups.retire.length>0)]),donate.length)
     :'<div class="panel"><div class="panel-h"><h3>Donate or recycle</h3><span class="count">0</span></div><div class="li"><span class="done">Nothing to donate right now.</span></div></div>');

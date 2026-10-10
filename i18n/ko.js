@@ -1195,5 +1195,15 @@ I18N.load("ko",{
 "It is also in today’s picks for {a}.": "오늘의 {a} 추천에도 들어 있어요.",
 "It fits {a}, but other pieces score higher today. Open Why this outfit? to see what holds it back.": "{a}에 어울리지만 오늘은 다른 아이템 점수가 더 높아요. ‘이 코디를 고른 이유’를 열어 무엇 때문인지 확인해 보세요.",
 "Enhance how photos look": "사진 보기 좋게 보정",
-"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "화면의 사진을 더 밝고 선명하게 보여 줘요. 아이템마다 밝기를 주요 색에 맞춰요. 저장된 사진은 바뀌지 않아요."
+"Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.": "화면의 사진을 더 밝고 선명하게 보여 줘요. 아이템마다 밝기를 주요 색에 맞춰요. 저장된 사진은 바뀌지 않아요.",
+"Not getting picked": "선택되지 않는 아이템",
+"Pieces that are in none of the top suggestions for any occasion right now, and why.": "지금 어떤 상황에서도 상위 추천에 들지 못한 아이템과 그 이유예요.",
+"In the wash: it returns to suggestions when you mark it clean.": "세탁 중: 세탁 완료로 표시하면 다시 추천에 포함돼요.",
+"Marked as needing repair.": "수선 필요로 표시됐어요.",
+"No occasions set, so it is never suggested. Open it and pick where you would wear it.": "상황이 설정되지 않아 추천되지 않아요. 열어서 입을 상황을 선택하세요.",
+"No color set, so it cannot be matched. Open it and pick its color.": "색상이 설정되지 않아 매칭할 수 없어요. 열어서 색상을 선택하세요.",
+"Set for {a}, but nothing to pair it with there yet.": "{a}용으로 설정됐지만 아직 함께 입을 아이템이 없어요.",
+"Set for {a}; other pieces score higher.": "{a}용으로 설정됐지만 다른 아이템의 점수가 더 높아요.",
+"Set for {a}; other pieces score higher. Best outfit with it: {b}.": "{a}용으로 설정됐지만 다른 아이템의 점수가 더 높아요. 이 아이템으로 만든 최고의 코디: {b}.",
+"Includes something new: {a}": "새 아이템 포함: {a}"
 });
