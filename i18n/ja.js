@@ -1205,5 +1205,18 @@ I18N.load("ja",{
 "Set for {a}, but nothing to pair it with there yet.": "{a}に設定されていますが、まだ合わせられるアイテムがありません。",
 "Set for {a}; other pieces score higher.": "{a}に設定されていますが、ほかのアイテムのほうがスコアが高いです。",
 "Set for {a}; other pieces score higher. Best outfit with it: {b}.": "{a}に設定されていますが、ほかのアイテムのほうがスコアが高いです。このアイテムを使ったベストコーデ：{b}。",
-"Includes something new: {a}": "新しいアイテム入り：{a}"
+"Includes something new: {a}": "新しいアイテム入り：{a}",
+"Happy Halloween": "ハッピーハロウィン",
+"Happy Thanksgiving": "ハッピーサンクスギビング",
+"Happy Diwali": "ハッピーディワリ",
+"Merry Christmas": "メリークリスマス",
+"Happy New Year": "よいお年を",
+"Happy Lunar New Year": "旧正月おめでとう",
+"Happy Valentine’s Day": "ハッピーバレンタイン",
+"Happy St. Patrick’s Day": "ハッピーセントパトリックスデー",
+"Happy Easter": "ハッピーイースター",
+"Happy Canada Day": "ハッピーカナダデー",
+"Happy Fourth of July": "ハッピー独立記念日",
+"Holiday look": "祝日デザイン",
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "オンにした祝日・行事の数日前から、アプリがその色に変わり、ちょっとしたあいさつを表示します。"
 });

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.37.0';
+const APP_VERSION='1.38.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -599,7 +599,37 @@ async function addPhotos(blobs){
 }
 
 /* ---------- rendering ---------- */
-function renderAll(){ renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.textContent='Wearcycle v'+APP_VERSION; }
+/* Holiday look: from a few days before each holiday you keep on (Settings > Holidays) until the day itself, the app's
+   accent color, a small badge on the logo and a greeting bar change to that holiday. Off with "Holiday look". */
+const HOLI_LOOK={
+  halloween:{before:7,accent:'#f07f1a',hello:'Happy Halloween',icon:'<path d="M12 6c-5 0-8 3-8 7.5S7 21 12 21s8-3 8-7.5S17 6 12 6z"/><path d="M12 6V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'},
+  thanksgiving_ca:{before:4,accent:'#b5651d',hello:'Happy Thanksgiving',icon:'<path d="M12 2c3 3 7 5 7 10a7 7 0 0 1-14 0c0-5 4-7 7-10z"/><path d="M12 9v13" stroke="#fff" stroke-width="1.6"/>'},
+  thanksgiving_us:{before:4,accent:'#b5651d',hello:'Happy Thanksgiving',icon:'<path d="M12 2c3 3 7 5 7 10a7 7 0 0 1-14 0c0-5 4-7 7-10z"/><path d="M12 9v13" stroke="#fff" stroke-width="1.6"/>'},
+  diwali:{before:4,accent:'#e0a000',hello:'Happy Diwali',icon:'<path d="M3 14h18c0 4-4 7-9 7s-9-3-9-7z"/><path d="M12 3c2 3 3 5 3 7a3 3 0 0 1-6 0c0-2 1-4 3-7z"/>'},
+  christmas:{before:14,accent:'#c62828',hello:'Merry Christmas',icon:'<path d="M12 2l5 7h-3l5 7h-4l3 4H6l3-4H5l5-7H7z"/>'},
+  nye:{before:3,accent:'#b8952b',hello:'Happy New Year',icon:'<path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>'},
+  lunar:{before:4,accent:'#d32f2f',hello:'Happy Lunar New Year',icon:'<rect x="6" y="5" width="12" height="14" rx="5"/><path d="M12 1v4M12 19v4" stroke="currentColor" stroke-width="2"/>'},
+  valentines:{before:4,accent:'#e0457b',hello:'Happy Valentine’s Day',icon:'<path d="M12 21s-8-5-8-11a4.5 4.5 0 0 1 8-3 4.5 4.5 0 0 1 8 3c0 6-8 11-8 11z"/>'},
+  stpatricks:{before:3,accent:'#2e8b57',hello:'Happy St. Patrick’s Day',icon:'<circle cx="12" cy="7" r="4"/><circle cx="7.5" cy="13" r="4"/><circle cx="16.5" cy="13" r="4"/><path d="M12 14v8" stroke="currentColor" stroke-width="2"/>'},
+  easter:{before:4,accent:'#8e6cc7',hello:'Happy Easter',icon:'<path d="M12 2c4 0 7 7 7 12a7 7 0 0 1-14 0c0-5 3-12 7-12z"/>'},
+  canada_day:{before:3,accent:'#d52b1e',hello:'Happy Canada Day',icon:'<path d="M12 2l2 4 3-1-1 5 4-1-2 4 3 2-6 1v6h-2v-6l-6-1 3-2-2-4 4 1-1-5 3 1z"/>'},
+  july4:{before:3,accent:'#b22234',hello:'Happy Fourth of July',icon:'<path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>'}};
+function holidayNow(){ if(S.settings.holidayLook===false) return null;
+  const h=holidaysSoon(14).find(x=>HOLI_LOOK[x.id]&&x.inDays<=HOLI_LOOK[x.id].before); return h?Object.assign({},h,HOLI_LOOK[h.id]):null; }
+function inkFor(hex){ const v=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(c=>c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4)); const L=0.2126*v[0]+0.7152*v[1]+0.0722*v[2]; return 1.05/(L+0.05)>=(L+0.05)/(0.0168+0.05)?'#ffffff':'#1b2433'; } // whichever of white or the ink color has more contrast (WCAG ratio)
+function applyHolidayLook(){
+  const h=holidayNow(), root=document.documentElement, key=h?h.id+'|'+h.inDays:'';
+  if(root.dataset.holiKey===key) return; root.dataset.holiKey=key;
+  if(h){ root.dataset.holiday=h.id; root.style.setProperty('--coral',h.accent); root.style.setProperty('--coral-ink',inkFor(h.accent)); }
+  else { delete root.dataset.holiday; root.style.removeProperty('--coral'); root.style.removeProperty('--coral-ink'); }
+  const top=document.querySelector('header.top'); if(!top||!top.querySelector('.logo')) return;
+  let badge=top.querySelector('.holibadge'); if(badge) badge.remove();
+  let bar=document.getElementById('holiBar'); if(bar) bar.remove();
+  if(!h) return;
+  const lg=top.querySelector('.logo'); lg.insertAdjacentHTML('afterend',`<span class="holibadge" aria-hidden="true" style="color:${h.accent};left:${lg.offsetLeft+lg.offsetWidth-14}px;top:${lg.offsetTop+lg.offsetHeight-14}px"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span>`);
+  top.insertAdjacentHTML('afterend',`<div id="holiBar" class="holibar" style="--hb:${h.accent}"><span class="hbicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span><span class="hbtxt"><b>${h.inDays===0?h.hello:h.label}</b>${h.inDays===0?'':`<span>${whenLabel(h.inDays)}</span>`}</span><button class="btn sm" data-theme-go="${h.id}">Themed outfits</button></div>`);
+}
+function renderAll(){ applyHolidayLook(); renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.textContent='Wearcycle v'+APP_VERSION; }
 function renderStatus(){
   const st=$('#status'); let b='';
   if(!S.online){ st.textContent='Offline'; st.className='status warn'; b='<div class="banner"><div><b>You are offline.</b> Showing the last saved copy. Changes and Claude need a connection.</div></div>'; }
@@ -1188,7 +1218,8 @@ function openSettings(){
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
    <h3>Holidays</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Themed outfits</b><span>Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.</span>
-     <div class="chips" style="flex-wrap:wrap;margin-top:8px">${Object.entries(HOLIDAYS).filter(([k,h])=>!h.region||h.region===region()).map(([k,h])=>`<button type="button" class="chip" data-hol-tog="${k}" aria-pressed="${!holidaysOff().includes(k)}">${h.label}</button>`).join('')}</div></div></div></div>
+     <div class="chips" style="flex-wrap:wrap;margin-top:8px">${Object.entries(HOLIDAYS).filter(([k,h])=>!h.region||h.region===region()).map(([k,h])=>`<button type="button" class="chip" data-hol-tog="${k}" aria-pressed="${!holidaysOff().includes(k)}">${h.label}</button>`).join('')}</div></div></div>
+   <label class="li"><div class="txt"><b>Holiday look</b><span>A few days before each holiday you keep on, the app takes on its colors with a small greeting.</span></div><input type="checkbox" id="holiLookT" ${S.settings.holidayLook===false?'':'checked'}></label></div>
    <h3>Work dress code</h3>
    <div class="panel dresspanel"><div class="li" style="flex-direction:column;align-items:stretch;gap:10px">
      <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}" aria-pressed="${((S.settings.work||{}).code||'casual')===k}">${esc(d.label)}</button>`).join('')}</div>
@@ -1911,6 +1942,7 @@ document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e
   if(e.target&&e.target.id==='washAutoT'){ S.settings.washAuto=e.target.checked; saveCache(); queueSettingsSave(); if(e.target.checked) autoWash(); return; }
   if(e.target&&e.target.id==='laundryT'){ S.settings.laundry=e.target.checked; saveCache(); queueSettingsSave(); if(!e.target.checked) toast('Laundry tracking off. Pieces already in the wash stay there until you mark them clean.',5000); return; }
   if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); return; }
+  if(e.target&&e.target.id==='holiLookT'){ S.settings.holidayLook=e.target.checked; saveCache(); queueSettingsSave(); renderAll(); return; }
   if(e.target&&e.target.id==='enhanceT'){ S.settings.enhance=e.target.checked; saveCache(); queueSettingsSave(); for(const u of CUT.urls.values()) URL.revokeObjectURL(u); CUT.urls.clear(); ENH.clear(); renderAll(); return; }
   if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.',6000); } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });

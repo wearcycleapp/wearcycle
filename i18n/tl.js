@@ -1205,5 +1205,18 @@ I18N.load("tl",{
 "Set for {a}, but nothing to pair it with there yet.": "Nakatakda para sa {a}, pero wala pa itong maipapares doon.",
 "Set for {a}; other pieces score higher.": "Nakatakda para sa {a}; mas mataas ang score ng ibang piraso.",
 "Set for {a}; other pieces score higher. Best outfit with it: {b}.": "Nakatakda para sa {a}; mas mataas ang score ng ibang piraso. Pinakamagandang outfit kasama ito: {b}.",
-"Includes something new: {a}": "May kasamang bago: {a}"
+"Includes something new: {a}": "May kasamang bago: {a}",
+"Happy Halloween": "Maligayang Halloween",
+"Happy Thanksgiving": "Maligayang Thanksgiving",
+"Happy Diwali": "Maligayang Diwali",
+"Merry Christmas": "Maligayang Pasko",
+"Happy New Year": "Manigong Bagong Taon",
+"Happy Lunar New Year": "Maligayang Lunar New Year",
+"Happy Valentine’s Day": "Maligayang Araw ng mga Puso",
+"Happy St. Patrick’s Day": "Maligayang St. Patrick’s Day",
+"Happy Easter": "Maligayang Pasko ng Pagkabuhay",
+"Happy Canada Day": "Maligayang Canada Day",
+"Happy Fourth of July": "Maligayang Ika-4 ng Hulyo",
+"Holiday look": "Itsura sa holiday",
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "Ilang araw bago ang bawat holiday na naka-on, kukunin ng app ang mga kulay nito na may maikling pagbati."
 });

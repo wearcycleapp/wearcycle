@@ -1205,5 +1205,18 @@ I18N.load("ko",{
 "Set for {a}, but nothing to pair it with there yet.": "{a}용으로 설정됐지만 아직 함께 입을 아이템이 없어요.",
 "Set for {a}; other pieces score higher.": "{a}용으로 설정됐지만 다른 아이템의 점수가 더 높아요.",
 "Set for {a}; other pieces score higher. Best outfit with it: {b}.": "{a}용으로 설정됐지만 다른 아이템의 점수가 더 높아요. 이 아이템으로 만든 최고의 코디: {b}.",
-"Includes something new: {a}": "새 아이템 포함: {a}"
+"Includes something new: {a}": "새 아이템 포함: {a}",
+"Happy Halloween": "해피 핼러윈",
+"Happy Thanksgiving": "즐거운 추수감사절",
+"Happy Diwali": "해피 디왈리",
+"Merry Christmas": "메리 크리스마스",
+"Happy New Year": "새해 복 많이 받으세요",
+"Happy Lunar New Year": "새해 복 많이 받으세요 (설날)",
+"Happy Valentine’s Day": "해피 밸런타인데이",
+"Happy St. Patrick’s Day": "해피 성 패트릭의 날",
+"Happy Easter": "해피 부활절",
+"Happy Canada Day": "해피 캐나다 데이",
+"Happy Fourth of July": "해피 독립기념일",
+"Holiday look": "기념일 테마",
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "켜 둔 기념일 며칠 전부터 앱이 그 색으로 바뀌고 짧은 인사가 나와요."
 });

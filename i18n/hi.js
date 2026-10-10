@@ -1205,5 +1205,18 @@ I18N.load("hi",{
 "Set for {a}, but nothing to pair it with there yet.": "{a} के लिए सेट है, लेकिन वहाँ अभी इसके साथ पहनने को कुछ नहीं है।",
 "Set for {a}; other pieces score higher.": "{a} के लिए सेट है; दूसरे पीस का स्कोर ज़्यादा है।",
 "Set for {a}; other pieces score higher. Best outfit with it: {b}.": "{a} के लिए सेट है; दूसरे पीस का स्कोर ज़्यादा है। इसके साथ सबसे अच्छा आउटफ़िट: {b}।",
-"Includes something new: {a}": "इसमें कुछ नया है: {a}"
+"Includes something new: {a}": "इसमें कुछ नया है: {a}",
+"Happy Halloween": "हैप्पी हैलोवीन",
+"Happy Thanksgiving": "हैप्पी थैंक्सगिविंग",
+"Happy Diwali": "शुभ दीपावली",
+"Merry Christmas": "मेरी क्रिसमस",
+"Happy New Year": "नया साल मुबारक",
+"Happy Lunar New Year": "लूनर न्यू ईयर की शुभकामनाएँ",
+"Happy Valentine’s Day": "हैप्पी वैलेंटाइन्स डे",
+"Happy St. Patrick’s Day": "हैप्पी सेंट पैट्रिक्स डे",
+"Happy Easter": "हैप्पी ईस्टर",
+"Happy Canada Day": "हैप्पी कनाडा डे",
+"Happy Fourth of July": "हैप्पी फ़ोर्थ ऑफ़ जुलाई",
+"Holiday look": "त्योहार वाला लुक",
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "चालू किए गए हर त्योहार से कुछ दिन पहले, ऐप उसके रंगों में बदल जाता है और एक छोटा सा अभिवादन दिखाता है।"
 });

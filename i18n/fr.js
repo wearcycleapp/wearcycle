@@ -1205,5 +1205,18 @@ I18N.load("fr",{
 "Set for {a}, but nothing to pair it with there yet.": "Associée à « {a} », mais il n’y a encore rien avec quoi l’agencer de ce côté.",
 "Set for {a}; other pieces score higher.": "Associée à « {a} »; d’autres pièces ont un meilleur score.",
 "Set for {a}; other pieces score higher. Best outfit with it: {b}.": "Associée à « {a} »; d’autres pièces ont un meilleur score. Meilleure tenue avec elle : {b}.",
-"Includes something new: {a}": "Inclut une nouveauté : {a}"
+"Includes something new: {a}": "Inclut une nouveauté : {a}",
+"Happy Halloween": "Joyeuse Halloween",
+"Happy Thanksgiving": "Joyeuse Action de grâce",
+"Happy Diwali": "Joyeux Diwali",
+"Merry Christmas": "Joyeux Noël",
+"Happy New Year": "Bonne année",
+"Happy Lunar New Year": "Bonne année lunaire",
+"Happy Valentine’s Day": "Joyeuse Saint-Valentin",
+"Happy St. Patrick’s Day": "Joyeuse Saint-Patrick",
+"Happy Easter": "Joyeuses Pâques",
+"Happy Canada Day": "Bonne fête du Canada",
+"Happy Fourth of July": "Joyeux 4 juillet",
+"Holiday look": "Thème des fêtes",
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "Quelques jours avant chaque fête activée, l’application prend ses couleurs avec un petit message."
 });

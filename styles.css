@@ -643,3 +643,13 @@ button.worn-ok.linkish{background:none;border:0;font:inherit;cursor:pointer;padd
 .pincard .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pincard .txt span{font-size:13px;color:var(--muted)}
 .pincard .txt b span{font-size:inherit;color:inherit}
+
+/* holiday look (v1.38) */
+header.top{position:relative}
+.holibadge{position:absolute;width:20px;height:20px;border-radius:50%;background:var(--bg);display:grid;place-items:center;box-shadow:0 0 0 2px var(--bg)}
+.holibadge svg{width:15px;height:15px}
+.holibar{display:flex;align-items:center;gap:10px;margin:8px 0 4px;padding:8px 10px;border-radius:12px;background:color-mix(in srgb,var(--hb) 14%,var(--raised));border:1px solid color-mix(in srgb,var(--hb) 45%,transparent)}
+.holibar .hbicon{width:28px;height:28px;flex:none;color:var(--hb);display:grid;place-items:center}
+.holibar .hbicon svg{width:24px;height:24px}
+.holibar .hbtxt{flex:1;min-width:0;display:flex;flex-direction:column;font-size:14px}
+.holibar .hbtxt span{font-size:12.5px;color:var(--muted)}
