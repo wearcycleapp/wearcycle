@@ -1218,5 +1218,11 @@ I18N.load("ko",{
 "Happy Canada Day": "해피 캐나다 데이",
 "Happy Fourth of July": "해피 독립기념일",
 "Holiday look": "기념일 테마",
-"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "켜 둔 기념일 며칠 전부터 앱이 그 색으로 바뀌고 짧은 인사가 나와요."
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "켜 둔 기념일 며칠 전부터 앱이 그 색으로 바뀌고 짧은 인사가 나와요.",
+"Mark recycled": "재활용 완료로 표시",
+"Donate or recycle?": "기부할까요, 재활용할까요?",
+"Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "깨끗하고 그대로 입을 수 있으면(구멍, 지워지지 않는 얼룩, 고장 난 지퍼가 없으면) 기부하세요. 찢어지거나 얼룩지거나 늘어났거나 짝을 잃었으면 '재활용'이라고 표시한 별도 봉투에 담아 재활용하세요.",
+"Donated or recycled": "기부 또는 재활용 완료",
+"Recycled {0}": "{0} 재활용함",
+"Marked as recycled": "재활용 완료로 표시함"
 });

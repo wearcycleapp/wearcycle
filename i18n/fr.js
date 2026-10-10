@@ -1218,5 +1218,11 @@ I18N.load("fr",{
 "Happy Canada Day": "Bonne fête du Canada",
 "Happy Fourth of July": "Joyeux 4 juillet",
 "Holiday look": "Thème des fêtes",
-"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "Quelques jours avant chaque fête activée, l’application prend ses couleurs avec un petit message."
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "Quelques jours avant chaque fête activée, l’application prend ses couleurs avec un petit message.",
+"Mark recycled": "Marquer recyclé",
+"Donate or recycle?": "Donner ou recycler?",
+"Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "Propre et portable tel quel (sans trous, taches tenaces ni fermeture brisée) : donnez-le. Déchiré, taché, déformé ou sans sa paire : recyclez-le, dans un sac à part marqué pour le recyclage.",
+"Donated or recycled": "Donnés ou recyclés",
+"Recycled {0}": "Recyclé le {0}",
+"Marked as recycled": "Marqué comme recyclé"
 });

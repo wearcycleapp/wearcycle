@@ -1218,5 +1218,11 @@ I18N.load("ja",{
 "Happy Canada Day": "ハッピーカナダデー",
 "Happy Fourth of July": "ハッピー独立記念日",
 "Holiday look": "祝日デザイン",
-"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "オンにした祝日・行事の数日前から、アプリがその色に変わり、ちょっとしたあいさつを表示します。"
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "オンにした祝日・行事の数日前から、アプリがその色に変わり、ちょっとしたあいさつを表示します。",
+"Mark recycled": "リサイクル済みにする",
+"Donate or recycle?": "寄付?それともリサイクル?",
+"Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "清潔でそのまま着られる(穴、落ちないシミ、壊れたファスナーがない)なら寄付。破れ、シミ、伸び、片方だけのものはリサイクルへ。「リサイクル用」と書いた別の袋に入れてください。",
+"Donated or recycled": "寄付・リサイクル済み",
+"Recycled {0}": "{0}にリサイクル済み",
+"Marked as recycled": "リサイクル済みにしました"
 });

@@ -1218,5 +1218,11 @@ I18N.load("tl",{
 "Happy Canada Day": "Maligayang Canada Day",
 "Happy Fourth of July": "Maligayang Ika-4 ng Hulyo",
 "Holiday look": "Itsura sa holiday",
-"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "Ilang araw bago ang bawat holiday na naka-on, kukunin ng app ang mga kulay nito na may maikling pagbati."
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "Ilang araw bago ang bawat holiday na naka-on, kukunin ng app ang mga kulay nito na may maikling pagbati.",
+"Mark recycled": "Markahang na-recycle",
+"Donate or recycle?": "I-donate o i-recycle?",
+"Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "Malinis at maisusuot pa (walang butas, mantsang hindi natatanggal o sirang zipper): i-donate. Punit, may mantsa, lumuwag o walang kapares: i-recycle, sa hiwalay na bag na may markang pang-recycle.",
+"Donated or recycled": "Na-donate o na-recycle",
+"Recycled {0}": "Na-recycle noong {0}",
+"Marked as recycled": "Minarkahang na-recycle"
 });

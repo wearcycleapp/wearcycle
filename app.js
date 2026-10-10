@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.38.0';
+const APP_VERSION='1.39.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -907,7 +907,8 @@ const DEPT_HINT='Used for what to buy and for shopping searches. Outfits from yo
 function mapsSearch(what){ const w=wxSet(); const where=(w.on&&w.mode==='place'&&w.label)?' near '+w.label:' near me';
   return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(what+where); }
 function dropOffRow(worn){
-  return `<div class="li dropoff"><div class="txt"><b>Where to take them</b><span>${worn?'Many charities also take worn-out textiles and sell them for recycling. Ask first, bag them apart and label the bag.':'Check each place\u2019s hours and what it accepts. Never leave bags beside a full bin.'}</span>
+  return `<div class="li dropoff"><div class="txt"><b>Donate or recycle?</b><span>Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.</span>
+   <b style="margin-top:8px">Where to take them</b><span>${worn?'Many charities also take worn-out textiles and sell them for recycling. Ask first, bag them apart and label the bag.':'Check each place\u2019s hours and what it accepts. Never leave bags beside a full bin.'}</span>
    <div class="row" style="margin-top:8px;gap:8px"><a class="btn sm primary" target="_blank" rel="noopener" href="${esc(mapsSearch('clothing donation'))}">Donation drop-offs</a>${worn?`<a class="btn sm" target="_blank" rel="noopener" href="${esc(mapsSearch('textile recycling'))}">Textile recycling</a>`:''}</div></div></div>`;
 }
 // Repair finder: same Maps search as donations, with the kind of shop that fixes this category.
@@ -926,12 +927,14 @@ function renderCare(){
   const out=[]; const rp=repairPanel(items); if(rp) out.push(rp);
   const np=notPickedPanel(items); if(np) out.push(np);
   const donate=groups.retire.concat(groups.unused.filter(([it])=>!groups.retire.some(([r])=>r.id===it.id)));
-  out.push(donate.length?panel('Donate or recycle','Retired items and anything not worn for '+Math.round(S.settings.unusedDays/MONTH)+'+ months.',donate.map(([it,f])=>careRow(it,f,`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)).concat([dropOffRow(groups.retire.length>0)]),donate.length)
+  out.push(donate.length?panel('Donate or recycle','Retired items and anything not worn for '+Math.round(S.settings.unusedDays/MONTH)+'+ months.',donate.map(([it,f])=>careRow(it,f,(it.cond??4)<=1
+      ?`<button class="btn sm" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`
+      :`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)).concat([dropOffRow(groups.retire.length>0)]),donate.length)
     :'<div class="panel"><div class="panel-h"><h3>Donate or recycle</h3><span class="count">0</span></div><div class="li"><span class="done">Nothing to donate right now.</span></div></div>');
   if(groups.downgraded.length) out.push(panel('Moved down a level','Still useful, but no longer counted for work or going out.',groups.downgraded.map(([it,f])=>careRow(it,f,`<button class="btn sm" data-check="${esc(it.id)}">Recheck</button>`))));
   if(groups.check.length) out.push(panel('Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>careRow(it,f,`<button class="btn sm primary" data-check="${esc(it.id)}">Check</button>`))));
-  const donated=items.filter(it=>it.status==='donated');
-  if(donated.length) out.push(`<div class="panel"><div class="panel-h"><h3>Donated</h3><span class="count">${donated.length}</span></div>${donated.slice(0,20).map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>Donated ${esc(it.donatedOn||'')}</span></div><div class="acts"><button class="btn sm ghost" data-restore="${esc(it.id)}">Restore</button></div></div>`).join('')}</div>`);
+  const donated=items.filter(it=>it.status==='donated'||it.status==='recycled').sort((a,b)=>String(b.donatedOn||b.recycledOn||'').localeCompare(String(a.donatedOn||a.recycledOn||'')));
+  if(donated.length) out.push(`<div class="panel"><div class="panel-h"><h3>Donated or recycled</h3><span class="count">${donated.length}</span></div>${donated.slice(0,20).map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${it.status==='recycled'?'Recycled '+esc(it.recycledOn||''):'Donated '+esc(it.donatedOn||'')}</span></div><div class="acts"><button class="btn sm ghost" data-restore="${esc(it.id)}">Restore</button></div></div>`).join('')}</div>`);
   box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+out.join('')+'</div>';
 }
 let ideasState={busy:false,list:null,err:''};
@@ -1885,6 +1888,7 @@ document.addEventListener('click',async e=>{
   if(ds.pswap!==undefined){ const k=+ds.pswap, sl=ds.slot; const before=pieceAt(k,sl); swap(k,sl); const after=pieceAt(k,sl);
     if(after&&before&&after.id!==before.id) openPiece(k,sl,true); return; }
   if(ds.donate){ if(await patchItem(ds.donate,{status:'donated',donatedOn:todayISO()})) toast('Marked as donated'); return; }
+  if(ds.recycle){ if(await patchItem(ds.recycle,{status:'recycled',recycledOn:todayISO()})) toast('Marked as recycled'); return; }
   if(ds.restore){ if(await patchItem(ds.restore,{status:'active'})) toast('Back in your closet'); return; }
   if(ds.check){ openCheck(ds.check); return; }
   if(ds.step){ changeSetting(ds.step, SETDEF[ds.step].get(S.settings)+(+ds.d)*SETDEF[ds.step].step); return; }

@@ -1218,5 +1218,11 @@ I18N.load("hi",{
 "Happy Canada Day": "हैप्पी कनाडा डे",
 "Happy Fourth of July": "हैप्पी फ़ोर्थ ऑफ़ जुलाई",
 "Holiday look": "त्योहार वाला लुक",
-"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "चालू किए गए हर त्योहार से कुछ दिन पहले, ऐप उसके रंगों में बदल जाता है और एक छोटा सा अभिवादन दिखाता है।"
+"A few days before each holiday you keep on, the app takes on its colors with a small greeting.": "चालू किए गए हर त्योहार से कुछ दिन पहले, ऐप उसके रंगों में बदल जाता है और एक छोटा सा अभिवादन दिखाता है।",
+"Mark recycled": "रीसायकल किया मार्क करें",
+"Donate or recycle?": "दान करें या रीसायकल?",
+"Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "साफ़ और जैसे है वैसे पहनने लायक (कोई छेद, पक्के दाग या टूटी ज़िप नहीं): दान करें। फटा, दाग वाला, ढीला पड़ा या जोड़ा गुम: रीसायकल करें, रीसायकल लिखे अलग बैग में।",
+"Donated or recycled": "दान या रीसायकल किए गए",
+"Recycled {0}": "{0} को रीसायकल किया",
+"Marked as recycled": "रीसायकल किया गया मार्क किया"
 });
