@@ -1234,5 +1234,6 @@ I18N.load("ko",{
 "Fit": "화면에 맞추기",
 "The photo could not be loaded.": "사진을 불러올 수 없어요.",
 "This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "이 사진에는 아이템의 디테일이 많지 않아요. 더 선명하게 보려면 아이템이 화면을 가득 채우도록 가까이서 다시 찍어 주세요(새 사진은 더 높은 해상도로 저장돼요).",
-"Dressier than {a} needs: {b}": "{a}에는 너무 격식 있음: {b}"
+"Dressier than {a} needs: {b}": "{a}에는 너무 격식 있음: {b}",
+"All dressy pieces: for going out, mix in chinos, jeans or clean sneakers": "모두 격식 있는 아이템: 외출에는 치노 팬츠, 청바지, 깔끔한 스니커즈를 섞어 보세요"
 });

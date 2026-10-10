@@ -205,6 +205,11 @@ function scoreOutfit(o,occ,ctx){
   if(dev>1){ s-=(dev-1); reasons.push({t:(avg>target?'Dressier':'More casual')+' than usual for '+(ctx.theme?ctx.theme.label:OCC[occ].label.toLowerCase()),neg:true}); }
   // Dress ceiling: pieces above the occasion's top level (suit trousers, dress oxfords for going out) cost 1 point
   // each, up to 3, so a style bonus (for example Classic) cannot turn going out into a formal outfit.
+  // Going out with every piece at business level or above (a full suit and dress shoes) is more than the occasion
+  // needs: -1.5. A blazer with chinos, jeans or sneakers is not affected.
+  // (shoes do not count: a suit with derbies is still a suit)
+  if(occ==='out'&&!ctx.theme){ const g=[o.top,o.bottom,o.outer,o.onepiece].filter(Boolean);
+    if(g.length>=3&&g.every(i=>(i.formality??3)>=4)){ s-=1.5; reasons.push({t:'All dressy pieces: for going out, mix in chinos, jeans or clean sneakers',neg:true}); } }
   const ceil=ctx.theme?ctx.theme.formality+1:OCC[occ].ceiling;
   if(ceil){ const over=core.filter(i=>i!==o.under&&(i===o.top&&o.under&&canOpen(o.top)?Math.min(2,i.formality??3):(i.formality??3))>ceil);
     if(over.length){ s-=Math.min(3,over.length); reasons.push({t:'Dressier than '+(ctx.theme?ctx.theme.label:OCC[occ].label.toLowerCase())+' needs: '+over.map(i=>i.name).join(', '),neg:true}); } }
@@ -287,6 +292,8 @@ function pickAccessories(o,by,occ,now,wx,all){
     const list=by[cat]; if(!list||!list.length) continue;
     if(cat==='belt' && !o.bottom) continue;
     if(cat==='hat' && occ==='work') continue;
+    // Hats only when the weather calls for one: cold (feels like 8° or less), rain or snow, or a hot sunny day.
+    if(cat==='hat' && (!wx || !(wxFeel(wx).lo<=8 || wx.rain || wx.snow || wxFeel(wx).hi>=25))) continue;
     if(cat==='socks'){
       if(!o.shoes || OPEN_SHOE_RX.test(String(o.shoes.name||''))) continue;
       let best=null,bs=-Infinity; for(const a of list){ const v=sockFit(o,a,occ,wx).s+Math.min(14,daysSince(a.lastWorn,now))/14; if(v>bs){bs=v;best=a;} }
@@ -298,6 +305,9 @@ function pickAccessories(o,by,occ,now,wx,all){
       s+=harmony(baseColors.concat(primary(a)||[])).s-baseH;
       if(cat==='belt' && o.shoes){ const sc=primary(o.shoes), bc=primary(a); if(['black','brown'].includes(sc)&&['black','brown'].includes(bc)) s+= sc===bc?1:-2; }
       const f=a.formality??3; if(Math.abs(f-OCC[occ].formality)>1) s-=1;
+      // Match the outfit's own dress level: no beanie or cap with tailoring (suit, blazer and dress shoes).
+      const core=coreOf(o), lvl=core.reduce((t,i)=>t+(i.formality??3),0)/Math.max(1,core.length);
+      if(['hat','bag','other'].includes(cat) && lvl-f>=2) s-=3;
       if(s>bestS){bestS=s;best=a;}
     }
     if(best && bestS>-1.5) acc.push(best);

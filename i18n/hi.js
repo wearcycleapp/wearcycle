@@ -1234,5 +1234,6 @@ I18N.load("hi",{
 "Fit": "फ़िट करें",
 "The photo could not be loaded.": "फ़ोटो लोड नहीं हो सकी।",
 "This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "इस फ़ोटो में कपड़े का ज़्यादा विवरण नहीं है। साफ़ देखने के लिए पास से दोबारा फ़ोटो लें ताकि कपड़ा पूरा फ़्रेम भर दे (नई फ़ोटो ज़्यादा रिज़ॉल्यूशन में सेव होती हैं)।",
-"Dressier than {a} needs: {b}": "{a} के लिए ज़रूरत से ज़्यादा फ़ॉर्मल: {b}"
+"Dressier than {a} needs: {b}": "{a} के लिए ज़रूरत से ज़्यादा फ़ॉर्मल: {b}",
+"All dressy pieces: for going out, mix in chinos, jeans or clean sneakers": "सब कुछ फ़ॉर्मल: बाहर जाने के लिए चिनोज़, जींस या साफ़ स्नीकर्स मिलाएँ"
 });
