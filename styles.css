@@ -167,8 +167,8 @@ nav.tabs .badge{position:absolute;top:2px;right:calc(50% - 22px);min-width:16px;
 .colors button .ord{position:absolute;bottom:-4px;right:-4px;background:var(--ink);color:var(--bg);font-size:10px;font-family:var(--f-mono);width:16px;height:16px;border-radius:50%;display:grid;place-items:center}
 .hint{font-size:12.5px;color:var(--muted);margin:0}
 .photo{display:flex;gap:12px;align-items:center}
-.photo .pv{width:110px;height:110px;flex:none;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
-.photo .pv img{width:100%;height:100%;object-fit:contain}
+.photo .pv{position:relative;width:110px;height:110px;flex:none;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
+.photo .pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .photo .pv svg.glyph{width:60%;height:70%}
 .photo .col{display:flex;flex-direction:column;gap:8px;min-width:0}
 .ai{background:var(--accent-soft);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;font-size:14px}
@@ -552,9 +552,9 @@ a.lirow{text-decoration:none;color:inherit}
 .editbar span{flex:1;min-width:140px}
 .editbar .btn svg{width:16px;height:16px;margin-right:6px}
 /* v1.24 piece preview */
-.piecebig{width:100%;aspect-ratio:1/1;max-height:56vh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
+.piecebig{position:relative;width:100%;aspect-ratio:1/1;max-height:56vh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
 .piecebig.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
-.piecebig img{width:100%;height:100%;object-fit:contain}
+.piecebig img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain} /* absolute: a percentage height inside a grid cell does not resolve, so the image overflowed and was cropped */
 .piecebig img.cut{padding:16px;box-sizing:border-box;filter:drop-shadow(0 6px 10px rgba(50,35,20,.22))}
 .piecebig svg.glyph{width:55%;height:60%}
 .sheet-actions .btn .swap{position:static;display:inline-grid;width:18px;height:18px;margin-right:6px;background:none;box-shadow:none}
