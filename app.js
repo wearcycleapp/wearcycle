@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.41.0';
+const APP_VERSION='1.42.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -180,9 +180,9 @@ async function decode(blob){
 }
 function drawScaled(src,max){ const w=src.width||src.videoWidth,h=src.height||src.videoHeight,k=Math.min(1,max/Math.max(w,h));
   const cv=document.createElement('canvas'); cv.width=Math.round(w*k); cv.height=Math.round(h*k); cv.getContext('2d').drawImage(src,0,0,cv.width,cv.height); return cv; }
-async function prepare(blob){ // -> {full: Blob (<=1024px), thumb: dataURL (<=256px)}
+async function prepare(blob){ // -> {full: Blob (<=2048px, enough detail to zoom), thumb: dataURL (<=256px)}
   const src=await decode(blob);
-  const full=await new Promise(r=>drawScaled(src,1024).toBlob(r,'image/jpeg',0.84));
+  const full=await new Promise(r=>drawScaled(src,2048).toBlob(r,'image/jpeg',0.85));
   const thumb=drawScaled(src,256).toDataURL('image/jpeg',0.72);
   if(src.close) src.close();
   return {full,thumb};
@@ -238,8 +238,9 @@ async function callClaude(task,payload){
   return data.result;
 }
 const aiMsg=e=>(e&&e.friendly)||'Claude could not answer right now. Try again.';
-async function aiTag(blob){ return callClaude('tag',{image:await blobToBase64(blob)}); }
-async function aiCheck(blob,it){ return callClaude('check',{image:await blobToBase64(blob),name:it.name,category:CAT[it.cat].label}); }
+// Claude gets a 1024 px copy: enough to read the piece, and it keeps requests small (photos are stored at up to 2048 px).
+async function aiTag(blob){ return callClaude('tag',{image:await blobToBase64(await shrink(blob,1024))}); }
+async function aiCheck(blob,it){ return callClaude('check',{image:await blobToBase64(await shrink(blob,1024)),name:it.name,category:CAT[it.cat].label}); }
 function applyAi(it,res){
   if(res.name) it.name=String(res.name).slice(0,60);
   if(CAT[res.category]) it.cat=res.category;
@@ -358,7 +359,7 @@ async function trimAlpha(png){
   if(x1<0) throw new Error('Nothing was found in the photo');
   g.putImageData(img,0,0);
   const pad=Math.round(0.02*Math.max(x1-x0,y1-y0)); x0=Math.max(0,x0-pad); y0=Math.max(0,y0-pad); x1=Math.min(W-1,x1+pad); y1=Math.min(H-1,y1+pad);
-  const w=x1-x0+1,h=y1-y0+1,k=Math.min(1,640/Math.max(w,h));
+  const w=x1-x0+1,h=y1-y0+1,k=Math.min(1,1024/Math.max(w,h));
   const out=document.createElement('canvas'); out.width=Math.round(w*k); out.height=Math.round(h*k);
   out.getContext('2d').drawImage(cv,x0,y0,w,h,0,0,out.width,out.height);
   let b=await new Promise(r=>out.toBlob(r,'image/webp',0.86)); if(!b||b.type!=='image/webp') b=await new Promise(r=>out.toBlob(r,'image/png'));
@@ -379,7 +380,7 @@ async function cutUrl(it){
 }
 async function makeCut(it,onp){
   const src=it.photo?await photoBlob(it.photo):await (await fetch(it.thumb)).blob();
-  const png=await removeBg(src,onp);
+  const png=await removeBg(await shrink(src,1600),onp);
   const out=await trimAlpha(png);
   const ext=out.type==='image/webp'?'webp':'png';
   const path=UID+'/'+it.id+'-cut-'+Date.now().toString(36)+'.'+ext;
@@ -468,19 +469,30 @@ const ZOOM_ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" str
 const VW={open:false,s:1,x:0,y:0,pts:new Map(),pinch:null,lastTap:0,mode:'photo',it:null};
 async function openViewer(id){
   const it=byId(id)||(ED&&ED.it); if(!it||!(it.photo||it.cut||thumbSrc(it)||(ED&&ED.preview))) return;
-  VW.open=true; VW.it=it; VW.mode=it.photo||(ED&&ED.preview&&!id)?'photo':'cut'; guard();
+  VW.open=true; VW.it=it; VW.mode=it.photo||!it.cut||(ED&&ED.preview&&!id)?'photo':'cut'; guard();
   $('#viewRoot').innerHTML=`<div class="viewer" role="dialog" aria-label="${esc(it.name||'')}"><div class="vtop"><b data-notr>${esc(it.name||'')}</b>${it.cut&&(it.photo||it.thumb)?`<div class="seg2 vseg"><button data-vmode="photo" aria-pressed="${VW.mode==='photo'}">Photo</button><button data-vmode="cut" aria-pressed="${VW.mode==='cut'}">Cut-out</button></div>`:''}<button class="iconbtn" data-vclose aria-label="Close">✕</button></div>
     <div class="vstage" id="vStage"><img id="vImg" alt="${esc(it.name||'')}" draggable="false"><span class="hint" id="vLoad">Loading…</span></div>
-    <div class="vbar"><button class="iconbtn" data-vzoom="-1" aria-label="Zoom out">−</button><input type="range" id="vRange" min="100" max="600" step="10" value="100" aria-label="Zoom"><button class="iconbtn" data-vzoom="1" aria-label="Zoom in">+</button><button class="btn sm ghost" data-vzoom="0">Fit</button></div></div>`;
+    <div class="vbar"><button class="iconbtn" data-vzoom="-1" aria-label="Zoom out">−</button><input type="range" id="vRange" min="100" max="600" step="10" value="100" aria-label="Zoom"><button class="iconbtn" data-vzoom="1" aria-label="Zoom in">+</button><button class="btn sm ghost" data-vzoom="0">Fit</button></div><p class="vnote" id="vNote" hidden>This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).</p></div>`;
   document.body.style.overflow='hidden'; await viewerLoad(); bindViewer();
 }
 async function viewerLoad(){
-  const it=VW.it, img=$('#vImg'); if(!img) return; let u='';
+  const it=VW.it, img=$('#vImg'); if(!img) return; let u=''; VW.full=false;
   if(VW.mode==='cut'&&it.cut) u=await cutUrl(it);
   else if(ED&&ED.it===it&&ED.preview) u=ED.preview;
-  else if(it.photo&&!isEx(it)&&sb) u=await fullPhotoUrl(it.photo).catch(()=>'');
+  else if(it.photo&&!isEx(it)&&sb){ u=await fullPhotoUrl(it.photo).catch(()=>''); VW.full=!!u; }
   if(!u) u=thumbSrc(it); if(!$('#vImg')) return;
-  img.classList.toggle('cut',VW.mode==='cut'); img.onload=()=>{ const l=$('#vLoad'); if(l) l.remove(); }; img.onerror=()=>{ const l=$('#vLoad'); if(l) l.textContent='The photo could not be loaded.'; img.hidden=true; }; img.src=u; viewerSet(1,0,0);
+  img.classList.toggle('cut',VW.mode==='cut'); img.onload=()=>{ const l=$('#vLoad'); if(l) l.remove(); viewerFrame(img); }; img.onerror=()=>{ const l=$('#vLoad'); if(l) l.textContent='The photo could not be loaded.'; img.hidden=true; }; img.src=u; viewerSet(1,0,0);
+}
+// Photos open framed on the piece (Claude's box around it), so a small item in a big photo fills the screen;
+// Fit shows the whole photo. A note appears when the photo holds little detail of the piece.
+function viewerFrame(img){
+  const it=VW.it, st=$('#vStage'), b=VW.full&&validBox(it.box)?it.box:null; const note=$('#vNote'); // only full photos: the thumbnail is already cropped to the box
+  const px=Math.round(img.naturalWidth*(b?b[2]-b[0]:1)), py=Math.round(img.naturalHeight*(b?b[3]-b[1]:1));
+  if(note) note.hidden=Math.max(px,py)>=700||VW.mode!=='photo';
+  if(!b||!st) return viewerSet(1,0,0);
+  const W=st.clientWidth,H=st.clientHeight, k=Math.min(W/img.naturalWidth,H/img.naturalHeight), dw=img.naturalWidth*k, dh=img.naturalHeight*k;
+  const bw=(b[2]-b[0])*dw, bh=(b[3]-b[1])*dh, sc=Math.min(6,Math.max(1,Math.min(W/(bw*1.15),H/(bh*1.15))));
+  viewerSet(sc,-((b[0]+b[2])/2-0.5)*dw*sc,-((b[1]+b[3])/2-0.5)*dh*sc);
 }
 function viewerSet(s,x,y){ const st=$('#vStage'), img=$('#vImg'); if(!st||!img) return;
   s=Math.min(6,Math.max(1,s)); const W=st.clientWidth, H=st.clientHeight, mx=W*(s-1)/2, my=H*(s-1)/2;
@@ -603,7 +615,7 @@ function stopStream(){ if(CAM.stream){ CAM.stream.getTracks().forEach(t=>t.stop(
 function closeCamera(result){ stopStream(); $('#camRoot').innerHTML=''; const r=CAM.resolve; CAM.resolve=null; if(r) r(result||[]); }
 async function shoot(){
   const v=$('#camVideo'); if(!v||!v.videoWidth||CAM.busy) return; CAM.busy=true;
-  const cv=drawScaled(v,1280); const br=brighten(cv);
+  const cv=drawScaled(v,2560); const br=brighten(cv);
   const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.86));
   CAM.busy=false; if(!blob) return;
   if(br.lifted&&!CAM.darkTold){ CAM.darkTold=true; toast(CAM.torchOk&&!CAM.torchOn?'That photo was dark, so it was brightened. Tap the light button at the top for truer colors.':'That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.',6000); }

@@ -1232,5 +1232,6 @@ I18N.load("es",{
 "Zoom in": "Acercar",
 "Zoom": "Zoom",
 "Fit": "Ajustar",
-"The photo could not be loaded.": "No se pudo cargar la foto."
+"The photo could not be loaded.": "No se pudo cargar la foto.",
+"This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "Esta foto tiene poco detalle de la prenda. Para verla más nítida, vuelve a tomarla de cerca para que la prenda llene el cuadro (las fotos nuevas se guardan con más resolución)."
 });

@@ -663,7 +663,7 @@ header.top{position:relative}
 .viewer .iconbtn{color:#fff;border-color:rgba(255,255,255,.35);background:transparent}
 .viewer .vseg button{color:#fff}
 .vstage{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;display:grid;place-items:center}
-.vstage img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain;transform-origin:center;user-select:none;-webkit-user-drag:none}
+.vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:center;user-select:none;-webkit-user-drag:none}
 .vstage img.cut{background:#f3f0ea}
 .vstage .hint{position:absolute;color:#aaa}
 .viewer .vbar{display:flex;align-items:center;gap:10px;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
@@ -703,3 +703,4 @@ header.top{position:relative}
   .fit.hero .flatlay{aspect-ratio:auto;height:calc(100vh - 150px);min-height:240px}
   .flatlay{max-height:calc(100vh - 150px)}
 }
+.viewer .vnote{margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:#c9ccd3}

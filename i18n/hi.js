@@ -1232,5 +1232,6 @@ I18N.load("hi",{
 "Zoom in": "ज़ूम इन",
 "Zoom": "ज़ूम",
 "Fit": "फ़िट करें",
-"The photo could not be loaded.": "फ़ोटो लोड नहीं हो सकी।"
+"The photo could not be loaded.": "फ़ोटो लोड नहीं हो सकी।",
+"This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "इस फ़ोटो में कपड़े का ज़्यादा विवरण नहीं है। साफ़ देखने के लिए पास से दोबारा फ़ोटो लें ताकि कपड़ा पूरा फ़्रेम भर दे (नई फ़ोटो ज़्यादा रिज़ॉल्यूशन में सेव होती हैं)।"
 });

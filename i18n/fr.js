@@ -1232,5 +1232,6 @@ I18N.load("fr",{
 "Zoom in": "Zoom avant",
 "Zoom": "Zoom",
 "Fit": "Ajuster",
-"The photo could not be loaded.": "Impossible de charger la photo."
+"The photo could not be loaded.": "Impossible de charger la photo.",
+"This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "Cette photo montre peu de détails de la pièce. Pour une image plus nette, reprenez-la de près pour que la pièce remplisse le cadre (les nouvelles photos sont enregistrées en plus haute résolution)."
 });
