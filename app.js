@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.39.0';
+const APP_VERSION='1.40.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -451,9 +451,10 @@ function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
 const CAM={stream:null,mode:'single',shots:[],resolve:null,facing:'environment',busy:false};
 let guarded=false;
 function guard(){ if(!guarded){ try{ history.pushState({wearcycle:1},''); guarded=true; }catch(e){} } }
-function inDepth(){ return !!CAM.resolve || !!$('#sheetRoot').innerHTML || S.sel!==0 || S.tab!=='outfits'; }
+function inDepth(){ return VW.open || !!CAM.resolve || !!$('#sheetRoot').innerHTML || S.sel!==0 || S.tab!=='outfits'; }
 window.addEventListener('popstate',()=>{
   guarded=false;
+  if(VW.open){ closeViewer(); if(inDepth()) guard(); return; }
   if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]);
   else if($('#sheetRoot').innerHTML) closeSheet();
   else if(S.sel!==0){ S.sel=0; renderOutfits(); window.scrollTo(0,0); }
@@ -461,6 +462,50 @@ window.addEventListener('popstate',()=>{
   else { history.back(); return; } // nothing left to close: let back leave the app
   if(inDepth()) guard();
 });
+/* Full-size viewer with zoom: pinch, double-tap, mouse wheel or the + and - buttons (1x to 6x); drag to move when
+   zoomed. Shows the full photo when there is one (signed URL), with a switch to the cut-out. */
+const ZOOM_ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5M11 8v6M8 11h6"/></svg>';
+const VW={open:false,s:1,x:0,y:0,pts:new Map(),pinch:null,lastTap:0,mode:'photo',it:null};
+async function openViewer(id){
+  const it=byId(id)||(ED&&ED.it); if(!it||!(it.photo||it.cut||thumbSrc(it)||(ED&&ED.preview))) return;
+  VW.open=true; VW.it=it; VW.mode=it.photo||(ED&&ED.preview&&!id)?'photo':'cut'; guard();
+  $('#viewRoot').innerHTML=`<div class="viewer" role="dialog" aria-label="${esc(it.name||'')}"><div class="vtop"><b data-notr>${esc(it.name||'')}</b>${it.cut&&(it.photo||it.thumb)?`<div class="seg2 vseg"><button data-vmode="photo" aria-pressed="${VW.mode==='photo'}">Photo</button><button data-vmode="cut" aria-pressed="${VW.mode==='cut'}">Cut-out</button></div>`:''}<button class="iconbtn" data-vclose aria-label="Close">✕</button></div>
+    <div class="vstage" id="vStage"><img id="vImg" alt="${esc(it.name||'')}" draggable="false"><span class="hint" id="vLoad">Loading…</span></div>
+    <div class="vbar"><button class="iconbtn" data-vzoom="-1" aria-label="Zoom out">−</button><input type="range" id="vRange" min="100" max="600" step="10" value="100" aria-label="Zoom"><button class="iconbtn" data-vzoom="1" aria-label="Zoom in">+</button><button class="btn sm ghost" data-vzoom="0">Fit</button></div></div>`;
+  document.body.style.overflow='hidden'; await viewerLoad(); bindViewer();
+}
+async function viewerLoad(){
+  const it=VW.it, img=$('#vImg'); if(!img) return; let u='';
+  if(VW.mode==='cut'&&it.cut) u=await cutUrl(it);
+  else if(ED&&ED.it===it&&ED.preview) u=ED.preview;
+  else if(it.photo&&!isEx(it)&&sb) u=await fullPhotoUrl(it.photo).catch(()=>'');
+  if(!u) u=thumbSrc(it); if(!$('#vImg')) return;
+  img.classList.toggle('cut',VW.mode==='cut'); img.onload=()=>{ const l=$('#vLoad'); if(l) l.remove(); }; img.onerror=()=>{ const l=$('#vLoad'); if(l) l.textContent='The photo could not be loaded.'; img.hidden=true; }; img.src=u; viewerSet(1,0,0);
+}
+function viewerSet(s,x,y){ const st=$('#vStage'), img=$('#vImg'); if(!st||!img) return;
+  s=Math.min(6,Math.max(1,s)); const W=st.clientWidth, H=st.clientHeight, mx=W*(s-1)/2, my=H*(s-1)/2;
+  VW.s=s; VW.x=s===1?0:Math.min(mx,Math.max(-mx,x)); VW.y=s===1?0:Math.min(my,Math.max(-my,y));
+  img.style.transform=`translate(${VW.x}px,${VW.y}px) scale(${VW.s})`; const r=$('#vRange'); if(r) r.value=Math.round(VW.s*100); }
+// zoom toward a point (px,py relative to the stage centre) so that point stays under the finger
+function zoomAt(ns,px,py){ ns=Math.min(6,Math.max(1,ns)); const k=ns/VW.s; viewerSet(ns,px-(px-VW.x)*k,py-(py-VW.y)*k); }
+function bindViewer(){
+  const st=$('#vStage'); if(!st) return; const rel=e=>{ const r=st.getBoundingClientRect(); return [e.clientX-r.left-r.width/2,e.clientY-r.top-r.height/2]; };
+  st.addEventListener("pointerdown",e=>{ try{ st.setPointerCapture(e.pointerId); }catch(err){} VW.pts.set(e.pointerId,rel(e));
+    if(VW.pts.size===2){ const [a,b]=[...VW.pts.values()]; VW.pinch={d:Math.hypot(a[0]-b[0],a[1]-b[1]),s:VW.s}; VW.down=null; VW.lastTap=0; }
+    else VW.down={t:Date.now(),p:rel(e)}; });
+  st.addEventListener('pointermove',e=>{ if(!VW.pts.has(e.pointerId)) return; const prev=VW.pts.get(e.pointerId), cur=rel(e); VW.pts.set(e.pointerId,cur);
+    if(VW.pts.size===2&&VW.pinch){ const [a,b]=[...VW.pts.values()]; const d=Math.hypot(a[0]-b[0],a[1]-b[1]); zoomAt(VW.pinch.s*d/Math.max(1,VW.pinch.d),(a[0]+b[0])/2,(a[1]+b[1])/2); }
+    else if(VW.pts.size===1&&VW.s>1) viewerSet(VW.s,VW.x+cur[0]-prev[0],VW.y+cur[1]-prev[1]); });
+  // double-tap: two quick taps (under 250 ms, moving under 10 px) within 300 ms toggle between fit and 2.5x
+  const up=e=>{ const d=VW.down, p=rel(e); VW.pts.delete(e.pointerId); if(VW.pts.size<2) VW.pinch=null;
+    if(d&&e.type==='pointerup'&&Date.now()-d.t<250&&Math.hypot(p[0]-d.p[0],p[1]-d.p[1])<10){ const now=Date.now();
+      if(now-VW.lastTap<300&&VW.tapAt&&Math.hypot(p[0]-VW.tapAt[0],p[1]-VW.tapAt[1])<30){ zoomAt(VW.s>1.5?1:2.5,p[0],p[1]); VW.lastTap=0; } else { VW.lastTap=now; VW.tapAt=p; } }
+    VW.down=null; };
+  st.addEventListener('pointerup',up); st.addEventListener('pointercancel',up);
+  st.addEventListener('wheel',e=>{ e.preventDefault(); const [px,py]=rel(e); zoomAt(VW.s*(e.deltaY<0?1.15:1/1.15),px,py); },{passive:false});
+  const r=$('#vRange'); if(r) r.oninput=()=>zoomAt(r.value/100,0,0);
+}
+function closeViewer(){ VW.open=false; VW.pts.clear(); VW.pinch=null; $('#viewRoot').innerHTML=''; if(!$('#sheetRoot').innerHTML) document.body.style.overflow=''; }
 function openCamera(mode){
   guard();
   return new Promise(resolve=>{
@@ -1005,7 +1050,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
   const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b><span>${key==='cond'?labels[n]:labels[n].split(' ')[0]}</span></button>`).join('')}</div>`;
   openSheet(sheetHead(ED.id?(it.review?'Review item':'Edit item'):'New item')+`
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
-   <div class="photo"><div class="pv ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}">${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
+   <div class="photo"><div class="pv ${pv||it.photo?'zoomable':''} ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}" ${pv||it.photo?`data-view="${esc(ED.id||'')}" role="button" aria-label="See full size"`:''}>${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
      ${ED.blob&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
      ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
@@ -1674,7 +1719,7 @@ function openPiece(i,slot,again){
   const big=it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}">`:(thumbSrc(it)?`<img id="pv-full" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}">`:glyph(it));
   const worn=it.worn||0;
   const html=sheetHead(esc(it.name))+`
-   <div class="piecebig ${it.cut?'studio':''}">${big}</div>
+   ${it.cut||it.photo||thumbSrc(it)?`<div class="piecebig zoomable ${it.cut?'studio':''}" data-view="${esc(it.id)}" role="button" aria-label="See full size">${big}<span class="zoomhint" aria-hidden="true">${ZOOM_ICON}</span></div>`:`<div class="piecebig">${big}</div>`}
    <p class="hint" style="margin:0">${esc(CAT[it.cat].label)} · ${COND[it.cond??4]} · ${worn===1?'Worn 1 time':'Worn '+worn+' times'}${it.lastWorn?' · '+'Last worn '+esc(it.lastWorn):''}</p>
    ${it.notes?`<p class="hint" style="margin:0">${esc(it.notes)}</p>`:''}
    <div class="row sheet-actions"><button class="btn primary" data-pswap="${i}" data-slot="${esc(slot)}">${SWAP_ICON}Swap for another</button>${isEx(it)?'':`<button class="btn" data-edit="${esc(it.id)}">Open item</button>`}</div>
@@ -1782,6 +1827,12 @@ document.addEventListener('click',async e=>{
   const del=e.target.closest('[data-look-del]');
   if(del){ const id=del.dataset.lookDel, st=styleSet(); S.settings.looks=looks().filter(l=>l.id!==id); st.pick=st.pick.filter(k=>k!==id); st.work=st.work.filter(k=>k!==id);
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); toast('Look removed.'); return; }
+  // full-size viewer
+  const vb=e.target.closest('[data-vclose],[data-vmode],[data-vzoom]');
+  if(vb){ const d=vb.dataset; if(d.vclose!==undefined) history.back();
+    else if(d.vmode){ VW.mode=d.vmode; document.querySelectorAll('[data-vmode]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.vmode===VW.mode)); viewerLoad(); }
+    else { const z=+d.vzoom; z===0?viewerSet(1,0,0):zoomAt(VW.s*(z>0?1.5:1/1.5),0,0); } return; }
+  const vw=e.target.closest('[data-view]'); if(vw&&!e.target.closest('button')){ openViewer(vw.dataset.view); return; }
   const t=e.target.closest('button,[data-scrim]'); if(!t) return;
   if(Date.now()-swiped<400 && t.closest('[data-swipe]')) return;
   const ds=t.dataset;

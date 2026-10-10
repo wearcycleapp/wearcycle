@@ -1224,5 +1224,13 @@ I18N.load("hi",{
 "Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "साफ़ और जैसे है वैसे पहनने लायक (कोई छेद, पक्के दाग या टूटी ज़िप नहीं): दान करें। फटा, दाग वाला, ढीला पड़ा या जोड़ा गुम: रीसायकल करें, रीसायकल लिखे अलग बैग में।",
 "Donated or recycled": "दान या रीसायकल किए गए",
 "Recycled {0}": "{0} को रीसायकल किया",
-"Marked as recycled": "रीसायकल किया गया मार्क किया"
+"Marked as recycled": "रीसायकल किया गया मार्क किया",
+"See full size": "पूरे आकार में देखें",
+"Photo": "फ़ोटो",
+"Cut-out": "कट-आउट",
+"Zoom out": "ज़ूम आउट",
+"Zoom in": "ज़ूम इन",
+"Zoom": "ज़ूम",
+"Fit": "फ़िट करें",
+"The photo could not be loaded.": "फ़ोटो लोड नहीं हो सकी।"
 });

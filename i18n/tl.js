@@ -1224,5 +1224,13 @@ I18N.load("tl",{
 "Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "Malinis at maisusuot pa (walang butas, mantsang hindi natatanggal o sirang zipper): i-donate. Punit, may mantsa, lumuwag o walang kapares: i-recycle, sa hiwalay na bag na may markang pang-recycle.",
 "Donated or recycled": "Na-donate o na-recycle",
 "Recycled {0}": "Na-recycle noong {0}",
-"Marked as recycled": "Minarkahang na-recycle"
+"Marked as recycled": "Minarkahang na-recycle",
+"See full size": "Tingnan nang buong laki",
+"Photo": "Litrato",
+"Cut-out": "Cut-out",
+"Zoom out": "Paliitin",
+"Zoom in": "Palakihin",
+"Zoom": "Zoom",
+"Fit": "Ibagay",
+"The photo could not be loaded.": "Hindi ma-load ang litrato."
 });

@@ -1224,5 +1224,13 @@ I18N.load("ja",{
 "Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "清潔でそのまま着られる(穴、落ちないシミ、壊れたファスナーがない)なら寄付。破れ、シミ、伸び、片方だけのものはリサイクルへ。「リサイクル用」と書いた別の袋に入れてください。",
 "Donated or recycled": "寄付・リサイクル済み",
 "Recycled {0}": "{0}にリサイクル済み",
-"Marked as recycled": "リサイクル済みにしました"
+"Marked as recycled": "リサイクル済みにしました",
+"See full size": "実寸で見る",
+"Photo": "写真",
+"Cut-out": "切り抜き",
+"Zoom out": "縮小",
+"Zoom in": "拡大",
+"Zoom": "ズーム",
+"Fit": "全体表示",
+"The photo could not be loaded.": "写真を読み込めませんでした。"
 });

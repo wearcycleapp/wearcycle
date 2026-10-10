@@ -1224,5 +1224,13 @@ I18N.load("es",{
 "Clean and wearable as it is (no holes, lasting stains or broken zippers): donate. Torn, stained, stretched out or missing its pair: recycle, in a separate bag marked for recycling.": "Limpia y lista para usar tal como está (sin agujeros, manchas permanentes ni cierres rotos): dónala. Rota, manchada, estirada o sin su par: recíclala, en una bolsa aparte marcada para reciclaje.",
 "Donated or recycled": "Donadas o recicladas",
 "Recycled {0}": "Reciclada el {0}",
-"Marked as recycled": "Marcada como reciclada"
+"Marked as recycled": "Marcada como reciclada",
+"See full size": "Ver a tamaño completo",
+"Photo": "Foto",
+"Cut-out": "Recorte",
+"Zoom out": "Alejar",
+"Zoom in": "Acercar",
+"Zoom": "Zoom",
+"Fit": "Ajustar",
+"The photo could not be loaded.": "No se pudo cargar la foto."
 });
