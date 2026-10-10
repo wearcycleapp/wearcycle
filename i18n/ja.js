@@ -1233,5 +1233,6 @@ I18N.load("ja",{
 "Zoom": "ズーム",
 "Fit": "全体表示",
 "The photo could not be loaded.": "写真を読み込めませんでした。",
-"This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "この写真ではアイテムの細部があまり写っていません。より鮮明に見るには、アイテムが画面いっぱいになるよう近くで撮り直してください(新しい写真はより高い解像度で保存されます)。"
+"This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "この写真ではアイテムの細部があまり写っていません。より鮮明に見るには、アイテムが画面いっぱいになるよう近くで撮り直してください(新しい写真はより高い解像度で保存されます)。",
+"Dressier than {a} needs: {b}": "{a}には改まりすぎ：{b}"
 });

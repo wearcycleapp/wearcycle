@@ -1233,5 +1233,6 @@ I18N.load("tl",{
 "Zoom": "Zoom",
 "Fit": "Ibagay",
 "The photo could not be loaded.": "Hindi ma-load ang litrato.",
-"This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "Kaunti ang detalye ng piraso sa litratong ito. Para mas malinaw, kunan ulit nang malapitan para mapuno ng piraso ang frame (mas mataas ang resolution ng mga bagong litrato)."
+"This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "Kaunti ang detalye ng piraso sa litratong ito. Para mas malinaw, kunan ulit nang malapitan para mapuno ng piraso ang frame (mas mataas ang resolution ng mga bagong litrato).",
+"Dressier than {a} needs: {b}": "Mas pormal kaysa kailangan sa {a}: {b}"
 });

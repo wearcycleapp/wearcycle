@@ -10,10 +10,10 @@ const GARMENT=['top','bottom','onepiece','outerwear','shoes'];
 // min = lowest condition (1-5) acceptable for the occasion; formality = target on a 1-5 scale
 const OCCASIONS=[
   {id:'work',label:'Work',min:4,formality:3},
-  {id:'out',label:'Going out',min:4,formality:3},
-  {id:'sport',label:'Sport',min:3,formality:1},
-  {id:'home',label:'Home',min:3,formality:1},
-  {id:'chores',label:'Chores',min:2,formality:1},
+  {id:'out',label:'Going out',min:4,formality:3,ceiling:4},
+  {id:'sport',label:'Sport',min:3,formality:1,ceiling:2},
+  {id:'home',label:'Home',min:3,formality:1,ceiling:3},
+  {id:'chores',label:'Chores',min:2,formality:1,ceiling:3},
   {id:'formal',label:'Formal',min:4,formality:4.5}];
 const OCC=Object.fromEntries(OCCASIONS.map(o=>[o.id,o]));
 const COND={5:'Like new',4:'Good',3:'Worn',2:'Worn out',1:'Retire'};
@@ -203,6 +203,11 @@ function scoreOutfit(o,occ,ctx){
   else { s-=(hi-lo-1); reasons.push({t:'Dress levels clash ('+FORM[lo]+' with '+FORM[hi]+')',neg:true}); }
   const target=ctx.theme?ctx.theme.formality:OCC[occ].formality; const avg=f.reduce((a,b)=>a+b,0)/f.length, dev=Math.abs(avg-target);
   if(dev>1){ s-=(dev-1); reasons.push({t:(avg>target?'Dressier':'More casual')+' than usual for '+(ctx.theme?ctx.theme.label:OCC[occ].label.toLowerCase()),neg:true}); }
+  // Dress ceiling: pieces above the occasion's top level (suit trousers, dress oxfords for going out) cost 1 point
+  // each, up to 3, so a style bonus (for example Classic) cannot turn going out into a formal outfit.
+  const ceil=ctx.theme?ctx.theme.formality+1:OCC[occ].ceiling;
+  if(ceil){ const over=core.filter(i=>i!==o.under&&(i===o.top&&o.under&&canOpen(o.top)?Math.min(2,i.formality??3):(i.formality??3))>ceil);
+    if(over.length){ s-=Math.min(3,over.length); reasons.push({t:'Dressier than '+(ctx.theme?ctx.theme.label:OCC[occ].label.toLowerCase())+' needs: '+over.map(i=>i.name).join(', '),neg:true}); } }
   const rest=core.map(i=>Math.min(14,daysSince(i.lastWorn,now)));
   const avgRest=rest.reduce((a,b)=>a+b,0)/rest.length; s+=avgRest/14*1.5;
   // Shoes need a day to dry out between wears (NHS: do not wear the same shoes 2 days in a row), so a pair worn
