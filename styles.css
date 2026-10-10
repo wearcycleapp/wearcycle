@@ -669,3 +669,5 @@ header.top{position:relative}
 .viewer .vbar{display:flex;align-items:center;gap:10px;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
 .viewer .vbar input{flex:1}
 .viewer .vbar .btn{color:#fff;border-color:rgba(255,255,255,.35)}
+.zoomhint.sm{width:18px;height:18px;right:3px;bottom:3px}
+.zoomhint.sm svg{width:11px;height:11px}

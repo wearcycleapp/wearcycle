@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.40.0';
+const APP_VERSION='1.40.1';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -935,7 +935,9 @@ function renderCloset(){ setTimeout(hydrateCuts,0);
     <div class="meta">${condTag(it)}${fl.length?`<span class="dot ${bad?'bad':''}" title="Needs attention"></span>`:''}${isEx(it)?'<span class="ex">Example</span>':''}${it.review?'<span class="ex">Review</span>':''}${it.dirty?'<span class="ex wash">In the wash</span>':''}${it.repair?'<span class="ex wash">Repair</span>':''}</div>
     <div class="meta">${(effectiveOccasions(it).map(o=>OCC[o].label).join(' · '))||'No occasion fits'}</div></div></button>`; }).join('')+'</div>';
 }
-function thumbBox(it){ return `<div class="thumb">${thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it)}</div>`; }
+// Small picture in lists (Care, Shop, history). With a photo, tapping it opens the full-size zoom viewer.
+function thumbBox(it){ const pic=thumbSrc(it)||it.photo||it.cut;
+  return `<div class="thumb${pic?' zoomable':''}"${pic?` data-view="${esc(it.id)}" role="button" aria-label="See full size"`:''}>${thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it)}${pic?`<span class="zoomhint sm" aria-hidden="true">${ZOOM_ICON}</span>`:''}</div>`; }
 function careRow(it,f,acts){
   const cls=f.kind==='retire'?'stripe-retire':(f.kind==='downgraded'?'stripe-down':'');
   return `<div class="li care ${cls}">${thumbBox(it)}<div class="txt"><b>${esc(it.name)} ${isEx(it)?'<span class="ex">Example</span>':''}</b><span>${esc(f.text)}</span></div><div class="acts">${acts}</div></div>`;
