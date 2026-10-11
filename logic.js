@@ -155,7 +155,10 @@ function wxFeel(wx){ const off=wx.off||0; return {lo:wx.feelMin+off,hi:wx.feelMa
 function wxWet(wx){ return !!(wx.rain||wx.snow); }
 // Shoes that suffer in the wet: smooth leather soles slip and soak up water, velvet and satin stain. Suede alone is not penalized (sources disagree; Permanent Style finds it handles rain well). Sneakers and boots are fine.
 const WET_RISK_RX=/\b(oxfords?|derby|derbies|brogues?|loafers?|monk ?straps?|dress shoes?|pumps?|heels?|stilettos?|ballet flats?|flats|mules?|velvet|patent)\b/i;
-function wetRisk(it){ if(!it||it.cat!=='shoes'||it.rain===true) return false; if(typeof it.wetRisk==='boolean') return it.wetRisk; if(/\b(velvet|satin)\b/i.test(String(it.name||''))) return true; if(rainReady(it)) return false; if(typeof it.wetRisk==='boolean') return it.wetRisk; return WET_RISK_RX.test(String(it.name||'')) || (it.formality??0)>=4; }
+function wetRisk(it){ if(!it||it.cat!=='shoes'||it.rain===true) return false; if(typeof it.wetRisk==='boolean') return it.wetRisk; const t=[it.name,it.kind,it.material].filter(Boolean).join(' '); if(/\b(velvet|satin)\b/i.test(t)) return true; if(rainReady(it)) return false;
+  if(WET_RISK_RX.test(t) || (it.formality??0)>=4) return true;
+  // Plain leather shoes that are not sneakers or boots usually have smooth leather soles.
+  return /\bleather\b/i.test(t) && !/\b(sneakers?|trainers?|runners?|running|boots?|hik\w*|rubber|sport\w*)\b/i.test(t); }
 // Accessories that only make sense in the cold: knit hats, gloves, scarves.
 const KNIT_HAT_RX=/\b(beanies?|toques?|tuques?|knit(ted)? hats?|pom[- ]?poms?|bobble|balaclavas?|ear ?muffs?|trapper|ushanka)\b/i;
 const COLD_ACC_RX=/\b(gloves?|mittens?|mitts?|scarf|scarves|snood|neck ?warmer)\b/i;
