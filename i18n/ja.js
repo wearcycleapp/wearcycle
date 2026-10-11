@@ -1235,5 +1235,10 @@ I18N.load("ja",{
 "The photo could not be loaded.": "写真を読み込めませんでした。",
 "This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "この写真ではアイテムの細部があまり写っていません。より鮮明に見るには、アイテムが画面いっぱいになるよう近くで撮り直してください(新しい写真はより高い解像度で保存されます)。",
 "Dressier than {a} needs: {b}": "{a}には改まりすぎ：{b}",
-"All dressy pieces: for going out, mix in chinos, jeans or clean sneakers": "きれいめアイテムばかり:お出かけにはチノパン、ジーンズ、きれいなスニーカーを混ぜましょう"
+"All dressy pieces: for going out, mix in chinos, jeans or clean sneakers": "きれいめアイテムばかり:お出かけにはチノパン、ジーンズ、きれいなスニーカーを混ぜましょう",
+"{a} handle rain": "{a}は雨に強いです",
+"{a} handle snow": "{a}は雪に強いです",
+"{a} on a wet day: slippery soles, water marks and mud": "雨の日に{a}：滑りやすい靴底、水じみ、泥",
+"{a} on a snowy day: slippery soles, water marks and mud": "雪の日に{a}：滑りやすい靴底、水じみ、泥",
+"Uses the feels-like temperature from now until 9 pm, shifted by your \"I usually feel\" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1, open shoes lose 1.5, shoes made for rain or snow earn +1, and dress shoes and other delicate shoes lose 2.5 (smooth soles slip on wet ground and the leather stains). Tick \"Made for rain or snow\" on shoes with grippy rubber soles to keep them in play. Hats are added only when it feels 8° or colder, when it snows, in the rain (a rain hat or a cap, never a beanie) or above 25°; gloves only at 8° or colder and scarves at 10° or colder. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.": "現在から午後9時までの体感温度を使い、「普段の体感」の選択に応じて補正します。12°未満では短パンは2点減点（5°未満では3点）、16°未満では1点減点です。5°未満ではアウターのないコーデは2点減点、暖かいアウターは+1です。24°超では暖かいアイテム1点につき2点減点、すべて軽いアイテムのコーデは+1です。雨か雪の確率が50%以上なら、防水のアウターは+1、オープンシューズは1.5点減点、雨や雪向けの靴は+1、ドレスシューズなど傷みやすい靴は2.5点減点です（平らな靴底は濡れた路面で滑り、革にしみができます）。滑りにくいゴム底の靴は「雨・雪向け」にチェックすると選ばれ続けます。帽子は体感8°以下、雪、雨（レインハットかキャップのみ、ニット帽は不可）、25°超のときだけ追加します。手袋は8°以下、マフラーは10°以下のときだけです。自動では、15°未満または雨・雪のときにアウターを追加します。これらの基準は実用的な目安であり、規格ではありません。"
 });

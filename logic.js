@@ -153,6 +153,24 @@ function rainReady(it){ if(typeof it.rain==='boolean') return it.rain; return RA
 // Temperatures are °C feels-like, shifted by the owner's "I run cold/warm" offset.
 function wxFeel(wx){ const off=wx.off||0; return {lo:wx.feelMin+off,hi:wx.feelMax+off}; }
 function wxWet(wx){ return !!(wx.rain||wx.snow); }
+// Shoes that suffer in the wet: smooth leather soles slip and soak up water, velvet and satin stain. Suede alone is not penalized (sources disagree; Permanent Style finds it handles rain well). Sneakers and boots are fine.
+const WET_RISK_RX=/\b(oxfords?|derby|derbies|brogues?|loafers?|monk ?straps?|dress shoes?|pumps?|heels?|stilettos?|ballet flats?|flats|mules?|velvet|patent)\b/i;
+function wetRisk(it){ if(!it||it.cat!=='shoes'||it.rain===true) return false; if(typeof it.wetRisk==='boolean') return it.wetRisk; if(/\b(velvet|satin)\b/i.test(String(it.name||''))) return true; if(rainReady(it)) return false; if(typeof it.wetRisk==='boolean') return it.wetRisk; return WET_RISK_RX.test(String(it.name||'')) || (it.formality??0)>=4; }
+// Accessories that only make sense in the cold: knit hats, gloves, scarves.
+const KNIT_HAT_RX=/\b(beanies?|toques?|tuques?|knit(ted)? hats?|pom[- ]?poms?|bobble|balaclavas?|ear ?muffs?|trapper|ushanka)\b/i;
+const COLD_ACC_RX=/\b(gloves?|mittens?|mitts?|scarf|scarves|snood|neck ?warmer)\b/i;
+function accWeatherOk(a,wx){
+  const n=String(a.name||''), f=wx?wxFeel(wx):null;
+  if(a.cat==='hat'){
+    if(!wx) return false;
+    if(f.lo<=8 || wx.snow) return true;                     // cold: any hat
+    if(KNIT_HAT_RX.test(n)) return false;                    // a beanie is for the cold, not for rain at 15°
+    if(wx.rain) return rainReady(a) || /\b(caps?|bucket hats?|hoods?)\b/i.test(n); // rain: a rain hat or a cap that keeps it off your face
+    return f.hi>=25;                                          // sun: caps and sun hats
+  }
+  if(COLD_ACC_RX.test(n)){ if(!wx) return false; return /scarf|scarves|snood|neck/i.test(n) ? (f.lo<=10||wx.snow) : (f.lo<=8||wx.snow); }
+  return true;
+}
 function needsLayer(wx){ if(!wx) return false; return wxFeel(wx).lo<15 || wxWet(wx); }
 const deg=t=>Math.round(t)+'°';
 function weatherScore(o,wx){
@@ -182,6 +200,8 @@ function weatherScore(o,wx){
   if(wxWet(wx)){
     if(outer && rainReady(outer)){ s+=1; r.push({t:outer.name+' handles '+(wx.snow?'snow':'rain')}); }
     if(o.shoes && warmthOf(o.shoes)===1){ s-=1.5; r.push({t:'Open shoes on a '+(wx.snow?'snowy':'wet')+' day',neg:1}); }
+    else if(o.shoes && rainReady(o.shoes) && !wetRisk(o.shoes)){ s+=1; r.push({t:o.shoes.name+' handle '+(wx.snow?'snow':'rain')}); }
+    else if(o.shoes && wetRisk(o.shoes)){ s-=2.5; r.push({t:o.shoes.name+' on a '+(wx.snow?'snowy':'wet')+' day: slippery soles, water marks and mud',neg:1}); }
   }
   return {s,r};
 }
@@ -292,8 +312,7 @@ function pickAccessories(o,by,occ,now,wx,all){
     const list=by[cat]; if(!list||!list.length) continue;
     if(cat==='belt' && !o.bottom) continue;
     if(cat==='hat' && occ==='work') continue;
-    // Hats only when the weather calls for one: cold (feels like 8° or less), rain or snow, or a hot sunny day.
-    if(cat==='hat' && (!wx || !(wxFeel(wx).lo<=8 || wx.rain || wx.snow || wxFeel(wx).hi>=25))) continue;
+
     if(cat==='socks'){
       if(!o.shoes || OPEN_SHOE_RX.test(String(o.shoes.name||''))) continue;
       let best=null,bs=-Infinity; for(const a of list){ const v=sockFit(o,a,occ,wx).s+Math.min(14,daysSince(a.lastWorn,now))/14; if(v>bs){bs=v;best=a;} }
@@ -301,6 +320,8 @@ function pickAccessories(o,by,occ,now,wx,all){
     }
     let best=null,bestS=-Infinity;
     for(const a of list){
+      // Weather first: hats only for cold, a rain hat in the rain, or sun; gloves and scarves only in the cold.
+      if(!accWeatherOk(a,wx)) continue;
       let s=Math.min(14,daysSince(a.lastWorn,now))/14;
       s+=harmony(baseColors.concat(primary(a)||[])).s-baseH;
       if(cat==='belt' && o.shoes){ const sc=primary(o.shoes), bc=primary(a); if(['black','brown'].includes(sc)&&['black','brown'].includes(bc)) s+= sc===bc?1:-2; }
@@ -619,6 +640,6 @@ function themeScore(o,th){
 
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
   daysSince,localDayGap,notPicked,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,wetRisk,accWeatherOk,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;

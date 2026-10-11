@@ -1235,5 +1235,10 @@ I18N.load("ko",{
 "The photo could not be loaded.": "사진을 불러올 수 없어요.",
 "This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).": "이 사진에는 아이템의 디테일이 많지 않아요. 더 선명하게 보려면 아이템이 화면을 가득 채우도록 가까이서 다시 찍어 주세요(새 사진은 더 높은 해상도로 저장돼요).",
 "Dressier than {a} needs: {b}": "{a}에는 너무 격식 있음: {b}",
-"All dressy pieces: for going out, mix in chinos, jeans or clean sneakers": "모두 격식 있는 아이템: 외출에는 치노 팬츠, 청바지, 깔끔한 스니커즈를 섞어 보세요"
+"All dressy pieces: for going out, mix in chinos, jeans or clean sneakers": "모두 격식 있는 아이템: 외출에는 치노 팬츠, 청바지, 깔끔한 스니커즈를 섞어 보세요",
+"{a} handle rain": "{a}: 비에 강해요",
+"{a} handle snow": "{a}: 눈에 강해요",
+"{a} on a wet day: slippery soles, water marks and mud": "비 오는 날 {a}: 미끄러운 밑창, 물 얼룩, 진흙",
+"{a} on a snowy day: slippery soles, water marks and mud": "눈 오는 날 {a}: 미끄러운 밑창, 물 얼룩, 진흙",
+"Uses the feels-like temperature from now until 9 pm, shifted by your \"I usually feel\" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1, open shoes lose 1.5, shoes made for rain or snow earn +1, and dress shoes and other delicate shoes lose 2.5 (smooth soles slip on wet ground and the leather stains). Tick \"Made for rain or snow\" on shoes with grippy rubber soles to keep them in play. Hats are added only when it feels 8° or colder, when it snows, in the rain (a rain hat or a cap, never a beanie) or above 25°; gloves only at 8° or colder and scarves at 10° or colder. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.": "지금부터 오후 9시까지의 체감 온도를 사용하고, \"평소 체감\" 설정에 따라 보정해요. 12° 미만에서는 반바지가 2점 감점(5° 미만은 3점), 16° 미만에서는 1점 감점돼요. 5° 미만에서 겉옷이 없는 코디는 2점 감점, 따뜻한 겉옷이 있으면 +1이에요. 24° 초과에서는 따뜻한 아이템 하나당 2점 감점, 모두 가벼운 코디는 +1이에요. 비나 눈 확률이 50% 이상이면 방수 겉옷은 +1, 트인 신발은 1.5점 감점, 비나 눈용 신발은 +1, 구두 등 손상되기 쉬운 신발은 2.5점 감점이에요(매끈한 밑창은 젖은 바닥에서 미끄럽고 가죽에 얼룩이 생겨요). 미끄럼 방지 고무 밑창 신발은 \"비나 눈에 대비한 옷\"에 체크하면 계속 추천돼요. 모자는 체감 8° 이하, 눈, 비(레인 햇이나 캡만, 비니는 제외), 25° 초과일 때만 추가해요. 장갑은 8° 이하, 목도리는 10° 이하일 때만이에요. 자동 모드에서는 15° 미만이거나 비·눈이 오면 겉옷을 추가해요. 이 기준은 실용적인 경험칙이며 표준은 아니에요."
 });
