@@ -13,7 +13,7 @@ Reviewed October 7, 2026, for v1.29.0. This is an engineering review against pub
 | Photo or text list of clothes | Anthropic API via the `claude` Edge Function | United States; deleted within 30 days, no training | Only with Claude features on |
 | Rounded coordinates / postal code | Open-Meteo, Zippopotam.us | Third-party servers | Only with weather on |
 | Sign-in emails | Gmail SMTP | Google | Sign-up, password reset |
-| IP and browser details (access logs) | GitHub Pages | GitHub | Every app open |
+| IP and browser details (access logs) | Cloudflare Pages (since v1.47; GitHub Pages before) | Cloudflare, Inc. (US) | Every app open |
 | Search text | Google Maps, Google Search (Shopping tab) | Google | Only when a "find a place" or "Shop" link is tapped |
 | Cut-out processing, scoring, fonts | On the phone / served by Wearcycle | Device | Always |
 
@@ -68,6 +68,10 @@ Fonts used to load from Google Fonts on every open. Since v1.29 they are served 
 3. **Data processing terms:** confirm the Supabase DPA and Anthropic's commercial terms and DPA are accepted for the accounts used.
 4. **Breach log:** keep a simple dated log (what, when, who was affected, risk assessment, actions taken) for at least 24 months, even when nothing has to be reported.
 5. **Whether PIPEDA applies:** PIPEDA covers personal information collected in the course of commercial activity. A free app for friends may fall outside it. These measures are good practice either way, and they matter if Wearcycle is ever opened to the public or charges money.
+
+## 4b. Hosting move (October 11, 2026, v1.47)
+
+The app moved from wearcycleapp.github.io/wearcycle to wearcycle.app, served by Cloudflare Pages from the same repository. Cloudflare replaces GitHub as the host that sees access logs (IP address and browser details), so the notice names Cloudflare instead. The kind of data and its purpose are unchanged, so the consent version (`PRIVACY_V`) was not bumped. The old address forwards to the new one until GitHub Pages is unpublished.
 
 ## 5. Known limits
 

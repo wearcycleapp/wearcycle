@@ -1,5 +1,5 @@
 /* Service worker: keeps the app shell available offline. Data and photos come from Supabase. */
-const VERSION = 'wearcycle-v1.46.0';
+const VERSION = 'wearcycle-v1.47.0';
 // Kept across app updates: the background-removal model (about 100 MB, downloaded once) and saved cut-outs.
 const KEEP = ['wearcycle-bgr-1', 'wearcycle-cutouts'];
 const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'i18n.js', 'app.js', 'config.js', 'vendor/supabase.js',
@@ -25,7 +25,7 @@ self.addEventListener('fetch', e => {
     return;
   }
   // Network first for the app files, so updates arrive on the next open; cache as fallback offline.
-  // App files skip the browser's HTTP cache (GitHub Pages allows 10 minutes), so a new version shows on the next open.
+  // App files skip the browser's HTTP cache (GitHub Pages allowed 10 minutes), so a new version shows on the next open.
   const net = fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' });
   e.respondWith(net.then(res => {
     if (res.ok) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
