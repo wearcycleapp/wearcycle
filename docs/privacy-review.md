@@ -71,7 +71,7 @@ Fonts used to load from Google Fonts on every open. Since v1.29 they are served 
 
 ## 4b. Hosting move (October 11, 2026, v1.47)
 
-The app moved from wearcycleapp.github.io/wearcycle to wearcycle.app, served by Cloudflare Pages from the same repository. Cloudflare replaces GitHub as the host that sees access logs (IP address and browser details), so the notice names Cloudflare instead. The kind of data and its purpose are unchanged, so the consent version (`PRIVACY_V`) was not bumped. The old address forwards to the new one until GitHub Pages is unpublished.
+The app moved from wearcycleapp.github.io/wearcycle to wearcycle.app, served by Cloudflare Pages from the same repository. Cloudflare replaces GitHub as the host that sees access logs (IP address and browser details), so the notice names Cloudflare instead. The kind of data and its purpose are unchanged, so the consent version (`PRIVACY_V`) was not bumped. The old address forwarded to the new one until GitHub Pages was unpublished the same day; the forward was removed in v1.47.1.
 
 ## 5. Known limits
 

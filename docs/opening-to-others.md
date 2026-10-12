@@ -13,7 +13,7 @@ Steps that need the owner (in this order):
 2. Supabase > Edge Functions > claude > Code: paste the latest `supabase/functions/claude/index.ts`, Deploy.
 3. Anthropic Console: set a monthly spend limit on the API key's workspace, so costs stay capped even if limits change.
 4. Supabase > Authentication > Sign In / Providers: turn "Allow new users to sign up" back ON.
-5. Supabase > Authentication > URL Configuration: Site URL https://wearcycle.app/ with Redirect URLs https://wearcycle.app/ and https://wearcycle.pages.dev/ (needed for confirmation and password-reset emails). Since v1.47 the app lives at wearcycle.app; the old github.io address forwards there.
+5. Supabase > Authentication > URL Configuration: Site URL https://wearcycle.app/ with Redirect URLs https://wearcycle.app/ and https://wearcycle.pages.dev/ (needed for confirmation and password-reset emails). Since v1.47 the app lives at wearcycle.app; the old github.io address was retired the same day.
 6. Supabase free plan sends a small number of auth emails per hour with its built-in mailer; for real users, connect a custom SMTP provider (Authentication > Emails > SMTP Settings).
 
 Google Play (optional, later):
