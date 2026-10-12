@@ -1,8 +1,8 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.47.1';
+const APP_VERSION='1.48.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
-  daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,
+  daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
@@ -1024,13 +1024,21 @@ function renderShop(){
     :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
   const buildH=`<div><h3 style="margin:0">Build toward a style</h3><p class="hint" style="margin:4px 0 0">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p></div>`;
   const ask=S.settings.dept?'':`<div class="panel"><div class="li"><div class="txt"><b>Which department do you shop in?</b><span>${DEPT_HINT}</span>${deptChips()}</div></div></div>`;
-  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+ask+comingUp(items)+repl+blocks.join('')+(keys.length?buildH:'')+build+ai+'</div>';
+  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+ask+comingUp(items)+repl+versaPanel(items)+blocks.join('')+(keys.length?buildH:'')+build+ai+'</div>';
+}
+// More outfits from one purchase: the pieces that open the most new color pairings with what is owned (logic.js versatility).
+function versaPanel(items){
+  const v=versatility(items,5); if(!v.list.length) return '';
+  const pl=(n,one,many)=>(n===1?one:many).replace('{0}',n);
+  return `<div class="panel"><div class="panel-h"><h3>More outfits from one purchase</h3></div>
+    <div class="li"><span class="hint">Pieces that pair with the most of what you own, in color pairings you can't make today (you have ${v.looks} now).</span></div>
+    ${v.list.map(r=>`<a class="li lirow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[r.color].hex}"></span><div class="txt"><b>${esc(r.label)} · ${esc(r.color)}</b><span style="display:block">${pl(r.newLooks,'1 new color pairing','{0} new color pairings')} · ${pl(r.adds,'1 more outfit','{0} more outfits')}</span>${r.pairs.length?`<span style="display:block">pairs with ${esc(r.pairs.map(x=>x.name).join(', '))}</span>`:''}</div>${SHOP_GO}</a>`).join('')}</div>`;
 }
 async function askIdeas(){
   if(ideasState.busy) return; ideasState={busy:true,list:ideasState.list,err:''}; renderShop();
   const items=allItems().filter(isActive);
   const closet=items.map(it=>`- ${it.name} | ${it.cat} | colors: ${(it.colors||[]).join('/')} | formality ${it.formality??3} | condition ${it.cond??4} | for: ${effectiveOccasions(it).join(', ')||'none'}`).join('\n').slice(0,12000);
-  const gapText=gaps(items).map(x=>`${x.occ}: `+(x.needs.map(n=>`${n.slot} ${n.have}/${n.target}`).join(', ')||'covered')).join('\n');
+  const vl=versatility(items,5).list; const gapText=gaps(items).map(x=>`${x.occ}: `+(x.needs.map(n=>`${n.slot} ${n.have}/${n.target}`).join(', ')||'covered')).join('\n')+(vl.length?'\nMost new color pairings from one purchase (variety, not just completeness): '+vl.map(r=>`${r.color} ${r.label.toLowerCase()} (+${r.newLooks} pairings)`).join('; '):'');
   const st=styleSet(); const t=(st.pick.length?st.pick:learned().ids).map(k=>STYLES[k]?STYLES[k].label+' ('+styleDesc(k)+')':(()=>{ const l=looks().find(x=>x.id===k); return l?l.label+' ('+l.pieces.join(', ')+')':''; })()).filter(Boolean).join('; ');
   const pl=seasonPlan(Date.now(),wxOn()?wxSet().lat:NaN); const season=[pl?SEASONS[pl.id].label+' ('+SEASONS[pl.id].desc+')':'',...holidaysSoon(30).map(h=>h.label+' on '+h.date+' ('+h.tip+')')].filter(Boolean).join('; ');
   try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t,season,dept:S.settings.dept||''}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],err:Array.isArray(r)?'':'No ideas came back. Try again.'}; }

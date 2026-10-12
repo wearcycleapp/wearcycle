@@ -454,6 +454,45 @@ function gaps(items){
   return out;
 }
 
+/* ---------- more outfits per purchase ----------
+   Ranks single purchases by how many color combinations they open up with what is already owned.
+   A "new look" is a top and bottom color pairing (worn with shoes the person owns) that passes the outfit checks
+   (color harmony, dress levels within one step) and that no owned pieces can make today. Shoe color is left out of
+   the look because it changes how an outfit reads far less than the top and bottom do. Owning black trousers and buying more black
+   trousers adds outfits but no new looks; beige chinos with navy, white and black tops add many. */
+const VERSA={
+  men:{bottom:[['Chinos',3,['beige','khaki','navy','olive','grey','brown','black']],['Jeans',2,['denim','black','grey']]],
+       top:[['T-shirt',2,['white','black','grey','navy','olive','burgundy']],['Button-up shirt',3,['white','lightblue','navy','olive']],['Sweater',3,['grey','navy','burgundy','olive','beige']]],
+       shoes:[['Sneakers',2,['white','black','grey']],['Boots or derbies',3,['brown','black']]]},
+  women:{bottom:[['Trousers',3,['beige','khaki','navy','olive','grey','brown','black']],['Jeans',2,['denim','black','grey']]],
+       top:[['T-shirt',2,['white','black','grey','navy','olive','burgundy']],['Blouse',3,['white','lightblue','navy','olive']],['Sweater',3,['grey','navy','burgundy','olive','beige']]],
+       shoes:[['Sneakers',2,['white','black','grey']],['Ankle boots or loafers',3,['brown','black']]]}};
+function versatility(items,n){
+  const occs=['work','out','home'], kind=DEPT==='women'?VERSA.women:VERSA.men;
+  const pools={}; for(const o of occs){ const by=group(eligible(items,o,true)); pools[o]={top:by.top||[],bottom:by.bottom||[],shoes:by.shoes||[]}; }
+  const fam=c=>c==='khaki'?'beige':c; // beige and khaki read as the same color
+  const key=(t,b)=>fam(primary(t))+'|'+fam(primary(b));
+  const before=new Set(); let total=0;
+  for(const o of occs){ const P=pools[o]; for(const t of P.top) for(const b of P.bottom) for(const s of P.shoes) if(goodCombo([t,b,s])){ before.add(key(t,b)); total++; } }
+  const occFor=f=>f<=2?['out','home']:['work','out'];
+  const res=[];
+  for(const slot of ['bottom','top','shoes']) for(const [label,f,colors] of kind[slot]) for(const c of colors){
+    const h={id:'__v',cat:slot,colors:[c],formality:f,name:label};
+    const owned=items.filter(i=>isActive(i)&&i.cat===slot&&primary(i)===c&&Math.abs((i.formality??3)-f)<=1).length;
+    const looks=new Set(), partners=new Map(); let adds=0;
+    for(const o of occFor(f)){ const P=Object.assign({},pools[o],{[slot]:[h]});
+      for(const t of P.top) for(const b of P.bottom) for(const s of P.shoes){ if(!goodCombo([t,b,s])) continue; adds++;
+        const k=key(t,b); if(!before.has(k)&&fam(primary(t))!==fam(primary(b))) looks.add(k); // same color top and bottom is not counted as variety
+        for(const x of [t,b,s]) if(x!==h) partners.set(x.id,(partners.get(x.id)||0)+1); } }
+    if(!looks.size) continue;
+    const pairs=[...partners.entries()].sort((a,b)=>b[1]-a[1]).map(([id])=>items.find(i=>i.id===id)).filter(i=>i&&i.cat!=='shoes').slice(0,3);
+    res.push({slot,label,color:c,formality:f,owned,newLooks:looks.size,adds,pairs});
+  }
+  res.sort((a,b)=>b.newLooks-a.newLooks||b.adds-a.adds);
+  const out=[], per={}; for(const r of res){ if((per[r.slot]||0)>=2) continue; if(out.some(x=>x.slot===r.slot&&fam(x.color)===fam(r.color))) continue; per[r.slot]=(per[r.slot]||0)+1; out.push(r); if(out.length>=(n||5)) break; }
+  return {total,looks:before.size,list:out};
+}
+
 /* ---------- styles ----------
    A style is a consistent set of piece types, fabrics and patterns (common menswear conventions, not standards).
    Each piece gets its styles from Claude's photo reading ("styles" field) or, until then, from its name and details.
@@ -651,6 +690,6 @@ function themeScore(o,th){
 
 return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
   daysSince,localDayGap,notPicked,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
-  SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,wetRisk,accWeatherOk,tailored,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps};
+  SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,wetRisk,accWeatherOk,tailored,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps,versatility,VERSA};
 })();
 if(typeof module!=='undefined') module.exports=WardrobeLogic;
