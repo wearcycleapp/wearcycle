@@ -193,7 +193,24 @@ function extractJson(text: string): unknown {
   const start = text.search(/[\[{]/);
   const end = Math.max(text.lastIndexOf("}"), text.lastIndexOf("]"));
   if (start >= 0 && end > start) { try { return JSON.parse(text.slice(start, end + 1)); } catch { /* fall through */ } }
-  return null;
+  return salvageArray(text);
+}
+
+// When a list answer is cut off (it hit max_tokens) or has a stray character, keep every complete object in it.
+function salvageArray(text: string): unknown[] | null {
+  const open = text.indexOf("[");
+  if (open < 0) return null;
+  const out: unknown[] = [];
+  let depth = 0, from = -1, inStr = false, esc = false;
+  for (let i = open + 1; i < text.length; i++) {
+    const ch = text[i];
+    if (inStr) { if (esc) esc = false; else if (ch === "\\") esc = true; else if (ch === '"') inStr = false; continue; }
+    if (ch === '"') { inStr = true; continue; }
+    if (ch === "{") { if (depth === 0) from = i; depth++; }
+    else if (ch === "}") { depth--; if (depth === 0 && from >= 0) { try { out.push(JSON.parse(text.slice(from, i + 1))); } catch { /* skip */ } from = -1; } }
+    else if (ch === "]" && depth === 0) break;
+  }
+  return out.length ? out : null;
 }
 
 Deno.serve(async (req) => {
@@ -233,7 +250,7 @@ Deno.serve(async (req) => {
       "anthropic-version": "2023-06-01",
       "content-type": "application/json",
     },
-    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 1500 : task === "box" || task === "graphic" ? 120 : task === "style" ? 200 : 700, messages: [{ role: "user", content }] }),
+    body: JSON.stringify({ model: MODEL, max_tokens: task === "ideas" ? 3000 : task === "box" || task === "graphic" ? 120 : task === "style" ? 200 : 700, messages: [{ role: "user", content }] }),
   });
 
   if (res.status === 429) return json({ error: "rate_limited" }, 429);
@@ -245,6 +262,10 @@ Deno.serve(async (req) => {
   const data = await res.json();
   const out = (data.content ?? []).filter((c: { type: string }) => c.type === "text").map((c: { text: string }) => c.text).join("\n");
   const result = extractJson(out);
-  if (result === null) return json({ error: "unreadable_answer" }, 502);
+  if (result === null) {
+    // Logged without the answer text, which can contain closet details: only why it stopped and how long it was.
+    console.error("Unreadable answer", task, data.stop_reason, out.length);
+    return json({ error: "unreadable_answer" }, 502);
+  }
   return json({ result, usage: data.usage ?? null });
 });
