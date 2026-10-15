@@ -135,8 +135,15 @@ function coreOf(o){ return [o.top,o.under,o.bottom,o.onepiece,o.outer,o.shoes].f
 // Set by the owner in the editor; otherwise guessed from the name.
 const OPEN_RX=/\b(button[- ]?(up|down)|flannel|plaid|overshirt|shacket|cardigan|chambray|camp[- ]collar|oxford|linen shirt|denim shirt|hawaiian)\b/i;
 const UNDER_RX=/\b(t-?shirts?|tees?|tank( top)?|henley|undershirt)\b/i;
-function canOpen(it){ if(typeof it.open==='boolean') return it.open; return it.cat==='top' && (it.formality??3)<=3 && OPEN_RX.test(String(it.name||'')); }
-function canUnder(it){ if(typeof it.inner==='boolean') return it.inner; return it.cat==='top' && !canOpen(it) && UNDER_RX.test(String(it.name||'')); }
+// A dress shirt (long tails, made to be tucked in) is not worn open as an overshirt, even when its name says button-up.
+const DRESS_SHIRT_RX=/\b(dress shirt|formal shirt|tuxedo shirt|french cuffs?)\b/i;
+function canOpen(it){ if(typeof it.open==='boolean') return it.open; const t=[it.name,it.kind].filter(Boolean).join(' ');
+  return it.cat==='top' && (it.formality??3)<=3 && OPEN_RX.test(t) && !DRESS_SHIRT_RX.test(t); }
+// The layer under an open shirt or a hoodie is a light one: a t-shirt, tank or short-sleeve henley.
+// Long sleeves and warm pieces (thermal, waffle, a thick henley) bunch up under another layer, so they are left out.
+const THICK_UNDER_RX=/\b(long[- ]?sleeved?|ls|thermal|waffle|heavyweight|knit)\b/i;
+function canUnder(it){ if(typeof it.inner==='boolean') return it.inner; const t=[it.name,it.kind].filter(Boolean).join(' ');
+  return it.cat==='top' && !canOpen(it) && UNDER_RX.test(t) && !THICK_UNDER_RX.test(t) && warmthOf(it)<3; }
 const LAYER_OCC=['work','out','home','chores'];
 // Pieces worn over a t-shirt (not open): hoodies, sweatshirts, sweaters and knits. The t-shirt is a base layer.
 const MID_RX=/\b(hoodies?|hooded|sweatshirts?|sweaters?|jumpers?|pullovers?|crew ?neck knit|knit sweater|fleece|quarter[- ]zip|half[- ]zip)\b/i;
