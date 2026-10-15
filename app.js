@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.48.1';
+const APP_VERSION='1.48.2';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1746,17 +1746,20 @@ function openPiece(i,slot,again){
    ${it.notes?`<p class="hint" style="margin:0">${esc(it.notes)}</p>`:''}
    <div class="row sheet-actions"><button class="btn primary" data-pswap="${i}" data-slot="${esc(slot)}">${SWAP_ICON}Swap for another</button>${isEx(it)?'':`<button class="btn" data-edit="${esc(it.id)}">Open item</button>`}</div>
    ${S.fits[i]&&S.fits[i].worn?(loggedToday(it.id)?`<button class="linkbtn" data-punlog="${esc(it.id)}">I did not wear it today: remove it from today's log</button>`:'')
-     :(DROPPABLE(slot)?`<button class="linkbtn" data-pdrop="${i}" data-slot="${esc(slot)}">Not wearing it: leave it out of this outfit</button>`:'')}`;
+     :(DROPPABLE(slot,hydrate(S.fits[i].ids))?`<button class="linkbtn" data-pdrop="${i}" data-slot="${esc(slot)}">Not wearing it: leave it out of this outfit</button>`:'')}`;
   if(again&&$('#sheetRoot').innerHTML){ const sh=document.querySelector('#sheetRoot .sheet'); if(sh) sh.innerHTML=html; } else openSheet(html);
   setTimeout(hydrateCuts,0);
   if(!it.cut&&it.photo&&!isEx(it)&&sb) fullPhotoUrl(it.photo).then(u=>{ const im=$('#pv-full'); if(u&&im) im.src=u; });
 }
 // Pieces that can be left out of an outfit: accessories (bag, scarf, hat, watch, belt, socks), the outer layer and
 // the t-shirt underneath. Top, bottom and shoes are the outfit itself; swap those instead.
-const DROPPABLE=slot=>slot.startsWith('acc')||slot==='outer'||slot==='under';
+// The shirt worn open over a t-shirt (or a hoodie over one) can be left out too: the t-shirt then becomes the top.
+const DROPPABLE=(slot,o)=>slot.startsWith('acc')||slot==='outer'||slot==='under'||(slot==='top'&&!!(o&&o.under));
 function dropPiece(i,slot){
   const f=S.fits[i]; if(!f||f.worn) return; const o=hydrate(f.ids); let gone=null;
-  if(slot.startsWith('acc')){ const k=+slot.slice(3); gone=o.acc[k]; o.acc.splice(k,1); } else { gone=o[slot]; delete o[slot]; }
+  if(slot.startsWith('acc')){ const k=+slot.slice(3); gone=o.acc[k]; o.acc.splice(k,1); }
+  else if(slot==='top'&&o.under){ gone=o.top; o.top=o.under; delete o.under; }
+  else { gone=o[slot]; delete o[slot]; }
   if(!gone) return; S.fits[i]=editedFit(f,o); closeSheet(); renderOutfits();
   toast(gone.name+' left out. Wear this logs only the pieces shown; Back to suggestion brings it back.',5500);
 }
