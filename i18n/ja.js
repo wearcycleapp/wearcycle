@@ -1268,5 +1268,17 @@ I18N.load("ja",{
 "blouse": "ブラウス",
 "ankle boots or loafers": "アンクルブーツまたはローファー",
 "chinos": "チノパン",
-"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "前を開けて着られるシャツ（ボタンダウン、ネルシャツ、シャツジャケット、カーディガン）は、Tシャツの上に羽織る形でも提案され、最もスコアの高いTシャツを使います。前を開けて着る場合、シャツはカジュアル扱い（きちんと度は最大2）となり、Tシャツはきちんと度のチェックから外れます。天気がオンのとき、Tシャツは16°未満で+0.5、24°超で1点減点です。前を開けたシャツはブレザーやスーツのジャケットの下には重ねません（3枚重ね）：3点減点です。下に着るのは軽いもの（Tシャツ、タンクトップ、半袖ヘンリー）だけです。長袖や厚手のトップスは除き、ドレスシャツは前を開けて着ません。どのアイテムが該当するかは名前から推定します。各アイテムの編集画面で変更できます。"
+"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "前を開けて着られるシャツ（ボタンダウン、ネルシャツ、シャツジャケット、カーディガン）は、Tシャツの上に羽織る形でも提案され、最もスコアの高いTシャツを使います。前を開けて着る場合、シャツはカジュアル扱い（きちんと度は最大2）となり、Tシャツはきちんと度のチェックから外れます。天気がオンのとき、Tシャツは16°未満で+0.5、24°超で1点減点です。前を開けたシャツはブレザーやスーツのジャケットの下には重ねません（3枚重ね）：3点減点です。下に着るのは軽いもの（Tシャツ、タンクトップ、半袖ヘンリー）だけです。長袖や厚手のトップスは除き、ドレスシャツは前を開けて着ません。どのアイテムが該当するかは名前から推定します。各アイテムの編集画面で変更できます。",
+"Confirm password": "パスワード（確認）",
+"Show": "表示",
+"Hide": "隠す",
+"Show password": "パスワードを表示",
+"Hide password": "パスワードを隠す",
+"The two passwords do not match.": "2つのパスワードが一致しません。",
+"Change password": "パスワードを変更",
+"Current password": "現在のパスワード",
+"Confirm new password": "新しいパスワード（確認）",
+"Enter your current password.": "現在のパスワードを入力してください。",
+"The new password is the same as the current one.": "新しいパスワードが現在のものと同じです。",
+"The current password is wrong.": "現在のパスワードが正しくありません。"
 });

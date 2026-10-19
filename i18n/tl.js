@@ -1268,5 +1268,17 @@ I18N.load("tl",{
 "blouse": "blusa",
 "ankle boots or loafers": "ankle boots o loafers",
 "chinos": "chinos",
-"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "Iminumungkahi ring isuot nang bukas sa ibabaw ng t-shirt ang mga shirt na puwedeng isuot nang bukas (button-up, flannel, overshirt, cardigan), gamit ang t-shirt na may pinakamataas na score. Kapag bukas, casual ang bilang sa shirt (antas ng pormalidad 2 ang pinakamataas) at hindi isinasama ang t-shirt sa pagsusuri ng pormalidad. Kapag naka-on ang panahon, +0.5 ang t-shirt sa ibaba ng 16° at bawas 1 puntos sa itaas ng 24°. Hindi isinusuot ang bukas na polo sa ilalim ng blazer o suit jacket (tatlong patong): bawas 3 puntos iyon. Manipis lang na damit ang nasa ilalim (t-shirt, sando, henley na maikli ang manggas); hindi isinasama ang mahaba ang manggas o makapal, at hindi isinusuot nang bukas ang dress shirt. Hinuhulaan mula sa pangalan kung aling mga item ang kasama; baguhin ito sa editor ng bawat item."
+"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "Iminumungkahi ring isuot nang bukas sa ibabaw ng t-shirt ang mga shirt na puwedeng isuot nang bukas (button-up, flannel, overshirt, cardigan), gamit ang t-shirt na may pinakamataas na score. Kapag bukas, casual ang bilang sa shirt (antas ng pormalidad 2 ang pinakamataas) at hindi isinasama ang t-shirt sa pagsusuri ng pormalidad. Kapag naka-on ang panahon, +0.5 ang t-shirt sa ibaba ng 16° at bawas 1 puntos sa itaas ng 24°. Hindi isinusuot ang bukas na polo sa ilalim ng blazer o suit jacket (tatlong patong): bawas 3 puntos iyon. Manipis lang na damit ang nasa ilalim (t-shirt, sando, henley na maikli ang manggas); hindi isinasama ang mahaba ang manggas o makapal, at hindi isinusuot nang bukas ang dress shirt. Hinuhulaan mula sa pangalan kung aling mga item ang kasama; baguhin ito sa editor ng bawat item.",
+"Confirm password": "Kumpirmahin ang password",
+"Show": "Ipakita",
+"Hide": "Itago",
+"Show password": "Ipakita ang password",
+"Hide password": "Itago ang password",
+"The two passwords do not match.": "Hindi magkatugma ang dalawang password.",
+"Change password": "Palitan ang password",
+"Current password": "Kasalukuyang password",
+"Confirm new password": "Kumpirmahin ang bagong password",
+"Enter your current password.": "Ilagay ang kasalukuyan mong password.",
+"The new password is the same as the current one.": "Pareho ang bagong password sa kasalukuyan.",
+"The current password is wrong.": "Mali ang kasalukuyang password."
 });

@@ -1268,5 +1268,17 @@ I18N.load("es",{
 "blouse": "blusa",
 "ankle boots or loafers": "botines o mocasines",
 "chinos": "chinos",
-"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "Las camisas que se pueden usar abiertas (con botones, de franela, sobrecamisas, cárdigans) también se sugieren sobre una camiseta, con la camiseta que mejor puntúa. Abierta, la camisa cuenta como casual (nivel de formalidad 2 como máximo) y la camiseta no entra en la revisión del nivel de formalidad. Con el clima activado, la camiseta suma +0.5 por debajo de 16° y resta 1 punto por encima de 24°. Una camisa abierta no se pone debajo de un blazer o saco de traje (tres capas): eso resta 3 puntos. Solo las prendas ligeras van debajo (camisetas, camisetas sin mangas, henleys de manga corta); las de manga larga o gruesas se descartan, y las camisas de vestir no se usan abiertas. Qué prendas cuentan se estima por su nombre; cámbialo en el editor de cada prenda."
+"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "Las camisas que se pueden usar abiertas (con botones, de franela, sobrecamisas, cárdigans) también se sugieren sobre una camiseta, con la camiseta que mejor puntúa. Abierta, la camisa cuenta como casual (nivel de formalidad 2 como máximo) y la camiseta no entra en la revisión del nivel de formalidad. Con el clima activado, la camiseta suma +0.5 por debajo de 16° y resta 1 punto por encima de 24°. Una camisa abierta no se pone debajo de un blazer o saco de traje (tres capas): eso resta 3 puntos. Solo las prendas ligeras van debajo (camisetas, camisetas sin mangas, henleys de manga corta); las de manga larga o gruesas se descartan, y las camisas de vestir no se usan abiertas. Qué prendas cuentan se estima por su nombre; cámbialo en el editor de cada prenda.",
+"Confirm password": "Confirmar contraseña",
+"Show": "Mostrar",
+"Hide": "Ocultar",
+"Show password": "Mostrar contraseña",
+"Hide password": "Ocultar contraseña",
+"The two passwords do not match.": "Las dos contraseñas no coinciden.",
+"Change password": "Cambiar contraseña",
+"Current password": "Contraseña actual",
+"Confirm new password": "Confirmar nueva contraseña",
+"Enter your current password.": "Ingresa tu contraseña actual.",
+"The new password is the same as the current one.": "La nueva contraseña es igual a la actual.",
+"The current password is wrong.": "La contraseña actual es incorrecta."
 });

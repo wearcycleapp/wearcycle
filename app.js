@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.48.2';
+const APP_VERSION='1.49.0';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1268,7 +1268,7 @@ function applyStyleFields(it,r){
 }
 function openSettings(){
   openSheet(sheetHead('Settings')+`
-   <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs privately to your account.</span></div><div class="acts"><button class="btn sm" data-act="signout">Sign out</button></div></div>
+   <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs privately to your account.</span></div><div class="acts"><button class="btn sm" data-act="chpass">Change password</button><button class="btn sm" data-act="signout">Sign out</button></div></div>
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
    <h3>Appearance</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Light or dark</b><span>Auto follows your phone's setting.</span>
@@ -1937,6 +1937,7 @@ document.addEventListener('click',async e=>{
     else toast('To install, open Chrome\u2019s menu and choose Install app or Add to Home screen.',6000);
     return;
     case 'installNo': LS.set('wardrobe.installDismissed',true); renderStatus(); return;
+    case 'chpass': askNewPassword(true); return;
     case 'signout': closeSheet(); LS.del(cacheKey()); try{ await caches.delete('wearcycle-cutouts'); }catch(e){} await sb.auth.signOut(); return;
     case 'server': closeSheet(); showSetup(true); return;
   }
@@ -2051,6 +2052,13 @@ function showSetup(again){
 }
 function atobSafe(k){ try{ return atob(k.split('.')[1]||''); }catch(e){ return ''; } }
 const FIXED_SERVER=!!(window.WARDROBE_CONFIG&&window.WARDROBE_CONFIG.supabaseUrl);
+// Password field with a Show/Hide button (the button keeps focus on the field and never submits).
+function pwField(id,label,ac){ return `<div class="field"><label for="${id}">${label}</label><div class="pw"><input type="password" id="${id}" autocomplete="${ac}" minlength="8" autocapitalize="off" spellcheck="false"><button type="button" class="pwtog" data-pwtog="${id}" aria-pressed="false" aria-label="Show password">Show</button></div></div>`; }
+document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closest('[data-pwtog]'); if(!b) return;
+  const inp=document.getElementById(b.dataset.pwtog); if(!inp) return; const show=inp.type==='password';
+  inp.type=show?'text':'password'; b.setAttribute('aria-pressed',String(show)); b.textContent=show?'Hide':'Show'; b.setAttribute('aria-label',show?'Hide password':'Show password'); inp.focus(); });
+// New passwords: at least 8 characters, typed twice. Returns an error message or ''.
+function pwCheck(a,b){ if(a.length<8) return 'Use at least 8 characters.'; if(a!==b) return 'The two passwords do not match.'; return ''; }
 function showLogin(msg,mode){
   mode=mode||'up';
   const up=mode==='up', reset=mode==='reset';
@@ -2059,7 +2067,8 @@ function showLogin(msg,mode){
     <ul class="perks"><li>Ranked outfits with a reason for each</li><li>Flat-lay view of every look</li><li>Care, donate and shopping lists from what you own</li></ul></div>
    <div class="card2"><div class="seg2" role="tablist"><button role="tab" aria-selected="${up}" id="g-mode-up">Create account</button><button role="tab" aria-selected="${!up}" id="g-mode-in">Sign in</button></div>
     <div class="field"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email"></div>
-    ${reset?'':`<div class="field"><label for="g-pass">Password${up?' (8+ characters)':''}</label><input type="password" id="g-pass" autocomplete="${up?'new-password':'current-password'}" minlength="8"></div>`}
+    ${reset?'':pwField('g-pass',up?'Password (8+ characters)':'Password',up?'new-password':'current-password')}
+    ${up?pwField('g-pass2','Confirm password','new-password'):''}
     ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and Claude (Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
       :'<p class="hint">How your data is handled: <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</p>'}
     <p class="err" id="g-err">${esc(msg||'')}</p>
@@ -2073,6 +2082,7 @@ function showLogin(msg,mode){
     $('#g-in').disabled=true; const {error}=await sb.auth.signInWithPassword(c); if($('#g-in')) $('#g-in').disabled=false;
     if(error) $('#g-err').textContent=error.message==='Invalid login credentials'?'Email or password is wrong.':error.message; };
   if($('#g-up')) $('#g-up').onclick=async()=>{ const c=creds(); if(!c.email||c.password.length<8){ $('#g-err').textContent='Enter an email and a password of at least 8 characters.'; return; }
+    if(c.password!==$('#g-pass2').value){ $('#g-err').textContent='The two passwords do not match.'; return; }
     if(!$('#g-agree').checked){ $('#g-err').textContent='Check the box to agree to the privacy notice first.'; return; }
     try{ localStorage.setItem('wearcycle.consent',new Date().toISOString()); }catch(e){}
     $('#g-up').disabled=true; const {data,error}=await sb.auth.signUp({email:c.email,password:c.password,options:{emailRedirectTo:location.origin+location.pathname}}); if($('#g-up')) $('#g-up').disabled=false;
@@ -2084,10 +2094,19 @@ function showLogin(msg,mode){
     const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}); $('#g-err').textContent=error?error.message:'If that email has an account, a reset link is on its way.'; };
   if($('#g-server')) $('#g-server').onclick=()=>showSetup(true);
 }
-async function askNewPassword(){
-  openSheet(sheetHead('Choose a new password')+`<div class="field"><label for="np">New password (8+ characters)</label><input type="password" id="np" autocomplete="new-password"></div><p class="err" id="np-err"></p><div class="row sheet-actions"><button class="btn primary" id="np-save">Save password</button></div>`);
-  $('#np-save').onclick=async()=>{ const v=$('#np').value; if(v.length<8){ $('#np-err').textContent='Use at least 8 characters.'; return; }
-    const {error}=await sb.auth.updateUser({password:v}); if(error){ $('#np-err').textContent=error.message; return; } closeSheet(); toast('Password updated.'); };
+// After a reset link (no current password is known) or from Settings (current password required).
+async function askNewPassword(change){
+  openSheet(sheetHead(change?'Change password':'Choose a new password')+(change?pwField('cp','Current password','current-password'):'')+pwField('np','New password (8+ characters)','new-password')+pwField('np2','Confirm new password','new-password')+`<p class="err" id="np-err"></p><div class="row sheet-actions"><button class="btn primary" id="np-save">Save password</button></div>`);
+  $('#np-save').onclick=async()=>{ const v=$('#np').value, bad=pwCheck(v,$('#np2').value); if(bad){ $('#np-err').textContent=bad; return; }
+    const btn=$('#np-save'); btn.disabled=true;
+    try{
+      if(change){ const cur=$('#cp').value; if(!cur){ $('#np-err').textContent='Enter your current password.'; return; }
+        if(cur===v){ $('#np-err').textContent='The new password is the same as the current one.'; return; }
+        // Confirms the current password by signing in again with it; nothing changes if it is wrong.
+        const r=await sb.auth.signInWithPassword({email:EMAIL,password:cur}); if(r.error){ $('#np-err').textContent=r.error.message==='Invalid login credentials'?'The current password is wrong.':r.error.message; return; } }
+      const {error}=await sb.auth.updateUser({password:v}); if(error){ $('#np-err').textContent=error.message; return; }
+      closeSheet(); toast('Password updated.');
+    } finally { if($('#np-save')) btn.disabled=false; } };
 }
 function defaultStyleToday(){ const v=LS.get('wearcycle.styleDay'); return v&&v.day===todayISO()&&v.k?v.k:undefined; }
 function defaultOcc(){

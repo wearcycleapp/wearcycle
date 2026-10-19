@@ -1268,5 +1268,17 @@ I18N.load("hi",{
 "blouse": "ब्लाउज़",
 "ankle boots or loafers": "एंकल बूट्स या लोफ़र्स",
 "chinos": "चिनोज़",
-"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "जो शर्ट खुली पहनी जा सकती हैं (बटन-अप, फ़्लैनल, ओवरशर्ट, कार्डिगन), वे टी-शर्ट के ऊपर भी सुझाई जाती हैं, सबसे अच्छे स्कोर वाली टी-शर्ट के साथ। खुली पहनी शर्ट कैज़ुअल गिनी जाती है (ज़्यादा से ज़्यादा ड्रेस लेवल 2) और टी-शर्ट को ड्रेस लेवल की जाँच से बाहर रखा जाता है। मौसम चालू होने पर, 16° से नीचे टी-शर्ट +0.5 जोड़ती है और 24° से ऊपर 1 पॉइंट घटाती है। खुली शर्ट को ब्लेज़र या सूट जैकेट के नीचे नहीं पहना जाता (तीन लेयर): इसके 3 पॉइंट कटते हैं। नीचे सिर्फ़ हल्के कपड़े पहने जाते हैं (टी-शर्ट, टैंक, छोटी बाँह वाले हेनली); लंबी बाँह या मोटे टॉप शामिल नहीं होते, और ड्रेस शर्ट खुली नहीं पहनी जाती। कौन से आइटम गिने जाते हैं, इसका अंदाज़ा उनके नामों से लगाया जाता है; इसे हर आइटम के एडिटर में बदलें।"
+"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "जो शर्ट खुली पहनी जा सकती हैं (बटन-अप, फ़्लैनल, ओवरशर्ट, कार्डिगन), वे टी-शर्ट के ऊपर भी सुझाई जाती हैं, सबसे अच्छे स्कोर वाली टी-शर्ट के साथ। खुली पहनी शर्ट कैज़ुअल गिनी जाती है (ज़्यादा से ज़्यादा ड्रेस लेवल 2) और टी-शर्ट को ड्रेस लेवल की जाँच से बाहर रखा जाता है। मौसम चालू होने पर, 16° से नीचे टी-शर्ट +0.5 जोड़ती है और 24° से ऊपर 1 पॉइंट घटाती है। खुली शर्ट को ब्लेज़र या सूट जैकेट के नीचे नहीं पहना जाता (तीन लेयर): इसके 3 पॉइंट कटते हैं। नीचे सिर्फ़ हल्के कपड़े पहने जाते हैं (टी-शर्ट, टैंक, छोटी बाँह वाले हेनली); लंबी बाँह या मोटे टॉप शामिल नहीं होते, और ड्रेस शर्ट खुली नहीं पहनी जाती। कौन से आइटम गिने जाते हैं, इसका अंदाज़ा उनके नामों से लगाया जाता है; इसे हर आइटम के एडिटर में बदलें।",
+"Confirm password": "पासवर्ड की पुष्टि करें",
+"Show": "दिखाएँ",
+"Hide": "छिपाएँ",
+"Show password": "पासवर्ड दिखाएँ",
+"Hide password": "पासवर्ड छिपाएँ",
+"The two passwords do not match.": "दोनों पासवर्ड मेल नहीं खाते।",
+"Change password": "पासवर्ड बदलें",
+"Current password": "मौजूदा पासवर्ड",
+"Confirm new password": "नए पासवर्ड की पुष्टि करें",
+"Enter your current password.": "अपना मौजूदा पासवर्ड डालें।",
+"The new password is the same as the current one.": "नया पासवर्ड मौजूदा पासवर्ड जैसा ही है।",
+"The current password is wrong.": "मौजूदा पासवर्ड ग़लत है।"
 });

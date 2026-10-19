@@ -704,3 +704,10 @@ header.top{position:relative}
   .flatlay{max-height:calc(100vh - 150px)}
 }
 .viewer .vnote{margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:#c9ccd3}
+
+/* Password fields: Show/Hide button inside the field (v1.49) */
+.pw{position:relative;display:flex}
+.pw input{padding-right:72px !important}
+.pwtog{position:absolute;right:2px;top:50%;transform:translateY(-50%);min-height:44px;min-width:60px;padding:0 12px;background:none;border:0;border-radius:6px;color:var(--ink);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.pwtog:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+@media (hover:hover) and (pointer:fine){.pwtog:hover{text-decoration:underline}}
