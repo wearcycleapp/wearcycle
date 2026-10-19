@@ -1,0 +1,339 @@
+---
+name: Wearcycle
+description: Your closet, outfits for every kind of day, wear and care tracking, and a shopping list.
+colors:
+  bg: "#f6f4f1"
+  surface: "#fbfaf8"
+  raised: "#ffffff"
+  ink: "#1b2433"
+  muted: "#5b6270"
+  line: "#e2ded8"
+  accent: "#1b2433"
+  accent-ink: "#ffffff"
+  accent-soft: "#e7e9ee"
+  coral: "#ff7a59"
+  coral-ink: "#1b2433"
+  good: "#2b7a4c"
+  good-soft: "#dcefe3"
+  warn: "#9c6a12"
+  warn-soft: "#f5e8cc"
+  bad: "#b4233c"
+  bad-soft: "#f7dde1"
+  board: "#ece8e2"
+  canvas-1: "#f7f4ef"
+  canvas-2: "#ebe4d9"
+  board-mid: "#efe9e0"
+  board-edge: "#e7dfd3"
+  bg-dark: "#12161e"
+  surface-dark: "#1a202b"
+  raised-dark: "#212836"
+  ink-dark: "#eceef2"
+  muted-dark: "#9aa2b0"
+  line-dark: "#2e3646"
+  accent-dark: "#f1f2f5"
+  accent-ink-dark: "#1b2433"
+  accent-soft-dark: "#2a3242"
+  coral-dark: "#ff8a6b"
+  coral-ink-dark: "#1b2433"
+  good-dark: "#6cc38e"
+  good-soft-dark: "#1b3225"
+  warn-dark: "#e2b45c"
+  warn-soft-dark: "#382d17"
+  bad-dark: "#f2668b"
+  bad-soft-dark: "#3d1f29"
+  board-dark: "#1c2230"
+typography:
+  display:
+    fontFamily: "Big Shoulders Display, Arial Narrow, Impact, sans-serif"
+    fontSize: "40px"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "0.01em"
+  headline:
+    fontFamily: "Big Shoulders Display, Arial Narrow, Impact, sans-serif"
+    fontSize: "30px"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "0.01em"
+  title:
+    fontFamily: "Big Shoulders Display, Arial Narrow, Impact, sans-serif"
+    fontSize: "24px"
+    fontWeight: 800
+    lineHeight: 1
+    letterSpacing: "0.01em"
+  body:
+    fontFamily: "Figtree, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: "15px"
+    fontWeight: 400
+    lineHeight: 1.45
+  label:
+    fontFamily: "Figtree, system-ui, -apple-system, Segoe UI, Roboto, sans-serif"
+    fontSize: "13px"
+    fontWeight: 600
+    lineHeight: 1.3
+  mono:
+    fontFamily: "JetBrains Mono, ui-monospace, Menlo, Consolas, monospace"
+    fontSize: "12px"
+    fontWeight: 500
+    lineHeight: 1.3
+rounded:
+  control: "8px"
+  card: "10px"
+  canvas: "12px"
+  sheet: "16px"
+  pill: "999px"
+spacing:
+  "1": "4px"
+  "2": "8px"
+  "3": "12px"
+  "4": "16px"
+  "6": "24px"
+  "8": "32px"
+  "12": "48px"
+  "16": "64px"
+  "24": "96px"
+components:
+  button:
+    backgroundColor: "{colors.raised}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "10px 14px"
+  button-primary:
+    backgroundColor: "{colors.accent}"
+    textColor: "{colors.accent-ink}"
+    rounded: "{rounded.control}"
+    padding: "10px 14px"
+  button-cta:
+    backgroundColor: "{colors.coral}"
+    textColor: "{colors.coral-ink}"
+    rounded: "{rounded.canvas}"
+    height: "48px"
+  chip:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.muted}"
+    rounded: "{rounded.pill}"
+    height: "44px"
+    padding: "0 16px"
+  chip-selected:
+    backgroundColor: "{colors.ink}"
+    textColor: "{colors.bg}"
+    rounded: "{rounded.pill}"
+    height: "44px"
+  input:
+    backgroundColor: "{colors.raised}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.control}"
+    padding: "10px 12px"
+  nav-item-active:
+    backgroundColor: "{colors.accent-soft}"
+    textColor: "{colors.accent}"
+    rounded: "{rounded.control}"
+  sheet:
+    backgroundColor: "{colors.bg}"
+    rounded: "{rounded.sheet}"
+    padding: "16px"
+---
+
+# Design System: Wearcycle
+
+Merged on 2026-10-19 from `/impeccable document` (scan of styles.css, index.html and app.js at v1.48.2, main a4159ed) and Sections 7.1 to 7.8 of the redesign plan v2.2 with its errata. Screen rules live in docs/design/SCREENS.md. Where today's code and a plan rule differ, this file names both: "Today" is what ships, "Rule" is what every screen phase moves toward. The frontmatter records today's values.
+
+## Overview
+
+**Creative North Star: "The Wardrobe Editor"**
+
+An editor curating what you own, laid out on cream like a stylist's board: what to wear today and why, what to mend, what to let go. The clothes are the page; the tools stay quiet around them (owner, 2026-10-19).
+
+Wearcycle is personal and calm, editorial and fashion-aware, intelligent and practical, and sustainable without eco cliches. Its concept is personal fashion editorial plus wardrobe intelligence. The clothing is the protagonist and the interface supports it. On phones it feels like a personal stylist in your pocket; on wide screens it is a digital wardrobe workspace, not a widened phone. A screen should be recognisable as Wearcycle without the logo.
+
+Hierarchy is built in this order: scale, typography, whitespace, alignment, contrast, color, divider, container. Cards are the last option. Different areas carry different personalities (docs/design/SCREENS.md) instead of one card pattern everywhere. Wearcycle is an established world: every change inherits and refines it, never replaces it.
+
+**Key Characteristics:**
+- Deep ink structure.
+- Warm cream garment canvas behind cut-outs.
+- Coral as the action accent.
+- Condensed editorial display type.
+- A subtle life-cycle (circular) movement language.
+
+## Colors
+
+Ink and cream with one coral signal; status colors only where they mean something.
+
+### Primary
+- **Ink** (#1b2433; dark theme #eceef2 as text): text, structure and every selected state. Also the logo, the manifest color and the share image.
+- **Coral** (#ff7a59; dark #ff8a6b): the action signal only. It marks the main action ("Wear this"), the Add clothes button, the #1 rank, the active tab icon, the active pager dot and progress (job bar). Ink on coral is 6.07:1 (light) and 6.76:1 (dark).
+
+### Neutral
+- **Background** (#f6f4f1; dark #12161e): the page.
+- **Surface** (#fbfaf8; dark #1a202b): quiet areas and inputs.
+- **Raised** (#ffffff; dark #212836): sheets, the tab bar, tiles.
+- **Muted** (#5b6270; dark #9aa2b0): secondary text, 5.58:1 on Background (dark 7.05:1).
+- **Line** (#e2ded8; dark #2e3646): dividers and control borders.
+- **Accent / accent-ink / accent-soft** (#1b2433 / #ffffff / #e7e9ee; dark #f1f2f5 / #1b2433 / #2a3242): primary buttons and soft fills. Accent is Ink in light mode.
+- **Board** (#ece8e2; dark #1c2230): the outfit board behind tiles.
+- **Cream canvas** (#f7f4ef to #ebe4d9, the same in both themes): the radial gradient behind cut-outs. The outfit board (.flatlay) uses three stops: #f7f4ef, #efe9e0, #e7dfd3.
+
+### Status
+- **Good** (#2b7a4c, soft #dcefe3; dark #6cc38e, #1b3225), **Warn** (#9c6a12, soft #f5e8cc; dark #e2b45c, #382d17), **Bad** (#b4233c, soft #f7dde1; dark #f2668b, #3d1f29).
+
+### Today versus rule
+- Today the cream canvas is hard-coded in four rules: .flatlay (styles.css:355), .card .vis.studio (462), .photo .pv.studio (544) and .piecebig.studio (556). Rule (Phase 5, erratum 3): tokenize them as --canvas-1 #f7f4ef, --canvas-2 #ebe4d9, --board-mid #efe9e0 and --board-edge #e7dfd3, with no visible change. Two more beige values are hard-coded and not yet tokenized: the viewer's cut-out background #f3f0ea (styles.css:667) and the style art background #ece8e2 (575, equal to Board).
+- Today Warn on Background is 4.27:1, below 4.5:1 for text, and Warn on Warn-soft (In the wash marks, warning pills) is 3.86:1. Rule (Phase 5): darken --warn to reach 4.5:1 on Background and show the ratio.
+- Today coral also marks weather icons, calendar dots and the selected borders of style cards, palette options, piece picks and the holiday chip. Rule (decision 1): those selections keep coral only with a second cue (fill, check mark or inset ring).
+
+### Named Rules
+**The One Token System Rule.** Use the token names above. Add a token only when none fits, give it a dark value, and update both dark blocks (the prefers-color-scheme block and [data-theme="dark"]).
+
+**The Signal Rule.** Coral is never text on light backgrounds (2.34:1 on Background) and never the only cue for a selected state. Selected states use ink: heavier weight plus a 2px ink underline, or an ink fill (today's chips).
+
+**The Canvas Rule.** Cream is for the garment canvas. Do not make every panel cream.
+
+**The Colors Outside CSS Rule.** When the palette changes, also update the theme-color metas in index.html (#f6f4f1 light, #12161e dark), manifest.webmanifest (#1b2433), the share image in app.js and privacy.html.
+
+## Typography
+
+**Display Font:** Big Shoulders Display 700/800 (with Arial Narrow, Impact)
+**Body Font:** Figtree 400 to 700 (with system-ui)
+**Label/Mono Font:** JetBrains Mono 500/600, sparingly
+
+**Character:** A tall, condensed editorial display voice over a friendly, legible geometric sans. All three faces are self-hosted with Latin and Latin Extended subsets only; Hindi, Japanese and Korean fall back to system fonts, which is accepted. No typeface is added without approval.
+
+### Hierarchy
+- **Display** (800, 40px today on the welcome screen, line-height 1): page titles and large editorial moments. Rule scale: Display XL 36 to 44px on phones, 48 to 64px on desktop; Display L 28 to 34px on phones, 32 to 40px on desktop.
+- **Headline** (800, 30px, line-height 1): tab titles (h2). Also outfit and look numbers, ranks (26px, 20px) and large numbers such as +N.
+- **Title** (800, 24px): sheet titles and the greeting. Rule: Heading 20 to 24px on phones, 22 to 26px on desktop.
+- **Body** (400, 15px, line-height 1.45): descriptions and details; 15 to 16px on desktop. Prose up to about 62ch (.lede).
+- **Label** (600, 13px): field labels, buttons (14px), chips (14px), garment names (14px).
+- **Small** (13 to 14px) and **Micro** (12px minimum). Today several labels are smaller than 12px: the header status (11px), tab labels (11.5px), condition tags (11.5px) and badges (10px). Rule: raise them to 12px when their screen phase rewrites them.
+
+### Named Rules
+**The Right Face Rule.** Display type is for page titles, outfit and look numbers, large numbers (+N) and short editorial labels. Never for paragraphs, controls or user-typed garment names: those are Figtree, because names may be typed in any script.
+
+**The Sentence Case Rule.** Strings are written in sentence case; uppercase only through CSS (text-transform), so the translation dictionaries keep matching.
+
+**The No Shrinking Rule.** Do not solve crowding by shrinking text. Body text stays 15px; Impeccable's 16px body floor does not apply here.
+
+## Layout
+
+A single column on phones with 16px gutters and a fixed bottom tab bar; from 960px a left rail and a wider workspace.
+
+- **Spacing:** 4px base: 4, 8, 12, 16, 24, 32, 48, 64, 96. Major sections 32 to 48px apart on phones, 48 to 80px on desktop. Today some gaps use 10px and 14px; screen phases move them onto the scale.
+- **Breakpoints (today, erratum 4):** max-width 380px and 460px (small phones), min-width 700px (sheets centre), min-width 960px (wide layout), and landscape with max-height 600px and max-width 959px (the outfit board stays inside the screen).
+- **Wide layout (v1.41, 960px and up):** the bottom bar becomes a 96px left rail; .app widens from 760px to 1180px; Outfits shows the hero outfit (sticky) beside its alternatives; Care and Shop flow in two columns; closet tiles grow from 150px to 180px minimum.
+- **Review widths (not breakpoints):** 360 and 390 (Android), 820 and 1180 (iPad portrait and landscape), 1366 and 1920 (Windows).
+
+### Width bands (rule)
+- **Under 700px**, Android phones (about 360 to 412px): bottom tab bar (Outfits, Closet, Care, Shop); Settings from the header icon; Add clothes button above the bar; single column; sheets slide up.
+- **700 to 959px**, iPad portrait (744 to 834px) and phones turned sideways: bottom bar or rail is decided in Phase 7 with screenshots. No 760px column floating in empty space: grids gain columns; Outfits may show alternatives beside the outfit; sheets centre.
+- **960 to 1279px**, iPad landscape (1133 to 1210px), iPad 13-inch portrait (1024 to 1032px), small windows: 96px rail with icons and labels plus Settings at the bottom of the rail; content up to 1180px; outfit beside alternatives.
+- **1280px and up**, Windows browsers (1366, 1536, 1920px) and iPad Pro 13-inch landscape (1376px): a wider rail (about 200px) with the wordmark, labels and Settings; gallery and editorial screens up to about 1280px; sheets up to about 720px.
+
+Active rail item: ink text, heavier weight, coral icon (as today). Tab names stay Outfits, Closet, Care, Shop (already translated). Device sizes come from the PhotoPrism device table (iPad) and StatCounter Canada, September 2026 (Windows).
+
+### Input and browsers
+- Phones and the iPad are touch first; an iPad with a trackpad can hover. Windows is mouse and keyboard. styles.css has no :hover rules today; add them only inside @media (hover: hover) and (pointer: fine).
+- Horizontal rows (.chips, occasion and style rows) hide their scrollbars today (styles.css:47, 583). With a mouse, wrap them or add arrow buttons from 960px, so every option is reachable without Shift and the wheel.
+- Keyboard: logical Tab order, visible focus, Escape closes sheets.
+- iPad: every iPad browser in Canada uses WebKit. styles.css uses 100vh in 3 declarations (694, 703, 704) and no dvh: use dvh with a vh fallback. Install to the Home Screen: WebKit deletes a site's storage after 7 days of Safari use without a visit, and Home Screen apps keep their own count, which protects the offline copy and the cut-out model.
+- Windows uses Chromium, the same engine as Claude's container, so automated screenshots are close (fonts and scrollbars differ). The app does no user-agent sniffing.
+
+## Elevation & Depth
+
+Rule (plan 7.4, confirmed by the owner 2026-10-19): flat by default. In light mode shadows belong only to overlays and floating elements: sheets, the Add clothes button and toasts. Dark mode conveys depth with contrast and borders. No glows.
+
+Today the soft shadow also sits on outfit cards, closet cards, panels and stat tiles (styles.css:69, 102, 113, 503); each screen phase removes it from its own containers.
+
+### Shadow Vocabulary
+- **Soft** (`box-shadow: 0 1px 2px rgba(27,36,51,.08), 0 4px 14px rgba(27,36,51,.06)`; dark `0 1px 2px rgba(0,0,0,.4)`): the --shadow token; sheets and toasts.
+- **Floating action** (`box-shadow: 0 6px 20px rgba(20,30,60,.25)`): the Add clothes button.
+- **Garment** (`filter: drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))`): cut-outs on the cream canvas, so garments sit on the board rather than float.
+
+### Named Rules
+**The Flat-By-Default Rule.** A container earns a shadow only by floating above the page. Grouping is done with space and alignment.
+
+## Shapes
+
+Gently rounded, with the pill shape reserved for meaning.
+
+- **Rule (plan 7.4):** controls 8px; garment canvas 12px; large compositions 12 to 16px; sheet top corners 20 to 24px. Pills (999px) only where the shape means something: a removable or toggle chip.
+- **Today:** buttons, icon buttons, inputs and tiles 8px; closet cards 10px; outfit cards, panels and the main action 12px; piece preview and cards added after v1.24 14px; sheets 16px (20 to 24px once Phase 12 rewrites the sheets); chips, weather pill and status pills 999px.
+- **Icons:** inline SVG, 24px viewBox, stroke 1.8 to 2, currentColor, as today. Use them where they help recognition, not on every heading. Life-cycle icons (wear, wash, repair, rotate, donate, recycle) may be added with a consistent stroke and size.
+
+## Components
+
+Quiet and tactile: plain ink controls with clear pressed and selected states (ink, never coral alone); 44px touch targets (40px for small chips); hover feedback only with a mouse. Coral stays where it is decided (owner, 2026-10-19).
+
+### Buttons
+- **Shape:** gently rounded (8px); the main action 12px.
+- **Default:** Raised background, 1px Line border, 600 weight, 14px, 10px by 14px padding.
+- **Primary:** Ink fill with white text (accent and accent-ink).
+- **Main action ("Wear this"):** Coral fill with Ink text, 48px tall, 700 weight, 15px. One per screen.
+- **Danger / Ghost / Small:** Bad text and border; transparent; 40px minimum height.
+- **Hover / Focus:** no hover rules today; add them only for mouse input. Focus is a 2px accent outline offset 2px (:focus-visible).
+
+### Chips
+- **Style:** Surface background, 1px Line border, Muted text, 600 weight, 44px minimum height (40px for small chips).
+- **State:** selected is an Ink fill with Background text and aria-pressed="true". The holiday chip today uses a coral border and fill (decision 1 adds a second cue).
+
+### Garment imagery (signature)
+- Three kinds of image must all look right: phone photos, cut-outs on the cream canvas, and SVG glyphs filled with the piece's main color. Design for an empty closet too (a new user has 0 items).
+- Do not cover garments with badges, shrink them to fit details, or surround them with chrome.
+- Use 256px thumbnails only where the image is shown small (rendered width times device pixel ratio up to 256); full photos or cut-outs for large tiles, the hero, the preview and the viewer (Phase 9 measures this).
+
+### Outfit board (signature)
+- The flat-lay board (.flatlay, 4:5) lays the outfit's pieces on the cream canvas with garment shadows; tapping a piece opens its preview. The rank badge, match label, palette strip and "Wear this" sit around the board, never on the garments.
+
+### Intelligence and numbers
+- Use the existing match labels (Excellent, Great, Good, Fair, Weak) rather than raw scores.
+- Meaningful numbers may become major elements, such as "+12 outfits with what you own", set in the display face.
+- When an occasion is covered, say so plainly. Never encourage buying to fill the screen.
+
+### Cards / Containers
+- **Corner Style:** 10 to 14px today (see Shapes).
+- **Background:** Raised.
+- **Shadow Strategy:** see Elevation & Depth (removed screen by screen).
+- **Internal Padding:** 12 to 14px today.
+- Before adding a card, ask whether scale, type, spacing or alignment can do the job. Never nest cards.
+
+### Inputs / Fields
+- **Style:** Raised background, 1px Line border, 8px radius, 10px by 12px padding, labels 13px 600 in Ink.
+- **Focus:** the global focus outline.
+- **Error:** Bad text at 13.5px below the field.
+
+### Navigation
+- **Phone:** fixed bottom bar on Raised with a top border, four tabs, 22px icons over 11.5px labels; the active tab gets Accent text on Accent-soft and a coral icon (aria-current="page"); the Care tab carries a count badge.
+- **960px and up:** a 96px left rail with 24px icons; Settings is still a header icon today (Phase 7 proposes moving it to the bottom of the rail).
+
+### Sheets, toasts and job bar
+- **Sheets:** one openSheet(html) for every sheet; slide up on phones, centre from 700px; Background fill; sticky action row; Escape closes.
+- **Toasts:** Ink fill with Background text, 12px radius, above the tab bar and safe area.
+- **Job bar:** Raised, with a coral progress bar and spinner, above the tab bar.
+
+### Motion
+- Motion follows wardrobe behaviour: an outfit swap, a piece going into the wash, a piece coming back, a sheet moving.
+- Durations: fast 120 to 180ms; normal 200 to 280ms; editorial 300 to 450ms.
+- Every animation sits inside @media (prefers-reduced-motion: no-preference). No continuous or decorative motion. These rules win over review-animations (which wants under 300ms and gentler motion under reduced motion) and over Impeccable's animate defaults.
+- Today: toast entrance 0.2s ease-out, camera flash 0.25s, board piece press 0.12s and the job spinner sit inside the query; two disclosure chevrons rotate in 0.15s outside it (styles.css:424, 476).
+
+## Do's and Don'ts
+
+### Do:
+- **Do** let the garments lead: large images on the cream canvas, tools quiet around them.
+- **Do** use Ink for every selected state: weight plus a 2px ink underline, or an ink fill.
+- **Do** keep coral to the main action, Add clothes, the #1 rank, the active tab icon, the active pager dot and progress.
+- **Do** keep text at 4.5:1 and indicators at 3:1 against their background, in both themes.
+- **Do** keep 44px touch targets (40px for small chips) and a visible focus outline.
+- **Do** design light and dark together; light is the primary presentation for design reviews and the default setting stays Auto.
+- **Do** use the full width on purpose at 1366 and 1920px.
+
+### Don't:
+- **Don't** use coral as text on light backgrounds or as the only cue for a selection.
+- **Don't** make every panel cream; cream is the garment canvas.
+- **Don't** build dashboard grids, generic stat cards, endless pill rows, endless rounded cards or cards inside cards.
+- **Don't** add decorative gradients, purple or blue AI styling, glassmorphism, neon or glows.
+- **Don't** add meaningless badges, unneeded progress bars or icon-heavy headings.
+- **Don't** hide information behind hover.
+- **Don't** leave large unused desktop space caused by a phone max-width.
+- **Don't** set user-typed garment names in the display face.
+- **Don't** shrink text to solve crowding, or truncate translated labels to hide overflow.
+- **Don't** add a colored side stripe thicker than 1px to a card or callout; today .advice and .askcard (styles.css:255, 531) carry 3px coral left borders, which the detector flags.

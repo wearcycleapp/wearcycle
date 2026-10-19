@@ -1,0 +1,24 @@
+{
+ "_about": "break-ui data for tools/check.mjs --worst-case. Each scenario starts from closet.json (or another scenario) and changes only the data, never the app. Names are realistic user input in French, Tagalog and Hindi, with emoji, a one-letter name, extra spaces and an unbroken word.",
+ "scenarios": {
+  "long": {
+   "rename": {
+    "fx-01": "Chemise oxford blanche à manches longues en coton biologique brossé, coupe ajustée",
+    "fx-02": "Mahabang manggas na polong de-butones na kulay asul na langit para sa opisina",
+    "fx-03": "👩🏽‍💻 Navy knit polo",
+    "fx-04": "  Grey   merino   sweater  ",
+    "fx-10": "Pantalon chino bleu marine en sergé de coton stretch, coupe droite ajustée",
+    "fx-11": "Jean brut japonais en denim selvedge non lavé de 14,5 onces, coupe fuselée",
+    "fx-12": "हल्के खाकी रंग की सूती चिनो पैंट, सीधी फ़िट, ऑफ़िस के लिए",
+    "fx-15": "J",
+    "fx-18": "👟 Favourite white sneakers ✨🌈",
+    "fx-19": "Brownderbyshoeswithstormweltandleathersolesmadeinportugal",
+    "fx-22": "Sinturong katad na kulay tsokolate na may pilak na hebilya"
+   },
+   "dropThumb": ["fx-02"],
+   "missingFiles": ["fx-07", "fx-15", "fx-19"]
+  },
+  "empty": { "items": [], "wears": [] },
+  "many": { "from": "long", "count": 200 }
+ }
+}

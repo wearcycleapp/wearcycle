@@ -1,0 +1,831 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T03:42:35+00:00",
+  "title": "Design System: Wearcycle",
+  "extensions": {
+    "colorMeta": {
+      "bg": {
+        "role": "neutral",
+        "displayName": "Background",
+        "canonical": "#f6f4f1",
+        "tonalRamp": [
+          "#0c0b0a",
+          "#262523",
+          "#434240",
+          "#62615f",
+          "#84827f",
+          "#a6a5a2",
+          "#cac9c7",
+          "#efeeec"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface",
+        "canonical": "#fbfaf8",
+        "tonalRamp": [
+          "#0b0b0a",
+          "#252524",
+          "#424241",
+          "#626160",
+          "#838280",
+          "#a6a5a3",
+          "#cac9c7",
+          "#efeeed"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Raised",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "ink": {
+        "role": "primary",
+        "displayName": "Ink",
+        "canonical": "#1b2433",
+        "tonalRamp": [
+          "#070b12",
+          "#1f252f",
+          "#3b424f",
+          "#586271",
+          "#788395",
+          "#9ba6b7",
+          "#c0cad9",
+          "#e7effd"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#5b6270",
+        "tonalRamp": [
+          "#080b11",
+          "#21252d",
+          "#3d424c",
+          "#5b616e",
+          "#7b8291",
+          "#9ea5b3",
+          "#c3c9d6",
+          "#e9eff9"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Line",
+        "canonical": "#e2ded8",
+        "tonalRamp": [
+          "#0c0b09",
+          "#272522",
+          "#44423e",
+          "#64615c",
+          "#85827c",
+          "#a8a49f",
+          "#ccc9c4",
+          "#f1eeea"
+        ]
+      },
+      "accent": {
+        "role": "neutral",
+        "displayName": "Accent",
+        "canonical": "#1b2433",
+        "tonalRamp": [
+          "#070b12",
+          "#1f252f",
+          "#3b424f",
+          "#586271",
+          "#788395",
+          "#9ba6b7",
+          "#c0cad9",
+          "#e7effd"
+        ]
+      },
+      "accent-ink": {
+        "role": "neutral",
+        "displayName": "Accent ink",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b0b0b",
+          "#252525",
+          "#424242",
+          "#616161",
+          "#828282",
+          "#a5a5a5",
+          "#c9c9c9",
+          "#eeeeee"
+        ]
+      },
+      "accent-soft": {
+        "role": "neutral",
+        "displayName": "Accent soft",
+        "canonical": "#e7e9ee",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242527",
+          "#414245",
+          "#606165",
+          "#808287",
+          "#a3a5a9",
+          "#c7c9cd",
+          "#edeef2"
+        ]
+      },
+      "coral": {
+        "role": "primary",
+        "displayName": "Coral",
+        "canonical": "#ff7a59",
+        "tonalRamp": [
+          "#270000",
+          "#4e0000",
+          "#781b00",
+          "#a5361a",
+          "#d35334",
+          "#f37f62",
+          "#ffa98f",
+          "#ffd4bc"
+        ]
+      },
+      "coral-ink": {
+        "role": "neutral",
+        "displayName": "Coral ink",
+        "canonical": "#1b2433",
+        "tonalRamp": [
+          "#070b12",
+          "#1f252f",
+          "#3b424f",
+          "#586271",
+          "#788395",
+          "#9ba6b7",
+          "#c0cad9",
+          "#e7effd"
+        ]
+      },
+      "good": {
+        "role": "status",
+        "displayName": "Good",
+        "canonical": "#2b7a4c",
+        "tonalRamp": [
+          "#001102",
+          "#002e14",
+          "#134e2d",
+          "#2d7148",
+          "#499565",
+          "#74b78b",
+          "#9fd9b2",
+          "#cbfdda"
+        ]
+      },
+      "good-soft": {
+        "role": "neutral",
+        "displayName": "Good soft",
+        "canonical": "#dcefe3",
+        "tonalRamp": [
+          "#060d09",
+          "#1e2822",
+          "#39453e",
+          "#57655c",
+          "#76877d",
+          "#9aaaa0",
+          "#bfcdc4",
+          "#e6f2ea"
+        ]
+      },
+      "warn": {
+        "role": "status",
+        "displayName": "Warn",
+        "canonical": "#9c6a12",
+        "tonalRamp": [
+          "#190500",
+          "#3a1e00",
+          "#5d3900",
+          "#825708",
+          "#aa7727",
+          "#ca9c5b",
+          "#ebc189",
+          "#ffe8b8"
+        ]
+      },
+      "warn-soft": {
+        "role": "neutral",
+        "displayName": "Warn soft",
+        "canonical": "#f5e8cc",
+        "tonalRamp": [
+          "#0f0a03",
+          "#2b2416",
+          "#49412f",
+          "#6a604a",
+          "#8d8168",
+          "#afa48d",
+          "#d2c8b3",
+          "#f6eedc"
+        ]
+      },
+      "bad": {
+        "role": "status",
+        "displayName": "Bad",
+        "canonical": "#b4233c",
+        "tonalRamp": [
+          "#280000",
+          "#50000d",
+          "#7b1024",
+          "#a92c3e",
+          "#d84959",
+          "#f7777f",
+          "#ffa3a8",
+          "#ffcfd1"
+        ]
+      },
+      "bad-soft": {
+        "role": "neutral",
+        "displayName": "Bad soft",
+        "canonical": "#f7dde1",
+        "tonalRamp": [
+          "#11080a",
+          "#2e2123",
+          "#4d3d40",
+          "#6f5b5f",
+          "#937b7f",
+          "#b49fa2",
+          "#d7c3c6",
+          "#fbeaec"
+        ]
+      },
+      "board": {
+        "role": "neutral",
+        "displayName": "Board",
+        "canonical": "#ece8e2",
+        "tonalRamp": [
+          "#0c0b09",
+          "#272522",
+          "#44423e",
+          "#64615c",
+          "#85827c",
+          "#a8a4a0",
+          "#ccc9c4",
+          "#f1eeea"
+        ]
+      },
+      "canvas-1": {
+        "role": "neutral",
+        "displayName": "Cream canvas (centre)",
+        "canonical": "#f7f4ef",
+        "tonalRamp": [
+          "#0c0b09",
+          "#262522",
+          "#44423f",
+          "#63615d",
+          "#85827d",
+          "#a7a5a1",
+          "#cbc9c5",
+          "#f0eeeb"
+        ]
+      },
+      "canvas-2": {
+        "role": "neutral",
+        "displayName": "Cream canvas (edge)",
+        "canonical": "#ebe4d9",
+        "tonalRamp": [
+          "#0d0b07",
+          "#28251f",
+          "#46413a",
+          "#666058",
+          "#888178",
+          "#aaa49b",
+          "#cec8c0",
+          "#f2eee7"
+        ]
+      },
+      "board-mid": {
+        "role": "neutral",
+        "displayName": "Outfit board (middle stop)",
+        "canonical": "#efe9e0",
+        "tonalRamp": [
+          "#0d0b08",
+          "#272520",
+          "#45413c",
+          "#65605a",
+          "#878179",
+          "#a9a49d",
+          "#cdc8c2",
+          "#f2eee8"
+        ]
+      },
+      "board-edge": {
+        "role": "neutral",
+        "displayName": "Outfit board (edge stop)",
+        "canonical": "#e7dfd3",
+        "tonalRamp": [
+          "#0e0b07",
+          "#28241e",
+          "#46413a",
+          "#666057",
+          "#888176",
+          "#aba49a",
+          "#cec8bf",
+          "#f3eee6"
+        ]
+      },
+      "bg-dark": {
+        "role": "neutral",
+        "displayName": "Background (dark theme)",
+        "canonical": "#12161e",
+        "tonalRamp": [
+          "#090b0f",
+          "#22252b",
+          "#3e4249",
+          "#5d616a",
+          "#7d828d",
+          "#a0a5af",
+          "#c5c9d2",
+          "#ebeff6"
+        ]
+      },
+      "surface-dark": {
+        "role": "neutral",
+        "displayName": "Surface (dark theme)",
+        "canonical": "#1a202b",
+        "tonalRamp": [
+          "#080b11",
+          "#21252d",
+          "#3d424c",
+          "#5b616d",
+          "#7b8390",
+          "#9ea5b2",
+          "#c3c9d5",
+          "#e9eff9"
+        ]
+      },
+      "raised-dark": {
+        "role": "neutral",
+        "displayName": "Raised (dark theme)",
+        "canonical": "#212836",
+        "tonalRamp": [
+          "#080b12",
+          "#20252e",
+          "#3c424e",
+          "#5a6170",
+          "#7a8394",
+          "#9da5b5",
+          "#c2c9d8",
+          "#e8effb"
+        ]
+      },
+      "ink-dark": {
+        "role": "primary",
+        "displayName": "Ink (dark theme)",
+        "canonical": "#eceef2",
+        "tonalRamp": [
+          "#0a0b0d",
+          "#242527",
+          "#414244",
+          "#606164",
+          "#808286",
+          "#a3a5a8",
+          "#c8c9cc",
+          "#edeef1"
+        ]
+      },
+      "muted-dark": {
+        "role": "neutral",
+        "displayName": "Muted (dark theme)",
+        "canonical": "#9aa2b0",
+        "tonalRamp": [
+          "#080b10",
+          "#21252c",
+          "#3d424c",
+          "#5b626d",
+          "#7b8390",
+          "#9ea5b2",
+          "#c3c9d5",
+          "#e9eff9"
+        ]
+      },
+      "line-dark": {
+        "role": "neutral",
+        "displayName": "Line (dark theme)",
+        "canonical": "#2e3646",
+        "tonalRamp": [
+          "#080b12",
+          "#20252f",
+          "#3c424f",
+          "#596171",
+          "#798395",
+          "#9da5b6",
+          "#c1c9d9",
+          "#e8effc"
+        ]
+      },
+      "accent-dark": {
+        "role": "neutral",
+        "displayName": "Accent (dark theme)",
+        "canonical": "#f1f2f5",
+        "tonalRamp": [
+          "#0b0b0c",
+          "#242526",
+          "#414244",
+          "#606163",
+          "#818285",
+          "#a4a5a7",
+          "#c8c9cb",
+          "#eeeef0"
+        ]
+      },
+      "accent-ink-dark": {
+        "role": "neutral",
+        "displayName": "Accent ink (dark theme)",
+        "canonical": "#1b2433",
+        "tonalRamp": [
+          "#070b12",
+          "#1f252f",
+          "#3b424f",
+          "#586271",
+          "#788395",
+          "#9ba6b7",
+          "#c0cad9",
+          "#e7effd"
+        ]
+      },
+      "accent-soft-dark": {
+        "role": "neutral",
+        "displayName": "Accent soft (dark theme)",
+        "canonical": "#2a3242",
+        "tonalRamp": [
+          "#080b12",
+          "#20252f",
+          "#3b424f",
+          "#596171",
+          "#798395",
+          "#9ca5b7",
+          "#c1c9d9",
+          "#e8effc"
+        ]
+      },
+      "coral-dark": {
+        "role": "primary",
+        "displayName": "Coral (dark theme)",
+        "canonical": "#ff8a6b",
+        "tonalRamp": [
+          "#240000",
+          "#4a0800",
+          "#73240d",
+          "#9e3f25",
+          "#cb5c3f",
+          "#eb856a",
+          "#ffae95",
+          "#ffd8c2"
+        ]
+      },
+      "coral-ink-dark": {
+        "role": "neutral",
+        "displayName": "Coral ink (dark theme)",
+        "canonical": "#1b2433",
+        "tonalRamp": [
+          "#070b12",
+          "#1f252f",
+          "#3b424f",
+          "#586271",
+          "#788395",
+          "#9ba6b7",
+          "#c0cad9",
+          "#e7effd"
+        ]
+      },
+      "good-dark": {
+        "role": "status",
+        "displayName": "Good (dark theme)",
+        "canonical": "#6cc38e",
+        "tonalRamp": [
+          "#001202",
+          "#002f14",
+          "#064f2d",
+          "#237247",
+          "#3f9664",
+          "#6eb88a",
+          "#9adbb1",
+          "#c7fed9"
+        ]
+      },
+      "good-soft-dark": {
+        "role": "neutral",
+        "displayName": "Good soft (dark theme)",
+        "canonical": "#1b3225",
+        "tonalRamp": [
+          "#040e08",
+          "#1b2920",
+          "#35473c",
+          "#51675a",
+          "#708a7a",
+          "#94ac9d",
+          "#bacfc2",
+          "#e2f4e8"
+        ]
+      },
+      "warn-dark": {
+        "role": "status",
+        "displayName": "Warn (dark theme)",
+        "canonical": "#e2b45c",
+        "tonalRamp": [
+          "#180600",
+          "#381f00",
+          "#5a3b00",
+          "#7f5a00",
+          "#a57a18",
+          "#c69e54",
+          "#e7c484",
+          "#ffeab4"
+        ]
+      },
+      "warn-soft-dark": {
+        "role": "neutral",
+        "displayName": "Warn soft (dark theme)",
+        "canonical": "#382d17",
+        "tonalRamp": [
+          "#0f0a03",
+          "#2b2416",
+          "#4a4130",
+          "#6b604b",
+          "#8d8168",
+          "#afa48d",
+          "#d2c8b4",
+          "#f7eddc"
+        ]
+      },
+      "bad-dark": {
+        "role": "status",
+        "displayName": "Bad (dark theme)",
+        "canonical": "#f2668b",
+        "tonalRamp": [
+          "#260005",
+          "#4e001c",
+          "#781236",
+          "#a52e53",
+          "#d34b72",
+          "#f37896",
+          "#ffa3bb",
+          "#ffcfe2"
+        ]
+      },
+      "bad-soft-dark": {
+        "role": "neutral",
+        "displayName": "Bad soft (dark theme)",
+        "canonical": "#3d1f29",
+        "tonalRamp": [
+          "#14060b",
+          "#321e25",
+          "#533a41",
+          "#765760",
+          "#9b7781",
+          "#bd9aa4",
+          "#dfc0c8",
+          "#ffe6ee"
+        ]
+      },
+      "board-dark": {
+        "role": "neutral",
+        "displayName": "Board (dark theme)",
+        "canonical": "#1c2230",
+        "tonalRamp": [
+          "#080b12",
+          "#21252e",
+          "#3d424e",
+          "#5b6170",
+          "#7b8294",
+          "#9ea5b5",
+          "#c3c9d8",
+          "#e9eefb"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Page titles and large editorial moments (Big Shoulders Display 800)."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Tab titles, outfit and look numbers, ranks, large numbers such as +N."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Sheet titles and the greeting."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Descriptions, details, garment names (Figtree 15px)."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, buttons and chips."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Counts and version, sparingly."
+      }
+    },
+    "shadows": [
+      {
+        "name": "soft",
+        "value": "0 1px 2px rgba(27,36,51,.08), 0 4px 14px rgba(27,36,51,.06)",
+        "purpose": "The --shadow token; sheets and toasts in light mode (dark: 0 1px 2px rgba(0,0,0,.4))."
+      },
+      {
+        "name": "floating-action",
+        "value": "0 6px 20px rgba(20,30,60,.25)",
+        "purpose": "The Add clothes button."
+      },
+      {
+        "name": "garment",
+        "value": "drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))",
+        "purpose": "filter on cut-outs on the cream canvas."
+      }
+    ],
+    "motion": [
+      {
+        "name": "fast",
+        "value": "120-180ms",
+        "purpose": "Press and small state feedback."
+      },
+      {
+        "name": "normal",
+        "value": "200-280ms",
+        "purpose": "Sheets, toasts, swaps."
+      },
+      {
+        "name": "editorial",
+        "value": "300-450ms",
+        "purpose": "Rare editorial transitions; always inside prefers-reduced-motion: no-preference."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "small-phone",
+        "value": "max-width: 380px"
+      },
+      {
+        "name": "phone",
+        "value": "max-width: 460px"
+      },
+      {
+        "name": "sheets-centre",
+        "value": "min-width: 700px"
+      },
+      {
+        "name": "wide",
+        "value": "min-width: 960px"
+      },
+      {
+        "name": "short-landscape",
+        "value": "(orientation: landscape) and (max-height: 600px) and (max-width: 959px)"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Main action (Wear this)",
+      "kind": "button",
+      "refersTo": "button-cta",
+      "description": "The one coral action per screen.",
+      "html": "<button class=\"ds-btn-cta\">Wear this</button>",
+      "css": ".ds-btn-cta{background:var(--coral,#ff7a59);color:var(--coral-ink,#1b2433);border:1px solid var(--coral,#ff7a59);height:48px;padding:0 20px;border-radius:12px;font:700 15px Figtree,system-ui,sans-serif}.ds-btn-cta:focus-visible{outline:2px solid var(--accent,#1b2433);outline-offset:2px}@media (hover:hover) and (pointer:fine){.ds-btn-cta:hover{filter:brightness(.96)}}.ds-btn-cta:active{transform:scale(.98)}"
+    },
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink button for confirming actions in sheets.",
+      "html": "<button class=\"ds-btn-primary\">Save</button>",
+      "css": ".ds-btn-primary{background:var(--accent,#1b2433);color:var(--accent-ink,#fff);border:1px solid var(--accent,#1b2433);padding:10px 14px;border-radius:8px;font:600 14px Figtree,system-ui,sans-serif;min-height:44px}.ds-btn-primary:focus-visible{outline:2px solid var(--accent,#1b2433);outline-offset:2px}"
+    },
+    {
+      "name": "Button",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Default quiet button.",
+      "html": "<button class=\"ds-btn\">Swap for another</button>",
+      "css": ".ds-btn{background:var(--raised,#fff);color:var(--ink,#1b2433);border:1px solid var(--line,#e2ded8);padding:10px 14px;border-radius:8px;font:600 14px Figtree,system-ui,sans-serif;min-height:44px}.ds-btn:focus-visible{outline:2px solid var(--accent,#1b2433);outline-offset:2px}@media (hover:hover) and (pointer:fine){.ds-btn:hover{background:var(--surface,#fbfaf8)}}"
+    },
+    {
+      "name": "Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Toggle chip; selected is an ink fill with aria-pressed.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">Work</button><button class=\"ds-chip\" aria-pressed=\"false\">Going out</button></div>",
+      "css": ".ds-chips{display:flex;gap:8px}.ds-chip{min-height:44px;padding:0 16px;border-radius:999px;border:1px solid var(--line,#e2ded8);background:var(--surface,#fbfaf8);color:var(--muted,#5b6270);font:600 14px Figtree,system-ui,sans-serif}.ds-chip[aria-pressed=\"true\"]{background:var(--ink,#1b2433);color:var(--bg,#f6f4f1);border-color:var(--ink,#1b2433)}.ds-chip:focus-visible{outline:2px solid var(--accent,#1b2433);outline-offset:2px}"
+    },
+    {
+      "name": "Text field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labelled input used in the item editor and settings.",
+      "html": "<label class=\"ds-field\"><span>Name</span><input value=\"Navy chinos\"></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:6px;font:600 13px Figtree,system-ui,sans-serif;color:var(--ink,#1b2433)}.ds-field input{background:var(--raised,#fff);border:1px solid var(--line,#e2ded8);border-radius:8px;padding:10px 12px;font:400 15px Figtree,system-ui,sans-serif;color:inherit}.ds-field input:focus-visible{outline:2px solid var(--accent,#1b2433);outline-offset:2px}"
+    },
+    {
+      "name": "Bottom navigation",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "Phone tab bar; the active tab has an accent-soft fill and a coral icon.",
+      "html": "<nav class=\"ds-tabs\"><button aria-current=\"page\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><circle cx=\"12\" cy=\"12\" r=\"8\"/></svg>Outfits</button><button><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\"><rect x=\"5\" y=\"5\" width=\"14\" height=\"14\" rx=\"2\"/></svg>Closet</button></nav>",
+      "css": ".ds-tabs{display:grid;grid-template-columns:repeat(2,1fr);gap:4px;background:var(--raised,#fff);border-top:1px solid var(--line,#e2ded8);padding:6px 8px}.ds-tabs button{border:0;background:transparent;padding:6px 4px;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:2px;font:600 12px Figtree,system-ui,sans-serif;color:var(--muted,#5b6270)}.ds-tabs svg{width:22px;height:22px}.ds-tabs button[aria-current=\"page\"]{color:var(--accent,#1b2433);background:var(--accent-soft,#e7e9ee)}.ds-tabs button[aria-current=\"page\"] svg{color:var(--coral,#ff7a59)}"
+    },
+    {
+      "name": "Garment on the cream canvas",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Signature: a cut-out or glyph on the radial cream canvas with a garment shadow.",
+      "html": "<div class=\"ds-canvas\"><svg viewBox=\"0 0 24 24\" fill=\"#3a4a6b\"><path d=\"M8 3l-4 3 2 4 2-1v12h8V9l2 1 2-4-4-3h-2a2 2 0 0 1-4 0z\"/></svg></div>",
+      "css": ".ds-canvas{width:160px;aspect-ratio:1/1;border-radius:12px;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}.ds-canvas svg{width:60%;height:60%;filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}"
+    },
+    {
+      "name": "Rank badge",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Outfit rank in the display face; coral only for #1.",
+      "html": "<span class=\"ds-rank ds-top\">1</span><span class=\"ds-rank\">2</span>",
+      "css": ".ds-rank{display:inline-grid;place-items:center;min-width:44px;height:44px;border-radius:10px;margin-right:8px;background:var(--accent-soft,#e7e9ee);color:var(--ink,#1b2433);font:800 26px \"Big Shoulders Display\",\"Arial Narrow\",sans-serif;line-height:1}.ds-rank.ds-top{background:var(--coral,#ff7a59);color:var(--coral-ink,#1b2433)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Wardrobe Editor",
+    "overview": "An editor curating what you own, laid out on cream like a stylist's board: what to wear today and why, what to mend, what to let go. The clothes are the page; the tools stay quiet around them (owner, 2026-10-19).\n\nWearcycle is personal and calm, editorial and fashion-aware, intelligent and practical, and sustainable without eco cliches. Its concept is personal fashion editorial plus wardrobe intelligence. The clothing is the protagonist and the interface supports it. On phones it feels like a personal stylist in your pocket; on wide screens it is a digital wardrobe workspace, not a widened phone. A screen should be recognisable as Wearcycle without the logo.\n\nHierarchy is built in this order: scale, typography, whitespace, alignment, contrast, color, divider, container. Cards are the last option. Different areas carry different personalities (docs/design/SCREENS.md) instead of one card pattern everywhere. Wearcycle is an established world: every change inherits and refines it, never replaces it.",
+    "keyCharacteristics": [
+      "Deep ink structure.",
+      "Warm cream garment canvas behind cut-outs.",
+      "Coral as the action accent.",
+      "Condensed editorial display type.",
+      "A subtle life-cycle (circular) movement language."
+    ],
+    "rules": [
+      {
+        "name": "The One Token System Rule",
+        "body": "Use the token names above. Add a token only when none fits, give it a dark value, and update both dark blocks (the prefers-color-scheme block and [data-theme=\"dark\"]).",
+        "section": "colors"
+      },
+      {
+        "name": "The Signal Rule",
+        "body": "Coral is never text on light backgrounds (2.34:1 on Background) and never the only cue for a selected state. Selected states use ink: heavier weight plus a 2px ink underline, or an ink fill (today's chips).",
+        "section": "colors"
+      },
+      {
+        "name": "The Canvas Rule",
+        "body": "Cream is for the garment canvas. Do not make every panel cream.",
+        "section": "colors"
+      },
+      {
+        "name": "The Colors Outside CSS Rule",
+        "body": "When the palette changes, also update the theme-color metas in index.html (#f6f4f1 light, #12161e dark), manifest.webmanifest (#1b2433), the share image in app.js and privacy.html.",
+        "section": "colors"
+      },
+      {
+        "name": "The Right Face Rule",
+        "body": "Display type is for page titles, outfit and look numbers, large numbers (+N) and short editorial labels. Never for paragraphs, controls or user-typed garment names: those are Figtree, because names may be typed in any script.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sentence Case Rule",
+        "body": "Strings are written in sentence case; uppercase only through CSS (text-transform), so the translation dictionaries keep matching.",
+        "section": "typography"
+      },
+      {
+        "name": "The No Shrinking Rule",
+        "body": "Do not solve crowding by shrinking text. Body text stays 15px; Impeccable's 16px body floor does not apply here.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat-By-Default Rule",
+        "body": "A container earns a shadow only by floating above the page. Grouping is done with space and alignment.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** let the garments lead: large images on the cream canvas, tools quiet around them.",
+      "**Do** use Ink for every selected state: weight plus a 2px ink underline, or an ink fill.",
+      "**Do** keep coral to the main action, Add clothes, the #1 rank, the active tab icon, the active pager dot and progress.",
+      "**Do** keep text at 4.5:1 and indicators at 3:1 against their background, in both themes.",
+      "**Do** keep 44px touch targets (40px for small chips) and a visible focus outline.",
+      "**Do** design light and dark together; light is the primary presentation for design reviews and the default setting stays Auto.",
+      "**Do** use the full width on purpose at 1366 and 1920px."
+    ],
+    "donts": [
+      "**Don't** use coral as text on light backgrounds or as the only cue for a selection.",
+      "**Don't** make every panel cream; cream is the garment canvas.",
+      "**Don't** build dashboard grids, generic stat cards, endless pill rows, endless rounded cards or cards inside cards.",
+      "**Don't** add decorative gradients, purple or blue AI styling, glassmorphism, neon or glows.",
+      "**Don't** add meaningless badges, unneeded progress bars or icon-heavy headings.",
+      "**Don't** hide information behind hover.",
+      "**Don't** leave large unused desktop space caused by a phone max-width.",
+      "**Don't** set user-typed garment names in the display face.",
+      "**Don't** shrink text to solve crowding, or truncate translated labels to hide overflow.",
+      "**Don't** add a colored side stripe thicker than 1px to a card or callout; today .advice and .askcard (styles.css:255, 531) carry 3px coral left borders, which the detector flags."
+    ]
+  }
+}

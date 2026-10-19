@@ -1,0 +1,141 @@
+# Wearcycle: project instructions
+
+Wearcycle is an installable web app (PWA) for managing your own clothes:
+ranked, explained outfits for an occasion and the weather; wear, laundry,
+condition and repair tracking; donate and shopping lists. Live at
+https://wearcycle.app/. Users today: the owner's family; design for any
+adult who signs up (public app planned; revenue model undecided, so no paid
+features or paywalls in the redesign). Product truth: PRODUCT.md.
+
+## Platforms (all supported)
+- Android phones: Chrome, app installed from the browser. Main use.
+- iPad: Safari (WebKit), added to the Home Screen. Portrait is 744 to
+  1032px wide, landscape 1133 to 1376px.
+- Windows: Chrome or Edge, mouse and keyboard. Common widths 1366, 1536
+  and 1920px.
+- Claude's container has Chromium only. iPad screenshots there show
+  layout, not WebKit rendering: check WebKit on a real iPad.
+
+## Stack (hard constraints)
+- Plain HTML, CSS and vanilla JavaScript. No framework, bundler,
+  package.json or build step in the app. Files are served as they are.
+- Hosting: Cloudflare Pages. Production branch main, output is the
+  repository root. Pushing to main publishes.
+- Backend: Supabase (Postgres with row-level security, auth, private
+  "photos" bucket) and one Edge Function "claude".
+- index.html: shell, header, tab bar, theme script, theme-color metas.
+- styles.css: all styling. app.js: all UI (string templates with
+  innerHTML), sheets (openSheet), camera, Supabase, Claude calls,
+  canvas share image. logic.js: pure rules, no DOM.
+- privacy.html has its own inline CSS. manifest.webmanifest and the
+  theme-color metas carry colors too.
+- The whole repository root is public. Never commit credentials. Never add
+  tools/, docs/, .claude/ or .impeccable/ to the SHELL list in sw.js.
+
+## Release model
+- One short branch per phase, design/<name>, from current main.
+  Cloudflare previews it at design-<name>.wearcycle.pages.dev.
+- Every phase ends with a release to main. Users may see new and old
+  screens side by side until the redesign is finished.
+- Screen freeze: while a screen is being redesigned, no feature work on
+  that screen on main. Bug fixes and outfit-rule changes in logic.js may
+  continue; merge them into the branch the same day.
+- On previews, sign in with the test account: previews use the real
+  Supabase project.
+
+## Release routine (every merge to main)
+1. The definition of done in docs/design/UI_REVIEW.md is met.
+2. node --check passes for every JS file; node tools/check.mjs passes.
+3. The owner checked the preview on his Android phone (plus iPad and
+   Windows at the milestones in the plan).
+4. APP_VERSION in app.js and VERSION in sw.js bumped to the same value
+   (app changes only); sw.js non-empty and lists every shell file.
+5. Merge, delete the branch, add the release to the Project doc
+   claude/wardrobe-app-decisions.md.
+
+## Checks (Claude's container)
+- `for f in *.js i18n/*.js tools/*.mjs; do node --check "$f"; done`
+- `node tools/check.mjs` with WEARCYCLE_TEST_EMAIL and
+  WEARCYCLE_TEST_PASSWORD set in the environment (test account only, never
+  in a file). Flags: `--worst-case`, `--compare <folder>`, `--baseline
+  <summary.json>`, `--strict`, `--out <folder>`, `--css-pixels`; the rest
+  are listed at the top of tools/check.mjs. Fixed clock, stubbed weather
+  and the fixture closet in tools/fixtures/. Every Supabase call except
+  sign-in is answered locally; Claude's container cannot reach Supabase,
+  so sign-in is stubbed there (the report says so). Screenshots go outside
+  the repo, except the Phase 4 baseline in docs/design/baseline/.
+  Test-only packages (Playwright, @axe-core/playwright) live outside the
+  repo; see tools/deps.mjs.
+
+## Translations
+- i18n.js translates each text node by exact English match. Changing
+  markup (splitting or joining text) changes what is matched, even with
+  no copy change. tools/check.mjs lists English left in fr and ja.
+- Any new or changed visible English string goes into i18n/es.js, fr.js,
+  tl.js, hi.js, ja.js and ko.js in the same commit, with {0} and {a}
+  placeholders kept. Keep copy changes to a minimum.
+- Sentence case in source strings; uppercase only with CSS.
+
+## Do not change without explicit approval
+- logic.js (scoring, ranking, care rules, shopping calculations).
+- The data model (items.body, settings.body, wears) and the Edge Function.
+- Brand: name, logo, Ink & Coral palette (ink #1B2433, coral #FF7A59,
+  neutral #F6F4F1). Coral is not a selected-state color.
+- Existing features. Never remove one to simplify a layout.
+
+## Design work
+- Before any UI change, read DESIGN.md, PRODUCT.md and
+  docs/design/SCREENS.md (it records the chosen direction).
+- Use the existing tokens in styles.css. No second token set.
+- Mouse and keyboard: hover styles only inside @media (hover: hover) and
+  (pointer: fine); horizontal rows usable with a mouse; every control
+  reachable by keyboard.
+- Pick images by rendered size: 256px thumbnails only where the image is
+  shown small; cut-outs or photos for large tiles and the hero.
+
+## Design skills (.claude/skills): Wearcycle rules win
+- Pinned: Impeccable 4.5.2 (tag skill-v4.5.2), mobile-native, break-ui,
+  review-animations (emilkowalski/skills 2d22863). Never run
+  `npx impeccable install` or `update`; never install skills globally.
+- Impeccable: Wearcycle is an established world. Inherit and refine it;
+  never run it as a Redesign that replaces the visual world. The cream
+  garment canvas is a brand trait, not a cliche to rework.
+- Allowed without asking: critique, audit, harden, layout, typeset,
+  quieter, distill, adapt, clarify, polish. Ask first: craft, shape,
+  bolder, colorize, delight, overdrive, animate, live, generate.
+- If Impeccable regenerates DESIGN.md, restore any rule it dropped.
+- No frameworks, npm packages or CDN libraries in shipped code, even when
+  a skill suggests one (overdrive does).
+- break-ui: worst-case data lives in tools/fixtures/ and enters through
+  tools/check.mjs. Never add a demo-data switch to app code.
+- harden: never truncate translated labels to hide overflow.
+- distill and quieter: never remove a feature, action or font family.
+- Type and motion come from DESIGN.md, not skill defaults: body stays 15px
+  (the skills assume 16px); animations only inside
+  prefers-reduced-motion: no-preference, editorial motion up to 450ms.
+- critique writes .impeccable/critique/*.md (tracked); it never edits app
+  code. Run it degraded (single context) unless the owner asks for agents.
+- live and generate insert a localhost script into index.html. Run
+  `live-server stop` and confirm index.html has no live.js before commit.
+- Network: .impeccable/config.json has "updateCheck": false and
+  .claude/settings.json sets DO_NOT_TRACK and IMPECCABLE_NO_TELEMETRY
+  (4.5.2 ignores "telemetry": false). impeccable.style is blocked in
+  Claude's cloud, so concept-seed runs degraded; that is expected.
+
+## Workflow for UI work
+1. Run /impeccable critique (read-only) and read the code.
+2. Propose phone, iPad and desktop layouts, the strings that change and
+   the image sources. Wait for approval.
+3. Implement on the phase branch.
+4. Run /impeccable harden, break-ui with the fixture, and
+   review-animations if motion changed.
+5. Run node --check and node tools/check.mjs.
+6. Fix the three highest-impact problems. At most two rounds.
+7. Release routine.
+
+## Accessibility (adopted; keep)
+- Touch targets 44px (40px for small chips).
+- Text contrast 4.5:1; UI indicators 3:1 (WCAG 2.2, 1.4.3, 1.4.11).
+- :focus-visible outline; aria-pressed and aria-current on toggles and
+  tabs; aria-label on icon buttons; Escape closes sheets (exists).
+- Safe-area insets on fixed layers; prefers-reduced-motion respected.
