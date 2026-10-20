@@ -33,8 +33,12 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   tools/, docs/, .claude/ or .impeccable/ to the SHELL list in sw.js.
 
 ## Release model
-- One short branch per phase, design/<name>, from current main.
-  Cloudflare previews it at design-<name>.wearcycle.pages.dev.
+- All work (features, fixes, redesign phases) goes on one permanent
+  branch, preview. Cloudflare previews it at preview.wearcycle.pages.dev.
+  Never delete it (Claude's session cannot delete branches). Before work,
+  check preview equals main or only adds commits on top of it.
+- Release = fast-forward main to preview (git merge --ff-only), so the
+  two are identical afterwards. Never force-push either branch.
 - Every phase ends with a release to main. Users may see new and old
   screens side by side until the redesign is finished.
 - Screen freeze: while a screen is being redesigned, no feature work on
@@ -50,7 +54,7 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
    Windows at the milestones in the plan).
 4. APP_VERSION in app.js and VERSION in sw.js bumped to the same value
    (app changes only); sw.js non-empty and lists every shell file.
-5. Merge, delete the branch, add the release to the Project doc
+5. Fast-forward main to preview, add the release to the Project doc
    claude/wardrobe-app-decisions.md.
 
 ## Checks (Claude's container)
