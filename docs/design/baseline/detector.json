@@ -1,0 +1,1354 @@
+{
+ "static": {
+  "warnings": 4,
+  "advisories": 95,
+  "warningsByRule": {
+   "dark-glow": 2,
+   "side-tab": 2
+  },
+  "advisoriesByRule": {
+   "repeating-stripes-gradient": 1,
+   "design-system-font-size": 65,
+   "design-system-radius": 18,
+   "design-system-color": 11
+  },
+  "findings": [
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "index.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark background"
+   },
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "index.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "index.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   },
+   {
+    "antipattern": "side-tab",
+    "severity": "warning",
+    "advisory": false,
+    "file": "styles.css",
+    "line": 255,
+    "snippet": "border-left:3px solid var(--coral)}"
+   },
+   {
+    "antipattern": "side-tab",
+    "severity": "warning",
+    "advisory": false,
+    "file": "styles.css",
+    "line": 531,
+    "snippet": "border-left:3px solid var(--coral)}"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 31,
+    "snippet": "font-size: 26px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 32,
+    "snippet": "font-size: 10px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 33,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 33,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 45,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 49,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 51,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 53,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 63,
+    "snippet": "border-radius: 3px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 63,
+    "snippet": "font-size: 10.5px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 65,
+    "snippet": "font-size: 10px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 86,
+    "snippet": "font-size: 10.5px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 89,
+    "snippet": "font-size: 28px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 90,
+    "snippet": "font-size: 10.5px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 95,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 107,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 123,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 132,
+    "snippet": "border-radius: 2px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 134,
+    "snippet": "border-radius: 3px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 145,
+    "snippet": "font-size: 10px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 147,
+    "snippet": "border-radius: 28px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 157,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 162,
+    "snippet": "font-size: 20px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 167,
+    "snippet": "font-size: 10px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 174,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 175,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 177,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 182,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 192,
+    "snippet": "Undocumented color #000 is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 195,
+    "snippet": "Undocumented color rgba(0,0,0,.55) is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 195,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 198,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 200,
+    "snippet": "Undocumented color #000 is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 200,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 201,
+    "snippet": "border-radius: 14px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 217,
+    "snippet": "font-size: 9px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 218,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 230,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 234,
+    "snippet": "font-size: 26px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 251,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 258,
+    "snippet": "font-size: 26px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 261,
+    "snippet": "font-size: 16px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 263,
+    "snippet": "border-radius: 2px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 269,
+    "snippet": "font-size: 10px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 274,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 275,
+    "snippet": "font-size: 9px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 280,
+    "snippet": "font-size: 20px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 289,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 291,
+    "snippet": "font-size: 18px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 294,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 308,
+    "snippet": "Undocumented color rgba(0,0,0,.25) is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 313,
+    "snippet": "font-size: 9.5px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 320,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 342,
+    "snippet": "Undocumented color #e2d9cb is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 344,
+    "snippet": "Undocumented color rgba(0,0,0,.18) is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 344,
+    "snippet": "border-radius: 6px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 349,
+    "snippet": "border-radius: 6px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 358,
+    "snippet": "Undocumented color rgba(0,0,0,.12) is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 358,
+    "snippet": "Undocumented color rgba(0,0,0,.10) is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 379,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 380,
+    "snippet": "Undocumented color rgba(0,0,0,.2) is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 380,
+    "snippet": "font-size: 17px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 387,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 397,
+    "snippet": "font-size: 28px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 399,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 405,
+    "snippet": "font-size: 20px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 406,
+    "snippet": "font-size: 17px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 412,
+    "snippet": "border-radius: 4px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 413,
+    "snippet": "font-size: 22px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 422,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 424,
+    "snippet": "font-size: 20px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 430,
+    "snippet": "font-size: 16px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 441,
+    "snippet": "font-size: 11px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 447,
+    "snippet": "font-size: 26px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 458,
+    "snippet": "border-radius: 3px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 475,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 476,
+    "snippet": "font-size: 20px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 482,
+    "snippet": "font-size: 22px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 483,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 490,
+    "snippet": "font-size: 16px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 493,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 513,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 517,
+    "snippet": "border-radius: 9px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 524,
+    "snippet": "font-size: 21px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 533,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 555,
+    "snippet": "border-radius: 14px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 564,
+    "snippet": "border-radius: 14px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 604,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 623,
+    "snippet": "Undocumented color #000 is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 631,
+    "snippet": "border-radius: 14px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 640,
+    "snippet": "border-radius: 14px is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-font-size",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 654,
+    "snippet": "font-size: 14px is off the DESIGN.md type ramp"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 659,
+    "snippet": "Undocumented color rgba(0,0,0,.45) is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "styles.css",
+    "line": 711,
+    "snippet": "border-radius: 6px is outside the DESIGN.md rounded scale"
+   }
+  ]
+ },
+ "snapshots": {
+  "warnings": 11,
+  "advisories": 54,
+  "warningsByRule": {
+   "dark-glow": 7,
+   "low-contrast": 4
+  },
+  "advisoriesByRule": {
+   "repeating-stripes-gradient": 7,
+   "design-system-color": 36,
+   "design-system-radius": 11
+  },
+  "findings": [
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/care.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/care.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   },
+   {
+    "antipattern": "low-contrast",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/closet.html",
+    "line": 0,
+    "snippet": "3.9:1 (need 4.5:1) — text #9c6a12 on #f5e8cc"
+   },
+   {
+    "antipattern": "low-contrast",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/closet.html",
+    "line": 0,
+    "snippet": "3.9:1 (need 4.5:1) — text #9c6a12 on #f5e8cc"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/closet.html",
+    "line": 0,
+    "snippet": "border-top rgb(0, 0, 0) on span \"Good\" is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/closet.html",
+    "line": 0,
+    "snippet": "border-radius 3px on span \"Good\" is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/closet.html",
+    "line": 0,
+    "snippet": "border-radius 28px on button \"Add clothes\" is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/closet.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/closet.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   },
+   {
+    "antipattern": "low-contrast",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/editor.html",
+    "line": 0,
+    "snippet": "3.9:1 (need 4.5:1) — text #9c6a12 on #f5e8cc"
+   },
+   {
+    "antipattern": "low-contrast",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/editor.html",
+    "line": 0,
+    "snippet": "3.9:1 (need 4.5:1) — text #9c6a12 on #f5e8cc"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 0,
+    "snippet": "border-top rgb(0, 0, 0) on span \"Good\" is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 0,
+    "snippet": "border-radius 3px on span \"Good\" is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 0,
+    "snippet": "border-radius 28px on button \"Add clothes\" is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(28, 29, 32) on button \"1\" is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(139, 144, 151) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(31, 46, 87) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(216, 198, 163) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(179, 164, 119) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(106, 74, 46) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(75, 101, 137) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(93, 106, 56) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(185, 50, 46) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(110, 31, 47) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(226, 154, 176) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(214, 116, 42) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(224, 190, 66) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(62, 138, 77) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(46, 137, 135) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(155, 191, 229) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(53, 102, 196) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 151,
+    "snippet": "background rgb(106, 74, 156) on button is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/editor.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/editor.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/outfits.html",
+    "line": 0,
+    "snippet": "border-radius 4px on button is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/outfits.html",
+    "line": 39,
+    "snippet": "background rgb(75, 101, 137) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/outfits.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/outfits.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/preview.html",
+    "line": 0,
+    "snippet": "border-radius 4px on button is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/preview.html",
+    "line": 39,
+    "snippet": "background rgb(75, 101, 137) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/preview.html",
+    "line": 0,
+    "snippet": "border-radius 14px on div is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/preview.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/preview.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/settings.html",
+    "line": 0,
+    "snippet": "border-radius 4px on button is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/settings.html",
+    "line": 39,
+    "snippet": "background rgb(75, 101, 137) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/settings.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/settings.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 0,
+    "snippet": "border-radius 4px on img is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 50,
+    "snippet": "background rgb(28, 29, 32) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 50,
+    "snippet": "background rgb(214, 116, 42) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 50,
+    "snippet": "background rgb(106, 74, 156) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 50,
+    "snippet": "background rgb(62, 138, 77) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 50,
+    "snippet": "background rgb(224, 190, 66) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 50,
+    "snippet": "background rgb(185, 50, 46) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 50,
+    "snippet": "background rgb(226, 154, 176) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 52,
+    "snippet": "background rgb(139, 144, 151) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 0,
+    "snippet": "border-radius 3px on span is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 52,
+    "snippet": "background rgb(93, 106, 56) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 52,
+    "snippet": "background rgb(110, 31, 47) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-radius",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 0,
+    "snippet": "border-radius 2px on i is outside the DESIGN.md rounded scale"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 54,
+    "snippet": "background rgb(155, 191, 229) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 54,
+    "snippet": "background rgb(31, 46, 87) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "design-system-color",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 57,
+    "snippet": "background rgb(179, 164, 119) on span is outside DESIGN.md colors"
+   },
+   {
+    "antipattern": "dark-glow",
+    "severity": "warning",
+    "advisory": false,
+    "file": "snapshots/shop.html",
+    "line": 0,
+    "snippet": "Colored box-shadow glow (#141e3c) on dark page"
+   },
+   {
+    "antipattern": "repeating-stripes-gradient",
+    "severity": "advisory",
+    "advisory": true,
+    "file": "snapshots/shop.html",
+    "line": 0,
+    "snippet": "repeating-gradient decorative stripes"
+   }
+  ],
+  "hiddenElementsExcluded": {
+   "outfits": 25,
+   "closet": 10,
+   "care": 11,
+   "shop": 16,
+   "preview": 25,
+   "editor": 10,
+   "settings": 25
+  }
+ }
+}

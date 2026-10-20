@@ -24,3 +24,6 @@
 
 # Claude Code machine-local settings (Impeccable's hook installer writes here).
 .claude/settings.local.json
+
+# tools/check.mjs scan input (HTML copies plus copies of styles.css, fonts and icons), rebuilt on every run.
+docs/design/baseline/snapshots/

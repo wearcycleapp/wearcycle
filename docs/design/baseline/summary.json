@@ -1,0 +1,2081 @@
+{
+ "when": "2026-10-20T03:29:43.374Z",
+ "seconds": 261,
+ "options": {
+  "worstCase": false,
+  "strict": false,
+  "fullPage": false,
+  "cssPixels": true,
+  "noAxe": false,
+  "noDetector": false,
+  "stubAuth": false
+ },
+ "fixedClock": "2026-10-14T08:30:00-04:00",
+ "auth": {
+  "mode": "stub",
+  "reason": "WEARCYCLE_TEST_EMAIL / WEARCYCLE_TEST_PASSWORD not set"
+ },
+ "totals": {
+  "axeSerious": 142,
+  "englishLeft": 2,
+  "textOverflow": 12,
+  "userNamesCut": 9,
+  "wearThisVisible": false,
+  "detectorWarnings": 15,
+  "detectorAdvisories": 149,
+  "detectorHiddenExcluded": 122
+ },
+ "checks": [
+  {
+   "name": "APP_VERSION equals the sw.js VERSION",
+   "status": "PASS",
+   "detail": "1.49.1"
+  },
+  {
+   "name": "sw.js is non-empty and every shell file exists",
+   "status": "PASS",
+   "detail": "31 files"
+  },
+  {
+   "name": "Sign-in",
+   "status": "PASS",
+   "detail": "stub: WEARCYCLE_TEST_EMAIL / WEARCYCLE_TEST_PASSWORD not set"
+  },
+  {
+   "name": "Every tab opens",
+   "status": "PASS",
+   "detail": "outfits, closet, care, shop"
+  },
+  {
+   "name": "Occasion change re-renders the outfits",
+   "status": "PASS",
+   "detail": "work to out and back"
+  },
+  {
+   "name": "Piece preview, Swap and Back to suggestion",
+   "status": "PASS",
+   "detail": "\"White oxford shirt\" swapped for \"Burgundy hoodie\", then restored"
+  },
+  {
+   "name": "Each sheet opens and closes",
+   "status": "PASS",
+   "detail": "12 sheets (Escape), plus the close button"
+  },
+  {
+   "name": "Theme switches (Settings, Appearance)",
+   "status": "PASS",
+   "detail": "dark rgb(18, 22, 30), light rgb(246, 244, 241)"
+  },
+  {
+   "name": "Language switches (Settings, Language)",
+   "status": "PASS",
+   "detail": "fr \"Tenues\", back to en"
+  },
+  {
+   "name": "Every view captured",
+   "status": "PASS",
+   "detail": "98 screenshots"
+  },
+  {
+   "name": "Cut-outs loaded before each screenshot",
+   "status": "PASS",
+   "detail": "all views"
+  },
+  {
+   "name": "No horizontal overflow",
+   "status": "PASS",
+   "detail": "all views"
+  },
+  {
+   "name": "No console errors",
+   "status": "PASS",
+   "detail": ""
+  },
+  {
+   "name": "Network stays local (Supabase, Open-Meteo stubbed)",
+   "status": "PASS",
+   "detail": "0 writes and 0 function calls answered locally"
+  },
+  {
+   "name": "\"Wear this\" visible at 390x844 without scrolling",
+   "status": "REVIEW",
+   "detail": "button at 950-998px, viewport 844px, covered or off screen (not yet: Phase 8 target)"
+  },
+  {
+   "name": "axe-core: no serious or critical issues",
+   "status": "REVIEW",
+   "detail": "142 (no baseline yet: recorded for Phase 4)"
+  },
+  {
+   "name": "No English left in French and Japanese",
+   "status": "REVIEW",
+   "detail": "2 (no baseline yet: recorded for Phase 4)"
+  },
+  {
+   "name": "No app text cut off or spilling (all languages)",
+   "status": "REVIEW",
+   "detail": "12 (no baseline yet: recorded for Phase 4)"
+  },
+  {
+   "name": "Piece names cut with an ellipsis",
+   "status": "INFO",
+   "detail": "9 (user-typed names may be truncated; listed per view in summary.json)"
+  },
+  {
+   "name": "Detector warnings (npx impeccable@4.5.2 detect)",
+   "status": "REVIEW",
+   "detail": "15 (index.html + styles.css 4, screen snapshots 11) (no baseline yet: recorded for Phase 4). Rules: detector.json"
+  },
+  {
+   "name": "Detector advisories (recorded, not gated)",
+   "status": "INFO",
+   "detail": "149 (index.html + styles.css 95, screen snapshots 54; 122 hidden elements left out of the snapshots)"
+  }
+ ],
+ "console": [],
+ "writesAnsweredLocally": [],
+ "functionsAnsweredLocally": [],
+ "detector": {
+  "static": {
+   "warnings": 4,
+   "advisories": 95,
+   "warningsByRule": {
+    "dark-glow": 2,
+    "side-tab": 2
+   },
+   "advisoriesByRule": {
+    "repeating-stripes-gradient": 1,
+    "design-system-font-size": 65,
+    "design-system-radius": 18,
+    "design-system-color": 11
+   }
+  },
+  "snapshots": {
+   "warnings": 11,
+   "advisories": 54,
+   "warningsByRule": {
+    "dark-glow": 7,
+    "low-contrast": 4
+   },
+   "advisoriesByRule": {
+    "repeating-stripes-gradient": 7,
+    "design-system-color": 36,
+    "design-system-radius": 11
+   },
+   "hiddenElementsExcluded": {
+    "outfits": 25,
+    "closet": 10,
+    "care": 11,
+    "shop": 16,
+    "preview": 25,
+    "editor": 10,
+    "settings": 25
+   }
+  }
+ },
+ "captures": [
+  {
+   "name": "phone-360-light-en-outfits",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-en-closet",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [
+    "div.name \"White leather sneakers\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-en-care",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-en-shop",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-en-preview",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-en-editor",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-en-settings",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [
+    "b \"sample.closet@example.test\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-dark-en-outfits",
+   "device": "phone-360",
+   "theme": "dark",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-dark-en-closet",
+   "device": "phone-360",
+   "theme": "dark",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [
+    "div.name \"White leather sneakers\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      "button[data-cat=\"top\"] > .n"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-dark-en-care",
+   "device": "phone-360",
+   "theme": "dark",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-dark-en-shop",
+   "device": "phone-360",
+   "theme": "dark",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-dark-en-preview",
+   "device": "phone-360",
+   "theme": "dark",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-dark-en-editor",
+   "device": "phone-360",
+   "theme": "dark",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-dark-en-settings",
+   "device": "phone-360",
+   "theme": "dark",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [
+    "b \"sample.closet@example.test\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-light-en-outfits",
+   "device": "phone-390",
+   "theme": "light",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-390-light-en-closet",
+   "device": "phone-390",
+   "theme": "light",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-390-light-en-care",
+   "device": "phone-390",
+   "theme": "light",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-light-en-shop",
+   "device": "phone-390",
+   "theme": "light",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-390-light-en-preview",
+   "device": "phone-390",
+   "theme": "light",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-light-en-editor",
+   "device": "phone-390",
+   "theme": "light",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-light-en-settings",
+   "device": "phone-390",
+   "theme": "light",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [
+    "b \"sample.closet@example.test\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-dark-en-outfits",
+   "device": "phone-390",
+   "theme": "dark",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-390-dark-en-closet",
+   "device": "phone-390",
+   "theme": "dark",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      "button[data-cat=\"top\"] > .n"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-390-dark-en-care",
+   "device": "phone-390",
+   "theme": "dark",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-dark-en-shop",
+   "device": "phone-390",
+   "theme": "dark",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-390-dark-en-preview",
+   "device": "phone-390",
+   "theme": "dark",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-dark-en-editor",
+   "device": "phone-390",
+   "theme": "dark",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-390-dark-en-settings",
+   "device": "phone-390",
+   "theme": "dark",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [
+    "b \"sample.closet@example.test\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-light-en-outfits",
+   "device": "ipad-820",
+   "theme": "light",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-820-light-en-closet",
+   "device": "ipad-820",
+   "theme": "light",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-820-light-en-care",
+   "device": "ipad-820",
+   "theme": "light",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-light-en-shop",
+   "device": "ipad-820",
+   "theme": "light",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-820-light-en-preview",
+   "device": "ipad-820",
+   "theme": "light",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-light-en-editor",
+   "device": "ipad-820",
+   "theme": "light",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-light-en-settings",
+   "device": "ipad-820",
+   "theme": "light",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-dark-en-outfits",
+   "device": "ipad-820",
+   "theme": "dark",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-820-dark-en-closet",
+   "device": "ipad-820",
+   "theme": "dark",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      "button[data-cat=\"top\"] > .n"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-820-dark-en-care",
+   "device": "ipad-820",
+   "theme": "dark",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-dark-en-shop",
+   "device": "ipad-820",
+   "theme": "dark",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-820-dark-en-preview",
+   "device": "ipad-820",
+   "theme": "dark",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-dark-en-editor",
+   "device": "ipad-820",
+   "theme": "dark",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-820-dark-en-settings",
+   "device": "ipad-820",
+   "theme": "dark",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-light-en-outfits",
+   "device": "ipad-1180",
+   "theme": "light",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-1180-light-en-closet",
+   "device": "ipad-1180",
+   "theme": "light",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-1180-light-en-care",
+   "device": "ipad-1180",
+   "theme": "light",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-light-en-shop",
+   "device": "ipad-1180",
+   "theme": "light",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-1180-light-en-preview",
+   "device": "ipad-1180",
+   "theme": "light",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-light-en-editor",
+   "device": "ipad-1180",
+   "theme": "light",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-light-en-settings",
+   "device": "ipad-1180",
+   "theme": "light",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-dark-en-outfits",
+   "device": "ipad-1180",
+   "theme": "dark",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-1180-dark-en-closet",
+   "device": "ipad-1180",
+   "theme": "dark",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      "button[data-cat=\"top\"] > .n"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-1180-dark-en-care",
+   "device": "ipad-1180",
+   "theme": "dark",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-dark-en-shop",
+   "device": "ipad-1180",
+   "theme": "dark",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "ipad-1180-dark-en-preview",
+   "device": "ipad-1180",
+   "theme": "dark",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-dark-en-editor",
+   "device": "ipad-1180",
+   "theme": "dark",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "ipad-1180-dark-en-settings",
+   "device": "ipad-1180",
+   "theme": "dark",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-light-en-outfits",
+   "device": "win-1366",
+   "theme": "light",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1366-light-en-closet",
+   "device": "win-1366",
+   "theme": "light",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1366-light-en-care",
+   "device": "win-1366",
+   "theme": "light",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-light-en-shop",
+   "device": "win-1366",
+   "theme": "light",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1366-light-en-preview",
+   "device": "win-1366",
+   "theme": "light",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-light-en-editor",
+   "device": "win-1366",
+   "theme": "light",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-light-en-settings",
+   "device": "win-1366",
+   "theme": "light",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-dark-en-outfits",
+   "device": "win-1366",
+   "theme": "dark",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1366-dark-en-closet",
+   "device": "win-1366",
+   "theme": "dark",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      "button[data-cat=\"top\"] > .n"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1366-dark-en-care",
+   "device": "win-1366",
+   "theme": "dark",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-dark-en-shop",
+   "device": "win-1366",
+   "theme": "dark",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1366-dark-en-preview",
+   "device": "win-1366",
+   "theme": "dark",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-dark-en-editor",
+   "device": "win-1366",
+   "theme": "dark",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1366-dark-en-settings",
+   "device": "win-1366",
+   "theme": "dark",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-light-en-outfits",
+   "device": "win-1920",
+   "theme": "light",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1920-light-en-closet",
+   "device": "win-1920",
+   "theme": "light",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1920-light-en-care",
+   "device": "win-1920",
+   "theme": "light",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-light-en-shop",
+   "device": "win-1920",
+   "theme": "light",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1920-light-en-preview",
+   "device": "win-1920",
+   "theme": "light",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-light-en-editor",
+   "device": "win-1920",
+   "theme": "light",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-light-en-settings",
+   "device": "win-1920",
+   "theme": "light",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-dark-en-outfits",
+   "device": "win-1920",
+   "theme": "dark",
+   "lang": "en",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1920-dark-en-closet",
+   "device": "win-1920",
+   "theme": "dark",
+   "lang": "en",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 1,
+     "targets": [
+      "button[data-cat=\"top\"] > .n"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1920-dark-en-care",
+   "device": "win-1920",
+   "theme": "dark",
+   "lang": "en",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-dark-en-shop",
+   "device": "win-1920",
+   "theme": "dark",
+   "lang": "en",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 of 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 of 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 of 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "win-1920-dark-en-preview",
+   "device": "win-1920",
+   "theme": "dark",
+   "lang": "en",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-dark-en-editor",
+   "device": "win-1920",
+   "theme": "dark",
+   "lang": "en",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "win-1920-dark-en-settings",
+   "device": "win-1920",
+   "theme": "dark",
+   "lang": "en",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-fr-outfits",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "fr",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [
+    "span.ml \"Très bon agencement\"",
+    "span.ml \"Très bon agencement\"",
+    "span.ml \"Agencement passable\""
+   ],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"Option 2\"]",
+      "button[aria-label=\"Option 3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-fr-closet",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "fr",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [
+    "div.name \"Chemise habillée blanche\"",
+    "div.name \"Chemise oxford blanche\"",
+    "div.name \"Pantalon de jogging noir\"",
+    "div.name \"Chaussettes habillées marine\""
+   ],
+   "userTruncated": [
+    "div.name \"White leather sneakers\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-fr-care",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "fr",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-fr-shop",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "fr",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [
+    "b \"Ce que vous porteriez par une journée de saison hiver\""
+   ],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1 sur 3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1 sur 2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1 sur 2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-fr-preview",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "fr",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-fr-editor",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "fr",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-fr-settings",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "fr",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [
+    "b \"Recadrer les photos sur les vêtements\""
+   ],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [
+    "8 pieces without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece."
+   ],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-ja-outfits",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "ja",
+   "view": "outfits",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "target-size",
+     "impact": "serious",
+     "help": "All touch targets must be 24px large, or leave sufficient space",
+     "nodes": 4,
+     "targets": [
+      "button[data-sel=\"0\"]",
+      "button[aria-label=\"候補2\"]",
+      "button[aria-label=\"候補3\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-ja-closet",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "ja",
+   "view": "closet",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [
+    "div.name \"白のオックスフォードシャツ\"",
+    "div.name \"緑のレインジャケット\"",
+    "div.name \"ネイビーのドレスソックス\""
+   ],
+   "userTruncated": [
+    "div.name \"White leather sneakers\""
+   ],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "color-contrast",
+     "impact": "serious",
+     "help": "Elements must meet minimum color contrast ratio thresholds",
+     "nodes": 3,
+     "targets": [
+      "button[data-cat=\"top\"] > .n",
+      ".card[data-edit=\"fx-05\"] > .body > .meta:nth-child(2) > .ex.wash",
+      "button[data-edit=\"fx-16\"] > .body > .meta:nth-child(2) > .ex.wash"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-ja-care",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "ja",
+   "view": "care",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-ja-shop",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "ja",
+   "view": "shop",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": [
+    {
+     "id": "aria-prohibited-attr",
+     "impact": "serious",
+     "help": "Elements must only use permitted ARIA attributes",
+     "nodes": 4,
+     "targets": [
+      "span[aria-label=\"1/3\"]",
+      ".need:nth-child(3) > .row > .meter[aria-label=\"1/2\"]",
+      ".panel:nth-child(9) > .need > .row > .meter[aria-label=\"1/2\"]"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "phone-360-light-ja-preview",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "ja",
+   "view": "preview",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-ja-editor",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "ja",
+   "view": "editor",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [],
+   "spilling": [],
+   "english": [],
+   "axe": []
+  },
+  {
+   "name": "phone-360-light-ja-settings",
+   "device": "phone-360",
+   "theme": "light",
+   "lang": "ja",
+   "view": "settings",
+   "overflowX": 0,
+   "wide": [],
+   "truncated": [],
+   "userTruncated": [
+    "b \"sample.closet@example.test\""
+   ],
+   "spilling": [],
+   "english": [
+    "8 pieces without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece."
+   ],
+   "axe": []
+  }
+ ]
+}
