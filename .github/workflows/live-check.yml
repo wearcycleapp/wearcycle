@@ -21,7 +21,9 @@ concurrency:
 
 jobs:
   live:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moves to Ubuntu 26 from 19 October 2026 (GitHub notice on the first run), and
+    # Playwright 1.56 installs its browser dependencies only on the Ubuntu versions it knows.
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
