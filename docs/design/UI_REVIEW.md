@@ -5,7 +5,7 @@ From Section 8 of the redesign plan v2.2. Capture with `node tools/check.mjs` (f
 - 360 and 390 (Android, touch, DPR 3), 820 and 1180 (iPad, touch, DPR 2), 1366 and 1920 (Windows, mouse, DPR 1); light and dark; English.
 - 360px in French and Japanese for every changed screen.
 - Photos, cut-outs and glyph-only items; an empty closet; the worst-case fixture (`node tools/check.mjs --worst-case`).
-- Compare with the Phase 4 baseline: `node tools/check.mjs --compare docs/design/baseline --baseline docs/design/baseline/summary.json` (add `--css-pixels` if the baseline was captured with it). `--baseline` turns the review counts (axe, English left, text cut off, detector warnings) into pass or fail against the baseline.
+- Compare with the Phase 4 baseline: `node tools/check.mjs --css-pixels --compare docs/design/baseline --baseline docs/design/baseline/summary.json`. The baseline is always captured with `--css-pixels` (the script refuses to write it otherwise, and `--compare` fails on a run at another scale). `--baseline` turns the review counts (axe, English left, text cut off, detector warnings) into pass or fail against the baseline; detector advisories are recorded but never gate.
 
 Chromium at iPad sizes shows layout, not WebKit rendering: the real iPad decides at milestones.
 
@@ -15,9 +15,9 @@ Chromium at iPad sizes shows layout, not WebKit rendering: the real iPad decides
 - No horizontal scroll at any review width; no text overflow in French or Japanese at 360px.
 - No English text left in the French and Japanese screenshots, apart from user content such as piece names.
 - axe-core: no serious or critical issues.
-- Detector findings at or below the Phase 4 baseline, or each one explained.
+- Detector warnings at or below the Phase 4 baseline, or each one explained. Advisories are recorded, not gated; elements hidden on screen are left out of the scan.
 - Light and dark reviewed.
-- The owner passed it on his Android phone; at milestones also on the iPad and in a Windows browser.
+- The owner passed the preview on his Android phone, signed in with the test account. Required at every release: Claude's container cannot reach Supabase, so this is the only test with real data. At milestones also on the iPad and in a Windows browser.
 - At most two refinement rounds.
 
 ## Ask

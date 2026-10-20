@@ -12,7 +12,11 @@
 // Sign-in uses WEARCYCLE_TEST_EMAIL / WEARCYCLE_TEST_PASSWORD from the environment. When Supabase cannot be reached
 // (or the variables are unset, or --stub-auth), the sign-in request is answered with a local fake session instead,
 // and the summary says so. Screenshots and reports go outside the repository (default: <tmp>/wearcycle-check/),
-// except the Phase 4 baseline under docs/design/baseline/ (--css-pixels keeps it small: one pixel per CSS pixel).
+// except the Phase 4 baseline under docs/design/baseline/, which must be captured with --css-pixels (one pixel per CSS
+// pixel, keeps it small); --compare refuses a run whose pixel scale differs from the baseline's.
+// Detector: warnings and advisories are counted separately; only warnings gate (against --baseline). Elements hidden in
+// the rendered screens (display: none, which includes [hidden], or visibility: hidden) are removed from the screen
+// snapshots before the scan, because nobody sees them.
 import { spawn, spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import net from 'node:net';
@@ -35,8 +39,12 @@ const A = {
   out: path.resolve(opt('out') || path.join(os.tmpdir(), 'wearcycle-check', flag('worst-case') ? 'worst-case' : 'run')),
 };
 const inside = (p, dir) => { const r = path.relative(dir, p); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
-if (inside(A.out, REPO) && !inside(A.out, path.join(REPO, 'docs', 'design', 'baseline'))) {
+const BASELINE_DIR = path.join(REPO, 'docs', 'design', 'baseline');
+if (inside(A.out, REPO) && !inside(A.out, BASELINE_DIR)) {
   console.error('--out must be outside the repository (or under docs/design/baseline for Phase 4).'); process.exit(2);
+}
+if (inside(A.out, BASELINE_DIR) && !A.cssPixels) {
+  console.error('The committed baseline (docs/design/baseline) is captured with --css-pixels.'); process.exit(2);
 }
 
 /* ---------- fixtures and app facts ---------- */
@@ -62,7 +70,7 @@ const pickList = (all, s) => s ? all.filter(x => s.split(',').includes(x.id || x
 const devices = pickList(DEVICES, A.devices), views = pickList(VIEWS, A.views);
 
 /* ---------- results ---------- */
-const R = { checks: [], captures: [], console: [], unexpectedHosts: new Set(), writes: [], functions: [], expected404: new Set(), auth: {} };
+const R = { checks: [], captures: [], console: [], unexpectedHosts: new Set(), writes: [], functions: [], expected404: new Set(), auth: {}, snapHidden: {} };
 function check(name, status, detail) { R.checks.push({ name, status, detail: detail || '' }); console.log(status.padEnd(6) + ' ' + name + (detail ? ': ' + String(detail).split('\n')[0].slice(0, 220) : '')); }
 async function step(name, fn) { try { const d = await fn(); check(name, 'PASS', d); } catch (e) { check(name, 'FAIL', e && e.message || String(e)); } }
 const assert = (c, m) => { if (!c) throw new Error(m); };
@@ -326,13 +334,25 @@ async function captureSet(browser, base, state, { dev, theme, lang, data, tag, s
       const inSheet = ['preview', 'editor', 'settings'].includes(view);
       Object.assign(cap, await pageFacts(page, lang, texts, inSheet));
       if (runAxe && !A.noAxe) cap.axe = await axe(page, inSheet);
-      if (snapshots) { // static copy for the detector: scripts removed, blob: images (cut-outs) inlined as data URLs
-        const html = await page.evaluate(() => {
+      if (snapshots) { // static copy for the detector: scripts removed, blob: images (cut-outs) inlined as data URLs,
+        // hidden elements removed (only what is on screen counts)
+        const { html, hidden } = await page.evaluate(() => {
           const live = [...document.images], d = document.documentElement.cloneNode(true), copies = [...d.querySelectorAll('img')];
           live.forEach((im, k) => { if (!im.currentSrc.startsWith('blob:') || !im.naturalWidth || !copies[k]) return;
             const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); copies[k].src = c.toDataURL('image/webp'); });
-          d.querySelectorAll('script').forEach(s => s.remove()); return '<!doctype html>\n' + d.outerHTML; });
+          // Hidden: display none (styles.css makes [hidden] display:none !important), or visibility hidden with nothing
+          // visible inside. The copy has the same document order as the page, so index k matches. Parts of an SVG are
+          // left alone (they are drawn through their svg); a removed element takes its descendants with it.
+          const liveEls = [...document.body.querySelectorAll('*')], copyEls = [...d.querySelector('body').querySelectorAll('*')];
+          let hidden = 0;
+          liveEls.forEach((el, k) => {
+            const c = copyEls[k]; if (!c || el.ownerSVGElement || !d.contains(c)) return;
+            const cs = getComputedStyle(el), invisible = cs.visibility === 'hidden' || cs.visibility === 'collapse';
+            if (cs.display === 'none' || (invisible && ![...el.querySelectorAll('*')].some(x => getComputedStyle(x).visibility === 'visible'))) { c.remove(); hidden++; }
+          });
+          d.querySelectorAll('script').forEach(s => s.remove()); return { html: '<!doctype html>\n' + d.outerHTML, hidden }; });
         writeFileSync(path.join(A.out, 'snapshots', view + '.html'), html);
+        R.snapHidden[view] = hidden;
       }
     } catch (e) { cap.error = String(e && e.message || e).split('\n')[0]; }
     R.captures.push(cap);
@@ -452,17 +472,21 @@ function detector() {
     if (r.status !== 0 && r.status !== 2) throw new Error('detector exit ' + r.status + ': ' + (r.stderr || '').slice(0, 200));
     return JSON.parse(r.stdout || '[]');
   };
-  const sum = list => { const by = {}; for (const f of list) { const k = f.antipattern + (f.advisory ? ' (advisory)' : ''); by[k] = (by[k] || 0) + 1; }
-    return { total: list.length, warnings: list.filter(f => !f.advisory).length, byRule: by, findings: list.map(({ antipattern, severity, advisory, file, line, snippet }) =>
-      ({ antipattern, severity, advisory, file: (f => path.relative(f.startsWith(A.out) ? A.out : REPO, f))(path.resolve(REPO, file || '')), line, snippet: String(snippet || '').slice(0, 200) })) }; };
+  // Warnings and advisories are kept apart: only warnings gate a release (an advisory has advisory: true).
+  const sum = list => {
+    const rules = only => { const by = {}; for (const f of list) if (!!f.advisory === only) by[f.antipattern] = (by[f.antipattern] || 0) + 1; return by; };
+    return { warnings: list.filter(f => !f.advisory).length, advisories: list.filter(f => f.advisory).length,
+      warningsByRule: rules(false), advisoriesByRule: rules(true),
+      findings: list.map(({ antipattern, severity, advisory, file, line, snippet }) =>
+        ({ antipattern, severity, advisory: !!advisory, file: (f => path.relative(f.startsWith(A.out) ? A.out : REPO, f))(path.resolve(REPO, file || '')), line, snippet: String(snippet || '').slice(0, 200) })) }; };
   const res = {};
+  // The unrendered shell: its [hidden] marks the state before the app runs (the sign-in gate and the app are both
+  // hidden there, and one of them always shows), so nothing is removed from it.
   res.static = sum(run(['index.html', 'styles.css']));
   const snapDir = path.join(A.out, 'snapshots'), snaps = existsSync(snapDir) ? readdirSync(snapDir).filter(f => f.endsWith('.html')).map(f => path.join(snapDir, f)) : [];
   if (snaps.length) {
     res.snapshots = sum(run(snaps)); // the HTML only: styles.css is linked from it, not scanned twice
-    // broken-image also fires on a hidden <img src=""> (the outfit board's slot for a piece without a picture,
-    // app.js flVisual), which shows nothing broken; the detector's snippet omits the attribute, so count them here.
-    res.snapshots.hiddenEmptyImages = snaps.reduce((n, f) => n + (readFileSync(f, 'utf8').match(/<img\b[^>]*\ssrc=""[^>]*\shidden\b[^>]*>/g) || []).length, 0);
+    res.snapshots.hiddenElementsExcluded = { ...R.snapHidden }; // per view: hidden elements removed before the scan
   }
   writeFileSync(path.join(A.out, 'detector.json'), JSON.stringify(res, null, 1));
   return res;
@@ -470,6 +494,15 @@ function detector() {
 async function compareTo(folder) {
   const shots = path.join(A.out, 'screens'), base = path.resolve(folder), diffDir = path.join(A.out, 'diff'); mkdirSync(diffDir, { recursive: true });
   const baseShots = existsSync(path.join(base, 'screens')) ? path.join(base, 'screens') : base;
+  const baseSummary = path.join(base, 'summary.json');
+  if (existsSync(baseSummary)) { // screenshots at different scales differ in size everywhere: say why instead
+    const o = JSON.parse(readFileSync(baseSummary, 'utf8')).options || {};
+    const diff = ['cssPixels', 'fullPage'].filter(k => !!o[k] !== !!A[k]);
+    if (diff.length) {
+      check('Pixel diff against ' + folder, 'FAIL', 'capture options differ from the baseline: ' + diff.map(k => '--' + k.replace(/[A-Z]/g, m => '-' + m.toLowerCase()) + (o[k] ? ' (baseline has it)' : ' (baseline lacks it)')).join(', ') + '; rerun with the same flags');
+      return [];
+    }
+  }
   const rows = []; let changed = 0, missing = 0;
   for (const f of readdirSync(shots).filter(f => f.endsWith('.png')).sort()) {
     const bf = path.join(baseShots, f); if (!existsSync(bf)) { missing++; rows.push(f + ': not in baseline'); continue; }
@@ -562,11 +595,14 @@ async function main() {
   check('Piece names cut with an ellipsis', 'INFO', T.userNamesCut + ' (user-typed names may be truncated; listed per view in summary.json)');
   let det = null;
   if (!A.noDetector && !A.worstCase) {
-    try { det = detector(); T.detectorWarnings = det.static.warnings + (det.snapshots ? det.snapshots.warnings : 0); T.detectorTotal = det.static.total + (det.snapshots ? det.snapshots.total : 0);
-      const d = 'index.html + styles.css: ' + det.static.warnings + ' warnings, ' + (det.static.total - det.static.warnings) + ' advisories' + (det.snapshots ? '; screen snapshots: ' + det.snapshots.warnings + ' warnings (' + det.snapshots.hiddenEmptyImages + ' of them hidden `<img src="">` slots), ' + (det.snapshots.total - det.snapshots.warnings) + ' advisories' : '') + '. Rules: detector.json';
-      if (base && base.detectorWarnings != null) check('Detector (npx impeccable@4.5.2 detect)', T.detectorWarnings <= base.detectorWarnings ? 'PASS' : 'FAIL', d + ' (baseline ' + base.detectorWarnings + ' warnings)');
-      else check('Detector (npx impeccable@4.5.2 detect)', 'INFO', d);
-    } catch (e) { check('Detector (npx impeccable@4.5.2 detect)', 'FAIL', e.message); }
+    try { det = detector(); const snap = det.snapshots || { warnings: 0, advisories: 0, hiddenElementsExcluded: {} };
+      T.detectorWarnings = det.static.warnings + snap.warnings; T.detectorAdvisories = det.static.advisories + snap.advisories;
+      T.detectorHiddenExcluded = Object.values(snap.hiddenElementsExcluded || {}).reduce((a, b) => a + b, 0);
+      const w = T.detectorWarnings + ' (index.html + styles.css ' + det.static.warnings + (det.snapshots ? ', screen snapshots ' + snap.warnings : '') + ')';
+      if (base && base.detectorWarnings != null) check('Detector warnings (npx impeccable@4.5.2 detect)', T.detectorWarnings <= base.detectorWarnings ? 'PASS' : 'FAIL', w + ' (baseline ' + base.detectorWarnings + '). Rules: detector.json');
+      else check('Detector warnings (npx impeccable@4.5.2 detect)', T.detectorWarnings ? 'REVIEW' : 'PASS', w + (T.detectorWarnings ? ' (no baseline yet: recorded for Phase 4)' : '') + '. Rules: detector.json');
+      check('Detector advisories (recorded, not gated)', 'INFO', T.detectorAdvisories + ' (index.html + styles.css ' + det.static.advisories + (det.snapshots ? ', screen snapshots ' + snap.advisories + '; ' + T.detectorHiddenExcluded + ' hidden elements left out of the snapshots' : '') + ')');
+    } catch (e) { check('Detector warnings (npx impeccable@4.5.2 detect)', 'FAIL', e.message); }
   }
   if (A.compare) await compareTo(A.compare);
 
