@@ -3,6 +3,8 @@
 # (theme.js and swreg.js replace them). 'wasm-unsafe-eval' lets the on-phone cut-out model run.
 # It is set on the HTML pages only: the cut-out worker (vendor/bgworker.mjs) needs eval, which the policy forbids,
 # and a worker gets its policy from its own response, so it is left without one. Pages are the attack surface.
+# HSTS: browsers already force HTTPS for every .app domain (HSTS preload list); the header makes it explicit.
+# Access-Control-Allow-Origin: Cloudflare adds "*" by default; removed, since no other site needs to read these files.
 # Adding a new outside service (an API, CDN or image host) means adding its address here, or the app will block it.
 /*
   X-Content-Type-Options: nosniff
@@ -10,6 +12,8 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), geolocation=(self), microphone=(), payment=(), usb=(), interest-cohort=()
   Cross-Origin-Opener-Policy: same-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
+  ! Access-Control-Allow-Origin
 
 /
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
