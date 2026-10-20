@@ -1,0 +1,52 @@
+# Live check: tools/live-check.mjs against the deployed site with the test account (real Supabase, real weather),
+# because Claude's container cannot reach Supabase, Cloudflare or Open-Meteo. Pushes to preview test
+# preview.wearcycle.pages.dev; pushes to main test https://wearcycle.app after the production deploy.
+# Read-only except one claude Edge Function request per run (see the top of tools/live-check.mjs).
+# One-time setup by the owner: Settings > Secrets and variables > Actions > New repository secret:
+# WEARCYCLE_TEST_EMAIL and WEARCYCLE_TEST_PASSWORD (the test account only).
+# The repository is public, so logs and summaries are public: the script prints counts and pass/fail only.
+name: Live check
+
+on:
+  push:
+    branches: [preview, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+
+      - name: Syntax check
+        run: |
+          for f in *.js i18n/*.js tools/*.mjs; do node --check "$f"; done
+
+      - name: Install Playwright and its browsers (test only, outside the repository)
+        env:
+          DISABLE_TELEMETRY: "1"
+          DO_NOT_TRACK: "1"
+        run: |
+          node --input-type=module -e "import { loadDeps } from './tools/deps.mjs'; await loadDeps(['playwright']);"
+          node ~/.cache/wearcycle-check-deps/node_modules/playwright/cli.js install --with-deps chromium webkit
+
+      - name: Live check
+        env:
+          WEARCYCLE_TEST_EMAIL: ${{ secrets.WEARCYCLE_TEST_EMAIL }}
+          WEARCYCLE_TEST_PASSWORD: ${{ secrets.WEARCYCLE_TEST_PASSWORD }}
+          BASE_URL: ${{ github.ref_name == 'main' && 'https://wearcycle.app' || 'https://preview.wearcycle.pages.dev' }}
+        run: node tools/live-check.mjs --base-url "$BASE_URL"
