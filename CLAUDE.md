@@ -9,8 +9,7 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
 
 ## Platforms (all supported)
 - Android phones: Chrome, app installed from the browser. Main use.
-- iPad: Safari (WebKit), added to the Home Screen. Portrait is 744 to
-  1032px wide, landscape 1133 to 1376px.
+- iPad: Safari (WebKit), Home Screen app; portrait 744 to 1032px, landscape 1133 to 1376.
 - Windows: Chrome or Edge, mouse and keyboard; common widths 1366, 1536, 1920.
 - Claude's container has Chromium only. iPad screenshots there show
   layout, not WebKit rendering: check WebKit on a real iPad.
@@ -44,6 +43,9 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   two are identical afterwards. Never force-push either branch.
 - Every phase ends with a release to main. Users may see new and old
   screens side by side until the redesign is finished.
+- Urgent fixes while a phase is unfinished on preview: commit on main,
+  release, then merge main into preview. Fast-forward main only when the
+  whole phase is done.
 - Screen freeze: while a screen is being redesigned, no feature work on
   that screen. Bug fixes and outfit-rule changes in logic.js continue.
 
@@ -57,8 +59,7 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
    confirms. At the plan's milestones, also the iPad and Windows.
 4. APP_VERSION in app.js and VERSION in sw.js bumped to the same value
    (app changes only); sw.js non-empty and lists every shell file.
-5. Fast-forward main to preview, add the release to the Project doc
-   claude/wardrobe-app-decisions.md.
+5. Fast-forward main to preview; log it in Project doc claude/wardrobe-app-decisions.md.
 
 ## Checks (Claude's container)
 - `for f in *.js i18n/*.js tools/*.mjs; do node --check "$f"; done`
@@ -68,9 +69,8 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   weather, fixture closet (tools/fixtures/). Supabase calls are answered
   locally, sign-in too when Supabase is unreachable, as from Claude's
   container (the report says so). Test packages: outside, tools/deps.mjs.
-- Screenshots go outside the repo, except the Phase 4 baseline in
-  docs/design/baseline/: always --css-pixels (the script refuses
-  otherwise; --compare needs the same flag).
+- Screenshots go outside the repo, except the Phase 4 baseline in docs/design/
+  baseline/: always --css-pixels (else refused; --compare needs the same flag).
 - Detector: only warnings gate a release (against the baseline);
   advisories are recorded, not gated. Hidden elements are left out.
 
