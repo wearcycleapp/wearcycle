@@ -23,12 +23,16 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   repository root. Pushing to main publishes.
 - Backend: Supabase (Postgres with row-level security, auth, private
   "photos" bucket) and one Edge Function "claude".
-- index.html: shell, header, tab bar, theme script, theme-color metas.
+- index.html: shell, header, tab bar, theme-color metas (theme.js sets the theme before paint).
 - styles.css: all styling. app.js: all UI (string templates with
   innerHTML), sheets (openSheet), camera, Supabase, Claude calls,
   canvas share image. logic.js: pure rules, no DOM.
 - privacy.html has its own inline CSS. manifest.webmanifest and the
   theme-color metas carry colors too.
+- _headers (Cloudflare) sets the security headers and, on the HTML pages,
+  the Content-Security-Policy. No inline <script> in index.html (theme.js
+  and swreg.js); a new outside service must be added to connect-src or
+  img-src there, or the app blocks it.
 - The whole repository root is public. Never commit credentials. Never add
   tools/, docs/, .claude/ or .impeccable/ to the SHELL list in sw.js.
 

@@ -15,12 +15,7 @@
 <link rel="stylesheet" href="fonts/fonts.css">
 <link rel="stylesheet" href="styles.css">
 <script src="i18n.js"></script>
-<script>
-/* Theme before first paint: Auto follows the phone; Light or Dark is remembered on this device. */
-(function(){ var t='auto'; try{ t=localStorage.getItem('wearcycle.theme')||'auto'; }catch(e){}
-  if(t==='light'||t==='dark'){ document.documentElement.setAttribute('data-theme',t);
-    document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ m.setAttribute('content',t==='dark'?'#12161e':'#f6f4f1'); m.removeAttribute('media'); }); } })();
-</script>
+<script src="theme.js"></script>
 </head>
 <body>
 
@@ -94,8 +89,6 @@
 <script src="config.js"></script>
 <script src="logic.js"></script>
 <script src="app.js"></script>
-<script>
-if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
-</script>
+<script src="swreg.js"></script>
 </body>
 </html>

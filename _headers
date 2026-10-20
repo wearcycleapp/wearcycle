@@ -1,0 +1,21 @@
+# Security headers for every response (Cloudflare Pages reads this file; it is not served).
+# Content-Security-Policy (pages only): only this site, Supabase, Open-Meteo and Zippopotam may be contacted; no inline scripts
+# (theme.js and swreg.js replace them). 'wasm-unsafe-eval' lets the on-phone cut-out model run.
+# It is set on the HTML pages only: the cut-out worker (vendor/bgworker.mjs) needs eval, which the policy forbids,
+# and a worker gets its policy from its own response, so it is left without one. Pages are the attack surface.
+# Adding a new outside service (an API, CDN or image host) means adding its address here, or the app will block it.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(self), geolocation=(self), microphone=(), payment=(), usb=(), interest-cohort=()
+  Cross-Origin-Opener-Policy: same-origin
+
+/
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+
+/index.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+
+/privacy.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests

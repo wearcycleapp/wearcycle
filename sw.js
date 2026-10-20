@@ -1,8 +1,8 @@
 /* Service worker: keeps the app shell available offline. Data and photos come from Supabase. */
-const VERSION = 'wearcycle-v1.49.0';
+const VERSION = 'wearcycle-v1.49.1';
 // Kept across app updates: the background-removal model (about 100 MB, downloaded once) and saved cut-outs.
 const KEEP = ['wearcycle-bgr-1', 'wearcycle-cutouts'];
-const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'i18n.js', 'app.js', 'config.js', 'vendor/supabase.js',
+const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'i18n.js', 'app.js', 'theme.js', 'swreg.js', 'config.js', 'vendor/supabase.js',
   'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png', 'icons/logo-icon.svg',
   'fonts/fonts.css', 'fonts/big-shoulders-display-latin-700-normal.woff2', 'fonts/big-shoulders-display-latin-800-normal.woff2', 'fonts/big-shoulders-display-latin-ext-700-normal.woff2', 'fonts/big-shoulders-display-latin-ext-800-normal.woff2', 'fonts/figtree-latin-400-normal.woff2', 'fonts/figtree-latin-500-normal.woff2', 'fonts/figtree-latin-600-normal.woff2', 'fonts/figtree-latin-700-normal.woff2', 'fonts/figtree-latin-ext-400-normal.woff2', 'fonts/figtree-latin-ext-500-normal.woff2', 'fonts/figtree-latin-ext-600-normal.woff2', 'fonts/figtree-latin-ext-700-normal.woff2', 'fonts/jetbrains-mono-latin-500-normal.woff2', 'fonts/jetbrains-mono-latin-600-normal.woff2', 'fonts/jetbrains-mono-latin-ext-500-normal.woff2', 'fonts/jetbrains-mono-latin-ext-600-normal.woff2'];
 
