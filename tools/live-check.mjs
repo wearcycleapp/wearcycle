@@ -187,10 +187,22 @@ async function deviceChecks(browser, engine, dev, state) {
     await step(tag + 'app opens signed in', async () => { await page.goto(BASE + '/'); await waitApp(page);
       if (await sheetOpen(page)) { const h = (await page.textContent('#sheetRoot h3').catch(() => '')) || 'a sheet'; await closeSheet(page).catch(() => {}); return { status: 'REVIEW', detail: 'opened with "' + h.trim().slice(0, 40) + '" on top' }; }
       return log.items === null ? 'items not read' : log.items + ' items read from Supabase'; });
-    await step(tag + 'outfits', async () => { const r = await page.evaluate(() => ({ hero: !!document.querySelector('.fit.hero'), wear: !!document.querySelector('.fit.hero [data-wear]'), pieces: document.querySelectorAll('.fit.hero [data-swap]').length, empty: !!document.querySelector('#fits .empty'), why: ((document.querySelector('#fits .empty') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200) }));
-      if (r.hero && r.wear && r.pieces) return 'outfit with ' + r.pieces + ' pieces and "Wear this"';
-      if (r.empty) return { status: 'REVIEW', detail: 'empty state: ' + r.why };
-      throw new Error('no outfit and no empty state'); });
+    await step(tag + 'outfits', async () => {
+      // Reads the outfit screen. Tapping an occasion chip only changes this browser's local storage, never Supabase.
+      const read = () => page.evaluate(() => { const e = document.querySelector('#fits .empty'); return { hero: !!document.querySelector('.fit.hero'), wear: !!document.querySelector('.fit.hero [data-wear]'), pieces: document.querySelectorAll('.fit.hero [data-swap]').length, empty: !!e, why: ((e || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200), occ: ((document.querySelector('#occChips [data-occ][aria-pressed="true"]') || {}).textContent || '').trim() }; });
+      const ok = r => r.hero && r.wear && r.pieces;
+      const first = await read();
+      if (ok(first)) return 'outfit with ' + first.pieces + ' pieces and "Wear this" (' + first.occ + ')';
+      if (!first.empty) throw new Error('no outfit and no empty state');
+      // The default occasion has nothing to build from in this closet: try the other occasions so outfit building is still tested on real data.
+      const ids = await page.$$eval('#occChips [data-occ]', bs => bs.filter(b => b.getAttribute('aria-pressed') !== 'true').map(b => b.dataset.occ));
+      for (const id of ids) {
+        await page.click('#occChips [data-occ="' + id + '"]');
+        await page.waitForFunction(() => { const f = document.querySelector('#fits'); return f && (f.querySelector('.fit.hero') || f.querySelector('.empty')); }, null, { timeout: 15000 });
+        const r = await read();
+        if (ok(r)) return 'outfit with ' + r.pieces + ' pieces and "Wear this" on ' + r.occ + '; ' + first.occ + ' showed the empty state (' + first.why + ')';
+      }
+      return { status: 'REVIEW', detail: 'empty state on every occasion: ' + first.why }; });
     await step(tag + 'weather (Open-Meteo)', async () => { const l = await page.getAttribute('[data-wx="edit"]', 'aria-label').catch(() => null);
       if (l && /^Weather: .*\d/.test(l)) return 'forecast shown';
       return { status: 'REVIEW', detail: l ? 'no forecast in the label' : 'no forecast (weather off or no location for this account)' }; });
