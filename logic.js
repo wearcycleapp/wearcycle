@@ -317,7 +317,9 @@ function beltFit(o,belt,occ){
   }
   return {s,why,neg};
 }
-function beltPool(all,occ){ return (all||[]).filter(i=>i.cat==='belt'&&available(i,occ)&&(i.cond??4)>=Math.min(3,OCC[occ].min)); }
+// Belts set for the occasion first; if none is, any wearable belt (trousers with belt loops still need one).
+function beltPool(all,occ){ const ok=(all||[]).filter(i=>i.cat==='belt'&&available(i,occ)&&(i.cond??4)>=Math.min(3,OCC[occ].min));
+  const set=ok.filter(i=>effectiveOccasions(i).includes(occ)); return set.length?set:ok; }
 
 function pickAccessories(o,by,occ,now,wx,all){
   const acc=[]; const baseColors=coreOf(o).map(primary).filter(Boolean); const baseH=harmony(baseColors).s;
@@ -373,8 +375,8 @@ function suggest(items,occ,ctx,opts){
   if(!shoes.length){ if(needShoes) missing.push('shoes'); shoes=[null]; } else if(!needShoes) shoes=shoes.concat([null]);
   if(missing.length) return {outfits:[],missing};
   ctx=Object.assign({},ctx,{shoeAlt:shoes.filter(Boolean).length>1});
-  // A t-shirt worn under an open shirt only needs to be in good enough condition; it need not be tagged for the occasion.
-  const allUnders=items.filter(i=>available(i,occ)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min);
+  // The t-shirt under an open shirt or a hoodie must itself be set for the occasion (a sports tee stays out of Work).
+  const allUnders=eligible(items,occ).filter(i=>i.cat==='top'&&canUnder(i));
   const unders=LAYER_OCC.includes(occ)?allUnders:[];
   const bestUnder=(b,pool)=>{ let best=null,bs=-Infinity; for(const u of pool){ if(u.id===b.top.id) continue; const r=scoreOutfit(Object.assign({},b,{under:u}),occ,ctx).score; if(r>bs){bs=r;best=u;} } return best; };
   for(const b of bases){ if(b.top && needsBase(b.top) && allUnders.length){ const u=bestUnder(b,allUnders); if(u) b.under=u; } }
@@ -416,7 +418,7 @@ function notPicked(items,ctxFor,opts){
 function swapCandidates(o,slot,items,occ,ctx){
   const cat=slot==='outer'?'outerwear':slot==='under'?'top':slot;
   let pool=eligible(items,occ).filter(i=>i.cat===cat);
-  if(slot==='under') pool=items.filter(i=>available(i,occ)&&i.cat==='top'&&canUnder(i)&&(i.cond??4)>=OCC[occ].min&&(!o.top||i.id!==o.top.id));
+  if(slot==='under') pool=eligible(items,occ).filter(i=>i.cat==='top'&&canUnder(i)&&(!o.top||i.id!==o.top.id));
   if(slot==='top'&&o.under) pool=pool.filter(i=>layeredOver(i));
   return pool.map(i=>{ const t=Object.assign({},o,{[slot]:i}); return {item:i,score:scoreOutfit(t,occ,ctx).score}; }).sort((a,b)=>b.score-a.score).map(x=>x.item);
 }
