@@ -1268,7 +1268,6 @@ I18N.load("ko",{
 "blouse": "블라우스",
 "ankle boots or loafers": "앵클부츠 또는 로퍼",
 "chinos": "치노 팬츠",
-"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.": "열어서 입을 수 있는 셔츠(버튼업 셔츠, 플란넬 셔츠, 오버셔츠, 카디건)는 티셔츠 위에 걸치는 코디로도 추천되며, 점수가 가장 높은 티셔츠와 함께 나와요. 열어 입으면 셔츠는 캐주얼로 취급되고(격식 단계 최대 2), 티셔츠는 격식 단계 검사에서 빠져요. 날씨 반영이 켜져 있으면 티셔츠는 16° 미만에서 +0.5, 24° 초과에서 1점 감점이에요. 열어 입는 셔츠는 블레이저나 정장 재킷 안에 겹쳐 입지 않아요(세 겹): 3점 감점이에요. 안에는 가벼운 옷만 입어요(티셔츠, 민소매, 반팔 헨리). 긴팔이나 두꺼운 상의는 빼고, 드레스 셔츠는 열어 입지 않아요. 어떤 아이템이 해당하는지는 이름으로 추정하며, 각 아이템의 편집 화면에서 바꿀 수 있어요.",
 "Confirm password": "비밀번호 확인",
 "Show": "보기",
 "Hide": "숨기기",
@@ -1280,5 +1279,7 @@ I18N.load("ko",{
 "Confirm new password": "새 비밀번호 확인",
 "Enter your current password.": "현재 비밀번호를 입력하세요.",
 "The new password is the same as the current one.": "새 비밀번호가 현재 비밀번호와 같아요.",
-"The current password is wrong.": "현재 비밀번호가 틀렸어요."
+"The current password is wrong.": "현재 비밀번호가 틀렸어요.",
+"Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.": "열어서 입을 수 있는 셔츠(버튼업 셔츠, 플란넬 셔츠, 오버셔츠, 카디건)는 티셔츠 위에 걸치는 코디로도 추천되며, 점수가 가장 높은 티셔츠와 함께 나와요. 열어 입으면 셔츠는 캐주얼로 취급되고(격식 단계 최대 2), 티셔츠는 격식 단계 검사에서 빠져요. 날씨 반영이 켜져 있으면 티셔츠는 16° 미만에서 +0.5, 24° 초과에서 1점 감점이에요. 열어 입는 셔츠는 블레이저나 정장 재킷 안에 겹쳐 입지 않아요(세 겹): 3점 감점이에요. 안에는 가벼운 옷만 입어요(티셔츠, 민소매, 반팔 헨리). 긴팔이나 두꺼운 상의는 빼고, 드레스 셔츠는 열어 입지 않아요. 재킷을 입을 때는 열어 입는 셔츠와 그 안의 옷이 모두 가벼워야 해요. 플란넬이나 긴팔을 겹치면 3점 감점이에요. 어떤 아이템이 해당하는지는 이름으로 추정하며, 각 아이템의 편집 화면에서 바꿀 수 있어요.",
+"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "{a} 안에 따뜻한 세 겹: 너무 두꺼워요. 셔츠는 가벼운 티셔츠 위에 입거나 단독으로 입으세요"
 });

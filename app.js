@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.49.2';
+const APP_VERSION='1.49.3';
 const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -428,7 +428,12 @@ async function writeItem(it){
   if(isEx(it)){ const i=S.examples.findIndex(e=>e.id===it.id); if(i>=0) S.examples[i]=it; renderAll(); return true; }
   if(!canWrite()){ toast('You are offline. Changes need a connection.'); return false; }
   const prev=S.items.get(it.id); S.items.set(it.id,it); renderAll();
-  const {error}=await sb.from('items').upsert({id:it.id,body:cleanBody(it),updated_at:new Date().toISOString()});
+  // A piece already in the closet is updated, never re-created: if it was deleted meanwhile (on another phone, tab or
+  // by an earlier tap) the update matches no row, and it stays deleted instead of coming back.
+  let error=null;
+  if(prev){ const r=await sb.from('items').update({body:cleanBody(it),updated_at:new Date().toISOString()}).eq('id',it.id).select('id'); error=r.error;
+    if(!error&&Array.isArray(r.data)&&!r.data.length){ S.items.delete(it.id); saveCache(); renderAll(); toast('This piece was deleted on another phone or tab, so the change was not saved.',5000); return false; } }
+  else ({error}=await sb.from('items').upsert({id:it.id,body:cleanBody(it),updated_at:new Date().toISOString()}));
   if(error){ if(prev) S.items.set(it.id,prev); else S.items.delete(it.id); renderAll(); toast('Could not save: '+(error.message||'unknown error'),4500); return false; }
   saveCache(); return true;
 }
@@ -442,7 +447,7 @@ async function loadRemote(){
   if(err){ S.fromCache=true; renderAll(); if(S.online) toast('Could not load from the server: '+(err.message||'unknown error'),5000); return; }
   S.items=new Map(it.data.map(r=>[r.id,Object.assign({},r.body,{id:r.id})]));
   S.log=we.data||[]; if(se.data&&se.data.body) Object.assign(S.settings,se.data.body); settingsLoaded();
-  S.fromCache=false; S.loaded=true; saveCache(); renderAll(); loadWeather(); refreshGps(); autoWash(); privacyCheck();
+  S.fromCache=false; S.loaded=true; S.loadedAt=Date.now(); saveCache(); renderAll(); loadWeather(); refreshGps(); autoWash(); privacyCheck();
 }
 function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
   S.items=new Map((c.items||[]).map(r=>[r.id,r])); S.log=c.log||[]; if(c.settings) Object.assign(S.settings,c.settings); settingsLoaded();
@@ -624,7 +629,10 @@ async function shoot(){
   const f=$('#camFlash'); if(f){ f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
   const done=document.querySelector('[data-cam="done"]'); if(done){ done.disabled=false; done.innerHTML=`<img src="${CAM.lastUrl}" alt=""><span class="n">${CAM.shots.length}</span>`; done.setAttribute('aria-label','Done, '+CAM.shots.length+' photos'); }
 }
-document.addEventListener('visibilitychange',()=>{ if(document.hidden && CAM.resolve) closeCamera(CAM.shots); });
+document.addEventListener('visibilitychange',()=>{ if(document.hidden && CAM.resolve) closeCamera(CAM.shots);
+  // Back in the app after a minute or more: reload the closet, so pieces deleted or changed on another phone or tab
+  // show their current state (skipped while a sheet is open or a job is running, so nothing in progress is replaced).
+  if(!document.hidden && UID && S.loadedAt && Date.now()-S.loadedAt>60000 && !S.busy && !$('#sheetRoot').innerHTML && canWrite()) loadRemote(); });
 
 function pickFiles(multiple){
   return new Promise(res=>{ const inp=multiple?$('#bulkIn'):$('#galIn'); inp.value='';
@@ -1140,9 +1148,11 @@ async function deleteItem(){
   const it=ED.it; closeSheet();
   if(isEx(it)){ S.examples=S.examples.filter(e=>e.id!==it.id); renderAll(); return; }
   if(!canWrite()){ toast('You are offline. Deleting needs a connection.'); return; }
+  // Taken out of the closet first, so a background job (cut-out, Claude scan) finishing meanwhile cannot save it back.
+  const had=S.items.get(it.id); S.items.delete(it.id); renderAll();
   const {error}=await sb.from('items').delete().eq('id',it.id);
-  if(error){ toast('Could not delete: '+error.message,4500); return; }
-  S.items.delete(it.id); removePhoto(it.photo); saveCache(); renderAll(); toast('Deleted');
+  if(error){ if(had) S.items.set(it.id,had); renderAll(); toast('Could not delete: '+error.message,4500); return; }
+  removePhoto(it.photo); if(it.cut) removePhoto(it.cut); saveCache(); toast('Deleted');
 }
 
 let CK=null;
@@ -1315,7 +1325,7 @@ function openSettings(){
 }
 function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="rules helpdoc">    <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.</p>
     <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1, open shoes lose 1.5, shoes made for rain or snow earn +1, and dress shoes and other delicate shoes lose 4, or 2.5 for Formal (smooth soles slip on wet ground and the leather stains). Sneakers or boots worn for the rain do not count as a dress-level clash. Tick "Made for rain or snow" on shoes with grippy rubber soles to keep them in play. Hats are added only when it feels 8° or colder, when it snows, in the rain (a rain hat or a cap, never a beanie) or above 25°; gloves only at 8° or colder and scarves at 10° or colder. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
-    <p><b>Layered look.</b> Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Which items count is guessed from their names; change it in each item's editor.</p>
+    <p><b>Layered look.</b> Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.</p>
     <p>Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with \u201cWorn over a t-shirt\u201d in its More details.</p>
     <p><b>Belts.</b> Jeans, chinos, trousers and casual shorts always get a belt if you own one, even one not tagged for the occasion; joggers and athletic wear don't. With leather dress shoes the belt should match them (black with black, brown with brown) and a casual belt is flagged; with sneakers any belt that keeps the colors in harmony. If your only belt doesn't fit the rule it is still shown, with a warning. Change whether a bottom takes a belt in its editor.</p>
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
