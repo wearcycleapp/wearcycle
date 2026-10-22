@@ -187,9 +187,9 @@ async function deviceChecks(browser, engine, dev, state) {
     await step(tag + 'app opens signed in', async () => { await page.goto(BASE + '/'); await waitApp(page);
       if (await sheetOpen(page)) { const h = (await page.textContent('#sheetRoot h3').catch(() => '')) || 'a sheet'; await closeSheet(page).catch(() => {}); return { status: 'REVIEW', detail: 'opened with "' + h.trim().slice(0, 40) + '" on top' }; }
       return log.items === null ? 'items not read' : log.items + ' items read from Supabase'; });
-    await step(tag + 'outfits', async () => { const r = await page.evaluate(() => ({ hero: !!document.querySelector('.fit.hero'), wear: !!document.querySelector('.fit.hero [data-wear]'), pieces: document.querySelectorAll('.fit.hero [data-swap]').length, empty: !!document.querySelector('#fits .empty') }));
+    await step(tag + 'outfits', async () => { const r = await page.evaluate(() => ({ hero: !!document.querySelector('.fit.hero'), wear: !!document.querySelector('.fit.hero [data-wear]'), pieces: document.querySelectorAll('.fit.hero [data-swap]').length, empty: !!document.querySelector('#fits .empty'), why: ((document.querySelector('#fits .empty') || {}).textContent || '').replace(/\s+/g, ' ').trim().slice(0, 200) }));
       if (r.hero && r.wear && r.pieces) return 'outfit with ' + r.pieces + ' pieces and "Wear this"';
-      if (r.empty) return { status: 'REVIEW', detail: 'empty state: no outfit for this closet' };
+      if (r.empty) return { status: 'REVIEW', detail: 'empty state: ' + r.why };
       throw new Error('no outfit and no empty state'); });
     await step(tag + 'weather (Open-Meteo)', async () => { const l = await page.getAttribute('[data-wx="edit"]', 'aria-label').catch(() => null);
       if (l && /^Weather: .*\d/.test(l)) return 'forecast shown';
