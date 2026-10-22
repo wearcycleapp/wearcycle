@@ -231,6 +231,9 @@ function scoreOutfit(o,occ,ctx){
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
   // An open shirt over a t-shirt is the outer layer of a relaxed look; under a blazer or suit jacket it makes three layers.
   if(o.under&&canOpen(o.top)&&tailored(o.outer)){ s-=3; reasons.push({t:'Open '+o.top.name+' under '+o.outer.name+': three layers. Wear one shirt under a blazer',neg:true}); }
+  // Under a jacket, the open shirt and the layer beneath it must both be light: a flannel or a long-sleeve top
+  // doubled up leaves no room for the jacket (owner, 2026-10-22). Warmth 1 = light, 3 = warm (flannel, fleece, knits).
+  else if(o.under&&canOpen(o.top)&&o.outer&&(warmthOf(o.top)>=3||warmthOf(o.under)>=2)){ s-=3; reasons.push({t:'Three warm layers under '+o.outer.name+': too bulky. Wear the shirt over a light t-shirt, or on its own',neg:true}); }
   else if(o.under&&canOpen(o.top)) reasons.push({t:'Open '+o.top.name+' over '+o.under.name+': a relaxed layered look'});
   else if(o.under) reasons.push({t:o.under.name+' under '+o.top.name});
   else if(needsBase(o.top)) reasons.push({t:'Nothing under '+o.top.name+'; add a t-shirt if you have one'});
@@ -388,6 +391,8 @@ function suggest(items,occ,ctx,opts){
   const outers=opts.layer?(by.outerwear||[]):[];
   const scored=combos.map(c=>{
     if(outers.length){ let best=null,bs=-Infinity; for(const ow of outers){ const r=scoreOutfit(Object.assign({},c,{outer:ow}),occ,ctx); if(r.score>bs){bs=r.score;best=ow;} } c.outer=best; }
+    // The t-shirt under an open shirt was chosen before the jacket; with a jacket on, pick it again (a lighter one may fit).
+    if(c.outer&&c.under&&canOpen(c.top||{})&&unders.length){ let bu=c.under,bs=scoreOutfit(c,occ,ctx).score; for(const u of unders){ if(u.id===c.top.id||u===c.under) continue; const r=scoreOutfit(Object.assign({},c,{under:u}),occ,ctx).score; if(r>bs){bs=r;bu=u;} } c.under=bu; }
     const r=scoreOutfit(c,occ,ctx); return {o:c,...r,rank:r.score+(rnd()-.5)*jitter}; }).sort((a,b)=>b.rank-a.rank);
   // One outfit per top and bottom. Among its shoe options, a pair already used higher in the list loses 0.75 per use,
   // so the list shows different shoes when another pair scores close to the best.
