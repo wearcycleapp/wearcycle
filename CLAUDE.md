@@ -52,11 +52,11 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
 ## Release routine (every merge to main)
 1. The definition of done in docs/design/UI_REVIEW.md is met.
 2. node --check passes for every JS file; node tools/check.mjs passes.
-3. Every release, tooling and docs included: the owner checks the preview
-   on his Android phone, signed in with the test account (previews use the
-   real Supabase project). Claude's container cannot reach Supabase, so
-   this is the only test with real data: fast-forward only after he
-   confirms. At the plan's milestones, also the iPad and Windows.
+3. Claude tests every release itself; the owner is not a tester (his
+   decision, 2026-10-19 and 2026-10-22). Real-data test: the live check
+   (tools/live-check.mjs in GitHub Actions) on the preview deploy, signed
+   in with the test account. Release only when it passes, or say plainly
+   in the release note which checks could not run and why.
 4. APP_VERSION in app.js and VERSION in sw.js bumped to the same value
    (app changes only); sw.js non-empty and lists every shell file.
 5. Fast-forward main to preview; log it in Project doc claude/wardrobe-app-decisions.md.
