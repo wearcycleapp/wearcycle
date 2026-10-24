@@ -557,6 +557,11 @@ a.lirow{text-decoration:none;color:inherit}
 .editbar .btn svg{width:16px;height:16px;margin-right:6px}
 /* v1.24 piece preview */
 .piecebig{position:relative;width:100%;aspect-ratio:1/1;max-height:56vh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
+.ppager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-4px 0 0}
+.ppager .ppg{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--raised);color:var(--ink);display:grid;place-items:center;flex:none;padding:0}
+.ppager .ppg svg{width:22px;height:22px}
+.ppager .pcount{font-size:14px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
+@media (hover:hover) and (pointer:fine){ .ppager .ppg:hover{border-color:var(--ink)} }
 .piecebig.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
 .piecebig img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain} /* absolute: a percentage height inside a grid cell does not resolve, so the image overflowed and was cropped */
 .piecebig img.cut{padding:16px;box-sizing:border-box;filter:drop-shadow(0 6px 10px rgba(50,35,20,.22))}

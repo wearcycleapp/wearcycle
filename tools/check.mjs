@@ -400,7 +400,7 @@ async function flows(browser, base, state, data) {
     where = 'flows-swap'; await goTab(page, 'outfits');
     await page.click('.fit.hero [data-swap][data-slot="top"]'); await page.waitForSelector('#sheetRoot .sheet');
     const name1 = (await page.textContent('#sheetRoot .sheet h3')).trim();
-    await page.click('#sheetRoot [data-pswap]'); await page.waitForTimeout(150); await settle(page);
+    await page.click('#sheetRoot [data-pstep="1"]'); await page.waitForTimeout(150); await settle(page);
     const name2 = (await page.textContent('#sheetRoot .sheet h3')).trim();
     assert(name2 && name2 !== name1, 'Swap kept "' + name1 + '"');
     await closeSheet(page);

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.50.1';
+const APP_VERSION='1.51.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -837,6 +837,8 @@ function renderOutfits(){
     `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'More options':'Only one outfit fits'}</h3><span class="spacer"></span><button class="btn sm" id="shuffleBtn">New ideas</button></div>
      ${S.fits.length>1?`<div class="altrow">${others}</div>`:`<p class="hint">Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`}</div>`;
 }
+const CHEV_L='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
+const CHEV_R='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
 const SWAP_ICON='<span class="swap" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></span>';
 function tile(it,slot,i,size){
   if(!it) return '';
@@ -1766,9 +1768,11 @@ function openPiece(i,slot,again){
   const worn=it.worn||0;
   const html=sheetHead(esc(it.name))+`
    ${it.cut||it.photo||thumbSrc(it)?`<div class="piecebig zoomable ${it.cut?'studio':''}" data-view="${esc(it.id)}" role="button" aria-label="See full size">${big}<span class="zoomhint" aria-hidden="true">${ZOOM_ICON}</span></div>`:`<div class="piecebig">${big}</div>`}
+   ${(()=>{ const opts=swapOpts(hydrate(S.fits[i].ids),slot); if(opts.length<2) return ''; const k=opts.findIndex(x=>x.id===it.id);
+     return `<div class="ppager"><button type="button" class="ppg" data-pstep="-1" data-pi="${i}" data-slot="${esc(slot)}" aria-label="Previous option">${CHEV_L}</button><span class="pcount" aria-live="polite">${k<0?'':(k+1)+' of '+opts.length}</span><button type="button" class="ppg" data-pstep="1" data-pi="${i}" data-slot="${esc(slot)}" aria-label="Next option">${CHEV_R}</button></div>`; })()}
    <p class="hint" style="margin:0">${esc(CAT[it.cat].label)} · ${COND[it.cond??4]} · ${worn===1?'Worn 1 time':'Worn '+worn+' times'}${it.lastWorn?' · '+'Last worn '+esc(it.lastWorn):''}</p>
    ${it.notes?`<p class="hint" style="margin:0">${esc(it.notes)}</p>`:''}
-   <div class="row sheet-actions"><button class="btn primary" data-pswap="${i}" data-slot="${esc(slot)}">${SWAP_ICON}Swap for another</button>${isEx(it)?'':`<button class="btn" data-edit="${esc(it.id)}">Open item</button>`}</div>
+   ${isEx(it)?'':`<div class="row sheet-actions"><button class="btn" data-edit="${esc(it.id)}">Open item</button></div>`}
    ${S.fits[i]&&S.fits[i].worn?(loggedToday(it.id)?`<button class="linkbtn" data-punlog="${esc(it.id)}">I did not wear it today: remove it from today's log</button>`:'')
      :(DROPPABLE(slot,hydrate(S.fits[i].ids))?`<button class="linkbtn" data-pdrop="${i}" data-slot="${esc(slot)}">Not wearing it: leave it out of this outfit</button>`:'')}`;
   if(again&&$('#sheetRoot').innerHTML){ const sh=document.querySelector('#sheetRoot .sheet'); if(sh) sh.innerHTML=html; } else openSheet(html);
@@ -1817,22 +1821,30 @@ async function unlogPiece(id){
   await uncountWear(it,todayISO());
   saveCache(); renderAll(); if(document.querySelector('#sheetRoot [data-punlog]')&&allLog().some(x=>x.date===todayISO())) openTodayLog(); else closeSheet(); toast(it.name+' removed from today\u2019s log.');
 }
-function swap(i,slot){
+// The pieces that can take this spot, in the order the preview steps through them.
+function swapOpts(o,slot){
+  if(slot.startsWith('acc')){ const cur=o.acc[+slot.slice(3)]; if(!cur) return []; return cur.cat==='belt'?beltPool(allItems(),S.occ):eligible(allItems(),S.occ).filter(x=>x.cat===cur.cat); }
+  // Tops are listed as if worn without the layer underneath, so the list stays the same while stepping
+  // (otherwise a sweater that brings a t-shirt would narrow it to tops worn over one).
+  if(slot==='top'){ const o0=Object.assign({},o); delete o0.under; return swapCandidates(o0,'top',allItems(),S.occ,ctx()); }
+  return swapCandidates(o,slot,allItems(),S.occ,ctx());
+}
+function swap(i,slot,dir){
+  dir=dir===-1?-1:1; const step=(list,id)=>{ const n=list.length, k=list.findIndex(x=>x.id===id); return list[((k<0?(dir>0?-1:0):k)+dir+n)%n]; };
   const f=S.fits[i]; if(!f) return; const o=hydrate(f.ids);
   if(slot.startsWith('acc')){
     const k=+slot.slice(3); const cur=o.acc[k]; if(!cur) return;
     const opts=cur.cat==='belt'?beltPool(allItems(),S.occ):eligible(allItems(),S.occ).filter(x=>x.cat===cur.cat); if(opts.length<2){ toast('No other '+CAT[cur.cat].label.toLowerCase()+' for this occasion.'); return; }
-    o.acc[k]=opts[(opts.findIndex(x=>x.id===cur.id)+1)%opts.length];
+    o.acc[k]=step(opts,cur.id);
   } else {
-    const cands=swapCandidates(o,slot,allItems(),S.occ,ctx()); const cur=o[slot];
-    if(slot==='under'){ const k=cands.findIndex(x=>x.id===cur.id); if(k<0||k===cands.length-1){ delete o.under; toast('Worn without a t-shirt underneath. Tap + to add one back.'); } else o.under=cands[k+1];
-      S.fits[i]=editedFit(f,o); renderOutfits(); if(o.under) toast('Swapped in '+o.under.name+'.'); return; }
+    const cands=swapOpts(o,slot); const cur=o[slot];
+    if(slot==='under'){ if(cands.length<2) return; o.under=step(cands,cur.id); S.fits[i]=editedFit(f,o); renderOutfits(); return; }
     if(cands.length<2){ toast('No other '+CAT[slot==='outer'?'outerwear':slot].label.toLowerCase()+' for this occasion.'); return; }
-    o[slot]=cands[(cands.findIndex(x=>x.id===cur.id)+1)%cands.length];
+    o[slot]=step(cands,cur.id);
+    if(slot==='top'&&o.under&&(!layeredOver(o.top)||o.under.id===o.top.id)) delete o.under; // a plain top is worn on its own
     if(slot==='top'&&needsBase(o.top)&&!o.under){ const u=swapCandidates(o,'under',allItems(),S.occ,ctx())[0]; if(u) o.under=u; }
   }
-  S.fits[i]=editedFit(f,o); renderOutfits();
-  const now=slot.startsWith('acc')?o.acc[+slot.slice(3)]:o[slot]; if(now) toast('Swapped in '+now.name+'.');
+  S.fits[i]=editedFit(f,o); renderOutfits(); // the open preview shows the new piece and its place in the list
 }
 function loadExamples(){
   const d=n=>new Date(Date.now()-n*DAY).toISOString().slice(0,10);
@@ -1991,8 +2003,8 @@ document.addEventListener('click',async e=>{
   if(ds.swap!==undefined){ openPiece(+ds.swap,ds.slot); return; }
   if(ds.pdrop!==undefined){ dropPiece(+ds.pdrop,ds.slot); return; }
   if(ds.punlog){ unlogPiece(ds.punlog); return; }
-  if(ds.pswap!==undefined){ const k=+ds.pswap, sl=ds.slot; const before=pieceAt(k,sl); swap(k,sl); const after=pieceAt(k,sl);
-    if(after&&before&&after.id!==before.id) openPiece(k,sl,true); return; }
+  if(ds.pstep!==undefined){ const k=+ds.pi, sl=ds.slot; const before=pieceAt(k,sl); swap(k,sl,+ds.pstep); const after=pieceAt(k,sl);
+    if(after&&before&&after.id!==before.id){ openPiece(k,sl,true); const b=document.querySelector('#sheetRoot [data-pstep="'+ds.pstep+'"]'); if(b) b.focus(); } return; }
   if(ds.donate){ if(await patchItem(ds.donate,{status:'donated',donatedOn:todayISO()})) toast('Marked as donated'); return; }
   if(ds.recycle){ if(await patchItem(ds.recycle,{status:'recycled',recycledOn:todayISO()})) toast('Marked as recycled'); return; }
   if(ds.restore){ if(await patchItem(ds.restore,{status:'active'})) toast('Back in your closet'); return; }
@@ -2055,6 +2067,9 @@ document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e
   if(e.target&&e.target.id==='holiLookT'){ S.settings.holidayLook=e.target.checked; saveCache(); queueSettingsSave(); renderAll(); return; }
   if(e.target&&e.target.id==='enhanceT'){ S.settings.enhance=e.target.checked; saveCache(); queueSettingsSave(); for(const u of CUT.urls.values()) URL.revokeObjectURL(u); CUT.urls.clear(); ENH.clear(); renderAll(); return; }
   if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.',6000); } });
+// Arrow keys step through the piece preview's options (keyboards on Windows and iPad).
+document.addEventListener('keydown',e=>{ if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test((e.target||{}).tagName||'')){
+  const b=document.querySelector('#sheetRoot [data-pstep="'+(e.key==='ArrowLeft'?'-1':'1')+'"]'); if(b){ e.preventDefault(); b.click(); } } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
