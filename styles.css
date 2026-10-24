@@ -390,6 +390,10 @@ details.rules p{margin:8px 0}
 .alt2{align-items:stretch}
 .flatlay.mini{width:100%;height:auto}
 .palopt .sws{max-width:46%;flex-wrap:wrap;row-gap:4px}
+.palopt .sws .sw-empty{background:transparent;border:2px dashed var(--line);box-shadow:none}
+.pcols{flex-wrap:wrap;gap:8px;overflow:visible;margin:4px 0 8px}
+.chip.pcol{display:inline-flex;align-items:center;gap:8px;min-height:40px}
+.chip.pcol .sw{width:18px;height:18px;border-radius:50%;box-shadow:0 0 0 1px var(--line);flex:none}
 
 /* ===== v1.11 Outfits redesign: picture first, quieter chrome ===== */
 .status.hidden{display:none}

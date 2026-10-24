@@ -301,7 +301,6 @@ I18N.load("es",{
 "Open items marked": "Abre las prendas marcadas",
 "Open laundry": "Abrir lavado",
 "Open shopping list": "Abrir lista de compras",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.": "Opcional. Si la eliges, un conjunto cuyas prendas principales usan solo colores de la paleta suma +1, y cada prenda fuera de ella resta 0.5. Paletas: clásicos sobrios, tonos tierra, monocromo, azul marino y blanco.",
 "Or postal code or city": "O código postal o ciudad",
 "Other accessory": "Otro accesorio",
 "Outer layer": "Capa exterior",
@@ -1281,5 +1280,12 @@ I18N.load("es",{
 "The new password is the same as the current one.": "La nueva contraseña es igual a la actual.",
 "The current password is wrong.": "La contraseña actual es incorrecta.",
 "Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.": "Las camisas que se pueden usar abiertas (con botones, de franela, sobrecamisas, cárdigans) también se sugieren sobre una camiseta, con la camiseta que mejor puntúa. Abierta, la camisa cuenta como casual (nivel de formalidad 2 como máximo) y la camiseta no entra en la revisión del nivel de formalidad. Con el clima activado, la camiseta suma +0.5 por debajo de 16° y resta 1 punto por encima de 24°. Una camisa abierta no se pone debajo de un blazer o saco de traje (tres capas): eso resta 3 puntos. Solo las prendas ligeras van debajo (camisetas, camisetas sin mangas, henleys de manga corta); las de manga larga o gruesas se descartan, y las camisas de vestir no se usan abiertas. Con una chaqueta encima, la camisa abierta y la prenda de debajo deben ser ligeras; una camisa de franela o una prenda de manga larga juntas restan 3 puntos. Qué prendas cuentan se estima por su nombre; cámbialo en el editor de cada prenda.",
-"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "Tres capas abrigadoras bajo {a}: demasiado volumen. Usa la camisa sobre una camiseta ligera, o sola"
+"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "Tres capas abrigadoras bajo {a}: demasiado volumen. Usa la camisa sobre una camiseta ligera, o sola",
+"Custom": "Personalizada",
+"Colors you pick, for example for a photo shoot or an event.": "Colores que eliges, por ejemplo para una sesión de fotos o un evento.",
+"Custom palette": "Paleta personalizada",
+"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "Marca los colores que los conjuntos deben priorizar, por ejemplo los que sugiere un fotógrafo. Los neutros que no marques también cuentan como fuera de la paleta.",
+"Use these colors": "Usar estos colores",
+"Ranking now favors your custom palette.": "Ahora se prioriza tu paleta personalizada.",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "Opcional. Si la eliges, un conjunto cuyas prendas principales usan solo colores de la paleta suma +1, y cada prenda fuera de ella resta 0.5. Paletas: clásicos sobrios, tonos tierra, monocromo, azul marino y blanco, o un conjunto de colores que tú eliges."
 });

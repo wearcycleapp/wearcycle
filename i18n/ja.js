@@ -301,7 +301,6 @@ I18N.load("ja",{
 "Open items marked": "次の印が付いたアイテム",
 "Open laundry": "洗濯を開く",
 "Open shopping list": "買い物リストを開く",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.": "任意。設定すると、メインのアイテムがすべてパレットの色のコーデは+1、パレット外のアイテムは1点につき-0.5になります。パレット：落ち着いた定番色、アースカラー、モノトーン、ネイビーと白。",
 "Or postal code or city": "または郵便番号か都市名",
 "Other accessory": "その他の小物",
 "Outer layer": "アウター",
@@ -1281,5 +1280,12 @@ I18N.load("ja",{
 "The new password is the same as the current one.": "新しいパスワードが現在のものと同じです。",
 "The current password is wrong.": "現在のパスワードが正しくありません。",
 "Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.": "前を開けて着られるシャツ（ボタンダウン、ネルシャツ、シャツジャケット、カーディガン）は、Tシャツの上に羽織る形でも提案され、最もスコアの高いTシャツを使います。前を開けて着る場合、シャツはカジュアル扱い（きちんと度は最大2）となり、Tシャツはきちんと度のチェックから外れます。天気がオンのとき、Tシャツは16°未満で+0.5、24°超で1点減点です。前を開けたシャツはブレザーやスーツのジャケットの下には重ねません（3枚重ね）：3点減点です。下に着るのは軽いもの（Tシャツ、タンクトップ、半袖ヘンリー）だけです。長袖や厚手のトップスは除き、ドレスシャツは前を開けて着ません。ジャケットを着るときは、前を開けたシャツとその下のどちらも軽いものにします。フランネルや長袖を重ねると3点減点です。どのアイテムが該当するかは名前から推定します。各アイテムの編集画面で変更できます。",
-"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "{a}の下に暖かい3枚重ね：厚すぎます。シャツは軽いTシャツの上か1枚で着ましょう"
+"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "{a}の下に暖かい3枚重ね：厚すぎます。シャツは軽いTシャツの上か1枚で着ましょう",
+"Custom": "カスタム",
+"Colors you pick, for example for a photo shoot or an event.": "撮影やイベント用など、自分で選んだ色。",
+"Custom palette": "カスタムパレット",
+"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "コーデで優先したい色を選んでください（例：フォトグラファーが勧める色）。選ばなかった無彩色もパレット外として扱われます。",
+"Use these colors": "この色を使う",
+"Ranking now favors your custom palette.": "カスタムパレットを優先して順位付けします。",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "任意。設定すると、メインのアイテムがすべてパレットの色のコーデは+1、パレット外のアイテムは1点につき-0.5になります。パレット：落ち着いた定番色、アースカラー、モノトーン、ネイビーと白、または自分で選んだ色。"
 });

@@ -32,6 +32,10 @@ const PALETTES={
   earth:{label:'Earth tones',colors:['beige','khaki','brown','olive','white','burgundy','denim'],desc:'Cream, tan, brown, olive and rust-like warmth.'},
   mono:{label:'Monochrome',colors:['black','white','grey'],desc:'Black, white and grey only.'},
   navy:{label:'Navy and white',colors:['navy','white','denim','lightblue','grey','beige'],desc:'Nautical: navy, white, light blue and soft neutrals.'}};
+// The palette in use: a preset, or 'custom' with the colors the person picked (settings.paletteCustom). An empty custom set means no preference.
+function paletteOf(id,custom){
+  if(id==='custom'){ const c=(custom||[]).filter(k=>COLORS[k]); return {label:'Custom',colors:c.length?c:null,desc:'Colors you pick, for example for a photo shoot or an event.'}; }
+  return PALETTES[id]||PALETTES.any; }
 const TARGETS={work:{top:5,bottom:3,shoes:2},out:{top:3,bottom:2,shoes:1},sport:{top:3,bottom:2,shoes:1},home:{top:3,bottom:2,shoes:1},chores:{top:2,bottom:1,shoes:1},formal:{top:1,bottom:1,shoes:1}};
 const IDEAS={
   work:{top:'button-up shirt or knit polo',bottom:'chinos or trousers',shoes:'leather shoes or clean minimal sneakers'},
@@ -223,10 +227,10 @@ function weatherScore(o,wx,occ){
 function scoreOutfit(o,occ,ctx){
   const now=ctx.now, log=ctx.log||[]; const core=coreOf(o); const reasons=[]; let s=0;
   if(ctx.wx){ const w=weatherScore(o,ctx.wx,occ); s+=w.s; reasons.push(...w.r); }
-  const pal=ctx.palette&&PALETTES[ctx.palette]&&PALETTES[ctx.palette].colors;
+  const P=ctx.palette?paletteOf(ctx.palette,ctx.paletteColors):null, pal=P&&P.colors;
   if(pal){ const out=core.filter(i=>primary(i)&&!pal.includes(primary(i)));
-    if(!out.length){ s+=1; reasons.push({t:'Fits your '+PALETTES[ctx.palette].label.toLowerCase()+' palette'}); }
-    else { s-=0.5*out.length; reasons.push({t:[...new Set(out.map(i=>primary(i)))].join(' and ')+(new Set(out.map(i=>primary(i))).size>1?' are':' is')+' outside your '+PALETTES[ctx.palette].label.toLowerCase()+' palette',neg:true}); } }
+    if(!out.length){ s+=1; reasons.push({t:'Fits your '+P.label.toLowerCase()+' palette'}); }
+    else { s-=0.5*out.length; reasons.push({t:[...new Set(out.map(i=>primary(i)))].join(' and ')+(new Set(out.map(i=>primary(i))).size>1?' are':' is')+' outside your '+P.label.toLowerCase()+' palette',neg:true}); } }
   const h=harmony(core.map(primary).filter(Boolean)); s+=h.s; reasons.push({t:h.why,neg:!!h.neg});
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
   // An open shirt over a t-shirt is the outer layer of a relaxed look; under a blazer or suit jacket it makes three layers.
@@ -702,7 +706,7 @@ function themeScore(o,th){
   return {s,r};
 }
 
-return {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
+return {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
   daysSince,localDayGap,notPicked,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,wetRisk,accWeatherOk,tailored,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps,versatility,VERSA};
 })();

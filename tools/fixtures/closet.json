@@ -24,6 +24,7 @@
    "units": "C"
   },
   "palette": "any",
+  "paletteCustom": [],
   "autoCut": false,
   "claude": true,
   "dept": "any",

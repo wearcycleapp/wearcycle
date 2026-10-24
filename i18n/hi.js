@@ -301,7 +301,6 @@ I18N.load("hi",{
 "Open items marked": "अलमारी में वे आइटम खोलें जिन पर",
 "Open laundry": "धुलाई खोलें",
 "Open shopping list": "ख़रीदारी सूची खोलें",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.": "वैकल्पिक। सेट करने पर, जिस आउटफ़िट के सभी मुख्य पीस पैलेट के रंगों में हों उसे +1 मिलता है, और पैलेट से बाहर के हर पीस पर -0.5। पैलेट: सादे क्लासिक, मिट्टी के रंग, मोनोक्रोम, नेवी और सफ़ेद।",
 "Or postal code or city": "या पोस्टल कोड या शहर",
 "Other accessory": "दूसरी एक्सेसरी",
 "Outer layer": "ऊपरी लेयर",
@@ -1281,5 +1280,12 @@ I18N.load("hi",{
 "The new password is the same as the current one.": "नया पासवर्ड मौजूदा पासवर्ड जैसा ही है।",
 "The current password is wrong.": "मौजूदा पासवर्ड ग़लत है।",
 "Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.": "जो शर्ट खुली पहनी जा सकती हैं (बटन-अप, फ़्लैनल, ओवरशर्ट, कार्डिगन), वे टी-शर्ट के ऊपर भी सुझाई जाती हैं, सबसे अच्छे स्कोर वाली टी-शर्ट के साथ। खुली पहनी शर्ट कैज़ुअल गिनी जाती है (ज़्यादा से ज़्यादा ड्रेस लेवल 2) और टी-शर्ट को ड्रेस लेवल की जाँच से बाहर रखा जाता है। मौसम चालू होने पर, 16° से नीचे टी-शर्ट +0.5 जोड़ती है और 24° से ऊपर 1 पॉइंट घटाती है। खुली शर्ट को ब्लेज़र या सूट जैकेट के नीचे नहीं पहना जाता (तीन लेयर): इसके 3 पॉइंट कटते हैं। नीचे सिर्फ़ हल्के कपड़े पहने जाते हैं (टी-शर्ट, टैंक, छोटी बाँह वाले हेनली); लंबी बाँह या मोटे टॉप शामिल नहीं होते, और ड्रेस शर्ट खुली नहीं पहनी जाती। जैकेट के नीचे, खुली शर्ट और उसके नीचे की लेयर दोनों हल्की होनी चाहिए; फ़्लानेल या लंबी बाँह वाला टॉप एक साथ पहनने पर 3 पॉइंट कटते हैं। कौन से आइटम गिने जाते हैं, इसका अंदाज़ा उनके नामों से लगाया जाता है; इसे हर आइटम के एडिटर में बदलें।",
-"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "{a} के नीचे तीन गर्म लेयर: बहुत भारी। शर्ट को हल्की टी-शर्ट के ऊपर या अकेले पहनें"
+"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "{a} के नीचे तीन गर्म लेयर: बहुत भारी। शर्ट को हल्की टी-शर्ट के ऊपर या अकेले पहनें",
+"Custom": "कस्टम",
+"Colors you pick, for example for a photo shoot or an event.": "आपके चुने हुए रंग, जैसे किसी फ़ोटो शूट या कार्यक्रम के लिए।",
+"Custom palette": "कस्टम पैलेट",
+"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "वे रंग चुनें जिन्हें आउटफ़िट में प्राथमिकता मिले, जैसे फ़ोटोग्राफ़र के सुझाए रंग। जो न्यूट्रल रंग आप नहीं चुनते, वे भी पैलेट से बाहर गिने जाते हैं।",
+"Use these colors": "ये रंग इस्तेमाल करें",
+"Ranking now favors your custom palette.": "रैंकिंग अब आपके कस्टम पैलेट को प्राथमिकता देती है।",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "वैकल्पिक। सेट करने पर, जिस आउटफ़िट के सभी मुख्य पीस पैलेट के रंगों में हों उसे +1 मिलता है, और पैलेट से बाहर के हर पीस पर -0.5। पैलेट: सादे क्लासिक, मिट्टी के रंग, मोनोक्रोम, नेवी और सफ़ेद, या आपके चुने हुए रंग।"
 });

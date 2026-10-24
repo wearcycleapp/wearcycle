@@ -1,7 +1,7 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.49.3';
-const {PALETTES,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
+const APP_VERSION='1.50.0';
+const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
@@ -26,7 +26,7 @@ const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:30,che
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
 function byId(id){ return S.items.get(id)||S.examples.find(e=>e.id===id); }
-function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',style:styleTarget(S.occ),theme:themeNow()}; }
+function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',paletteColors:S.settings.paletteCustom||[],style:styleTarget(S.occ),theme:themeNow()}; }
 /* ---------- seasons and holidays ---------- */
 // Country for country-specific holidays: the weather place's country, else the phone's time zone, else the language region.
 const CA_TZ=/^America\/(Toronto|Montreal|Vancouver|Edmonton|Winnipeg|Regina|Halifax|St_Johns|Moncton|Glace_Bay|Goose_Bay|Whitehorse|Dawson|Dawson_Creek|Fort_Nelson|Creston|Iqaluit|Rankin_Inlet|Resolute|Cambridge_Bay|Inuvik|Yellowknife|Swift_Current|Atikokan|Blanc-Sablon|Nipigon|Thunder_Bay|Rainy_River|Pangnirtung)$/;
@@ -715,7 +715,7 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
-function fitKeyNow(){ const w=wxForScore(); return (S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return (S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 /* "See outfits with this": the Outfits screen builds every outfit around one piece, and says why that piece
@@ -879,8 +879,10 @@ function heroMeta(f,i,o,canAddUnder){
       <p class="hint">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?', today’s weather':''}${S.settings.palette&&S.settings.palette!=='any'?' and your palette':''}. Tap any piece to swap it.</p></details>
     <button class="linkbtn" data-act="logOther">Wore something else? Log it</button>`;
 }
+function palNow(){ return paletteOf(S.settings.palette||'any',S.settings.paletteCustom); }
+function palDesc(p){ return (S.settings.palette==='custom'&&p.colors)?p.colors.join(', '):p.desc; }
 function openAdjust(){
-  const auto=needsLayer(wxForScore()), pal=PALETTES[S.settings.palette||'any'];
+  const auto=needsLayer(wxForScore()), pal=palNow();
   openSheet(sheetHead('Adjust')+`
    <div class="field"><span class="lab">Outer layer</span><div class="chips">${[['auto','Auto'+(wxForScore()?(auto?' (on today)':' (off today)'):'')],['on','Always add'],['off','None']].map(([k,l])=>`<button class="chip" data-layer="${k}" aria-pressed="${S.layerMode===k}">${l}</button>`).join('')}</div>
      <p class="hint">Auto adds a jacket or coat when it is below 15° or wet.</p></div>
@@ -1288,7 +1290,7 @@ function openSettings(){
    <div class="panel"><div class="li"><div class="txt"><b>Shopping department</b><span>${DEPT_HINT} Any: searches cover both; style lists use menswear pieces.</span>${deptChips()}</div></div>
    <button class="li lirow" data-act="styles"><div class="txt"><b>Your style</b><span>${esc(styleSummary())}</span></div><span class="chev">›</span></button>
    <div class="li"><div class="txt"><b>Recognize piece types</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!Array.isArray(i.styles)).length;return n?'Claude looks at '+n+' piece'+(n===1?'':'s')+' once to note the type, pattern, fabric and styles (one small request each). New photos get this when Claude reads them.':'Every piece with a photo has its type and styles.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanStyles">Check</button></div></div></div>
-   <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(PALETTES[S.settings.palette||'any'].label)}</b><span>${esc(PALETTES[S.settings.palette||'any'].desc)}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
+   <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(palNow().label)}</b><span>${esc(palDesc(palNow()))}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
    <h3>Weather</h3>
    <div class="panel"><div class="li"><div class="txt"><b>${wxOn()?esc(wxSet().label||'Your location'):'Off'}</b><span>${wxOn()?'Outfits follow today\u2019s forecast.':'Outfits ignore the weather.'}</span></div><div class="acts"><button class="btn sm" data-wx="edit">${wxOn()?'Change':'Set up'}</button></div></div></div>
    <h3>Photos</h3>
@@ -1329,7 +1331,7 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p>Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with \u201cWorn over a t-shirt\u201d in its More details.</p>
     <p><b>Belts.</b> Jeans, chinos, trousers and casual shorts always get a belt if you own one, even one not tagged for the occasion; joggers and athletic wear don't. With leather dress shoes the belt should match them (black with black, brown with brown) and a casual belt is flagged; with sneakers any belt that keeps the colors in harmony. If your only belt doesn't fit the rule it is still shown, with a warning. Change whether a bottom takes a belt in its editor.</p>
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
-    <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.</p>
+    <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.</p>
     <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
     <p><b>Work dress code.</b> Casual: t-shirts, hoodies, jeans and casual jackets (dress levels 2 to 3), no shorts, no big logos. Business casual: shirts, polos, knits and chinos (levels 3 to 4), no t-shirts or hoodies. Suits: levels 4 to 5, and a jacket is added automatically. Each rule can be switched in Settings, and any piece can be overridden in its editor. Formal (interviews, weddings, graduations) takes pieces at level 4 or above and always adds a jacket.</p>
     <p><b>Reminders.</b> A garment kept by one owner lasts about 5.3 years and 94 wears, and is worn about 30 times a year while under 2 years old (Laitala and Klepp, Oslo Metropolitan University, 2021); UK clothing lasts 3.3 years on average (WRAP). So condition is checked after 30 wears or 12 months, and donating is suggested after 2 years unworn, 3 years for coats and formal wear, which can sit out a whole season or wait for the next wedding.</p>
@@ -1614,7 +1616,17 @@ async function shareOutfit(){
 function openPalettes(){
   const cur=S.settings.palette||'any';
   openSheet(sheetHead('Style palette')+`<p class="hint">Outfits whose main colors all sit in your palette rank higher (+1); each piece outside it costs half a point. Color harmony still applies to every palette.</p>
-   ${Object.entries(PALETTES).map(([k,p])=>`<button class="palopt" data-pal="${k}" aria-pressed="${cur===k}"><span class="sws">${(p.colors||['black','white','navy','olive','burgundy','khaki','lightblue']).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><span class="pl"><b>${esc(p.label)}</b><span>${esc(p.desc)}</span></span></button>`).join('')}`);
+   ${Object.entries(PALETTES).map(([k,p])=>`<button class="palopt" data-pal="${k}" aria-pressed="${cur===k}"><span class="sws">${(p.colors||['black','white','navy','olive','burgundy','khaki','lightblue']).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><span class="pl"><b>${esc(p.label)}</b><span>${esc(p.desc)}</span></span></button>`).join('')}
+   ${(()=>{ const p=paletteOf('custom',S.settings.paletteCustom); return `<button class="palopt" data-act="palcustom" aria-pressed="${cur==='custom'}"><span class="sws">${(p.colors||[]).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')||'<span class="sw sw-empty"></span>'}</span><span class="pl"><b>${esc(p.label)}</b><span>${esc(p.colors?p.colors.join(', '):p.desc)}</span></span></button>`; })()}`);
+}
+// Custom palette: the person ticks any of the app's colors; saved as settings.paletteCustom.
+let PCOL=null;
+function openPaletteCustom(){
+  PCOL=new Set(S.settings.paletteCustom||[]);
+  openSheet(sheetHead('Custom palette')+`<p class="hint">Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.</p>
+   <div class="chips pcols">${Object.entries(COLORS).map(([k,v])=>`<button type="button" class="chip pcol" data-pcol="${k}" aria-pressed="${PCOL.has(k)}"><span class="sw" style="background:${v.hex}"></span>${k}</button>`).join('')}</div>
+   <p class="err" id="pc-err" role="alert"></p>
+   <div class="row"><button class="btn primary" data-act="palsave">Use these colors</button><button class="btn ghost" data-act="palettes">Back</button></div>`);
 }
 
 /* ---------- weather sheet ---------- */
@@ -1900,6 +1912,7 @@ document.addEventListener('click',async e=>{
   }
   if(ds.dept){ S.settings.dept=ds.dept; setDept(ds.dept); saveCache(); queueSettingsSave(); ideasState.list=null; renderAll(); document.querySelectorAll('[data-dept]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.dept===ds.dept)); return; }
   if(ds.wcode){ S.settings.work={code:ds.wcode}; setDressCode(S.settings.work); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); if($('#sheetRoot').innerHTML&&document.querySelector('.dresspanel')) openSettings(); else closeSheet(); toast('Work dress code: '+DRESS_CODES[ds.wcode].label+'. Your closet was re-sorted.'); return; }
+  if(ds.pcol&&PCOL){ if(PCOL.has(ds.pcol)) PCOL.delete(ds.pcol); else PCOL.add(ds.pcol); t.setAttribute('aria-pressed',PCOL.has(ds.pcol)); const er=$('#pc-err'); if(er) er.textContent=''; return; }
   if(ds.pal){ S.settings.palette=ds.pal; saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast(ds.pal==='any'?'No palette preference.':'Ranking now favors '+PALETTES[ds.pal].label.toLowerCase()+'.'); return; }
   if(ds.view){ S.view=ds.view; LS.set('wearcycle.view',S.view); renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
@@ -1921,6 +1934,10 @@ document.addEventListener('click',async e=>{
     case 'cropAll': cropAll(); return;
     case 'logOther': openLog(); return;
     case 'palettes': openPalettes(); return;
+    case 'palcustom': openPaletteCustom(); return;
+    case 'palsave': { if(!PCOL||!PCOL.size){ const er=$('#pc-err'); if(er) er.textContent='Pick at least one color.'; return; }
+      S.settings.paletteCustom=Object.keys(COLORS).filter(k=>PCOL.has(k)); S.settings.palette='custom'; PCOL=null;
+      saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast('Ranking now favors your custom palette.'); return; }
     case 'styles': openStyles(); return;
     case 'addLook': addLook(); return;
     case 'scanStyles': scanStyles(); return;

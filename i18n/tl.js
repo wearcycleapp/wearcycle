@@ -301,7 +301,6 @@ I18N.load("tl",{
 "Open items marked": "Buksan ang mga item na may markang",
 "Open laundry": "Buksan ang labada",
 "Open shopping list": "Buksan ang listahan ng bibilhin",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.": "Opsyonal. Kapag naka-set, +1 ang outfit na ang lahat ng pangunahing piraso ay nasa kulay ng palette, at -0.5 ang bawat pirasong wala rito. Mga palette: malamlam na klasiko, kulay-lupa, monochrome, navy at puti.",
 "Or postal code or city": "O postal code o lungsod",
 "Other accessory": "Ibang accessory",
 "Outer layer": "Panlabas na patong",
@@ -1281,5 +1280,12 @@ I18N.load("tl",{
 "The new password is the same as the current one.": "Pareho ang bagong password sa kasalukuyan.",
 "The current password is wrong.": "Mali ang kasalukuyang password.",
 "Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.": "Iminumungkahi ring isuot nang bukas sa ibabaw ng t-shirt ang mga shirt na puwedeng isuot nang bukas (button-up, flannel, overshirt, cardigan), gamit ang t-shirt na may pinakamataas na score. Kapag bukas, casual ang bilang sa shirt (antas ng pormalidad 2 ang pinakamataas) at hindi isinasama ang t-shirt sa pagsusuri ng pormalidad. Kapag naka-on ang panahon, +0.5 ang t-shirt sa ibaba ng 16° at bawas 1 puntos sa itaas ng 24°. Hindi isinusuot ang bukas na polo sa ilalim ng blazer o suit jacket (tatlong patong): bawas 3 puntos iyon. Manipis lang na damit ang nasa ilalim (t-shirt, sando, henley na maikli ang manggas); hindi isinasama ang mahaba ang manggas o makapal, at hindi isinusuot nang bukas ang dress shirt. Kapag may jacket sa ibabaw, dapat manipis pareho ang bukas na polo at ang nasa ilalim nito; bawas 3 puntos ang flannel o mahabang manggas na pinagpatong. Hinuhulaan mula sa pangalan kung aling mga item ang kasama; baguhin ito sa editor ng bawat item.",
-"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "Tatlong makapal na patong sa ilalim ng {a}: masyadong makapal. Isuot ang polo sa ibabaw ng manipis na t-shirt, o mag-isa"
+"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "Tatlong makapal na patong sa ilalim ng {a}: masyadong makapal. Isuot ang polo sa ibabaw ng manipis na t-shirt, o mag-isa",
+"Custom": "Sarili mong pili",
+"Colors you pick, for example for a photo shoot or an event.": "Mga kulay na pinili mo, halimbawa para sa photo shoot o isang okasyon.",
+"Custom palette": "Sariling palette",
+"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "Lagyan ng tsek ang mga kulay na dapat unahin ng mga outfit, halimbawa ang mga kulay na mungkahi ng photographer. Ang mga neutral na hindi mo pinili ay bibilangin ding wala sa palette.",
+"Use these colors": "Gamitin ang mga kulay na ito",
+"Ranking now favors your custom palette.": "Inuuna na ngayon ang sarili mong palette.",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "Opsyonal. Kapag naka-set, +1 ang outfit na ang lahat ng pangunahing piraso ay nasa kulay ng palette, at -0.5 ang bawat pirasong wala rito. Mga palette: malamlam na klasiko, kulay-lupa, monochrome, navy at puti, o mga kulay na ikaw mismo ang pumili."
 });

@@ -301,7 +301,6 @@ I18N.load("fr",{
 "Open items marked": "Ouvrez les articles marqués",
 "Open laundry": "Ouvrir la lessive",
 "Open shopping list": "Ouvrir la liste d’achats",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white.": "Facultatif. Lorsqu’une palette est choisie, une tenue dont les pièces principales sont toutes dans ses couleurs obtient +1, et chaque pièce hors palette -0,5. Palettes : classiques sobres, tons de terre, monochrome, marine et blanc.",
 "Or postal code or city": "Ou code postal ou ville",
 "Other accessory": "Autre accessoire",
 "Outer layer": "Couche extérieure",
@@ -1281,5 +1280,12 @@ I18N.load("fr",{
 "The new password is the same as the current one.": "Le nouveau mot de passe est identique à l’actuel.",
 "The current password is wrong.": "Le mot de passe actuel est incorrect.",
 "Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.": "Les chemises qui peuvent se porter ouvertes (chemises boutonnées, chemises en flanelle, surchemises, cardigans) sont aussi suggérées par-dessus un t-shirt, avec le t-shirt qui obtient le meilleur score. Portée ouverte, la chemise compte comme décontractée (niveau d’habillement 2 au maximum) et le t-shirt est exclu de la vérification du niveau d’habillement. Avec la météo activée, le t-shirt ajoute +0,5 sous 16° et coûte 1 point au-dessus de 24°. Une chemise ouverte n’est pas portée sous un blazer ou un veston (trois couches) : cela coûte 3 points. Seules les pièces légères vont dessous (t-shirts, camisoles, henleys à manches courtes); les hauts à manches longues ou épais sont exclus, et les chemises habillées ne se portent pas ouvertes. Sous un manteau, la chemise ouverte et la pièce en dessous doivent être légères; une chemise de flanelle ou un haut à manches longues superposés coûtent 3 points. Les articles concernés sont estimés d’après leur nom; modifiez ce réglage dans l’éditeur de chaque article.",
-"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "Trois couches chaudes sous {a} : trop volumineux. Portez la chemise sur un t-shirt léger, ou seule"
+"Three warm layers under {a}: too bulky. Wear the shirt over a light t-shirt, or on its own": "Trois couches chaudes sous {a} : trop volumineux. Portez la chemise sur un t-shirt léger, ou seule",
+"Custom": "Personnalisée",
+"Colors you pick, for example for a photo shoot or an event.": "Les couleurs de votre choix, par exemple pour une séance photo ou un événement.",
+"Custom palette": "Palette personnalisée",
+"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "Cochez les couleurs que les tenues doivent privilégier, par exemple celles que suggère un photographe. Les neutres non cochés comptent aussi comme hors palette.",
+"Use these colors": "Utiliser ces couleurs",
+"Ranking now favors your custom palette.": "Le classement favorise maintenant votre palette personnalisée.",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "Facultatif. Lorsqu’une palette est choisie, une tenue dont les pièces principales sont toutes dans ses couleurs obtient +1, et chaque pièce hors palette -0,5. Palettes : classiques sobres, tons de terre, monochrome, marine et blanc, ou un ensemble de couleurs que vous choisissez."
 });
