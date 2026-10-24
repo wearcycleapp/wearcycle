@@ -1284,8 +1284,9 @@ I18N.load("hi",{
 "Custom": "कस्टम",
 "Colors you pick, for example for a photo shoot or an event.": "आपके चुने हुए रंग, जैसे किसी फ़ोटो शूट या कार्यक्रम के लिए।",
 "Custom palette": "कस्टम पैलेट",
-"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "वे रंग चुनें जिन्हें आउटफ़िट में प्राथमिकता मिले, जैसे फ़ोटोग्राफ़र के सुझाए रंग। जो न्यूट्रल रंग आप नहीं चुनते, वे भी पैलेट से बाहर गिने जाते हैं।",
 "Use these colors": "ये रंग इस्तेमाल करें",
 "Ranking now favors your custom palette.": "रैंकिंग अब आपके कस्टम पैलेट को प्राथमिकता देती है।",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "वैकल्पिक। सेट करने पर, जिस आउटफ़िट के सभी मुख्य पीस पैलेट के रंगों में हों उसे +1 मिलता है, और पैलेट से बाहर के हर पीस पर -0.5। पैलेट: सादे क्लासिक, मिट्टी के रंग, मोनोक्रोम, नेवी और सफ़ेद, या आपके चुने हुए रंग।"
+"Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "पहनने के रंग चुनें, जैसे फ़ोटोग्राफ़र के सुझाए रंग। हर आउटफ़िट विकल्प इन्हीं रंगों के पीस से बनता है; कोई दूसरा रंग तभी आता है जब उस तरह का कोई पीस इन रंगों में न हो।",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "वैकल्पिक। सेट करने पर, जिस आउटफ़िट के सभी मुख्य पीस पैलेट के रंगों में हों उसे +1 मिलता है, और पैलेट से बाहर के हर पीस पर -0.5। पैलेट: सादे क्लासिक, मिट्टी के रंग, मोनोक्रोम, नेवी और सफ़ेद, या आपके चुने हुए रंग। कस्टम पैलेट हर विकल्प पर लागू होता है, सिर्फ़ पहले पर नहीं।",
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "इसका रंग आपके कस्टम पैलेट से बाहर है, इसलिए वह पैलेट चालू रहने तक दूसरे पीस चुने जाते हैं।"
 });

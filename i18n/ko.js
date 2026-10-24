@@ -1284,8 +1284,9 @@ I18N.load("ko",{
 "Custom": "사용자 지정",
 "Colors you pick, for example for a photo shoot or an event.": "사진 촬영이나 행사 등을 위해 직접 고른 색상.",
 "Custom palette": "사용자 지정 팔레트",
-"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "코디에서 우선할 색상을 고르세요. 예를 들어 사진작가가 추천한 색상이요. 고르지 않은 무채색도 팔레트 밖으로 계산돼요.",
 "Use these colors": "이 색상 사용",
 "Ranking now favors your custom palette.": "이제 사용자 지정 팔레트 위주로 순위를 매겨요.",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "선택 사항. 설정하면 주요 아이템이 모두 팔레트 색상인 코디는 +1, 팔레트에서 벗어난 아이템은 하나당 -0.5. 팔레트: 차분한 클래식, 어스 톤, 모노크롬, 네이비 & 화이트, 또는 직접 고른 색상."
+"Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "입을 색상을 고르세요. 예를 들어 사진작가가 추천한 색상이요. 모든 코디 옵션은 이 색상의 아이템으로 만들어지고, 그 종류의 아이템이 이 색상에 하나도 없을 때만 다른 색상이 들어가요.",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "선택 사항. 설정하면 주요 아이템이 모두 팔레트 색상인 코디는 +1, 팔레트에서 벗어난 아이템은 하나당 -0.5. 팔레트: 차분한 클래식, 어스 톤, 모노크롬, 네이비 & 화이트, 또는 직접 고른 색상. 사용자 지정 팔레트는 첫 번째뿐 아니라 모든 옵션에 적용돼요.",
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "색상이 사용자 지정 팔레트 밖이라, 그 팔레트를 쓰는 동안에는 다른 아이템이 선택돼요."
 });

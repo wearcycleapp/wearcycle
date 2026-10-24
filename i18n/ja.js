@@ -1284,8 +1284,9 @@ I18N.load("ja",{
 "Custom": "カスタム",
 "Colors you pick, for example for a photo shoot or an event.": "撮影やイベント用など、自分で選んだ色。",
 "Custom palette": "カスタムパレット",
-"Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.": "コーデで優先したい色を選んでください（例：フォトグラファーが勧める色）。選ばなかった無彩色もパレット外として扱われます。",
 "Use these colors": "この色を使う",
 "Ranking now favors your custom palette.": "カスタムパレットを優先して順位付けします。",
-"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.": "任意。設定すると、メインのアイテムがすべてパレットの色のコーデは+1、パレット外のアイテムは1点につき-0.5になります。パレット：落ち着いた定番色、アースカラー、モノトーン、ネイビーと白、または自分で選んだ色。"
+"Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "着たい色を選んでください（例：フォトグラファーが勧める色）。どのコーデ候補もこの色のアイテムで組みます。その種類のアイテムがこの色に1つもない場合だけ、ほかの色を使います。",
+"Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "任意。設定すると、メインのアイテムがすべてパレットの色のコーデは+1、パレット外のアイテムは1点につき-0.5になります。パレット：落ち着いた定番色、アースカラー、モノトーン、ネイビーと白、または自分で選んだ色。カスタムパレットは1番目だけでなく、すべての候補に適用されます。",
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "色がカスタムパレット外のため、そのパレットを使っている間はほかのアイテムが選ばれます。"
 });

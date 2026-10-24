@@ -374,7 +374,15 @@ function suggest(items,occ,ctx,opts){
   if(pin){ const c=pin.cat;
     if(c==='top') by.top=[pin]; else if(c==='bottom'){ by.bottom=[pin]; by.onepiece=[]; } else if(c==='onepiece'){ by.onepiece=[pin]; by.top=[]; by.bottom=[]; }
     else if(c==='shoes') by.shoes=[pin]; else if(c==='outerwear'){ by.outerwear=[pin]; opts=Object.assign({},opts,{layer:true}); } }
-  const tops=by.top||[], bottoms=by.bottom||[], ones=by.onepiece||[];
+  let tops=by.top||[], bottoms=by.bottom||[], ones=by.onepiece||[];
+  // A custom palette is a firm choice (for example a photo shoot): every option is built from pieces in its colors.
+  // Per category, if nothing in the palette fits the occasion, all pieces of that category stay in, so outfits are still built.
+  const PC=ctx.palette==='custom'&&opts.strictPalette!==false?paletteOf('custom',ctx.paletteColors).colors:null;
+  const inP=i=>!!PC&&!!primary(i)&&PC.includes(primary(i));
+  const keep=l=>{ if(!PC||!l) return l; const k=l.filter(x=>x===pin||inP(x)); return k.length?k:l; };
+  if(PC){ tops=keep(tops); bottoms=keep(bottoms); ones=keep(ones); by.shoes=keep(by.shoes); by.outerwear=keep(by.outerwear);
+    if(!pin){ const sep=tops.some(inP)&&bottoms.some(inP), one=ones.some(inP);
+      if(sep&&!one) ones=[]; else if(one&&!sep){ tops=[]; bottoms=[]; } } }
   const missing=[];
   const bases=[]; for(const t of tops) for(const b of bottoms) bases.push({top:t,bottom:b}); for(const o of ones) bases.push({onepiece:o});
   if(!bases.length){ if(!tops.length&&!ones.length) missing.push('top'); if(!bottoms.length&&!ones.length) missing.push('bottom'); }
@@ -383,7 +391,7 @@ function suggest(items,occ,ctx,opts){
   if(missing.length) return {outfits:[],missing};
   ctx=Object.assign({},ctx,{shoeAlt:shoes.filter(Boolean).length>1});
   // The t-shirt under an open shirt or a hoodie must itself be set for the occasion (a sports tee stays out of Work).
-  const allUnders=eligible(items,occ).filter(i=>i.cat==='top'&&canUnder(i));
+  const allUnders=keep(eligible(items,occ).filter(i=>i.cat==='top'&&canUnder(i)));
   const unders=LAYER_OCC.includes(occ)?allUnders:[];
   const bestUnder=(b,pool)=>{ let best=null,bs=-Infinity; for(const u of pool){ if(u.id===b.top.id) continue; const r=scoreOutfit(Object.assign({},b,{under:u}),occ,ctx).score; if(r>bs){bs=r;best=u;} } return best; };
   for(const b of bases){ if(b.top && needsBase(b.top) && allUnders.length){ const u=bestUnder(b,allUnders); if(u) b.under=u; } }
@@ -420,7 +428,7 @@ function suggest(items,occ,ctx,opts){
    occasions it is set for. Pieces in the wash, needing repair, retired or with no occasions are reported too. */
 function notPicked(items,ctxFor,opts){
   opts=opts||{}; const n=opts.n||8, seen=new Set(), garments=['top','bottom','onepiece','outerwear','shoes'];
-  for(const o of OCCASIONS.map(x=>x.id)){ const r=suggest(items,o,ctxFor(o),{n,layer:true});
+  for(const o of OCCASIONS.map(x=>x.id)){ const r=suggest(items,o,ctxFor(o),{n,layer:true,strictPalette:false});
     for(const f of r.outfits) for(const i of coreOf(f.o)) seen.add(i.id); }
   return items.filter(i=>isActive(i)&&garments.includes(i.cat)&&!seen.has(i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
 }

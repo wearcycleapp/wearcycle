@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.50.0';
+const APP_VERSION='1.50.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -728,6 +728,8 @@ function pinWhy(it){
   if(it.repair&&!repairOk(it,S.occ)) return 'It is marked as needing repair, so it is only suggested for sport, home and chores.';
   if(!occs.length) return 'It has no occasions set, so it is never suggested. Add some in its details.';
   if(!occs.includes(S.occ)) return 'It is not set for '+OCC[S.occ].label.toLowerCase()+' (it is for '+occs.map(o=>OCC[o].label.toLowerCase()).join(', ')+').';
+  const pc=S.settings.palette==='custom'&&palNow().colors;
+  if(pc&&!pc.includes(primary(it))&&allItems().some(x=>x.id!==it.id&&x.cat===it.cat&&isActive(x)&&!x.dirty&&pc.includes(primary(x))&&effectiveOccasions(x).includes(S.occ))) return 'Its color is outside your custom palette, so other pieces are picked while that palette is on.';
   const r=suggest(allItems(),S.occ,ctx(),{n:4,layer:layerOn()}); const inTop=r.outfits.some(f=>coreOf(f.o).concat(f.o.acc||[]).some(x=>x.id===it.id));
   return inTop?'It is also in today\u2019s picks for '+OCC[S.occ].label.toLowerCase()+'.':'It fits '+OCC[S.occ].label.toLowerCase()+', but other pieces score higher today. Open Why this outfit? to see what holds it back.';
 }
@@ -1331,7 +1333,7 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p>Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with \u201cWorn over a t-shirt\u201d in its More details.</p>
     <p><b>Belts.</b> Jeans, chinos, trousers and casual shorts always get a belt if you own one, even one not tagged for the occasion; joggers and athletic wear don't. With leather dress shoes the belt should match them (black with black, brown with brown) and a casual belt is flagged; with sneakers any belt that keeps the colors in harmony. If your only belt doesn't fit the rule it is still shown, with a warning. Change whether a bottom takes a belt in its editor.</p>
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
-    <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick.</p>
+    <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.</p>
     <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
     <p><b>Work dress code.</b> Casual: t-shirts, hoodies, jeans and casual jackets (dress levels 2 to 3), no shorts, no big logos. Business casual: shirts, polos, knits and chinos (levels 3 to 4), no t-shirts or hoodies. Suits: levels 4 to 5, and a jacket is added automatically. Each rule can be switched in Settings, and any piece can be overridden in its editor. Formal (interviews, weddings, graduations) takes pieces at level 4 or above and always adds a jacket.</p>
     <p><b>Reminders.</b> A garment kept by one owner lasts about 5.3 years and 94 wears, and is worn about 30 times a year while under 2 years old (Laitala and Klepp, Oslo Metropolitan University, 2021); UK clothing lasts 3.3 years on average (WRAP). So condition is checked after 30 wears or 12 months, and donating is suggested after 2 years unworn, 3 years for coats and formal wear, which can sit out a whole season or wait for the next wedding.</p>
@@ -1623,7 +1625,7 @@ function openPalettes(){
 let PCOL=null;
 function openPaletteCustom(){
   PCOL=new Set(S.settings.paletteCustom||[]);
-  openSheet(sheetHead('Custom palette')+`<p class="hint">Tick the colors outfits should favor, for example the colors a photographer suggests. Neutrals you leave out count as outside the palette too.</p>
+  openSheet(sheetHead('Custom palette')+`<p class="hint">Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.</p>
    <div class="chips pcols">${Object.entries(COLORS).map(([k,v])=>`<button type="button" class="chip pcol" data-pcol="${k}" aria-pressed="${PCOL.has(k)}"><span class="sw" style="background:${v.hex}"></span>${k}</button>`).join('')}</div>
    <p class="err" id="pc-err" role="alert"></p>
    <div class="row"><button class="btn primary" data-act="palsave">Use these colors</button><button class="btn ghost" data-act="palettes">Back</button></div>`);
