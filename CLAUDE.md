@@ -63,12 +63,12 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
 
 ## Checks (Claude's container)
 - `for f in *.js i18n/*.js tools/*.mjs; do node --check "$f"; done`
-- `node tools/check.mjs` with WEARCYCLE_TEST_EMAIL and
-  WEARCYCLE_TEST_PASSWORD in the environment (test account only, never in
-  a file); flags at the top of tools/check.mjs. Fixed clock, stubbed
-  weather, fixture closet (tools/fixtures/). Supabase calls are answered
-  locally, sign-in too when Supabase is unreachable, as from Claude's
-  container (the report says so). Test packages: outside, tools/deps.mjs.
+- `node tools/check.mjs` with WEARCYCLE_TEST_EMAIL and WEARCYCLE_TEST_PASSWORD in the
+  environment (test account only, never in a file); flags at the top of tools/check.mjs.
+  Fixed clock, stubbed weather, fixture closet (tools/fixtures/). Supabase calls are answered
+  locally, sign-in too when Supabase is unreachable, as from Claude's container (the report
+  says so). Test packages: outside, tools/deps.mjs; set WEARCYCLE_PLAYWRIGHT=1.63.0 to match
+  the container's Chromium (build 1243 since 2026-10-25).
 - Screenshots go outside the repo, except the Phase 4 baseline in docs/design/
   baseline/: always --css-pixels (else refused; --compare needs the same flag).
 - Detector: only warnings gate a release (against the baseline);
