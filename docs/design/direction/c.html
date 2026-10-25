@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Direction C: Board · Wearcycle Phase 6</title>
+<link rel="stylesheet" href="../../../fonts/fonts.css">
+<link rel="stylesheet" href="../../../styles.css">
+<link rel="stylesheet" href="mock.css">
+<style>
+
+/* Direction C, Board: today's structure and scale, refined and flattened */
+.m-wrap{max-width:1240px;margin:0 auto}
+.m-day{display:flex;align-items:center;gap:8px;min-height:48px}
+.m-day .m-dt{flex:1;min-width:0}
+.m-day h2{font-size:26px;line-height:1}
+.m-day .m-dt p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+.m-wx{display:inline-flex;align-items:center;gap:6px;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--raised);font-weight:600;font-size:14px;white-space:nowrap}
+.m-wx svg{width:18px;height:18px;color:var(--muted)}
+/* one row: the occasion menu, then the style chips */
+.m-ctl{display:flex;align-items:center;gap:10px;margin:0 -16px;padding:0 16px}
+.m-menu{position:relative;flex:none}
+.m-menubtn{min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 10px 0 14px;border:1.5px solid var(--ink);border-radius:8px;background:var(--raised);color:var(--ink);font-weight:700;font-size:15px;white-space:nowrap}
+.m-menubtn svg{width:18px;height:18px}
+.m-menubtn[aria-expanded="true"] svg{transform:rotate(180deg)}
+.m-list{position:absolute;top:calc(100% + 6px);left:0;z-index:8;min-width:220px;background:var(--raised);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow);padding:6px;display:flex;flex-direction:column}
+.m-list[hidden]{display:none}
+.m-list button{min-height:44px;display:flex;align-items:center;gap:10px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--ink);font-size:15px;font-weight:500;text-align:left}
+.m-list button svg{width:18px;height:18px;visibility:hidden;flex:none}
+.m-list button[aria-pressed="true"]{font-weight:700}
+.m-list button[aria-pressed="true"] svg{visibility:visible}
+.m-divider{flex:none;width:1px;height:28px;background:var(--line)}
+.m-styles{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding-right:16px;margin-right:-16px}
+.m-styles::-webkit-scrollbar{display:none}
+.m-styles button{flex:none;min-height:40px;padding:0 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-weight:600;font-size:14px;white-space:nowrap}
+.m-styles button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+/* hero: no card, the board leads */
+.m-hero{display:flex;flex-direction:column;gap:12px;min-width:0}
+.m-pickh{display:flex;align-items:center;gap:12px}
+.m-rank{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1;width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:var(--coral);color:var(--coral-ink);flex:none}
+.m-pt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.m-pt b{font-size:17px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.m-pt > span{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.m-cta{display:flex;gap:8px}
+.m-cta .btn.cta{flex:1}
+.m-meta-row{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.m-adv{margin:0;font-size:14px;color:var(--muted)}
+details.m-whyd{border-top:1px solid var(--line);padding-top:4px}
+details.m-whyd summary{list-style:none;cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:15px}
+details.m-whyd summary::-webkit-details-marker{display:none}
+details.m-whyd summary svg{width:18px;height:18px;color:var(--muted)}
+details.m-whyd[open] summary svg{transform:rotate(180deg)}
+details.m-whyd .m-why{padding:0 0 12px}
+.m-side{display:flex;flex-direction:column;gap:12px;min-width:0}
+.m-sec{display:flex;align-items:center;gap:8px;margin-top:8px}
+.m-sec h3{font-size:16px;flex:1}
+/* more options: a strip of small boards, numbered */
+.m-strip{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x proximity;margin:0 -16px;padding:0 16px 4px;scrollbar-width:none}
+.m-strip::-webkit-scrollbar{display:none}
+.m-alt{flex:0 0 44%;scroll-snap-align:start;display:flex;flex-direction:column;gap:6px;border:0;padding:0;background:none;text-align:left;min-width:0}
+.m-alt .m-al{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted)}
+.m-alt .m-al .m-an{font-family:var(--f-display);font-size:18px;font-weight:800;color:var(--ink);line-height:1}
+.m-log{align-self:flex-start;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px;background:none;border:0;padding:0;min-height:40px;color:var(--ink)}
+.m-occlist{display:none}
+@media (min-width:700px){
+  .m-out{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:28px;align-items:start}
+  .m-strip{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;margin:0;padding:0}
+  .m-alt{flex:none}
+}
+@media (min-width:960px){
+  .m-out{grid-template-columns:180px minmax(0,1.15fr) minmax(0,1fr);gap:32px}
+  .m-menu,.m-divider{display:none}
+  .m-ctl{margin:0;padding:0}
+  .m-occlist{display:flex;flex-direction:column;gap:4px;position:sticky;top:12px}
+  .m-occlist .m-k{font-size:13px;color:var(--muted);margin:0 0 4px 12px}
+  .m-occlist button{min-height:44px;padding:0 14px;border:0;border-radius:8px;background:none;color:var(--muted);font-weight:600;font-size:15px;text-align:left}
+  .m-occlist button[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+  .m-strip{grid-template-columns:repeat(2,minmax(0,1fr))}
+  /* as today from 960px: the board keeps the screen height and widens, so Wear this stays in view */
+  .m-hero > .m-board{aspect-ratio:auto!important;height:clamp(320px,calc(100vh - 330px),600px)}
+}
+@media (hover:hover) and (pointer:fine){
+  .m-occlist button:not([aria-pressed="true"]):hover,.m-list button:hover{background:var(--accent-soft);color:var(--ink)}
+}
+/* Closet: today's tiles without the card box; flags as one corner mark */
+.m-title{display:flex;align-items:center;gap:8px}
+.m-title h2{flex:1}
+.m-lede{margin:0;font-size:14px;color:var(--muted)}
+.m-chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.m-chips::-webkit-scrollbar{display:none}
+.m-chips button{flex:none;min-height:44px;padding:0 16px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--muted);font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.m-chips button .n{font-size:12px;font-weight:500;opacity:.9}
+.m-chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+@media (min-width:960px){.m-chips{flex-wrap:wrap;overflow:visible;margin:0;padding:0}}
+.m-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px}
+@media (min-width:700px){.m-tiles{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (min-width:1200px){.m-tiles{grid-template-columns:repeat(6,minmax(0,1fr))}}
+.m-tile{display:flex;flex-direction:column;gap:3px;border:0;padding:0;background:none;text-align:left;min-width:0}
+.m-tile .m-g{aspect-ratio:1/1;border-radius:10px;margin-bottom:5px}
+.m-tile .m-g img.cut{padding:10%}
+.m-tile b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-tile .m-meta{font-size:13px;color:var(--muted)}
+.m-mark{position:absolute;left:8px;top:8px;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:var(--raised)}
+.m-mark svg{width:16px;height:16px}
+.m-mark.warn{color:var(--warn)}
+.m-mark.bad{color:var(--bad)}
+/* Care: one row in its section */
+.m-csec{display:flex;align-items:baseline;gap:8px;margin-top:4px}
+.m-csec h3{font-size:17px}
+.m-csec .n{font-size:14px;color:var(--muted)}
+.m-crow{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.m-crow .m-g{width:64px;height:64px;border-radius:10px}
+.m-crow b{font-size:15px;display:block}
+.m-crow p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.m-crow .m-acts{grid-column:2;display:flex;gap:6px;flex-wrap:wrap}
+
+</style>
+</head>
+<body data-view="outfits" class="dir-c">
+<div class="app"><div class="m-wrap">
+  <header class="top">
+    <img class="logo" src="../../../icons/logo-icon.svg" alt="" width="36" height="36"><div class="brand">Wearcycle</div>
+    <button class="iconbtn" aria-label="Settings and rules" data-tl="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  </header>
+  <section class="m-view" data-view="outfits" aria-label="Outfits">
+    <div class="m-day">
+      <div class="m-dt"><h2><span data-t="Wednesday">Wednesday</span></h2><p data-t="Good morning">Good morning</p></div>
+      <button class="m-wx" aria-label="Weather: 10 to 14 degrees, cloudy. Change"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 1 1 .8-7.9A5.5 5.5 0 0 1 18.5 12 3 3 0 0 1 18 18H7Z"/></svg><span>10°–14°C</span></button>
+      <button class="iconbtn round" aria-label="Outfit diary" data-tl="Outfit diary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></button>
+    </div>
+    <div class="m-ctl">
+      <div class="m-menu"><button class="m-menubtn" data-menu-toggle aria-expanded="false" aria-haspopup="true" aria-label="Occasion: Work. Change"><span data-menu-label data-t="Work">Work</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+        <div class="m-list" role="group" aria-label="Occasion" data-group data-menu-list hidden><button data-pick aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span class="m-optl" data-t="Work">Work</span></button><button data-pick aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span class="m-optl" data-t="Going out">Going out</span></button><button data-pick aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span class="m-optl" data-t="Sport">Sport</span></button><button data-pick aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span class="m-optl" data-t="Home">Home</span></button><button data-pick aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span class="m-optl" data-t="Chores">Chores</span></button><button data-pick aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg><span class="m-optl" data-t="Formal">Formal</span></button></div></div>
+      <span class="m-divider" aria-hidden="true"></span>
+      <div class="m-styles" role="group" aria-label="Style" data-group><button data-pick aria-pressed="true"><span data-t="All my styles">All my styles</span></button><button data-pick aria-pressed="false"><span data-t="Rotate">Rotate</span></button><button data-pick aria-pressed="false"><span data-t="Classic">Classic</span></button><button data-pick aria-pressed="false"><span data-t="Minimal">Minimal</span></button></div>
+    </div>
+    <div class="m-out">
+      <nav class="m-occlist" aria-label="Occasion" data-group><span class="m-k" data-t="Occasion">Occasion</span><button data-pick aria-pressed="true"><span data-t="Work">Work</span></button><button data-pick aria-pressed="false"><span data-t="Going out">Going out</span></button><button data-pick aria-pressed="false"><span data-t="Sport">Sport</span></button><button data-pick aria-pressed="false"><span data-t="Home">Home</span></button><button data-pick aria-pressed="false"><span data-t="Chores">Chores</span></button><button data-pick aria-pressed="false"><span data-t="Formal">Formal</span></button></nav>
+      <div class="m-hero">
+        <div class="m-pickh"><span class="m-rank" aria-hidden="true">1</span><div class="m-pt"><b><span data-t="Today’s pick">Today’s pick</span><span class="stylepill" data-t="Minimal">Minimal</span></b><span><span data-t="Excellent match">Excellent match</span> <span class="m-bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></div>
+          <button class="iconbtn" aria-label="Adjust: outer layer, view and palette" data-tl="Adjust"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg></button></div>
+        <div class="m-board " style="aspect-ratio:4/5" role="group" aria-label="Option 1, Excellent match: Grey merino sweater, Navy chinos, White leather sneakers"><button class="fl" style="left:4%;top:4%;width:44%;height:74%" aria-label="Top: Grey merino sweater. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-04.jpg" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:52%;top:4%;width:44%;height:46%" aria-label="Bottom: Navy chinos. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-10-cut.webp" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:52%;top:52%;width:44%;height:26%" aria-label="Shoes: White leather sneakers. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-18-cut.webp" alt="" loading="lazy" decoding="async"></button><button class="fl small" style="left:4.0%;top:80%;width:21.5%;height:16%" aria-label="Belt: Brown leather belt. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-22.jpg" alt="" loading="lazy" decoding="async"></button><button class="fl small" style="left:27.5%;top:80%;width:21.5%;height:16%" aria-label="Socks: Navy dress socks. Tap to see it"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#1f2e57" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><path d="M16 4h13v20l9 8c3 3 1 10-5 10-2 0-4-1-5-2L15 31c-2-2-3-4-3-7V8c0-2 2-4 4-4Z"/></svg></button><button class="fl small" style="left:51.0%;top:80%;width:21.5%;height:16%" aria-label="Watch: Steel watch. Tap to see it"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#8b9097" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><rect x="19" y="4" width="10" height="40" rx="3"/><circle cx="24" cy="24" r="10"/></svg></button><button class="fl small" style="left:74.5%;top:80%;width:21.5%;height:16%" aria-label="Other accessory: Grey wool scarf. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-25.jpg" alt="" loading="lazy" decoding="async"></button></div>
+        <div class="m-cta"><button class="btn cta"><span data-t="Wear this">Wear this</span></button><button class="btn iconb" aria-label="Share this outfit" data-tl="Share this outfit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div>
+        <div class="m-meta-row"><span class="m-sws" aria-hidden="true"><i style="background:#8b9097"></i><i style="background:#1f2e57"></i><i style="background:#f6f6f3"></i><i style="background:#6a4a2e"></i></span><span>All-neutral palette</span></div>
+        <p class="m-adv">Cool for work. An outer layer would help, but none is tagged for work yet.</p>
+        <div class="m-note"><span>3 pieces are still on their floor photo.</span><button class="btn sm">Make cut-outs</button></div>
+      </div>
+      <div class="m-side">
+        <details class="m-whyd" open><summary><span data-t="Why this outfit?">Why this outfit?</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><ul class="m-why"><li class="neg">Nothing under Grey merino sweater; add a t-shirt if you have one</li><li class="">Pieces sit at the same dress level</li><li class="">Brown leather belt goes with the outfit</li><li class="">Navy dress socks go with the outfit</li><li class="">Fits your Minimal style</li></ul></details>
+        <div class="m-sec"><h3 data-t="More options">More options</h3><button class="btn sm" data-t="New ideas">New ideas</button></div>
+        <div class="m-strip"><button class="m-alt" aria-label="Option 2, Excellent match: Burgundy hoodie, Dark jeans, White leather sneakers"><div class="m-board " style="aspect-ratio:4/5"><span class="fl" style="left:4%;top:6%;width:46%;height:58%"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#6e1f2f" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><path d="M17 7 8 12l3 8 4-2v22h18V18l4 2 3-8-9-5c-1 3-4 5-7 5s-6-2-7-5Z"/></svg></span><span class="fl" style="left:52%;top:4%;width:44%;height:64%"><img class="photo " src="../../../tools/fixtures/img/fx-11.jpg" alt="" loading="lazy" decoding="async"></span><span class="fl" style="left:6%;top:66%;width:42%;height:30%"><img class="cut " src="../../../tools/fixtures/img/fx-18-cut.webp" alt="" loading="lazy" decoding="async"></span></div><span class="m-al"><span class="m-an">02</span><span data-t="Excellent match">Excellent match</span></span></button><button class="m-alt" aria-label="Option 3, Fair match: Navy knit polo, Navy chinos, Black chelsea boots"><div class="m-board " style="aspect-ratio:4/5"><span class="fl" style="left:4%;top:6%;width:46%;height:58%"><img class="cut " src="../../../tools/fixtures/img/fx-03-cut.webp" alt="" loading="lazy" decoding="async"></span><span class="fl" style="left:52%;top:4%;width:44%;height:64%"><img class="cut " src="../../../tools/fixtures/img/fx-10-cut.webp" alt="" loading="lazy" decoding="async"></span><span class="fl" style="left:6%;top:66%;width:42%;height:30%"><img class="cut " src="../../../tools/fixtures/img/fx-21-cut.webp" alt="" loading="lazy" decoding="async"></span></div><span class="m-al"><span class="m-an">03</span><span data-t="Fair match">Fair match</span></span></button><button class="m-alt" aria-label="Option 4, Fair match: Navy knit polo, Dark jeans, Black chelsea boots"><div class="m-board " style="aspect-ratio:4/5"><span class="fl" style="left:4%;top:6%;width:46%;height:58%"><img class="cut " src="../../../tools/fixtures/img/fx-03-cut.webp" alt="" loading="lazy" decoding="async"></span><span class="fl" style="left:52%;top:4%;width:44%;height:64%"><img class="photo " src="../../../tools/fixtures/img/fx-11.jpg" alt="" loading="lazy" decoding="async"></span><span class="fl" style="left:6%;top:66%;width:42%;height:30%"><img class="cut " src="../../../tools/fixtures/img/fx-21-cut.webp" alt="" loading="lazy" decoding="async"></span></div><span class="m-al"><span class="m-an">04</span><span data-t="Fair match">Fair match</span></span></button></div>
+        <button class="m-log">Wore something else? Log it</button>
+      </div>
+    </div>
+    <div class="m-foot">
+      <p>Mockup for the Phase 6 direction choice. Sample data: the fixture closet in tools/fixtures (synthetic images, no real photos). Only the look is designed here; buttons change their state but not the content.</p>
+      <div class="m-sw">Theme: <a data-set="theme=auto">Device</a><a data-set="theme=light">Light</a><a data-set="theme=dark">Dark</a></div>
+      <div class="m-sw">Labels: <a data-set="lang=en">English</a><a data-set="lang=fr">Français</a><a data-set="lang=ja">日本語</a></div>
+      <div class="m-sw"><a href="index.html">All directions</a><a href="a.html">Direction A</a><a href="b.html">Direction B</a></div>
+    </div>
+  </section>
+  <section class="m-view" data-view="closet" aria-label="Closet">
+    <div class="m-title"><h2 data-t="Closet">Closet</h2><button class="btn sm" data-t="Stats">Stats</button></div>
+    <p class="m-lede">Everything you own that is still in rotation. Tap an item to edit it.</p>
+    <div class="m-chips" role="group" aria-label="Category" data-group><button data-pick aria-pressed="true"><span data-t="All">All</span><span class="n">26</span></button><button data-pick aria-pressed="false"><span data-t="In the wash">In the wash</span><span class="n">1</span></button><button data-pick aria-pressed="false"><span data-t="Top">Top</span><span class="n">10</span></button><button data-pick aria-pressed="false"><span data-t="Bottom">Bottom</span><span class="n">5</span></button><button data-pick aria-pressed="false"><span data-t="Outerwear">Outerwear</span><span class="n">3</span></button><button data-pick aria-pressed="false"><span data-t="Shoes">Shoes</span><span class="n">4</span></button></div>
+    <div class="m-tiles"><button class="m-tile"><span class="m-g m-cv"><img class="cut " src="../../../tools/fixtures/img/fx-01-cut.webp" alt="" loading="lazy" decoding="async"></span><b>White oxford shirt</b><span class="m-meta"><span data-t="Like new">Like new</span> · 12 wears</span></button><button class="m-tile"><span class="m-g m-cv"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#1c1d20" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><path d="M17 7 8 12l3 8 4-2v22h18V18l4 2 3-8-9-5c-1 3-4 5-7 5s-6-2-7-5Z"/></svg><span class="m-mark warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z"/></svg><span class="m-sr">In the wash</span></span></span><b>Black t-shirt</b><span class="m-meta"><span data-t="Good">Good</span> · 9 wears</span></button><button class="m-tile"><span class="m-g"><img class="photo " src="../../../tools/fixtures/img/fx-04.jpg" alt="" loading="lazy" decoding="async"></span><b>Grey merino sweater</b><span class="m-meta"><span data-t="Good">Good</span> · 12 wears</span></button><button class="m-tile"><span class="m-g m-cv"><img class="cut " src="../../../tools/fixtures/img/fx-10-cut.webp" alt="" loading="lazy" decoding="async"></span><b>Navy chinos</b><span class="m-meta"><span data-t="Like new">Like new</span> · 15 wears</span></button><button class="m-tile"><span class="m-g"><img class="photo " src="../../../tools/fixtures/img/fx-16.jpg" alt="" loading="lazy" decoding="async"><span class="m-mark bad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6Z"/></svg><span class="m-sr">Needs repair</span></span></span><b>Green rain jacket</b><span class="m-meta"><span data-t="Worn">Worn</span> · 6 wears</span></button><button class="m-tile"><span class="m-g m-cv"><img class="cut " src="../../../tools/fixtures/img/fx-18-cut.webp" alt="" loading="lazy" decoding="async"></span><b>White leather sneakers</b><span class="m-meta"><span data-t="Good">Good</span> · 15 wears</span></button></div>
+    <div class="m-foot">
+      <p>Mockup for the Phase 6 direction choice. Sample data: the fixture closet in tools/fixtures (synthetic images, no real photos). Only the look is designed here; buttons change their state but not the content.</p>
+      <div class="m-sw">Theme: <a data-set="theme=auto">Device</a><a data-set="theme=light">Light</a><a data-set="theme=dark">Dark</a></div>
+      <div class="m-sw">Labels: <a data-set="lang=en">English</a><a data-set="lang=fr">Français</a><a data-set="lang=ja">日本語</a></div>
+      <div class="m-sw"><a href="index.html">All directions</a><a href="a.html">Direction A</a><a href="b.html">Direction B</a></div>
+    </div>
+  </section>
+  <section class="m-view" data-view="care" aria-label="Care">
+    <div><h2 data-t="Care &amp; donate">Care &amp; donate</h2><p class="m-lede" style="margin-top:4px">Items flagged by condition, wear and age. Nothing is removed until you confirm it.</p></div>
+    <div class="m-csec"><h3>Repair</h3><span class="n">1</span></div>
+    <div class="m-crow"><span class="m-g "><img class="photo " src="../../../tools/fixtures/img/fx-16.jpg" alt="" loading="lazy" decoding="async"></span><div><b>Green rain jacket</b><p>Zipper sticks · since Oct 2</p><p>Until fixed, it is suggested only for sport, home and chores.</p></div>
+      <div class="m-acts"><button class="btn sm" data-t="Fixed">Fixed</button><button class="btn sm" data-t="Find a tailor">Find a tailor</button><button class="btn sm ghost" data-t="Open">Open</button></div></div>
+    <div class="m-foot">
+      <p>Mockup for the Phase 6 direction choice. Sample data: the fixture closet in tools/fixtures (synthetic images, no real photos). Only the look is designed here; buttons change their state but not the content.</p>
+      <div class="m-sw">Theme: <a data-set="theme=auto">Device</a><a data-set="theme=light">Light</a><a data-set="theme=dark">Dark</a></div>
+      <div class="m-sw">Labels: <a data-set="lang=en">English</a><a data-set="lang=fr">Français</a><a data-set="lang=ja">日本語</a></div>
+      <div class="m-sw"><a href="index.html">All directions</a><a href="a.html">Direction A</a><a href="b.html">Direction B</a></div>
+    </div>
+  </section>
+  <section class="m-view" data-view="shop"><p class="m-shop">Shop is not part of the Phase 6 mockups: the chosen direction carries to it in Phase 11.</p></section>
+</div></div>
+<button class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-t="Add clothes">Add clothes</span></button>
+<nav class="tabs" aria-label="Sections"><div class="inner">
+  <button data-tab="outfits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 3 3 6l2 5 3-1.5V21h8V9.5l3 1.5 2-5-5-3c-.5 1.7-2 3-4 3S8.5 4.7 8 3Z"/></svg><span data-t="Outfits">Outfits</span></button>
+  <button data-tab="closet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 .7-2 2v1M12 11 3 17.5c-.8.6-.4 1.5.5 1.5h17c.9 0 1.3-.9.5-1.5L12 11Z"/></svg><span data-t="Closet">Closet</span></button>
+  <button data-tab="care"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10Z"/></svg><span data-t="Care">Care</span><span class="badge">3</span></button>
+  <button data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span data-t="Shop">Shop</span></button>
+</div></nav>
+<script src="mock.js"></script>
+</body>
+</html>

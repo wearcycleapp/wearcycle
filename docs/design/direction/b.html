@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Direction B: Lookbook · Wearcycle Phase 6</title>
+<link rel="stylesheet" href="../../../fonts/fonts.css">
+<link rel="stylesheet" href="../../../styles.css">
+<link rel="stylesheet" href="mock.css">
+<style>
+
+/* Direction B, Lookbook: large condensed type, typographic tabs, one look per page */
+.m-wrap{max-width:1240px;margin:0 auto}
+.dir-b .m-view{gap:12px}
+.m-date{display:flex;align-items:flex-start;gap:12px}
+.m-date .m-dt{flex:1;min-width:0}
+.m-date h2{font-size:40px;line-height:.95;letter-spacing:.005em}
+.m-date p{margin:6px 0 0;font-size:15px;color:var(--muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.m-date p svg{width:18px;height:18px}
+/* typographic tabs: selected is ink with a 2px ink underline; the row scrolls on phones */
+.m-tabs{display:flex;gap:22px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px;scroll-padding-inline:16px;box-shadow:inset 0 -1px 0 var(--line)}
+.m-tabs::-webkit-scrollbar{display:none}
+.m-tabs button{flex:none;min-height:46px;border:0;background:none;padding:0;font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.m-tabs button[aria-pressed="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+.m-tabs button .n{font-family:var(--f-body);font-size:13px;font-weight:600;letter-spacing:0;margin-left:5px;color:var(--muted)}
+.m-stabs{display:flex;align-items:center;gap:16px;overflow-x:auto;scrollbar-width:none;margin:0 -16px;padding:0 16px}
+.m-stabs::-webkit-scrollbar{display:none}
+.m-stabs .m-k{font-size:13px;color:var(--muted);flex:none}
+.m-stabs button{flex:none;min-height:40px;border:0;background:none;padding:0;font-size:14px;font-weight:600;color:var(--muted);box-shadow:inset 0 -2px 0 transparent;white-space:nowrap}
+.m-stabs button[aria-pressed="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+.m-sel{display:flex;flex-direction:column;gap:6px}
+/* the look rail: pages side by side, the next one peeking; snap one page at a time */
+.m-rail{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -16px;padding:0 16px;scroll-padding-inline:16px;scrollbar-width:none;outline:none}
+.m-rail::-webkit-scrollbar{display:none}
+.m-rail:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.m-page{flex:0 0 calc(100% - 40px);scroll-snap-align:start;display:flex;flex-direction:column;gap:10px;min-width:0}
+.m-ph{display:flex;align-items:center;gap:12px;min-height:44px}
+.m-num{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1;min-width:52px;height:44px;padding:0 6px;display:grid;place-items:center;border-radius:8px;border:1px solid var(--line);color:var(--ink);flex:none}
+.m-page.first .m-num{background:var(--coral);border-color:var(--coral);color:var(--coral-ink)}
+.m-pt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.m-pt b{font-size:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.m-pt > span{font-size:13px;color:var(--muted)}
+.m-page .m-board{width:100%}
+.m-pager{display:flex;align-items:center;justify-content:center;gap:4px;min-height:40px}
+.m-pager .m-arrow{width:44px;height:40px;border:0;background:none;color:var(--ink);display:grid;place-items:center;border-radius:8px}
+.m-pager .m-arrow svg{width:22px;height:22px}
+.m-dots{display:flex;align-items:center}
+.m-dots button{width:24px;height:24px;border:0;background:none;padding:0;display:grid;place-items:center}
+.m-dots button i{width:8px;height:8px;border-radius:4px;background:var(--line)}
+@media (prefers-reduced-motion:no-preference){.m-dots button i{transition:width .2s ease-out}}
+.m-dots button[aria-current="true"] i{width:22px;background:var(--coral)}
+.m-pager .m-count{font-size:13px;color:var(--muted);min-width:44px;text-align:center}
+.m-cta{display:flex;gap:8px}
+.m-cta .btn.cta{flex:1}
+.m-why-h{display:flex;align-items:baseline;gap:10px;margin-top:20px}
+.m-why-h h3{font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1}
+.m-after{display:flex;flex-direction:column;gap:12px}
+.m-adv{margin:0;font-size:15px;line-height:1.5;max-width:62ch}
+.m-pal{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.m-log{align-self:flex-start;font-size:14px;font-weight:600;text-decoration:underline;text-underline-offset:3px;background:none;border:0;padding:0;min-height:40px;color:var(--ink)}
+@media (min-width:700px){
+  .m-date h2{font-size:52px}
+  .m-page{flex-basis:calc(58% - 6px)}
+  .m-after{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);column-gap:32px;align-items:start}
+  .m-why-h{grid-column:1/-1}
+}
+@media (min-width:1200px){
+  .m-date h2{font-size:56px}
+  .m-sel{flex-direction:row;align-items:flex-end;gap:32px;box-shadow:inset 0 -1px 0 var(--line)}
+  .m-sel .m-tabs{box-shadow:none;margin:0;padding:0;flex:none}
+  .m-sel .m-stabs{margin:0 0 3px auto;padding:0}
+  /* the spread: every look at once, today's pick largest */
+  .m-rail{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr;gap:20px;overflow:visible;margin:0;padding:0;align-items:start}
+  .m-page{flex:none}
+  .m-pager{display:none}
+  .m-cta{width:calc((100% - 60px) * 1.6 / 4.6)}
+}
+/* Closet: gallery tiles, flags as one corner mark */
+.m-ttl{display:flex;align-items:flex-end;gap:12px}
+.m-ttl h2{flex:1;font-size:40px;line-height:.95}
+@media (min-width:700px){.m-ttl h2{font-size:52px}}
+.m-tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px 12px}
+@media (min-width:700px){.m-tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:24px 16px}}
+@media (min-width:1200px){.m-tiles{grid-template-columns:repeat(5,minmax(0,1fr))}}
+.m-tile{display:flex;flex-direction:column;gap:6px;border:0;padding:0;background:none;text-align:left;min-width:0}
+.m-tile .m-g{aspect-ratio:4/5;border-radius:12px}
+.m-tile .m-g img.cut{padding:12%}
+.m-tile b{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-tile .m-meta{font-size:14px;color:var(--muted);margin-top:-4px}
+.m-mark{position:absolute;right:8px;top:8px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center}
+.m-mark svg{width:17px;height:17px}
+.m-mark.warn{background:var(--warn-soft);color:var(--warn)}
+.m-mark.bad{background:var(--bad-soft);color:var(--bad)}
+/* Care: the garment leads the row */
+.m-csec h3{font-family:var(--f-display);font-weight:800;font-size:28px;line-height:1;text-transform:uppercase;letter-spacing:.02em}
+.m-csec{display:flex;align-items:baseline;gap:10px;margin-top:8px}
+.m-csec .n{font-size:15px;color:var(--muted)}
+.m-lede{margin:0;font-size:15px;color:var(--muted);max-width:62ch}
+.m-crow{display:grid;grid-template-columns:112px minmax(0,1fr);gap:16px;align-items:start}
+.m-crow .m-g{width:112px;aspect-ratio:4/5;border-radius:12px}
+.m-crow b{font-size:18px;display:block;line-height:1.25}
+.m-crow p{margin:6px 0 0;font-size:15px;color:var(--muted)}
+.m-crow .m-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media (min-width:700px){.m-crow{grid-template-columns:160px minmax(0,1fr)}.m-crow .m-g{width:160px}}
+
+</style>
+</head>
+<body data-view="outfits" class="dir-b">
+<div class="app"><div class="m-wrap">
+  <header class="top">
+    <img class="logo" src="../../../icons/logo-icon.svg" alt="" width="36" height="36"><div class="brand">Wearcycle</div>
+    <button class="iconbtn" aria-label="Settings and rules" data-tl="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></button>
+  </header>
+  <section class="m-view" data-view="outfits" aria-label="Outfits">
+    <div class="m-date">
+      <div class="m-dt"><h2><span data-t="Wednesday">Wednesday</span></h2><p><span data-t="Good morning">Good morning</span><span aria-hidden="true">·</span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a4 4 0 1 1 .8-7.9A5.5 5.5 0 0 1 18.5 12 3 3 0 0 1 18 18H7Z"/></svg><span>10°–14°C</span></p></div>
+      <button class="iconbtn round" aria-label="Outfit diary" data-tl="Outfit diary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></button>
+    </div>
+    <div class="m-sel">
+      <div class="m-tabs" role="group" aria-label="Occasion" data-group><button data-pick aria-pressed="true"><span data-t="Work">Work</span></button><button data-pick aria-pressed="false"><span data-t="Going out">Going out</span></button><button data-pick aria-pressed="false"><span data-t="Sport">Sport</span></button><button data-pick aria-pressed="false"><span data-t="Home">Home</span></button><button data-pick aria-pressed="false"><span data-t="Chores">Chores</span></button><button data-pick aria-pressed="false"><span data-t="Formal">Formal</span></button></div>
+      <div class="m-stabs" role="group" aria-label="Style" data-group><span class="m-k" data-t="Style">Style</span><button data-pick aria-pressed="true"><span data-t="All my styles">All my styles</span></button><button data-pick aria-pressed="false"><span data-t="Rotate">Rotate</span></button><button data-pick aria-pressed="false"><span data-t="Classic">Classic</span></button><button data-pick aria-pressed="false"><span data-t="Minimal">Minimal</span></button></div>
+    </div>
+    <div class="m-rail" data-rail tabindex="0" aria-label="Looks for work, best first. Swipe or use the arrow keys."><article class="m-page first" aria-label="Look 1 of 4: Grey merino sweater, Navy chinos, White leather sneakers, Brown leather belt, Navy dress socks, Steel watch, Grey wool scarf"><div class="m-ph"><span class="m-num" aria-hidden="true">01</span><div class="m-pt"><b><span data-t="Today’s pick">Today’s pick</span> <span class="stylepill" data-t="Minimal">Minimal</span></b><span><span data-t="Excellent match">Excellent match</span> <span class="m-bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></div></div><div class="m-board " style="aspect-ratio:1/1"><button class="fl" style="left:4%;top:4%;width:44%;height:64%" aria-label="Top: Grey merino sweater. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-04.jpg" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:52%;top:4%;width:44%;height:40%" aria-label="Bottom: Navy chinos. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-10-cut.webp" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:52%;top:46%;width:44%;height:22%" aria-label="Shoes: White leather sneakers. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-18-cut.webp" alt="" loading="lazy" decoding="async"></button><button class="fl small" style="left:4.0%;top:72%;width:21.5%;height:24%" aria-label="Belt: Brown leather belt. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-22.jpg" alt="" loading="lazy" decoding="async"></button><button class="fl small" style="left:27.5%;top:72%;width:21.5%;height:24%" aria-label="Socks: Navy dress socks. Tap to see it"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#1f2e57" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><path d="M16 4h13v20l9 8c3 3 1 10-5 10-2 0-4-1-5-2L15 31c-2-2-3-4-3-7V8c0-2 2-4 4-4Z"/></svg></button><button class="fl small" style="left:51.0%;top:72%;width:21.5%;height:24%" aria-label="Watch: Steel watch. Tap to see it"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#8b9097" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><rect x="19" y="4" width="10" height="40" rx="3"/><circle cx="24" cy="24" r="10"/></svg></button><button class="fl small" style="left:74.5%;top:72%;width:21.5%;height:24%" aria-label="Other accessory: Grey wool scarf. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-25.jpg" alt="" loading="lazy" decoding="async"></button></div></article><article class="m-page" aria-label="Look 2 of 4: Burgundy hoodie, Dark jeans, White leather sneakers"><div class="m-ph"><span class="m-num" aria-hidden="true">02</span><div class="m-pt"><b><span data-t="Excellent match">Excellent match</span></b><span><span class="m-bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></span></div></div><div class="m-board " style="aspect-ratio:1/1"><button class="fl" style="left:4%;top:6%;width:46%;height:58%" aria-label="Top: Burgundy hoodie. Tap to see it"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#6e1f2f" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><path d="M17 7 8 12l3 8 4-2v22h18V18l4 2 3-8-9-5c-1 3-4 5-7 5s-6-2-7-5Z"/></svg></button><button class="fl" style="left:52%;top:4%;width:44%;height:64%" aria-label="Bottom: Dark jeans. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-11.jpg" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:6%;top:66%;width:42%;height:30%" aria-label="Shoes: White leather sneakers. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-18-cut.webp" alt="" loading="lazy" decoding="async"></button></div></article><article class="m-page" aria-label="Look 3 of 4: Navy knit polo, Navy chinos, Black chelsea boots"><div class="m-ph"><span class="m-num" aria-hidden="true">03</span><div class="m-pt"><b><span data-t="Fair match">Fair match</span></b><span><span class="m-bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></span></span></div></div><div class="m-board " style="aspect-ratio:1/1"><button class="fl" style="left:4%;top:6%;width:46%;height:58%" aria-label="Top: Navy knit polo. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-03-cut.webp" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:52%;top:4%;width:44%;height:64%" aria-label="Bottom: Navy chinos. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-10-cut.webp" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:6%;top:66%;width:42%;height:30%" aria-label="Shoes: Black chelsea boots. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-21-cut.webp" alt="" loading="lazy" decoding="async"></button></div></article><article class="m-page" aria-label="Look 4 of 4: Navy knit polo, Dark jeans, Black chelsea boots"><div class="m-ph"><span class="m-num" aria-hidden="true">04</span><div class="m-pt"><b><span data-t="Fair match">Fair match</span></b><span><span class="m-bars" aria-hidden="true"><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i></span></span></div></div><div class="m-board " style="aspect-ratio:1/1"><button class="fl" style="left:4%;top:6%;width:46%;height:58%" aria-label="Top: Navy knit polo. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-03-cut.webp" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:52%;top:4%;width:44%;height:64%" aria-label="Bottom: Dark jeans. Tap to see it"><img class="photo " src="../../../tools/fixtures/img/fx-11.jpg" alt="" loading="lazy" decoding="async"></button><button class="fl" style="left:6%;top:66%;width:42%;height:30%" aria-label="Shoes: Black chelsea boots. Tap to see it"><img class="cut " src="../../../tools/fixtures/img/fx-21-cut.webp" alt="" loading="lazy" decoding="async"></button></div></article></div>
+    <div class="m-pager"><button class="m-arrow" data-step="-1" aria-label="Previous look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg></button><span class="m-dots"><button data-dot aria-label="Look 1" aria-current="true"><i></i></button><button data-dot aria-label="Look 2"><i></i></button><button data-dot aria-label="Look 3"><i></i></button><button data-dot aria-label="Look 4"><i></i></button></span><span class="m-count" data-count>1 of 4</span><button class="m-arrow" data-step="1" aria-label="Next look"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg></button></div>
+    <div class="m-cta"><button class="btn cta"><span data-t="Wear this">Wear this</span></button><button class="btn iconb" aria-label="Share this outfit" data-tl="Share this outfit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg></button></div>
+    <div class="m-after">
+      <div class="m-why-h"><h3 data-t="Why this outfit?">Why this outfit?</h3></div>
+      <ul class="m-why"><li class="neg">Nothing under Grey merino sweater; add a t-shirt if you have one</li><li class="">Pieces sit at the same dress level</li><li class="">Brown leather belt goes with the outfit</li><li class="">Navy dress socks go with the outfit</li><li class="">Fits your Minimal style</li></ul>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <p class="m-adv">Cool for work. An outer layer would help, but none is tagged for work yet.</p>
+        <div class="m-pal"><span class="m-sws" aria-hidden="true"><i style="background:#8b9097"></i><i style="background:#1f2e57"></i><i style="background:#f6f6f3"></i><i style="background:#6a4a2e"></i></span><span>All-neutral palette</span></div>
+        <div class="m-note"><span>3 pieces are still on their floor photo.</span><button class="btn sm">Make cut-outs</button></div>
+        <button class="m-log">Wore something else? Log it</button>
+      </div>
+    </div>
+    <div class="m-foot">
+      <p>Mockup for the Phase 6 direction choice. Sample data: the fixture closet in tools/fixtures (synthetic images, no real photos). Only the look is designed here; buttons change their state but not the content.</p>
+      <div class="m-sw">Theme: <a data-set="theme=auto">Device</a><a data-set="theme=light">Light</a><a data-set="theme=dark">Dark</a></div>
+      <div class="m-sw">Labels: <a data-set="lang=en">English</a><a data-set="lang=fr">Français</a><a data-set="lang=ja">日本語</a></div>
+      <div class="m-sw"><a href="index.html">All directions</a><a href="a.html">Direction A</a><a href="c.html">Direction C</a></div>
+    </div>
+  </section>
+  <section class="m-view" data-view="closet" aria-label="Closet">
+    <div class="m-ttl"><h2 data-t="Closet">Closet</h2><button class="btn sm" data-t="Stats">Stats</button></div>
+    <div class="m-tabs" role="group" aria-label="Category" data-group><button data-pick aria-pressed="true"><span data-t="All">All</span><span class="n">26</span></button><button data-pick aria-pressed="false"><span data-t="In the wash">In the wash</span><span class="n">1</span></button><button data-pick aria-pressed="false"><span data-t="Top">Top</span><span class="n">10</span></button><button data-pick aria-pressed="false"><span data-t="Bottom">Bottom</span><span class="n">5</span></button><button data-pick aria-pressed="false"><span data-t="Outerwear">Outerwear</span><span class="n">3</span></button><button data-pick aria-pressed="false"><span data-t="Shoes">Shoes</span><span class="n">4</span></button></div>
+    <div class="m-tiles"><button class="m-tile"><span class="m-g m-cv"><img class="cut " src="../../../tools/fixtures/img/fx-01-cut.webp" alt="" loading="lazy" decoding="async"></span><b>White oxford shirt</b><span class="m-meta"><span data-t="Like new">Like new</span></span></button><button class="m-tile"><span class="m-g m-cv"><svg class="glyph " viewBox="0 0 48 48" aria-hidden="true" fill="#1c1d20" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round"><path d="M17 7 8 12l3 8 4-2v22h18V18l4 2 3-8-9-5c-1 3-4 5-7 5s-6-2-7-5Z"/></svg><span class="m-mark warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 4 6 7 6 11a6 6 0 0 1-12 0c0-4 3-7 6-11Z"/></svg><span class="m-sr">In the wash</span></span></span><b>Black t-shirt</b><span class="m-meta"><span data-t="Good">Good</span></span></button><button class="m-tile"><span class="m-g"><img class="photo " src="../../../tools/fixtures/img/fx-04.jpg" alt="" loading="lazy" decoding="async"></span><b>Grey merino sweater</b><span class="m-meta"><span data-t="Good">Good</span></span></button><button class="m-tile"><span class="m-g m-cv"><img class="cut " src="../../../tools/fixtures/img/fx-10-cut.webp" alt="" loading="lazy" decoding="async"></span><b>Navy chinos</b><span class="m-meta"><span data-t="Like new">Like new</span></span></button><button class="m-tile"><span class="m-g"><img class="photo " src="../../../tools/fixtures/img/fx-16.jpg" alt="" loading="lazy" decoding="async"><span class="m-mark bad"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17v3h3l5.3-5.3a4 4 0 0 0 5.4-5.4l-2.4 2.4-2.6-.6-.6-2.6Z"/></svg><span class="m-sr">Needs repair</span></span></span><b>Green rain jacket</b><span class="m-meta"><span data-t="Worn">Worn</span></span></button><button class="m-tile"><span class="m-g m-cv"><img class="cut " src="../../../tools/fixtures/img/fx-18-cut.webp" alt="" loading="lazy" decoding="async"></span><b>White leather sneakers</b><span class="m-meta"><span data-t="Good">Good</span></span></button></div>
+    <div class="m-foot">
+      <p>Mockup for the Phase 6 direction choice. Sample data: the fixture closet in tools/fixtures (synthetic images, no real photos). Only the look is designed here; buttons change their state but not the content.</p>
+      <div class="m-sw">Theme: <a data-set="theme=auto">Device</a><a data-set="theme=light">Light</a><a data-set="theme=dark">Dark</a></div>
+      <div class="m-sw">Labels: <a data-set="lang=en">English</a><a data-set="lang=fr">Français</a><a data-set="lang=ja">日本語</a></div>
+      <div class="m-sw"><a href="index.html">All directions</a><a href="a.html">Direction A</a><a href="c.html">Direction C</a></div>
+    </div>
+  </section>
+  <section class="m-view" data-view="care" aria-label="Care">
+    <div class="m-ttl"><h2 data-t="Care &amp; donate">Care &amp; donate</h2></div>
+    <p class="m-lede">Items flagged by condition, wear and age. Nothing is removed until you confirm it.</p>
+    <div class="m-csec"><h3>Repair</h3><span class="n">1</span></div>
+    <div class="m-crow"><span class="m-g "><img class="photo " src="../../../tools/fixtures/img/fx-16.jpg" alt="" loading="lazy" decoding="async"></span><div><b>Green rain jacket</b><p>Zipper sticks, since Oct 2. Until it is fixed, it is suggested only for sport, home and chores.</p>
+      <div class="m-acts"><button class="btn" data-t="Fixed">Fixed</button><button class="btn" data-t="Find a tailor">Find a tailor</button><button class="btn ghost" data-t="Open">Open</button></div></div></div>
+    <div class="m-foot">
+      <p>Mockup for the Phase 6 direction choice. Sample data: the fixture closet in tools/fixtures (synthetic images, no real photos). Only the look is designed here; buttons change their state but not the content.</p>
+      <div class="m-sw">Theme: <a data-set="theme=auto">Device</a><a data-set="theme=light">Light</a><a data-set="theme=dark">Dark</a></div>
+      <div class="m-sw">Labels: <a data-set="lang=en">English</a><a data-set="lang=fr">Français</a><a data-set="lang=ja">日本語</a></div>
+      <div class="m-sw"><a href="index.html">All directions</a><a href="a.html">Direction A</a><a href="c.html">Direction C</a></div>
+    </div>
+  </section>
+  <section class="m-view" data-view="shop"><p class="m-shop">Shop is not part of the Phase 6 mockups: the chosen direction carries to it in Phase 11.</p></section>
+</div></div>
+<button class="fab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span data-t="Add clothes">Add clothes</span></button>
+<nav class="tabs" aria-label="Sections"><div class="inner">
+  <button data-tab="outfits"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M8 3 3 6l2 5 3-1.5V21h8V9.5l3 1.5 2-5-5-3c-.5 1.7-2 3-4 3S8.5 4.7 8 3Z"/></svg><span data-t="Outfits">Outfits</span></button>
+  <button data-tab="closet"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 .7-2 2v1M12 11 3 17.5c-.8.6-.4 1.5.5 1.5h17c.9 0 1.3-.9.5-1.5L12 11Z"/></svg><span data-t="Closet">Closet</span></button>
+  <button data-tab="care"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10Z"/></svg><span data-t="Care">Care</span><span class="badge">3</span></button>
+  <button data-tab="shop"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.2 12H6.2L5 8Z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg><span data-t="Shop">Shop</span></button>
+</div></nav>
+<script src="mock.js"></script>
+</body>
+</html>

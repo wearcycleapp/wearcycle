@@ -1,0 +1,70 @@
+/* Phase 6 direction mockups: shared layer. The real tokens, fonts and shared layer come from ../../../styles.css;
+   everything here is mockup-only (prefix m-) and is never loaded by the app. */
+
+/* views: one page per direction, three screens switched by the tab bar (#outfits, #closet, #care) */
+.m-view{display:none}
+body[data-view="outfits"] .m-view[data-view="outfits"],
+body[data-view="closet"] .m-view[data-view="closet"],
+body[data-view="care"] .m-view[data-view="care"],
+body[data-view="shop"] .m-view[data-view="shop"]{display:flex}
+.m-view{flex-direction:column;gap:16px;padding-top:16px}
+body:not([data-view="closet"]) .fab{display:none}
+header.top .status{display:none}
+nav.tabs button{min-height:44px}
+nav.tabs button[aria-disabled="true"]{opacity:.55}
+::selection{background:var(--accent-soft);color:var(--ink)}
+
+/* garment imagery: cut-outs on the cream canvas, photos, colour glyphs */
+.m-cv{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.m-g{position:relative;display:grid;place-items:center;overflow:hidden}
+.m-g img{position:absolute;inset:0;display:block;width:100%;height:100%} /* absolute: a % height in a grid cell does not resolve */
+.m-g img.cut{object-fit:contain;filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
+.m-g img.photo{object-fit:cover}
+.m-g svg.glyph{width:62%;height:62%}
+
+/* flat-lay board: pieces placed in % of the board, as app.js flatlay() does */
+.m-board{position:relative;border-radius:12px;overflow:hidden;
+  background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--board-mid) 70%,var(--board-edge) 100%)}
+.m-board .fl{position:absolute;display:flex;align-items:center;justify-content:center;padding:6px;border:0;background:none;cursor:pointer}
+.m-board .fl img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.m-board .fl img.photo{width:auto;height:auto;max-width:100%;max-height:100%;object-fit:contain;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.10)}
+.m-board .fl img.cut{width:100%;height:100%;filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
+.m-board .fl svg.glyph{width:100%;height:100%}
+.m-board .fl:focus-visible{outline:2px solid var(--ink);outline-offset:-2px;border-radius:8px}
+
+/* match meter (five bars) */
+.m-bars{display:inline-flex;gap:3px;vertical-align:middle}
+.m-bars i{width:5px;height:12px;border-radius:2px;background:var(--line)}
+.m-bars i.on{background:var(--good)}
+
+/* reasons */
+.m-why{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;color:var(--muted)}
+.m-why li{display:flex;gap:8px;align-items:baseline}
+.m-why li::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:var(--good);transform:translateY(-1px)}
+.m-why li.neg::before{background:var(--bad)}
+
+/* swatches */
+.m-sws{display:inline-flex}
+.m-sws i{width:18px;height:18px;border-radius:50%;border:2px solid var(--bg);margin-left:-5px;box-shadow:0 0 0 1px var(--line)}
+.m-sws i:first-child{margin-left:0}
+
+/* notice line (cut-outs, laundry): compact, never above the outfit */
+.m-note{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--muted);padding:10px 0;border-top:1px solid var(--line)}
+.m-note span{flex:1}
+.m-note button{flex:none}
+
+/* screen-reader-only label for marks */
+.m-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* mockup footer: sample data label and switches (below the screens, never in the first viewport) */
+.m-foot{margin:48px 0 0;padding:16px 0 0;border-top:1px dashed var(--line);font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:10px}
+.m-foot .m-sw{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.m-foot a{color:var(--ink);text-underline-offset:3px;min-height:40px;display:inline-flex;align-items:center;padding:0 6px}
+.m-foot a[aria-current="true"]{font-weight:700;text-decoration-thickness:2px}
+.m-shop{padding:32px 0;color:var(--muted)}
+
+@media (hover:hover) and (pointer:fine){
+  .m-board .fl:hover img{transform:scale(1.02)}
+  nav.tabs button:not([aria-current="page"]):hover{color:var(--ink)}
+}
+@media (prefers-reduced-motion:no-preference){ .m-board .fl img{transition:transform .14s ease-out} }
