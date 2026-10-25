@@ -1295,5 +1295,7 @@ I18N.load("fr",{
 "Your phone ran out of memory. Close other apps and try again.": "Votre téléphone a manqué de mémoire. Fermez d’autres apps et réessayez.",
 "The cut-out could not be saved. Check your connection and try again.": "Le détourage n’a pas pu être enregistré. Vérifiez votre connexion et réessayez.",
 "Open the piece and tap Make cut-out to try again.": "Ouvrez la pièce et touchez Détourer pour réessayer.",
-"Open each one marked Review to confirm the details.": "Ouvrez chaque article marqué À vérifier pour confirmer les détails."
+"Open each one marked Review to confirm the details.": "Ouvrez chaque article marqué À vérifier pour confirmer les détails.",
+"+ Wear a belt": "+ Porter une ceinture",
+"Added {a}. Tap it to choose another belt.": "Ajouté : {a}. Touchez-la pour choisir une autre ceinture."
 });

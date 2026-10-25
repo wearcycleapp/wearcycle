@@ -1295,5 +1295,7 @@ I18N.load("tl",{
 "Your phone ran out of memory. Close other apps and try again.": "Naubusan ng memory ang phone mo. Isara ang ibang app at subukang muli.",
 "The cut-out could not be saved. Check your connection and try again.": "Hindi na-save ang cut-out. Tingnan ang koneksyon mo at subukang muli.",
 "Open the piece and tap Make cut-out to try again.": "Buksan ang piraso at i-tap ang Gumawa ng cut-out para subukang muli.",
-"Open each one marked Review to confirm the details.": "Buksan ang bawat isang may markang I-review para kumpirmahin ang mga detalye."
+"Open each one marked Review to confirm the details.": "Buksan ang bawat isang may markang I-review para kumpirmahin ang mga detalye.",
+"+ Wear a belt": "+ Magsuot ng sinturon",
+"Added {a}. Tap it to choose another belt.": "Naidagdag ang {a}. I-tap ito para pumili ng ibang sinturon."
 });

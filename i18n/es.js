@@ -1295,5 +1295,7 @@ I18N.load("es",{
 "Your phone ran out of memory. Close other apps and try again.": "Tu teléfono se quedó sin memoria. Cierra otras apps y vuelve a intentarlo.",
 "The cut-out could not be saved. Check your connection and try again.": "No se pudo guardar el recorte. Revisa tu conexión y vuelve a intentarlo.",
 "Open the piece and tap Make cut-out to try again.": "Abre la prenda y toca Crear recorte para volver a intentarlo.",
-"Open each one marked Review to confirm the details.": "Abre cada una marcada como Revisar para confirmar los detalles."
+"Open each one marked Review to confirm the details.": "Abre cada una marcada como Revisar para confirmar los detalles.",
+"+ Wear a belt": "+ Usar un cinturón",
+"Added {a}. Tap it to choose another belt.": "Añadido: {a}. Tócalo para elegir otro cinturón."
 });

@@ -1295,5 +1295,7 @@ I18N.load("ja",{
 "Your phone ran out of memory. Close other apps and try again.": "スマホのメモリが足りませんでした。ほかのアプリを閉じて、もう一度お試しください。",
 "The cut-out could not be saved. Check your connection and try again.": "切り抜きを保存できませんでした。接続を確認して、もう一度お試しください。",
 "Open the piece and tap Make cut-out to try again.": "アイテムを開いて「切り抜きを作成」をタップし、もう一度お試しください。",
-"Open each one marked Review to confirm the details.": "「要確認」の付いたアイテムを開いて、内容を確認してください。"
+"Open each one marked Review to confirm the details.": "「要確認」の付いたアイテムを開いて、内容を確認してください。",
+"+ Wear a belt": "+ ベルトを着ける",
+"Added {a}. Tap it to choose another belt.": "{a}を追加しました。タップすると別のベルトを選べます。"
 });

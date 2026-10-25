@@ -1295,5 +1295,7 @@ I18N.load("ko",{
 "Your phone ran out of memory. Close other apps and try again.": "휴대폰 메모리가 부족했어요. 다른 앱을 닫고 다시 시도하세요.",
 "The cut-out could not be saved. Check your connection and try again.": "배경 제거 이미지를 저장하지 못했어요. 연결을 확인하고 다시 시도하세요.",
 "Open the piece and tap Make cut-out to try again.": "아이템을 열고 배경 제거를 눌러 다시 시도하세요.",
-"Open each one marked Review to confirm the details.": "검토 표시가 있는 아이템을 하나씩 열어 내용을 확인하세요."
+"Open each one marked Review to confirm the details.": "검토 표시가 있는 아이템을 하나씩 열어 내용을 확인하세요.",
+"+ Wear a belt": "+ 벨트 하기",
+"Added {a}. Tap it to choose another belt.": "{a}을(를) 추가했어요. 눌러서 다른 벨트를 고를 수 있어요."
 });

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.51.1';
+const APP_VERSION='1.51.2';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -883,7 +883,8 @@ function heroCard(f,i){
     ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}`;
   const tapbar=f.edited&&f.orig?`<div class="editbar"><span>You changed this outfit.</span><button class="btn sm" data-revert="${i}">${UNDO_ICON}Back to suggestion</button></div>`
     :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to see it or swap it</span></p>`;
-  return `<article class="fit hero">${head}${visual}${tapbar}${nav}${heroMeta(f,i,o,canAddUnder)}</article>`;
+  const canAddBelt=!f.worn&&o.bottom&&!(o.acc||[]).some(a=>a.cat==='belt')&&beltOpts(o).length>0;
+  return `<article class="fit hero">${head}${visual}${tapbar}${nav}${heroMeta(f,i,o,canAddUnder,canAddBelt)}</article>`;
 }
 // The outfit's color story: one swatch per main piece (in wearing order) and the harmony rule it follows.
 function paletteStrip(o){
@@ -892,13 +893,13 @@ function paletteStrip(o){
   return `<div class="palette"><span class="sws">${core.filter(i=>COLORS[primary(i)]).map(i=>`<span class="sw" style="background:${COLORS[primary(i)].hex}" title="${esc(primary(i))}: ${esc(i.name)}"></span>`).join('')}</span>
     <span class="pl"><b>${esc(h.why)}</b>${adv?`<span>${esc(adv)}</span>`:''}</span></div>`;
 }
-function heroMeta(f,i,o,canAddUnder){
+function heroMeta(f,i,o,canAddUnder,canAddBelt){
   const hw=WardrobeLogic.harmony(coreOf(o).map(primary).filter(c=>COLORS[c])).why;
   const rs=f.reasons.filter(r=>r.t!==hw); const warn=rs.filter(r=>r.neg).length;
   return `${paletteStrip(o)}
     <div class="ctarow">${f.worn?'<button class="worn-ok linkish" data-act="todaylog">✓ Logged as worn today · Correct</button>':`<button class="btn cta grow" data-wear="${i}">Wear this</button>`}
       <button class="btn iconb" data-act="share" aria-label="Share this outfit">${SHARE_ICON}</button></div>
-    ${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}
+    ${canAddUnder||canAddBelt?`<div class="addrow">${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}${canAddBelt?`<button class="btn sm ghost addunder" data-addbelt="${i}">+ Wear a belt</button>`:''}</div>`:''}
     <details class="whybox"><summary>Why this outfit?${warn?` <span class="warnn">${warn} note${warn>1?'s':''}</span>`:''}</summary>
       <ul class="why">${rs.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
       <p class="hint">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?', today’s weather':''}${S.settings.palette&&S.settings.palette!=='any'?' and your palette':''}. Tap any piece to swap it.</p></details>
@@ -1843,8 +1844,14 @@ async function unlogPiece(id){
   saveCache(); renderAll(); if(document.querySelector('#sheetRoot [data-punlog]')&&allLog().some(x=>x.date===todayISO())) openTodayLog(); else closeSheet(); toast(it.name+' removed from today\u2019s log.');
 }
 // The pieces that can take this spot, in the order the preview steps through them.
+// Every belt you could wear today (available, in good enough condition): those set for the occasion first, each group
+// best match first. Outfits still pick from the occasion's belts; stepping and adding can reach any of them.
+function beltOpts(o){ const L=WardrobeLogic, min=Math.min(3,OCC[S.occ].min);
+  const all=allItems().filter(i=>i.cat==='belt'&&L.available(i,S.occ)&&(i.cond??4)>=min);
+  const fit=a=>L.beltFit(o,a,S.occ).s, by=(a,b)=>fit(b)-fit(a);
+  const set=all.filter(i=>effectiveOccasions(i).includes(S.occ)).sort(by); return set.concat(all.filter(i=>!set.includes(i)).sort(by)); }
 function swapOpts(o,slot){
-  if(slot.startsWith('acc')){ const cur=o.acc[+slot.slice(3)]; if(!cur) return []; return cur.cat==='belt'?beltPool(allItems(),S.occ):eligible(allItems(),S.occ).filter(x=>x.cat===cur.cat); }
+  if(slot.startsWith('acc')){ const cur=o.acc[+slot.slice(3)]; if(!cur) return []; return cur.cat==='belt'?beltOpts(o):eligible(allItems(),S.occ).filter(x=>x.cat===cur.cat); }
   // Tops are listed as if worn without the layer underneath, so the list stays the same while stepping
   // (otherwise a sweater that brings a t-shirt would narrow it to tops worn over one).
   if(slot==='top'){ const o0=Object.assign({},o); delete o0.under; return swapCandidates(o0,'top',allItems(),S.occ,ctx()); }
@@ -1855,7 +1862,7 @@ function swap(i,slot,dir){
   const f=S.fits[i]; if(!f) return; const o=hydrate(f.ids);
   if(slot.startsWith('acc')){
     const k=+slot.slice(3); const cur=o.acc[k]; if(!cur) return;
-    const opts=cur.cat==='belt'?beltPool(allItems(),S.occ):eligible(allItems(),S.occ).filter(x=>x.cat===cur.cat); if(opts.length<2){ toast('No other '+CAT[cur.cat].label.toLowerCase()+' for this occasion.'); return; }
+    const opts=swapOpts(o,slot); if(opts.length<2){ toast('No other '+CAT[cur.cat].label.toLowerCase()+' for this occasion.'); return; }
     o.acc[k]=step(opts,cur.id);
   } else {
     const cands=swapOpts(o,slot); const cur=o[slot];
@@ -1955,6 +1962,8 @@ document.addEventListener('click',async e=>{
   if(ds.sel!==undefined){ S.sel=+ds.sel; if(S.sel) guard(); renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
   if(ds.addunder!==undefined){ const f=S.fits[+ds.addunder]; if(!f) return; const o=hydrate(f.ids); const c=swapCandidates(o,'under',allItems(),S.occ,ctx()); if(!c.length) return;
     o.under=c[0]; S.fits[+ds.addunder]=editedFit(f,o); renderOutfits(); return; }
+  if(ds.addbelt!==undefined){ const k=+ds.addbelt, f=S.fits[k]; if(!f) return; const o=hydrate(f.ids); const c=beltOpts(o); if(!c.length) return;
+    o.acc=(o.acc||[]).concat([c[0]]); S.fits[k]=editedFit(f,o); renderOutfits(); toast('Added '+c[0].name+'. Tap it to choose another belt.'); return; }
   if(ds.stepOpt){ S.sel=(S.sel+(+ds.stepOpt)+S.fits.length)%S.fits.length; if(S.sel) guard(); renderOutfits(); return; }
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }

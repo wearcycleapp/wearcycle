@@ -1295,5 +1295,7 @@ I18N.load("hi",{
 "Your phone ran out of memory. Close other apps and try again.": "आपके फ़ोन की मेमोरी खत्म हो गई। दूसरे ऐप बंद करें और फिर से कोशिश करें।",
 "The cut-out could not be saved. Check your connection and try again.": "कट-आउट सेव नहीं हो सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।",
 "Open the piece and tap Make cut-out to try again.": "पीस खोलें और फिर से कोशिश करने के लिए कट-आउट बनाएँ पर टैप करें।",
-"Open each one marked Review to confirm the details.": "विवरण की पुष्टि के लिए जाँचें वाले हर पीस को खोलें।"
+"Open each one marked Review to confirm the details.": "विवरण की पुष्टि के लिए जाँचें वाले हर पीस को खोलें।",
+"+ Wear a belt": "+ बेल्ट पहनें",
+"Added {a}. Tap it to choose another belt.": "{a} जोड़ा गया। दूसरी बेल्ट चुनने के लिए उस पर टैप करें।"
 });

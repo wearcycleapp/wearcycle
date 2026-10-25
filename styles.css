@@ -422,6 +422,9 @@ details.rules p{margin:8px 0}
 .btn.iconb svg{width:20px;height:20px}
 .worn-ok{flex:1;display:flex;align-items:center;justify-content:center;height:48px;border-radius:12px;background:var(--good-soft);color:var(--good)}
 .fit.hero .addunder{margin:10px 14px 0}
+.fit.hero .addrow{display:flex;flex-wrap:wrap;gap:0 8px}
+.fit.hero .addrow .addunder{margin:10px 0 0 14px}
+.fit.hero .addrow .addunder+.addunder{margin-left:0}
 details.whybox{margin:12px 14px 0;border-top:1px solid var(--line);padding-top:10px}
 details.whybox summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px;min-height:32px}
 details.whybox summary::-webkit-details-marker{display:none}
