@@ -15,7 +15,7 @@ colors:
   coral-ink: "#1b2433"
   good: "#2b7a4c"
   good-soft: "#dcefe3"
-  warn: "#9c6a12"
+  warn: "#8e6010"
   warn-soft: "#f5e8cc"
   bad: "#b4233c"
   bad-soft: "#f7dde1"
@@ -171,14 +171,14 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 - **Line** (#e2ded8; dark #2e3646): dividers and control borders.
 - **Accent / accent-ink / accent-soft** (#1b2433 / #ffffff / #e7e9ee; dark #f1f2f5 / #1b2433 / #2a3242): primary buttons and soft fills. Accent is Ink in light mode.
 - **Board** (#ece8e2; dark #1c2230): the outfit board behind tiles.
-- **Cream canvas** (#f7f4ef to #ebe4d9, the same in both themes): the radial gradient behind cut-outs. The outfit board (.flatlay) uses three stops: #f7f4ef, #efe9e0, #e7dfd3.
+- **Cream canvas** (--canvas-1 #f7f4ef to --canvas-2 #ebe4d9, the same in both themes): the radial gradient behind cut-outs. The outfit board (.flatlay) uses three stops: --canvas-1, --board-mid #efe9e0, --board-edge #e7dfd3.
 
 ### Status
-- **Good** (#2b7a4c, soft #dcefe3; dark #6cc38e, #1b3225), **Warn** (#9c6a12, soft #f5e8cc; dark #e2b45c, #382d17), **Bad** (#b4233c, soft #f7dde1; dark #f2668b, #3d1f29).
+- **Good** (#2b7a4c, soft #dcefe3; dark #6cc38e, #1b3225), **Warn** (#8e6010, soft #f5e8cc; dark #e2b45c, #382d17; #9c6a12 until Phase 5), **Bad** (#b4233c, soft #f7dde1; dark #f2668b, #3d1f29).
 
 ### Today versus rule
-- Today the cream canvas is hard-coded in four rules: .flatlay (styles.css:355), .card .vis.studio (462), .photo .pv.studio (544) and .piecebig.studio (556). Rule (Phase 5, erratum 3): tokenize them as --canvas-1 #f7f4ef, --canvas-2 #ebe4d9, --board-mid #efe9e0 and --board-edge #e7dfd3, with no visible change. Two more beige values are hard-coded and not yet tokenized: the viewer's cut-out background #f3f0ea (styles.css:667) and the style art background #ece8e2 (575, equal to Board).
-- Today Warn on Background is 4.27:1, below 4.5:1 for text, and Warn on Warn-soft (In the wash marks, warning pills) is 3.86:1. Rule (Phase 5): darken --warn to reach 4.5:1 on Background and show the ratio.
+- Done in Phase 5 (v1.51.3): the cream canvas in its four rules (.flatlay, .card .vis.studio, .photo .pv.studio, .piecebig.studio) uses --canvas-1, --canvas-2, --board-mid and --board-edge, with the same values in both dark blocks and no visible change. Two more beige values are hard-coded and not yet tokenized: the viewer's cut-out background #f3f0ea (styles.css:706) and the style art background #ece8e2 (615, equal to Board).
+- Done in Phase 5 (v1.51.3): --warn darkened from #9c6a12 to #8e6010 (same hue). Warn on Background 4.99:1 (was 4.27), on Surface 5.26:1, on Raised 5.48:1 and on Warn-soft 4.52:1 (was 3.86), so every place Warn is text (status, banner, condition tags, warning pills, In the wash marks) passes 4.5:1. The smallest change reaching 4.5:1 on Background alone, #976611, would have left Warn-soft at 4.09:1. Dark Warn is unchanged (#e2b45c, 9.42:1 on dark Background, 7.02:1 on dark Warn-soft).
 - Today coral also marks weather icons, calendar dots and the selected borders of style cards, palette options, piece picks and the holiday chip. Rule (decision 1): those selections keep coral only with a second cue (fill, check mark or inset ring).
 
 ### Named Rules
@@ -232,7 +232,7 @@ Active rail item: ink text, heavier weight, coral icon (as today). Tab names sta
 
 ### Input and browsers
 - Phones and the iPad are touch first; an iPad with a trackpad can hover. Windows is mouse and keyboard. styles.css has no :hover rules today; add them only inside @media (hover: hover) and (pointer: fine).
-- Horizontal rows (.chips, occasion and style rows) hide their scrollbars today (styles.css:47, 583). With a mouse, wrap them or add arrow buttons from 960px, so every option is reachable without Shift and the wheel.
+- Horizontal rows (.chips, occasion and style rows) hide their scrollbars today (styles.css:66, 623). With a mouse, wrap them or add arrow buttons from 960px, so every option is reachable without Shift and the wheel.
 - Keyboard: logical Tab order, visible focus, Escape closes sheets.
 - iPad: every iPad browser in Canada uses WebKit. styles.css uses 100vh in 3 declarations (694, 703, 704) and no dvh: use dvh with a vh fallback. Install to the Home Screen: WebKit deletes a site's storage after 7 days of Safari use without a visit, and Home Screen apps keep their own count, which protects the offline copy and the cut-out model.
 - Windows uses Chromium, the same engine as Claude's container, so automated screenshots are close (fonts and scrollbars differ). The app does no user-agent sniffing.
@@ -241,7 +241,7 @@ Active rail item: ink text, heavier weight, coral icon (as today). Tab names sta
 
 Rule (plan 7.4, confirmed by the owner 2026-10-19): flat by default. In light mode shadows belong only to overlays and floating elements: sheets, the Add clothes button and toasts. Dark mode conveys depth with contrast and borders. No glows.
 
-Today the soft shadow also sits on outfit cards, closet cards, panels and stat tiles (styles.css:69, 102, 113, 503); each screen phase removes it from its own containers.
+Today the soft shadow also sits on outfit cards, closet cards, panels and stat tiles (styles.css:160, 193, 204, 541); each screen phase removes it from its own containers.
 
 ### Shadow Vocabulary
 - **Soft** (`box-shadow: 0 1px 2px rgba(27,36,51,.08), 0 4px 14px rgba(27,36,51,.06)`; dark `0 1px 2px rgba(0,0,0,.4)`): the --shadow token; sheets and toasts.
@@ -313,7 +313,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - Motion follows wardrobe behaviour: an outfit swap, a piece going into the wash, a piece coming back, a sheet moving.
 - Durations: fast 120 to 180ms; normal 200 to 280ms; editorial 300 to 450ms.
 - Every animation sits inside @media (prefers-reduced-motion: no-preference). No continuous or decorative motion. These rules win over review-animations (which wants under 300ms and gentler motion under reduced motion) and over Impeccable's animate defaults.
-- Today: toast entrance 0.2s ease-out, camera flash 0.25s, board piece press 0.12s and the job spinner sit inside the query; two disclosure chevrons rotate in 0.15s outside it (styles.css:424, 476).
+- Today: toast entrance 0.2s ease-out, camera flash 0.25s, board piece press 0.12s and the job spinner sit inside the query; two disclosure chevrons rotate in 0.15s outside it (styles.css:479, 515).
 
 ## Do's and Don'ts
 
@@ -336,4 +336,4 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - **Don't** leave large unused desktop space caused by a phone max-width.
 - **Don't** set user-typed garment names in the display face.
 - **Don't** shrink text to solve crowding, or truncate translated labels to hide overflow.
-- **Don't** add a colored side stripe thicker than 1px to a card or callout; today .advice and .askcard (styles.css:255, 531) carry 3px coral left borders, which the detector flags.
+- **Don't** add a colored side stripe thicker than 1px to a card or callout; today .advice and .askcard (styles.css:310, 568) carry 3px coral left borders, which the detector flags.

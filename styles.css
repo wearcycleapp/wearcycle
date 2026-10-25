@@ -7,8 +7,9 @@
 :root{
   --bg:#f6f4f1; --surface:#fbfaf8; --raised:#ffffff; --ink:#1b2433; --muted:#5b6270; --line:#e2ded8;
   --accent:#1b2433; --accent-ink:#ffffff; --accent-soft:#e7e9ee; --coral:#ff7a59; --coral-ink:#1b2433;
-  --good:#2b7a4c; --good-soft:#dcefe3; --warn:#9c6a12; --warn-soft:#f5e8cc; --bad:#b4233c; --bad-soft:#f7dde1;
+  --good:#2b7a4c; --good-soft:#dcefe3; --warn:#8e6010; --warn-soft:#f5e8cc; --bad:#b4233c; --bad-soft:#f7dde1;
   --board:#ece8e2; --shadow:0 1px 2px rgba(27,36,51,.08),0 4px 14px rgba(27,36,51,.06);
+  --canvas-1:#f7f4ef; --canvas-2:#ebe4d9; --board-mid:#efe9e0; --board-edge:#e7dfd3; /* garment canvas and outfit board backdrop */
   --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
@@ -17,12 +18,14 @@
   --bg:#12161e; --surface:#1a202b; --raised:#212836; --ink:#eceef2; --muted:#9aa2b0; --line:#2e3646;
   --accent:#f1f2f5; --accent-ink:#1b2433; --accent-soft:#2a3242; --coral:#ff8a6b; --coral-ink:#1b2433;
   --good:#6cc38e; --good-soft:#1b3225; --warn:#e2b45c; --warn-soft:#382d17; --bad:#f2668b; --bad-soft:#3d1f29;
-  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;}}
+  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+  --canvas-1:#f7f4ef; --canvas-2:#ebe4d9; --board-mid:#efe9e0; --board-edge:#e7dfd3;}}
 :root[data-theme="dark"]{
   --bg:#12161e; --surface:#1a202b; --raised:#212836; --ink:#eceef2; --muted:#9aa2b0; --line:#2e3646;
   --accent:#f1f2f5; --accent-ink:#1b2433; --accent-soft:#2a3242; --coral:#ff8a6b; --coral-ink:#1b2433;
   --good:#6cc38e; --good-soft:#1b3225; --warn:#e2b45c; --warn-soft:#382d17; --bad:#f2668b; --bad-soft:#3d1f29;
-  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;}
+  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+  --canvas-1:#f7f4ef; --canvas-2:#ebe4d9; --board-mid:#efe9e0; --board-edge:#e7dfd3;}
 
 /* ===== 2. Base: elements, focus, headings, text helpers, utilities ===== */
 *{box-sizing:border-box}
@@ -401,7 +404,7 @@ details.rules p{margin:8px 0}
 .fl.fold img.cut{width:100%;height:auto;max-height:none;object-fit:fill}
 
 /* v1.9.1 board polish: calm studio backdrop, consistent shadows, padded cells */
-.flatlay{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#efe9e0 70%,#e7dfd3 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
+.flatlay{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--board-mid) 70%,var(--board-edge) 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
 .fl{padding:3%}
 .fl.small{padding:6%}
 .fl img{border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.10)}
@@ -500,7 +503,7 @@ details.whybox .why{margin:6px 0 8px}
 .wxpill{padding:0 12px;height:38px}
 
 /* v1.11 studio closet cards (the job bar moved to the shared layer) */
-.card .vis.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
+.card .vis.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .card .vis.studio img.cut{object-fit:contain;padding:10px;filter:drop-shadow(0 4px 6px rgba(50,35,20,.2))}
 
 /* v1.13 ease of use: 44px touch targets (Apple HIG minimum); chips, buttons and toasts moved to the shared layer */
@@ -573,7 +576,7 @@ a.lirow{text-decoration:none;color:inherit}
 /* v1.20 link buttons anywhere in lists */
 .li a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
 .li a.btn.primary{color:var(--accent-ink)}
-.photo .pv.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
+.photo .pv.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .photo .pv img.cut{padding:6px;box-sizing:border-box;filter:drop-shadow(0 3px 5px rgba(50,35,20,.2))}
 .langsel{min-height:40px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--raised);color:var(--ink);max-width:150px}
 /* v1.23 make tap-to-change obvious, and offer a way back */
@@ -590,7 +593,7 @@ a.lirow{text-decoration:none;color:inherit}
 .ppager .ppg svg{width:22px;height:22px}
 .ppager .pcount{font-size:14px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 @media (hover:hover) and (pointer:fine){ .ppager .ppg:hover{border-color:var(--ink)} }
-.piecebig.studio{background:radial-gradient(120% 90% at 50% 40%,#f7f4ef 0%,#ebe4d9 100%)}
+.piecebig.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .piecebig img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain} /* absolute: a percentage height inside a grid cell does not resolve, so the image overflowed and was cropped */
 .piecebig img.cut{padding:16px;box-sizing:border-box;filter:drop-shadow(0 6px 10px rgba(50,35,20,.22))}
 .piecebig svg.glyph{width:55%;height:60%}
