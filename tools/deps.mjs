@@ -9,9 +9,11 @@ import os from 'node:os';
 import path from 'node:path';
 
 // Exact versions, each released at least two weeks before they were pinned (2026-10-19).
-// playwright 1.56.0 matches the Chromium build preinstalled in Claude's container (/opt/pw-browsers).
+// playwright 1.56.0 matched the Chromium build preinstalled in Claude's container (/opt/pw-browsers) until 2026-10-25,
+// when the container image shipped chromium-1243 (Playwright 1.63.0) and the 1194 download was refused.
+// WEARCYCLE_PLAYWRIGHT overrides the version for a run (e.g. 1.63.0); the GitHub live check keeps the pinned one.
 export const PINNED = {
-  'playwright': '1.56.0',
+  'playwright': process.env.WEARCYCLE_PLAYWRIGHT || '1.56.0',
   '@axe-core/playwright': '4.13.0',
   'pngjs': '7.0.0',
   'pixelmatch': '7.2.0',

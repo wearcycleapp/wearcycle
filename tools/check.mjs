@@ -543,7 +543,8 @@ async function main() {
   console.log('Wearcycle check' + (A.worstCase ? ' (worst case)' : '') + '. Output: ' + A.out);
   versionCheck();
   const server = await startServer();
-  const browser = await PW.chromium.launch();
+  let browser;
+  try { browser = await PW.chromium.launch(); } catch (e) { server.stop(); throw e; } // else the local server keeps the run alive
   try {
     const data = scenario(null);
     const state = await signIn(browser, server.base, data);
