@@ -1,4 +1,6 @@
-"""The index page: the comparison table and every direction at 390, 820 and 1366px (live frames of the real pages)."""
+"""The index page: the comparison table and every direction at 390, 820 and 1366px.
+Screenshots, not frames: _headers sends X-Frame-Options: DENY for every file, so frames of the pages would be blocked.
+The pictures in shots/ are made from the checks' captures (CSS pixels, light and dark) and link to the live pages."""
 from gen_common import R, e
 
 ROWS = [
@@ -21,8 +23,9 @@ ROWS = [
      'Comparing looks takes a swipe on phones; the big type uses height.', 'Changing occasion takes one more tap on phones; closest to today, so the least new.'),
 ]
 
-FRAMES = [('Phone 390', 390, 844, '#outfits'), ('iPad 820', 820, 1180, '#outfits'), ('Windows 1366', 1366, 768, '#outfits'),
-          ('Closet row, phone', 390, 844, '#closet'), ('Care row, phone', 390, 844, '#care')]
+FRAMES = [('Phone 390', 390, 844, 'outfits', 'p390'), ('iPad 820', 820, 1180, 'outfits', 'i820'), ('Windows 1366', 1366, 768, 'outfits', 'w1366'),
+          ('Closet row, phone', 390, 844, 'closet', 'p390'), ('Care row, phone', 390, 844, 'care', 'p390')]
+VIEW = {'outfits': 'Outfits', 'closet': 'Closet', 'care': 'Care'}
 
 
 def page():
@@ -32,11 +35,12 @@ def page():
     for x, n, line in [('A', 'Kit', 'Every piece named and visible, all six occasions in view, options as an index.'),
                        ('B', 'Lookbook', 'Each ranked outfit is a page you turn, today’s pick first.'),
                        ('C', 'Board', 'Today’s screen, refined: the flat-lay board stays the hero; the occasion moves into a menu.')]:
-        frames = ''.join(f'<figure class="fr" style="--w:{w};--h:{h}"><figcaption>{e(lab)}</figcaption><div class="box"><iframe data-src="{x.lower()}.html{hash}" title="Direction {x}, {e(lab)}" loading="lazy" width="{w}" height="{h}"></iframe></div></figure>'
-                         for lab, w, h, hash in FRAMES)
+        frames = ''.join(f'<figure class="fr" style="--w:{w};--h:{h}"><figcaption>{e(lab)}</figcaption><a class="box" href="{x.lower()}.html#{v}" data-view-link>'
+                         f'<img src="shots/{x.lower()}-{v}-{dv}-light.webp" data-shot="shots/{x.lower()}-{v}-{dv}" alt="Direction {x}, {VIEW[v]} screen at {w} pixels wide" width="{w}" height="{h}" loading="lazy" decoding="async"></a></figure>'
+                         for lab, w, h, v, dv in FRAMES)
         dirs += f'''<section class="dir" id="{x.lower()}">
       <div class="dh"><h2>{x}: {n}</h2><p>{e(line)}</p><a class="btn primary" href="{x.lower()}.html">Open direction {x}</a></div>
-      <div class="frames" tabindex="0" role="region" aria-label="Direction {x} at three widths, scaled down">{frames}</div>
+      <div class="frames" tabindex="0" role="region" aria-label="Direction {x} at three widths, screenshots">{frames}</div>
     </section>'''
     return f'''<!doctype html>
 <html lang="en">
@@ -71,8 +75,8 @@ td{{color:var(--muted)}}
 .frames{{display:flex;gap:16px;overflow-x:auto;padding-bottom:8px;align-items:flex-start}}
 .fr{{margin:0;flex:none;--s:.42;width:calc(var(--w) * 1px * var(--s))}}
 .fr figcaption{{font-size:13px;color:var(--muted);margin-bottom:6px}}
-.fr .box{{width:calc(var(--w) * 1px * var(--s));height:calc(var(--h) * 1px * var(--s));overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--raised)}}
-.fr iframe{{border:0;transform:scale(var(--s));transform-origin:0 0;display:block}}
+.fr .box{{display:block;width:calc(var(--w) * 1px * var(--s));height:calc(var(--h) * 1px * var(--s));overflow:hidden;border:1px solid var(--line);border-radius:10px;background:var(--raised)}}
+.fr img{{display:block;width:100%;height:100%;object-fit:cover;object-position:top}}
 @media (max-width:699px){{ .fr{{--s:.6}} .fr:nth-child(2),.fr:nth-child(3){{display:none}} }}
 .foot{{font-size:13px;color:var(--muted);max-width:80ch}}
 </style>
@@ -81,21 +85,14 @@ td{{color:var(--muted)}}
 <main class="ix">
   <div>
     <h1>Three visual directions</h1>
-    <p class="lede">Phase 6 of the redesign. Each direction keeps ink, the cream garment canvas, coral for the main action only, and the condensed display type; selected states are ink, containers are flat, and “Wear this” shows without scrolling at 390 by 844. They differ in type scale, occasion selector, outfit composition, alternatives and density. Open one on your phone, the iPad and a Windows browser to see it at that device’s width; the frames below show the same pages scaled down.</p>
+    <p class="lede">Phase 6 of the redesign. Each direction keeps ink, the cream garment canvas, coral for the main action only, and the condensed display type; selected states are ink, containers are flat, and “Wear this” shows without scrolling at 390 by 844. They differ in type scale, occasion selector, outfit composition, alternatives and density. Open one on your phone, the iPad and a Windows browser to see it at that device’s width; the pictures below are screenshots of the same pages (select one to open it).</p>
   </div>
-  <div class="bar">Frames: <a data-theme-set="light" href="?theme=light">Light</a><a data-theme-set="dark" href="?theme=dark">Dark</a><span>· Inside each direction, the footer switches theme and labels (English, French, Japanese).</span></div>
+  <div class="bar">Pictures: <a data-theme-set="light" href="?theme=light">Light</a><a data-theme-set="dark" href="?theme=dark">Dark</a><span>· Inside each direction, the footer switches theme and labels (English, French, Japanese).</span></div>
   <div class="tbl" tabindex="0" role="region" aria-label="How the directions differ"><table><thead><tr><th scope="col"></th>{head}</tr></thead><tbody>{body}</tbody></table></div>
   {dirs}
   <p class="foot">Sample data: the fixture closet in tools/fixtures (synthetic pictures and names, no real photos), with the four Work options the app ranks for it at the fixed clock (Wednesday, 10°–14°C). Only the look is designed: tapping changes selected states, not the content. The navigation shell (bottom bar, rail) is today’s; Phase 7 decides it. Shop is not part of these mockups.</p>
 </main>
-<script>
-(function(){{
-  const q=new URLSearchParams(location.search), th=q.get('theme')==='dark'?'dark':'light';
-  document.documentElement.setAttribute('data-theme',th);
-  document.querySelectorAll('[data-theme-set]').forEach(a=>{{ if(a.dataset.themeSet===th) a.setAttribute('aria-current','true'); }});
-  document.querySelectorAll('iframe[data-src]').forEach(f=>{{ const [p,h]=f.dataset.src.split('#'); f.src=p+'?theme='+th+'#'+h; }});
-}})();
-</script>
+<script src="index.js"></script>
 </body>
 </html>
 '''
