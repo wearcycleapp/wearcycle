@@ -1288,5 +1288,12 @@ I18N.load("fr",{
 "Ranking now favors your custom palette.": "Le classement favorise maintenant votre palette personnalisée.",
 "Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "Cochez les couleurs à porter, par exemple celles que suggère un photographe. Chaque option de tenue est composée de pièces dans ces couleurs; une autre couleur n’entre que si vous n’avez rien de ce type dans ces couleurs.",
 "Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "Facultatif. Lorsqu’une palette est choisie, une tenue dont les pièces principales sont toutes dans ses couleurs obtient +1, et chaque pièce hors palette -0,5. Palettes : classiques sobres, tons de terre, monochrome, marine et blanc, ou un ensemble de couleurs que vous choisissez. Une palette personnalisée s’applique à toutes les options, pas seulement à la première.",
-"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "Sa couleur est hors de votre palette personnalisée, donc d’autres pièces sont choisies tant que cette palette est active."
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "Sa couleur est hors de votre palette personnalisée, donc d’autres pièces sont choisies tant que cette palette est active.",
+"The connection dropped. Try again when you are back online.": "La connexion a été coupée. Réessayez une fois de nouveau en ligne.",
+"Open the piece and tap Fill in with Claude to try again.": "Ouvrez la pièce et touchez Remplir avec Claude pour réessayer.",
+"The connection dropped while getting the cut-out tool (about 100 MB, once). Try again on Wi-Fi.": "La connexion a été coupée pendant le téléchargement de l’outil de détourage (environ 100 Mo, une seule fois). Réessayez en Wi-Fi.",
+"Your phone ran out of memory. Close other apps and try again.": "Votre téléphone a manqué de mémoire. Fermez d’autres apps et réessayez.",
+"The cut-out could not be saved. Check your connection and try again.": "Le détourage n’a pas pu être enregistré. Vérifiez votre connexion et réessayez.",
+"Open the piece and tap Make cut-out to try again.": "Ouvrez la pièce et touchez Détourer pour réessayer.",
+"Open each one marked Review to confirm the details.": "Ouvrez chaque article marqué À vérifier pour confirmer les détails."
 });

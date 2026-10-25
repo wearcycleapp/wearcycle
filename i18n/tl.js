@@ -1288,5 +1288,12 @@ I18N.load("tl",{
 "Ranking now favors your custom palette.": "Inuuna na ngayon ang sarili mong palette.",
 "Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "Lagyan ng tsek ang mga kulay na isusuot, halimbawa ang mungkahi ng photographer. Bawat opsyon ng outfit ay gawa sa mga pirasong nasa mga kulay na ito; papasok lang ang ibang kulay kung wala kang ganoong klase sa mga kulay na ito.",
 "Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "Opsyonal. Kapag naka-set, +1 ang outfit na ang lahat ng pangunahing piraso ay nasa kulay ng palette, at -0.5 ang bawat pirasong wala rito. Mga palette: malamlam na klasiko, kulay-lupa, monochrome, navy at puti, o mga kulay na ikaw mismo ang pumili. Ang sariling palette ay para sa lahat ng opsyon, hindi lang sa una.",
-"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "Wala sa sarili mong palette ang kulay nito, kaya ibang piraso ang pinipili habang naka-on ang palette na iyon."
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "Wala sa sarili mong palette ang kulay nito, kaya ibang piraso ang pinipili habang naka-on ang palette na iyon.",
+"The connection dropped. Try again when you are back online.": "Naputol ang koneksyon. Subukang muli kapag online ka na.",
+"Open the piece and tap Fill in with Claude to try again.": "Buksan ang piraso at i-tap ang Ipapunan kay Claude para subukang muli.",
+"The connection dropped while getting the cut-out tool (about 100 MB, once). Try again on Wi-Fi.": "Naputol ang koneksyon habang kinukuha ang cut-out tool (mga 100 MB, isang beses lang). Subukang muli sa Wi-Fi.",
+"Your phone ran out of memory. Close other apps and try again.": "Naubusan ng memory ang phone mo. Isara ang ibang app at subukang muli.",
+"The cut-out could not be saved. Check your connection and try again.": "Hindi na-save ang cut-out. Tingnan ang koneksyon mo at subukang muli.",
+"Open the piece and tap Make cut-out to try again.": "Buksan ang piraso at i-tap ang Gumawa ng cut-out para subukang muli.",
+"Open each one marked Review to confirm the details.": "Buksan ang bawat isang may markang I-review para kumpirmahin ang mga detalye."
 });

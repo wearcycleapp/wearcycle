@@ -1288,5 +1288,12 @@ I18N.load("hi",{
 "Ranking now favors your custom palette.": "रैंकिंग अब आपके कस्टम पैलेट को प्राथमिकता देती है।",
 "Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "पहनने के रंग चुनें, जैसे फ़ोटोग्राफ़र के सुझाए रंग। हर आउटफ़िट विकल्प इन्हीं रंगों के पीस से बनता है; कोई दूसरा रंग तभी आता है जब उस तरह का कोई पीस इन रंगों में न हो।",
 "Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "वैकल्पिक। सेट करने पर, जिस आउटफ़िट के सभी मुख्य पीस पैलेट के रंगों में हों उसे +1 मिलता है, और पैलेट से बाहर के हर पीस पर -0.5। पैलेट: सादे क्लासिक, मिट्टी के रंग, मोनोक्रोम, नेवी और सफ़ेद, या आपके चुने हुए रंग। कस्टम पैलेट हर विकल्प पर लागू होता है, सिर्फ़ पहले पर नहीं।",
-"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "इसका रंग आपके कस्टम पैलेट से बाहर है, इसलिए वह पैलेट चालू रहने तक दूसरे पीस चुने जाते हैं।"
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "इसका रंग आपके कस्टम पैलेट से बाहर है, इसलिए वह पैलेट चालू रहने तक दूसरे पीस चुने जाते हैं।",
+"The connection dropped. Try again when you are back online.": "कनेक्शन टूट गया। ऑनलाइन होने पर फिर से कोशिश करें।",
+"Open the piece and tap Fill in with Claude to try again.": "पीस खोलें और फिर से कोशिश करने के लिए Claude से भरवाएँ पर टैप करें।",
+"The connection dropped while getting the cut-out tool (about 100 MB, once). Try again on Wi-Fi.": "कट-आउट टूल (लगभग 100 MB, सिर्फ़ एक बार) डाउनलोड करते समय कनेक्शन टूट गया। Wi-Fi पर फिर से कोशिश करें।",
+"Your phone ran out of memory. Close other apps and try again.": "आपके फ़ोन की मेमोरी खत्म हो गई। दूसरे ऐप बंद करें और फिर से कोशिश करें।",
+"The cut-out could not be saved. Check your connection and try again.": "कट-आउट सेव नहीं हो सका। अपना कनेक्शन जाँचें और फिर से कोशिश करें।",
+"Open the piece and tap Make cut-out to try again.": "पीस खोलें और फिर से कोशिश करने के लिए कट-आउट बनाएँ पर टैप करें।",
+"Open each one marked Review to confirm the details.": "विवरण की पुष्टि के लिए जाँचें वाले हर पीस को खोलें।"
 });

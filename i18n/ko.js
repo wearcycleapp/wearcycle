@@ -1288,5 +1288,12 @@ I18N.load("ko",{
 "Ranking now favors your custom palette.": "이제 사용자 지정 팔레트 위주로 순위를 매겨요.",
 "Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "입을 색상을 고르세요. 예를 들어 사진작가가 추천한 색상이요. 모든 코디 옵션은 이 색상의 아이템으로 만들어지고, 그 종류의 아이템이 이 색상에 하나도 없을 때만 다른 색상이 들어가요.",
 "Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "선택 사항. 설정하면 주요 아이템이 모두 팔레트 색상인 코디는 +1, 팔레트에서 벗어난 아이템은 하나당 -0.5. 팔레트: 차분한 클래식, 어스 톤, 모노크롬, 네이비 & 화이트, 또는 직접 고른 색상. 사용자 지정 팔레트는 첫 번째뿐 아니라 모든 옵션에 적용돼요.",
-"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "색상이 사용자 지정 팔레트 밖이라, 그 팔레트를 쓰는 동안에는 다른 아이템이 선택돼요."
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "색상이 사용자 지정 팔레트 밖이라, 그 팔레트를 쓰는 동안에는 다른 아이템이 선택돼요.",
+"The connection dropped. Try again when you are back online.": "연결이 끊겼어요. 다시 온라인이 되면 다시 시도하세요.",
+"Open the piece and tap Fill in with Claude to try again.": "아이템을 열고 Claude로 채우기를 눌러 다시 시도하세요.",
+"The connection dropped while getting the cut-out tool (about 100 MB, once). Try again on Wi-Fi.": "배경 제거 도구(약 100MB, 처음 한 번)를 받는 중 연결이 끊겼어요. Wi-Fi에서 다시 시도하세요.",
+"Your phone ran out of memory. Close other apps and try again.": "휴대폰 메모리가 부족했어요. 다른 앱을 닫고 다시 시도하세요.",
+"The cut-out could not be saved. Check your connection and try again.": "배경 제거 이미지를 저장하지 못했어요. 연결을 확인하고 다시 시도하세요.",
+"Open the piece and tap Make cut-out to try again.": "아이템을 열고 배경 제거를 눌러 다시 시도하세요.",
+"Open each one marked Review to confirm the details.": "검토 표시가 있는 아이템을 하나씩 열어 내용을 확인하세요."
 });

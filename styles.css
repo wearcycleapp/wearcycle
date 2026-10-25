@@ -472,6 +472,10 @@ body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 .presets .chip,.viewsw .chip{min-height:40px}
 .btn.sm{min-height:40px}
 .toast{bottom:calc(84px + env(safe-area-inset-bottom,0px));font-size:13.5px;padding:10px 14px;border-radius:12px;max-width:min(calc(100% - 32px),480px)}
+.toast.sticky{display:flex;align-items:flex-start;gap:8px;padding:10px 6px 10px 14px;width:min(calc(100% - 32px),480px);box-sizing:border-box}
+.toast.sticky span{flex:1;min-width:0;padding-top:2px}
+.toast .toastx{flex:none;width:44px;height:44px;margin:-10px -4px -10px 0;border:0;background:none;color:inherit;display:grid;place-items:center;padding:0}
+.toast .toastx svg{width:18px;height:18px}
 body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 details.more{border:1px solid var(--line);border-radius:12px;padding:0 12px;background:var(--surface)}
 details.more summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:12px 0;min-height:44px}

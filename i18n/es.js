@@ -1288,5 +1288,12 @@ I18N.load("es",{
 "Ranking now favors your custom palette.": "Ahora se prioriza tu paleta personalizada.",
 "Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "Marca los colores con los que quieres vestirte, por ejemplo los que sugiere un fotógrafo. Todas las opciones de conjunto usan prendas de estos colores; otro color entra solo si no tienes nada de ese tipo en ellos.",
 "Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "Opcional. Si la eliges, un conjunto cuyas prendas principales usan solo colores de la paleta suma +1, y cada prenda fuera de ella resta 0.5. Paletas: clásicos sobrios, tonos tierra, monocromo, azul marino y blanco, o un conjunto de colores que tú eliges. Una paleta personalizada se aplica a todas las opciones, no solo a la primera.",
-"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "Su color está fuera de tu paleta personalizada, así que se eligen otras prendas mientras esa paleta esté activa."
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "Su color está fuera de tu paleta personalizada, así que se eligen otras prendas mientras esa paleta esté activa.",
+"The connection dropped. Try again when you are back online.": "Se cortó la conexión. Vuelve a intentarlo cuando tengas conexión.",
+"Open the piece and tap Fill in with Claude to try again.": "Abre la prenda y toca Completar con Claude para volver a intentarlo.",
+"The connection dropped while getting the cut-out tool (about 100 MB, once). Try again on Wi-Fi.": "Se cortó la conexión al descargar la herramienta de recorte (unos 100 MB, una sola vez). Vuelve a intentarlo con Wi-Fi.",
+"Your phone ran out of memory. Close other apps and try again.": "Tu teléfono se quedó sin memoria. Cierra otras apps y vuelve a intentarlo.",
+"The cut-out could not be saved. Check your connection and try again.": "No se pudo guardar el recorte. Revisa tu conexión y vuelve a intentarlo.",
+"Open the piece and tap Make cut-out to try again.": "Abre la prenda y toca Crear recorte para volver a intentarlo.",
+"Open each one marked Review to confirm the details.": "Abre cada una marcada como Revisar para confirmar los detalles."
 });

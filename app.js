@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.51.0';
+const APP_VERSION='1.51.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -116,7 +116,10 @@ function cleanBody(it){ const b={}; for(const [k,v] of Object.entries(it)) if(k!
 function cleanBodyWithId(it){ return Object.assign({id:it.id},cleanBody(it)); }
 
 /* ---------- toast ---------- */
-function toast(msg,ms){ const r=$('#toastRoot'); r.innerHTML=`<div class="toast" role="status">${esc(msg)}</div>`; clearTimeout(toast.t); if(ms!==0) toast.t=setTimeout(()=>{r.innerHTML='';},ms||2800); }
+// ms 0 keeps the message until it is closed (used for failures the person should read).
+// msg may be a list of sentences: each goes in its own text node, so each is translated by exact match.
+function toast(msg,ms){ const r=$('#toastRoot'); const txt=Array.isArray(msg)?msg.filter(Boolean).map(m=>`<span class="tp">${esc(m)}</span>`).join(' '):esc(msg);
+  r.innerHTML=ms===0?`<div class="toast sticky" role="alert"><span>${txt}</span><button type="button" class="toastx" data-toastx="1" aria-label="Close">${CLOSE_ICON}</button></div>`:`<div class="toast" role="status">${txt}</div>`; clearTimeout(toast.t); if(ms!==0) toast.t=setTimeout(()=>{r.innerHTML='';},ms||2800); }
 
 /* ---------- glyphs and visuals ---------- */
 const GLYPH={
@@ -237,7 +240,8 @@ async function callClaude(task,payload){
   if(!data||data.error) throw {friendly:'Claude could not read that'+(data&&data.error?' ('+data.error+')':'')+'.'};
   return data.result;
 }
-const aiMsg=e=>(e&&e.friendly)||'Claude could not answer right now. Try again.';
+const aiMsg=e=>(e&&e.friendly)||(netErr(e)?'The connection dropped. Try again when you are back online.':'Claude could not answer right now. Try again.');
+function netErr(e){ const m=String(e&&(e.message||e)||''); return (typeof navigator!=='undefined'&&navigator.onLine===false)||/fetch|network|load failed|timed? ?out|abort/i.test(m); }
 // Claude gets a 1024 px copy: enough to read the piece, and it keeps requests small (photos are stored at up to 2048 px).
 async function aiTag(blob){ return callClaude('tag',{image:await blobToBase64(await shrink(blob,1024))}); }
 async function aiCheck(blob,it){ return callClaude('check',{image:await blobToBase64(await shrink(blob,1024)),name:it.name,category:CAT[it.cat].label}); }
@@ -413,15 +417,32 @@ async function runCuts(){
     if(it&&needsCut(it)){
       const label='Cut-out '+(n+fail+1)+' of '+total;
       job(label+' · '+it.name,(n+fail)/total*100);
-      try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) job('One-time download of the cut-out tool',100*p.cur/p.tot); else if(p&&/compute|inference/.test(p.k)) job(label+' · '+it.name,(n+fail+0.5)/total*100); }); n++; delete CUT.failed[id]; CUT.missing.delete(id); renderOutfits(); renderCloset(); }
+      try{ await makeCut(it,p=>{ if(p&&/fetch/.test(p.k)&&p.tot) job('One-time download of the cut-out tool',100*p.cur/p.tot); else if(p&&/compute|inference/.test(p.k)) job(label+' · '+it.name,(n+fail+0.5)/total*100); }); n++; delete CUT.failed[id]; CUT.missing.delete(id); try{ caches.open('wearcycle-bgr-1').then(c=>c.keys()).then(k=>{ if(k.length) LS.set('wearcycle.bgrFiles',k.length); }); }catch(e){} renderOutfits(); renderCloset(); }
       catch(e){ fail++; lastErr=String(e&&e.message||e); CUT.failed[id]=lastErr; }
     }
     CUT.queue.shift();
   }
   CUT.busy=false; job(''); renderAll();
-  if(n||fail) toast('Made '+n+' cut-out'+(n===1?'':'s')+'.'+(fail?' '+fail+' failed'+(lastErr?' ('+lastErr.slice(0,80)+')':'')+'.':''),5000);
+  if(n||fail) toast(['Made '+n+' cut-out'+(n===1?'':'s')+'.'].concat(fail?[fail+' failed.',cutWhy(lastErr)]:[]),fail?0:5000);
 }
+function cutWhy(m){
+  if(netErr(m)) return 'The connection dropped while getting the cut-out tool (about 100 MB, once). Try again on Wi-Fi.';
+  if(/memory|allocat|out of range/i.test(m)) return 'Your phone ran out of memory. Close other apps and try again.';
+  if(/upload|storage|bucket/i.test(m)) return 'The cut-out could not be saved. Check your connection and try again.';
+  return 'Open the piece and tap Make cut-out to try again.'; }
 function autoCuts(list){ if(S.settings.autoCut===false) return; makeCuts(list,{auto:true}); }
+// Pieces still marked Review whose automatic cut-out did not happen (a dropped connection, or the app closed while
+// the queue waited) are tried again when the app opens: once per piece per session. If the cut-out tool is not on
+// the phone yet, this waits for Wi-Fi (or a connection of unknown type) rather than use mobile data for the download.
+CUT.retried=new Set();
+async function bgrReady(){ try{ const n=+(LS.get('wearcycle.bgrFiles')||0); if(!n) return false; return (await (await caches.open('wearcycle-bgr-1')).keys()).length>=n; }catch(e){ return false; } }
+async function retryCuts(){
+  if(S.settings.autoCut===false||!canWrite()||CUT.busy) return;
+  const list=allItems().filter(it=>it.review&&needsCut(it)&&!CUT.retried.has(it.id)); if(!list.length) return;
+  const c=navigator.connection, mobile=c&&(c.type==='cellular'||c.saveData);
+  if(mobile&&!(await bgrReady())) return;
+  list.forEach(it=>CUT.retried.add(it.id)); makeCuts(list,{auto:true});
+}
 
 /* ---------- persistence ---------- */
 async function writeItem(it){
@@ -447,7 +468,7 @@ async function loadRemote(){
   if(err){ S.fromCache=true; renderAll(); if(S.online) toast('Could not load from the server: '+(err.message||'unknown error'),5000); return; }
   S.items=new Map(it.data.map(r=>[r.id,Object.assign({},r.body,{id:r.id})]));
   S.log=we.data||[]; if(se.data&&se.data.body) Object.assign(S.settings,se.data.body); settingsLoaded();
-  S.fromCache=false; S.loaded=true; S.loadedAt=Date.now(); saveCache(); renderAll(); loadWeather(); refreshGps(); autoWash(); privacyCheck();
+  S.fromCache=false; S.loaded=true; S.loadedAt=Date.now(); saveCache(); renderAll(); loadWeather(); refreshGps(); autoWash(); privacyCheck(); setTimeout(retryCuts,4000);
 }
 function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
   S.items=new Map((c.items||[]).map(r=>[r.id,r])); S.log=c.log||[]; if(c.settings) Object.assign(S.settings,c.settings); settingsLoaded();
@@ -643,7 +664,7 @@ function pickFiles(multiple){
 async function addPhotos(blobs){
   if(!blobs.length) return;
   if(!canWrite()){ toast('You are offline. Adding clothes needs a connection.'); return; }
-  S.busy=true; let done=0, aiFail=0, aiStop=claudeOn()?'':'off'; const added=[];
+  S.busy=true; let done=0, aiFail=0, aiWhy='', aiStop=claudeOn()?'':'off'; const added=[];
   const list=blobs.slice(0,40);
   for(const b of list){
     job('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Claude is reading it'),done/list.length*100);
@@ -652,11 +673,11 @@ async function addPhotos(blobs){
     const it={id:uuid(),name:'New item '+(done+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
     const path=await uploadPhoto(p.full); if(path) it.photo=path;
     if(!claudeOn()){ try{ const g=await guessColors(p.full); if(g.length){ it.colors=[g[0]]; it.colorGuess=g; } }catch(e){} }
-    if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else aiFail++; }catch(e){ aiFail++; if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
+    if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else { aiFail++; aiWhy=aiWhy||'Claude could not answer right now. Try again.'; } }catch(e){ aiFail++; aiWhy=aiWhy||aiMsg(e); if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
     if(await writeItem(it)){ done++; added.push(it); }
   }
   S.busy=false; job(''); renderAll();
-  if(claudeOn()) toast('Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'+(aiStop?' '+aiStop:(aiFail?' Claude could not read '+aiFail+'.':'')),7000);
+  if(claudeOn()) toast(['Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'].concat(aiStop?[aiStop]:aiFail?['Claude could not read '+aiFail+'.',aiWhy,'Open the piece and tap Fill in with Claude to try again.']:[]),aiFail||aiStop?0:7000);
   else toast('Added '+done+' item'+(done===1?'':'s')+'.',2500);
   goTab('closet');
   autoCuts(added.map(it=>byId(it.id)).filter(Boolean));
@@ -1088,7 +1109,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
    <div class="photo"><div class="pv ${pv||it.photo?'zoomable':''} ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}" ${pv||it.photo?`data-view="${esc(ED.id||'')}" role="button" aria-label="See full size"`:''}>${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
-     ${ED.blob&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
+     ${(ED.blob||(it.review&&it.photo&&!isEx(it)))&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
      ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
 </div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
@@ -1907,6 +1928,7 @@ document.addEventListener('click',async e=>{
     else if(ds.cam==='gallery'){ const mode=CAM.mode; closeCamera(CAM.shots); const files=await pickFiles(mode==='batch'); if(mode==='batch') addPhotos(files); else if(files[0]) (ED?editorSetPhoto:checkSetPhoto)(files[0]); }
     return;
   }
+  if(ds.toastx){ clearTimeout(toast.t); $('#toastRoot').innerHTML=''; return; }
   if(ds.scrim && e.target===t){ closeSheet(); return; }
   if(ds.close!==undefined){ closeSheet(); return; }
   if(ds.tab){ goTab(ds.tab); return; }
@@ -2022,9 +2044,9 @@ document.addEventListener('click',async e=>{
       const o=ED.it.occ=(ED.it.occ||[]).slice(); const ix=o.indexOf(ds.occt); if(ix>=0) o.splice(ix,1); else o.push(ds.occt); drawEditor(); return; }
     if(ds.photo){ readEditorFields(); if(ds.photo==='cam'){ const [b]=await openCamera('single'); if(b) editorSetPhoto(b); } else { const [f]=await pickFiles(false); if(f) editorSetPhoto(f); } return; }
     if(ds.ai==='tag'){ readEditorFields(); ED.busy=true; ED.ai=null; drawEditor();
-      try{ const res=await aiTag(ED.blob); if(!ED) return;
+      try{ const blob=ED.blob||await photoBlob(ED.it.photo); const res=await aiTag(blob); if(!ED) return;
         if(res&&res.error) ED.ai=`<span class="k">Claude</span><div>${esc(res.error)}</div>`;
-        else if(res){ applyAi(ED.it,res); if(validBox(res.box)){ try{ ED.thumb=await cropThumb(ED.blob,res.box); ED.newBox=res.box.map(v=>Math.round(v*1000)/1000); ED.cropChanged=true; }catch(e){} } ED.ai=`<span class="k">Filled in by Claude · ${esc(res.confidence||'')} confidence</span><div>Check each field below before saving.</div>${(res.issues||[]).length?`<ul>${res.issues.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}`; }
+        else if(res){ applyAi(ED.it,res); if(validBox(res.box)){ try{ ED.thumb=await cropThumb(blob,res.box); ED.newBox=res.box.map(v=>Math.round(v*1000)/1000); ED.cropChanged=true; }catch(e){} } ED.ai=`<span class="k">Filled in by Claude · ${esc(res.confidence||'')} confidence</span><div>Check each field below before saving.</div>${(res.issues||[]).length?`<ul>${res.issues.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}`; }
       }catch(err){ if(ED) ED.ai=`<span class="k">Claude</span><div>${esc(aiMsg(err))}</div>`; }
       if(ED){ ED.busy=false; drawEditor(); } return; }
     if(ds.ai==='box'){ readEditorFields(); ED.busy=true; drawEditor();

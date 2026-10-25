@@ -1288,5 +1288,12 @@ I18N.load("ja",{
 "Ranking now favors your custom palette.": "カスタムパレットを優先して順位付けします。",
 "Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.": "着たい色を選んでください（例：フォトグラファーが勧める色）。どのコーデ候補もこの色のアイテムで組みます。その種類のアイテムがこの色に1つもない場合だけ、ほかの色を使います。",
 "Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.": "任意。設定すると、メインのアイテムがすべてパレットの色のコーデは+1、パレット外のアイテムは1点につき-0.5になります。パレット：落ち着いた定番色、アースカラー、モノトーン、ネイビーと白、または自分で選んだ色。カスタムパレットは1番目だけでなく、すべての候補に適用されます。",
-"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "色がカスタムパレット外のため、そのパレットを使っている間はほかのアイテムが選ばれます。"
+"Its color is outside your custom palette, so other pieces are picked while that palette is on.": "色がカスタムパレット外のため、そのパレットを使っている間はほかのアイテムが選ばれます。",
+"The connection dropped. Try again when you are back online.": "接続が切れました。オンラインに戻ってから、もう一度お試しください。",
+"Open the piece and tap Fill in with Claude to try again.": "アイテムを開いて「Claudeで入力」をタップし、もう一度お試しください。",
+"The connection dropped while getting the cut-out tool (about 100 MB, once). Try again on Wi-Fi.": "切り抜きツール（約100MB、初回のみ）の取得中に接続が切れました。Wi-Fiでもう一度お試しください。",
+"Your phone ran out of memory. Close other apps and try again.": "スマホのメモリが足りませんでした。ほかのアプリを閉じて、もう一度お試しください。",
+"The cut-out could not be saved. Check your connection and try again.": "切り抜きを保存できませんでした。接続を確認して、もう一度お試しください。",
+"Open the piece and tap Make cut-out to try again.": "アイテムを開いて「切り抜きを作成」をタップし、もう一度お試しください。",
+"Open each one marked Review to confirm the details.": "「要確認」の付いたアイテムを開いて、内容を確認してください。"
 });
