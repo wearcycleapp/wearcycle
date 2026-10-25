@@ -18,7 +18,30 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Chosen direction
 
-Not chosen yet. Phase 6 builds 2 or 3 static mockups in docs/design/direction/; the owner picks one (or a mix) on his phone, the iPad and a Windows browser, and the choice and its rules are recorded here before any screen is coded.
+Owner's choice, 2026-10-25 (Phase 6): **direction A, "Kit", on phones and direction B, "Lookbook", from 700px** (iPad and Windows). Mockups: docs/design/direction/ (a.html and b.html; index.html compares the three directions). The switch is at 700px, where the navigation shell's rail band starts (Phase 7): phones in portrait get A; the iPad (744px and wider) and Windows get B. Where an older rule in the screen sections said otherwise (occasion tabs and a lookbook on phones, v1.41's hero-left layout on wide screens), this choice replaces it, and those sections are updated below.
+
+Both keep the brand and the decided rules: ink, the cream garment canvas and the condensed display type; coral only where DESIGN.md puts it (Wear this, the #1 rank, the active tab icon, the active pager dot, progress); selected states in ink (a fill or a 2px underline) with aria-pressed; flat containers. The shell (tab bar, rail) stays as today until Phase 7.
+
+| | Phones, below 700px (A) | From 700px (B) |
+| --- | --- | --- |
+| Type | Compact: day 22px and screen titles 26px in the display face (as every h2), labels 13 to 15px, rank and option numbers in the display face | Editorial: day 52px (56px from 1100px); occasions in the display face, 20px, uppercase by CSS; look numbers 28px |
+| Day row | Day, weather and greeting; style as a menu button ("Style: All my styles"); diary | Day, greeting and weather; diary; style as text tabs under the occasions (beside them from 1100px) |
+| Occasion selector | All six at once: a segmented grid, 3 by 2, ink fill when selected | Text tabs, selected in ink with a 2px ink underline; the row scrolls sideways when it does not fit |
+| Outfit | The kit: top and bottom as 4:5 pictures with category and name, then shoes and accessories in one row, every piece named | The flat-lay board, square, one look per page |
+| Reasons | The first reason, then "N more reasons" | "Why this outfit?" with every reason, below the looks |
+| Other options | An index: one row per option with its number, small pictures, piece names and match | Looks as pages you turn (swipe, arrows, dots, "1 of 4"), the next one peeking; from 1100px all looks side by side, today's pick largest |
+| Closet | Category chips with counts that wrap (all visible); square tiles, 2 columns; a flag is a short text mark on the picture | Category text tabs with counts; 4:5 tiles, 3 columns (5 from 1200px); a flag is a round icon mark with a screen-reader label |
+| Care | Compact row: 56px picture, name, reason, small action buttons | The garment leads: 160px picture, 18px name, section title in the display face |
+
+Measured on the mockups in Chromium (2026-10-25): "Wear this" shows without scrolling at 360x800, 390x844 and 412x915 (A), and at 744x1133, 820x1180, 1024x1366, 1133x744, 1180x820, 1366x1024, 1366x768, 1536x864 and 1920x1080 (B). That needed one change to B as first shown: the side-by-side spread starts at 1100px instead of 1200px, because at 1200px the page-turn layout put "Wear this" 258px and 209px below the visible area on iPad landscape (1133x744 and 1180x820). b.html is updated.
+
+To settle in each screen's proposal (workflow step 2):
+- Two compositions per screen. Where they can, phone and wide share markup (the occasion selector is the same group of six aria-pressed buttons in A and B, so that switch is CSS only); the kit and the board, and the index and the page-turn rail, are different layouts of the same outfit data. Every existing action works in both: tap a piece, Swap for another, Back to suggestion, leave a piece out, Wear this, share, log.
+- Phones in landscape are 700px wide or more (844x390, 915x412) and so get B, where "Wear this" ends at 850px on a screen 390 to 412px tall; the installed app allows any orientation (manifest.webmanifest, "orientation": "any"). A at 844x390 shows it at 197 to 245px. Decide whether B also needs a minimum height (for example: A below 700px wide or below 600px tall).
+- Closet tiles keep the wear count at every width (Closet rule below); B's mockup tile shows the condition only.
+- Closet flags: A shows words, B an icon. Consider the same visible words at every width, so no flag has to be learned.
+- On Windows the viewport is shorter than the screen (browser bars and taskbar), so at a 1366x768 screen "Wear this" (ending at 713px) may need a short scroll: measure in the Outfits phase.
+- New strings in the mockups (for example "4 more reasons") are translated when their screen is built.
 
 ## Navigation shell (Phase 7)
 
@@ -28,23 +51,23 @@ Rules: DESIGN.md Layout and the plan's Phase 7 (700 to 959px, Settings at the bo
 - The header lost `position:sticky` in v1.38: the holiday-badge rule `header.top{position:relative}` overrode it (Phase 5 merged both into one rule, styles.css:97, so today it reads `position:relative`). Decide whether the header sticks again.
 - With `position:relative`, `top:env(safe-area-inset-top,0px)` moves the header down by the inset, on top of `:root`'s `padding-top` with the same inset (index.html sets `viewport-fit=cover`), so in the installed app on a phone with a notch the header may sit one inset lower than intended. Not verified on a device.
 - Overridden declarations (2): `.version` font-family and letter-spacing (styles.css:274), always replaced by the `!important` typography rule (styles.css:489).
+- Dark mode: the Care tab's count badge (`nav.tabs .badge`, styles.css:114) is white on `--bad` #f2668b, 2.98:1, below 4.5:1 for text (light: white on #b4233c, 6.47:1; ink on #f2668b would be 5.23:1). Found on the Phase 6 mockups, which use today's shell; tools/check.mjs takes detector snapshots in light at 390px only (tools/check.mjs:592), so its reports did not show it.
 
 ## Outfits (EDITORIAL)
 
-Phone order:
+Phone order (below 700px, direction A; see Chosen direction):
 
-1. Greeting, weather and diary (one row).
-2. Occasion selector (typographic tabs).
-3. Style row (only when 2 or more styles are picked).
-4. Hero outfit: rank, match label, style, flat-lay board, palette, Wear this, Why this outfit.
-5. Wearing today strip: thumbnails and Edit, one line.
-6. More looks as a lookbook: 02, 03 and so on, each with image, label and match.
+1. Day, weather, greeting and diary in one row, with the style menu (only when 2 or more styles are picked).
+2. Occasion selector (all six at once).
+3. Hero outfit: rank, match label, style, the kit, Wear this and share, the first reason with "N more reasons", palette.
+4. Wearing today strip: thumbnails and Edit, one line.
+5. More options as an index: 02, 03 and so on, each with small pictures, piece names and match.
 
 - Banners, laundry and holiday notices stay below the greeting row in a compact form and never push the hero below the first screen at 390px.
-- Occasion selector: text tabs (Work, Going out, Formal, Sport, Home, Chores) that scroll sideways; selected is ink, heavier, with a 2px ink underline; aria-pressed kept; each target at least 40px tall; reachable with a mouse from 960px (wrap or arrow buttons).
+- Occasion selector (Work, Going out, Formal, Sport, Home, Chores): aria-pressed kept; each target at least 40px tall. Phones: a 3 by 2 grid, selected is an ink fill; long translations wrap inside their cell. From 700px: text tabs in the display face that scroll sideways when they do not fit, selected is ink with a 2px ink underline; usable with a mouse (wrap or arrow buttons).
 - Keep: tap a piece to preview, Swap for another, Back to suggestion, leave a piece out, Wear this, share, log, diary, weather, style row, holiday chip.
-- "Wear this" is visible without scrolling at 390 x 844.
-- Wide: hero left (sticky), alternatives right, as in v1.41; refine spacing and type, not structure.
+- "Wear this" is visible without scrolling at 390 x 844, and on the iPad and Windows sizes measured under Chosen direction.
+- Wide (from 700px, direction B): the looks as pages, today's pick first and the next one peeking, with arrows, dots and a count; from 1100px all looks side by side, today's pick largest; Wear this under today's pick; Why this outfit below. This replaces v1.41's hero-left, alternatives-right layout.
 - Code: renderOutfits (app.js:804) with heroCard, flatlay, paletteStrip, altRow, tile and todayLine.
 
 ### Known issues to fix in this phase
@@ -57,10 +80,10 @@ Phone order:
 ## Closet (GALLERY)
 
 - Tile: image, name (Figtree), one line with the condition word and the wear count.
-- Flags (Review, Example, In the wash, needs repair, needs attention) become one small mark on the image corner, with a text label for screen readers. Occasions move to the piece preview.
-- Filters: typographic category tabs with counts, for example "All 47, Tops 18, Bottoms 8, Outerwear 8, Shoes 8".
+- Flags (Review, Example, In the wash, needs repair, needs attention) become one small mark on the image corner: the words on phones (A); from 700px an icon with a text label for screen readers (B), unless the Closet proposal adopts the words at every width (open point under Chosen direction). Occasions move to the piece preview.
+- Filters: categories with counts, for example "All 47, Tops 18, Bottoms 8, Outerwear 8, Shoes 8": chips that wrap on phones (A), text tabs from 700px (B).
 - "In the wash" stays a separate control with its count.
-- Wide: 4 or 5 columns where width allows. Opening a tile keeps opening the editor. Stats stays reachable.
+- Phones: square tiles, 2 columns (A). Wide: 4:5 tiles, 3 columns from 700px and 5 from 1200px (B). Opening a tile keeps opening the editor. Stats stays reachable.
 - Image source by rendered size (Phase 9): the 256px thumbnail only where rendered width x DPR is 256 or less; otherwise the cut-out or the photo, lazy-loaded. Report bytes downloaded per screen before and after.
 - Code: renderCloset (app.js:926).
 
@@ -90,7 +113,7 @@ Sections map to groups that already exist in renderCare (app.js:980) and careFla
 | Let go | Donate or recycle; Donated or recycled (history); drop-off guidance | Mark donated, Mark recycled, Donation drop-offs, Textile recycling, Open |
 
 - Show only sections that have items; when nothing needs attention, say so in one calm line.
-- Garments lead each row; text explains why.
+- Garments lead each row; text explains why. Phones: a compact row, 56px picture, name, reason and small action buttons (A). From 700px: a 160px picture, an 18px name and the section title in the display face (B).
 - "In the wash" stays in Closet.
 - Wide: sections composed side by side instead of wide stacked panels.
 

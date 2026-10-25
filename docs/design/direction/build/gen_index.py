@@ -4,7 +4,7 @@ The pictures in shots/ are made from the checks' captures (CSS pixels, light and
 from gen_common import R, e
 
 ROWS = [
-    ('Type scale', 'Compact. The display face only for numbers (rank, option numbers); day 22px; labels 13 to 15px.',
+    ('Type scale', 'Compact. Day 22px and screen titles 26px in the display face; labels 13 to 15px; rank and option numbers in the display face.',
      'Large and editorial. Day 40px (56px on desktop); occasions set in the display face; look numbers 28px.',
      'Today’s scale, refined. Day 26px; title 17px; display face for the rank and option numbers.'),
     ('Occasion selector', 'All six visible at once: a segmented grid, 3 by 2 on phones, one row from 700px. Long translations wrap inside their cell.',
@@ -87,6 +87,7 @@ td{{color:var(--muted)}}
     <h1>Three visual directions</h1>
     <p class="lede">Phase 6 of the redesign. Each direction keeps ink, the cream garment canvas, coral for the main action only, and the condensed display type; selected states are ink, containers are flat, and “Wear this” shows without scrolling at 390 by 844. They differ in type scale, occasion selector, outfit composition, alternatives and density. Open one on your phone, the iPad and a Windows browser to see it at that device’s width; the pictures below are screenshots of the same pages (select one to open it).</p>
   </div>
+  <p class="lede"><strong>Chosen on 2026-10-25:</strong> A on phones, B from 700px wide (iPad and Windows), with B’s side-by-side looks starting at 1100px. The rules are in docs/design/SCREENS.md, under “Chosen direction”.</p>
   <div class="bar">Pictures: <a data-theme-set="light" href="?theme=light">Light</a><a data-theme-set="dark" href="?theme=dark">Dark</a><span>· Inside each direction, the footer switches theme and labels (English, French, Japanese).</span></div>
   <div class="tbl" tabindex="0" role="region" aria-label="How the directions differ"><table><thead><tr><th scope="col"></th>{head}</tr></thead><tbody>{body}</tbody></table></div>
   {dirs}
