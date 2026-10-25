@@ -6,6 +6,7 @@ From Section 8 of the redesign plan v2.2. Capture with `node tools/check.mjs` (f
 - 360px in French and Japanese for every changed screen.
 - Photos, cut-outs and glyph-only items; an empty closet; the worst-case fixture (`node tools/check.mjs --worst-case`).
 - Compare with the Phase 4 baseline: `node tools/check.mjs --css-pixels --compare docs/design/baseline --baseline docs/design/baseline/summary.json`. The baseline is always captured with `--css-pixels` (the script refuses to write it otherwise, and `--compare` fails on a run at another scale). `--baseline` turns the review counts (axe, English left, text cut off, detector warnings) into pass or fail against the baseline; detector advisories are recorded but never gate.
+- Prove that a change is invisible, or limited to what was meant: capture a before on the current code in the same session, then `node tools/check.mjs --css-pixels --compare <before> --exact`. It lists every changed pixel per screenshot (masks in the run's diff folder) and fails on any; it refuses a before from another Chromium build or launch flags, such as the Phase 4 baseline (Chromium 1194, partial raster). The default `--compare` (pixelmatch threshold 0.1) misses small color changes.
 
 Chromium at iPad sizes shows layout, not WebKit rendering: the real iPad decides at milestones.
 
@@ -17,7 +18,7 @@ Chromium at iPad sizes shows layout, not WebKit rendering: the real iPad decides
 - axe-core: no serious or critical issues.
 - Detector warnings at or below the Phase 4 baseline, or each one explained. Advisories are recorded, not gated; elements hidden on screen are left out of the scan.
 - Light and dark reviewed.
-- The owner passed the preview on his Android phone, signed in with the test account. Required at every release: Claude's container cannot reach Supabase, so this is the only test with real data. At milestones also on the iPad and in a Windows browser.
+- The live check passed on the preview deploy (tools/live-check.mjs in GitHub Actions, signed in with the test account: Chromium at 390 and 1366, WebKit at 820). Claude's container cannot reach Supabase, so this is the real-data test; the owner no longer tests releases (his decision, 2026-10-19 and 2026-10-22). He reviews design choices, such as the Phase 6 direction, on his own devices.
 - At most two refinement rounds.
 
 ## Ask

@@ -69,8 +69,8 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   locally, sign-in too when Supabase is unreachable, as from Claude's container (the report
   says so). Test packages: outside, tools/deps.mjs; set WEARCYCLE_PLAYWRIGHT=1.63.0 to match
   the container's Chromium (build 1243 since 2026-10-25).
-- Screenshots go outside the repo, except the Phase 4 baseline in docs/design/
-  baseline/: always --css-pixels (else refused; --compare needs the same flag).
+- Screenshots go outside the repo, except the Phase 4 baseline in docs/design/baseline/: always
+  --css-pixels. To prove "no visible change": --compare <before> --exact (before from this session).
 - Detector: only warnings gate a release (against the baseline);
   advisories are recorded, not gated. Hidden elements are left out.
 

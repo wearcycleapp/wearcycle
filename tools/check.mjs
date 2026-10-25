@@ -2,7 +2,7 @@
 // Wearcycle visual and functional check (redesign plan v2.2, Phase 2). Runs in Claude's container with Playwright.
 // Test-only: never listed in sw.js, never loaded by the app.
 //
-//   node tools/check.mjs [--worst-case] [--compare <folder>] [--baseline <summary.json>] [--strict]
+//   node tools/check.mjs [--worst-case] [--compare <folder> [--exact]] [--baseline <summary.json>] [--strict]
 //                        [--out <folder>] [--full-page] [--css-pixels] [--devices a,b] [--views a,b] [--no-axe] [--no-detector]
 //                        [--stub-auth] [--base-url <url>]
 //
@@ -14,6 +14,12 @@
 // and the summary says so. Screenshots and reports go outside the repository (default: <tmp>/wearcycle-check/),
 // except the Phase 4 baseline under docs/design/baseline/, which must be captured with --css-pixels (one pixel per CSS
 // pixel, keeps it small); --compare refuses a run whose pixel scale differs from the baseline's.
+// --compare uses pixelmatch at threshold 0.1, which hides small color changes (the Phase 5 --warn change was invisible
+// to it). --compare <folder> --exact counts every pixel whose color differs at all, per screenshot, and fails on any.
+// It needs a "before" captured by this script in the same browser build: Chromium is launched with
+// --disable-partial-raster, because with partial raster two runs of unchanged code differed by up to 44 color levels
+// on chip and image edges in 6 to 10 of 20 screenshots (measured 2026-10-25, Chromium 1243); without it, 4 repeat
+// runs were identical to the pixel. --exact therefore ignores nothing.
 // Detector: warnings and advisories are counted separately; only warnings gate (against --baseline). Elements hidden in
 // the rendered screens (display: none, which includes [hidden], or visibility: hidden) are removed from the screen
 // snapshots before the scan, because nobody sees them.
@@ -33,7 +39,7 @@ const argv = process.argv.slice(2);
 const flag = n => argv.includes('--' + n);
 const opt = n => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : undefined; };
 const A = {
-  worstCase: flag('worst-case'), compare: opt('compare'), baseline: opt('baseline'), strict: flag('strict'),
+  worstCase: flag('worst-case'), compare: opt('compare'), exact: flag('exact'), baseline: opt('baseline'), strict: flag('strict'),
   fullPage: flag('full-page'), cssPixels: flag('css-pixels'), noAxe: flag('no-axe'), noDetector: flag('no-detector'), stubAuth: flag('stub-auth'),
   baseUrl: opt('base-url'), devices: opt('devices'), views: opt('views'),
   out: path.resolve(opt('out') || path.join(os.tmpdir(), 'wearcycle-check', flag('worst-case') ? 'worst-case' : 'run')),
@@ -43,6 +49,7 @@ const BASELINE_DIR = path.join(REPO, 'docs', 'design', 'baseline');
 if (inside(A.out, REPO) && !inside(A.out, BASELINE_DIR)) {
   console.error('--out must be outside the repository (or under docs/design/baseline for Phase 4).'); process.exit(2);
 }
+if (A.exact && !A.compare) { console.error('--exact goes with --compare <folder>.'); process.exit(2); }
 if (inside(A.out, BASELINE_DIR) && !A.cssPixels) {
   console.error('The committed baseline (docs/design/baseline) is captured with --css-pixels.'); process.exit(2);
 }
@@ -70,7 +77,9 @@ const pickList = (all, s) => s ? all.filter(x => s.split(',').includes(x.id || x
 const devices = pickList(DEVICES, A.devices), views = pickList(VIEWS, A.views);
 
 /* ---------- results ---------- */
-const R = { checks: [], captures: [], console: [], unexpectedHosts: new Set(), writes: [], functions: [], expected404: new Set(), auth: {}, snapHidden: {} };
+const R = { checks: [], captures: [], console: [], unexpectedHosts: new Set(), writes: [], functions: [], expected404: new Set(), auth: {}, snapHidden: {}, render: {}, compare: null };
+// Full raster on every repaint: partial raster reuses earlier tile pixels and made repeat runs differ (see the top).
+const CHROMIUM_ARGS = ['--disable-partial-raster'];
 function check(name, status, detail) { R.checks.push({ name, status, detail: detail || '' }); console.log(status.padEnd(6) + ' ' + name + (detail ? ': ' + String(detail).split('\n')[0].slice(0, 220) : '')); }
 async function step(name, fn) { try { const d = await fn(); check(name, 'PASS', d); } catch (e) { check(name, 'FAIL', e && e.message || String(e)); } }
 const assert = (c, m) => { if (!c) throw new Error(m); };
@@ -495,24 +504,46 @@ async function compareTo(folder) {
   const shots = path.join(A.out, 'screens'), base = path.resolve(folder), diffDir = path.join(A.out, 'diff'); mkdirSync(diffDir, { recursive: true });
   const baseShots = existsSync(path.join(base, 'screens')) ? path.join(base, 'screens') : base;
   const baseSummary = path.join(base, 'summary.json');
+  const name = 'Pixel diff' + (A.exact ? ' (exact)' : '') + ' against ' + folder;
+  R.compare = { folder, mode: A.exact ? 'exact' : 'pixelmatch 0.1', rows: [] };
   if (existsSync(baseSummary)) { // screenshots at different scales differ in size everywhere: say why instead
-    const o = JSON.parse(readFileSync(baseSummary, 'utf8')).options || {};
+    const bs = JSON.parse(readFileSync(baseSummary, 'utf8')), o = bs.options || {};
     const diff = ['cssPixels', 'fullPage'].filter(k => !!o[k] !== !!A[k]);
     if (diff.length) {
-      check('Pixel diff against ' + folder, 'FAIL', 'capture options differ from the baseline: ' + diff.map(k => '--' + k.replace(/[A-Z]/g, m => '-' + m.toLowerCase()) + (o[k] ? ' (baseline has it)' : ' (baseline lacks it)')).join(', ') + '; rerun with the same flags');
+      check(name, 'FAIL', 'capture options differ from the baseline: ' + diff.map(k => '--' + k.replace(/[A-Z]/g, m => '-' + m.toLowerCase()) + (o[k] ? ' (baseline has it)' : ' (baseline lacks it)')).join(', '));
       return [];
     }
-  }
-  const rows = []; let changed = 0, missing = 0;
+    if (A.exact) { // same browser build and raster mode, or anti-aliasing noise shows up as changes
+      const r = bs.render || {}, why = [];
+      if (r.browser !== R.render.browser) why.push('browser ' + (r.browser || 'not recorded') + ' vs ' + R.render.browser);
+      if (JSON.stringify(r.args || null) !== JSON.stringify(R.render.args)) why.push('launch flags ' + JSON.stringify(r.args || 'not recorded') + ' vs ' + JSON.stringify(R.render.args));
+      if (why.length) { check(name, 'FAIL', 'the before run was captured differently (' + why.join('; ') + '): capture a new before with this script'); return []; }
+    }
+  } else if (A.exact) { check(name, 'FAIL', 'no summary.json in ' + folder + ': --exact needs a before captured by this script'); return []; }
+  const rows = R.compare.rows; let changed = 0, missing = 0;
   for (const f of readdirSync(shots).filter(f => f.endsWith('.png')).sort()) {
-    const bf = path.join(baseShots, f); if (!existsSync(bf)) { missing++; rows.push(f + ': not in baseline'); continue; }
+    const bf = path.join(baseShots, f); if (!existsSync(bf)) { missing++; rows.push({ file: f, note: 'not in the before run' }); continue; }
     const a = PNG.sync.read(readFileSync(path.join(shots, f))), b = PNG.sync.read(readFileSync(bf));
-    if (a.width !== b.width || a.height !== b.height) { changed++; rows.push(f + ': size ' + a.width + 'x' + a.height + ' vs ' + b.width + 'x' + b.height); continue; }
+    if (a.width !== b.width || a.height !== b.height) { changed++; rows.push({ file: f, note: 'size ' + a.width + 'x' + a.height + ' vs ' + b.width + 'x' + b.height }); continue; }
     const d = new PNG({ width: a.width, height: a.height });
-    const n = pixelmatch(a.data, b.data, d.data, a.width, a.height, { threshold: 0.1 });
-    if (n) { changed++; rows.push(f + ': ' + n + ' px differ'); writeFileSync(path.join(diffDir, f), PNG.sync.write(d)); }
+    if (!A.exact) {
+      const n = pixelmatch(a.data, b.data, d.data, a.width, a.height, { threshold: 0.1 });
+      if (n) { changed++; rows.push({ file: f, pixels: n }); writeFileSync(path.join(diffDir, f), PNG.sync.write(d)); }
+      continue;
+    }
+    // exact: every pixel whose color differs; the mask shows them red over a faded copy of this run
+    let n = 0, max = 0, x0 = a.width, y0 = a.height, x1 = -1, y1 = -1;
+    for (let y = 0; y < a.height; y++) for (let x = 0; x < a.width; x++) {
+      const i = (y * a.width + x) * 4;
+      const dl = Math.max(Math.abs(a.data[i] - b.data[i]), Math.abs(a.data[i + 1] - b.data[i + 1]), Math.abs(a.data[i + 2] - b.data[i + 2]), Math.abs(a.data[i + 3] - b.data[i + 3]));
+      if (dl) { n++; max = Math.max(max, dl); x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+        d.data[i] = 255; d.data[i + 1] = 0; d.data[i + 2] = 0; d.data[i + 3] = 255; }
+      else { const g = Math.round(255 - (255 - (a.data[i] * .3 + a.data[i + 1] * .59 + a.data[i + 2] * .11)) * .15); d.data[i] = d.data[i + 1] = d.data[i + 2] = g; d.data[i + 3] = 255; }
+    }
+    if (n) { changed++; rows.push({ file: f, pixels: n, maxDelta: max, box: [x0, y0, x1, y1] }); writeFileSync(path.join(diffDir, f), PNG.sync.write(d)); }
   }
-  check('Pixel diff against ' + folder, changed || missing ? 'FAIL' : 'PASS', changed || missing ? changed + ' changed, ' + missing + ' new: ' + rows.slice(0, 6).join('; ') : 'all screenshots identical');
+  const line = r => r.file + ': ' + (r.note || r.pixels + ' px' + (r.maxDelta ? ' (up to ' + r.maxDelta + ' levels, box ' + r.box.join(',') + ')' : ''));
+  check(name, changed || missing ? 'FAIL' : 'PASS', changed || missing ? changed + ' changed, ' + missing + ' new: ' + rows.slice(0, 6).map(line).join('; ') + (rows.length > 6 ? '; ... (summary.md lists all)' : '') : 'all screenshots identical');
   return rows;
 }
 
@@ -544,7 +575,8 @@ async function main() {
   versionCheck();
   const server = await startServer();
   let browser;
-  try { browser = await PW.chromium.launch(); } catch (e) { server.stop(); throw e; } // else the local server keeps the run alive
+  try { browser = await PW.chromium.launch({ args: CHROMIUM_ARGS }); } catch (e) { server.stop(); throw e; } // else the local server keeps the run alive
+  R.render = { browser: 'chromium ' + browser.version(), args: CHROMIUM_ARGS };
   try {
     const data = scenario(null);
     const state = await signIn(browser, server.base, data);
@@ -608,13 +640,17 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, totals: T, checks: R.checks, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, checks: R.checks, compare: R.compare, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',
     '| Status | Check | Detail |', '| --- | --- | --- |', ...R.checks.map(c => '| ' + c.status + ' | ' + c.name + ' | ' + String(c.detail).replace(/\|/g, '/').slice(0, 300) + ' |'), '',
     '## Per view', '', '| View | Overflow | App text cut | Spilling | Names cut | English left | axe serious |', '| --- | --- | --- | --- | --- | --- | --- |',
     ...caps.map(c => '| ' + c.name + ' | ' + (c.overflowX > 1 ? '+' + c.overflowX + 'px' : '') + ' | ' + (c.truncated || []).length + ' | ' + (c.spilling || []).length + ' | ' + (c.userTruncated || []).length + ' | ' + (c.english || []).length + ' | ' + (c.axe ? c.axe.reduce((m, v) => m + v.nodes, 0) : '') + ' |')];
+  if (R.compare && R.compare.rows.length) md.push('', '## Pixel diff (' + R.compare.mode + ') against ' + R.compare.folder, '', 'Masks: ' + path.join(A.out, 'diff'), '',
+    '| Screenshot | Changed pixels | Largest change (levels) | Box x0,y0,x1,y1 |', '| --- | --- | --- | --- |',
+    ...R.compare.rows.map(r => '| ' + r.file + ' | ' + (r.note || r.pixels) + ' | ' + (r.maxDelta || '') + ' | ' + (r.box ? r.box.join(',') : '') + ' |'));
+  md.push('', 'Rendered with ' + (R.render.browser || '?') + ' ' + (R.render.args || []).join(' ') + '.');
   writeFileSync(path.join(A.out, 'summary.md'), md.join('\n') + '\n');
   const fails = R.checks.filter(c => c.status === 'FAIL').length, reviews = R.checks.filter(c => c.status === 'REVIEW').length;
   console.log('\n' + (fails ? 'FAIL' : 'PASS') + ': ' + R.checks.filter(c => c.status === 'PASS').length + ' passed, ' + fails + ' failed, ' + reviews + ' to review. Report: ' + path.join(A.out, 'summary.md'));
