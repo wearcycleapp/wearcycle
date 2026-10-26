@@ -66,6 +66,7 @@ const SB_HOST = SB_URL ? new URL(SB_URL).host : 'invalid.supabase.co';
 const DEVICES = [
   { id: 'phone-360', width: 360, height: 800, dpr: 3, touch: true },
   { id: 'phone-390', width: 390, height: 844, dpr: 3, touch: true },
+  { id: 'phone-land', width: 844, height: 390, dpr: 3, touch: true }, // the 390x844 phone turned sideways (Phase 7)
   { id: 'ipad-820', width: 820, height: 1180, dpr: 2, touch: true },
   { id: 'ipad-1180', width: 1180, height: 820, dpr: 2, touch: true },
   { id: 'win-1366', width: 1366, height: 768, dpr: 1, touch: false },
