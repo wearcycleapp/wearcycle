@@ -8,7 +8,7 @@
   --bg:#f6f4f1; --surface:#fbfaf8; --raised:#ffffff; --ink:#1b2433; --muted:#5b6270; --line:#e2ded8;
   --accent:#1b2433; --accent-ink:#ffffff; --accent-soft:#e7e9ee; --coral:#ff7a59; --coral-ink:#1b2433;
   --good:#2b7a4c; --good-soft:#dcefe3; --warn:#8e6010; --warn-soft:#f5e8cc; --bad:#b4233c; --bad-soft:#f7dde1;
-  --board:#ece8e2; --shadow:0 1px 2px rgba(27,36,51,.08),0 4px 14px rgba(27,36,51,.06);
+  --board:#ece8e2; --shadow:0 1px 2px rgba(27,36,51,.08),0 4px 14px rgba(27,36,51,.06); --shadow-float:0 6px 20px rgba(27,36,51,.25);
   --canvas-1:#f7f4ef; --canvas-2:#ebe4d9; --board-mid:#efe9e0; --board-edge:#e7dfd3; /* garment canvas and outfit board backdrop */
   --f-display:"Big Shoulders Display","Arial Narrow",Impact,sans-serif;
   --f-body:"Figtree",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -18,18 +18,18 @@
   --bg:#12161e; --surface:#1a202b; --raised:#212836; --ink:#eceef2; --muted:#9aa2b0; --line:#2e3646;
   --accent:#f1f2f5; --accent-ink:#1b2433; --accent-soft:#2a3242; --coral:#ff8a6b; --coral-ink:#1b2433;
   --good:#6cc38e; --good-soft:#1b3225; --warn:#e2b45c; --warn-soft:#382d17; --bad:#f2668b; --bad-soft:#3d1f29;
-  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-float:0 2px 8px rgba(0,0,0,.5); color-scheme:dark;
   --canvas-1:#f7f4ef; --canvas-2:#ebe4d9; --board-mid:#efe9e0; --board-edge:#e7dfd3;}}
 :root[data-theme="dark"]{
   --bg:#12161e; --surface:#1a202b; --raised:#212836; --ink:#eceef2; --muted:#9aa2b0; --line:#2e3646;
   --accent:#f1f2f5; --accent-ink:#1b2433; --accent-soft:#2a3242; --coral:#ff8a6b; --coral-ink:#1b2433;
   --good:#6cc38e; --good-soft:#1b3225; --warn:#e2b45c; --warn-soft:#382d17; --bad:#f2668b; --bad-soft:#3d1f29;
-  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); color-scheme:dark;
+  --board:#1c2230; --shadow:0 1px 2px rgba(0,0,0,.4); --shadow-float:0 2px 8px rgba(0,0,0,.5); color-scheme:dark;
   --canvas-1:#f7f4ef; --canvas-2:#ebe4d9; --board-mid:#efe9e0; --board-edge:#e7dfd3;}
 
 /* ===== 2. Base: elements, focus, headings, text helpers, utilities ===== */
 *{box-sizing:border-box}
-:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{height:100%}
 body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-tap-highlight-color:transparent}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -91,39 +91,82 @@ h3{font-size:15px;font-weight:700;margin:0}
 .pwtog:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
 @media (hover:hover) and (pointer:fine){.pwtog:hover{text-decoration:underline}}
 
-/* ===== 6. App shell and navigation: page column, header, tab bar (a rail from 960px), Add clothes button ===== */
+/* ===== 6. App shell and navigation (Phase 7) =====
+   One condition decides the shell, as it decides direction A or B (docs/design/SCREENS.md, Chosen direction):
+   - Bar: below 700px wide or below 600px tall (phones, also turned sideways; short windows): a bottom tab bar and
+     Settings in the header. Turned sideways (landscape, under 600px tall) the bar is lower, icon beside label.
+   - Rail: at least 700px wide and 600px tall (iPad, Windows): a 96px left rail with Settings at its bottom.
+   - Wide rail: also at least 1280px wide: a 208px rail, labels beside icons; the header (logo, wordmark, status)
+     sits at its top.
+   The header scrolls with the page. Safe areas: :root pads top and bottom, body pads left and right, and every
+   fixed layer adds the insets on its own edges. */
+body{padding-inline:env(safe-area-inset-left,0px) env(safe-area-inset-right,0px)}
+html{scroll-padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))} /* a focused control scrolls above the bar (WCAG 2.4.11) */
 .app{max-width:760px;margin:0 auto;padding-inline:16px;padding-block:0 150px}
 section.tab{padding-top:16px;display:flex;flex-direction:column;gap:16px}
-header.top{position:relative;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;padding-block:12px 10px;border-bottom:1px solid var(--line)}
-header.top .iconbtn{margin-left:auto}
+header.top{position:relative;z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;min-height:59px;padding-block:8px 6px;border-bottom:1px solid var(--line)} /* 59px with or without the Settings button */
+header.top .iconbtn{margin-left:auto;width:44px;height:44px}
+header.top .holibadge{left:22px;top:34px} /* bottom-right of the 36px logo */
 .brandrow{display:flex;align-items:center;gap:10px}
 .logo{width:36px;height:36px;flex:none;display:block}
 .brand{font-family:var(--f-display);font-weight:800;font-size:26px;letter-spacing:.02em;text-transform:uppercase;line-height:1}
 .brand small{display:block;white-space:nowrap;font-family:var(--f-mono);font-size:10px;font-weight:500;letter-spacing:.12em;color:var(--muted);margin-top:3px}
 @media (max-width:460px){.brand small{font-size:9px;letter-spacing:.05em}.brand{font-size:24px}}
-.status{margin-left:auto;font-family:var(--f-mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.status{margin-left:auto;font-family:var(--f-mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:4px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
 .status.ok{color:var(--good);border-color:currentColor}
 .status.warn{color:var(--warn);border-color:currentColor}
 .status.hidden{display:none}
-nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--raised);border-top:1px solid var(--line);padding:6px 8px calc(6px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--raised);border-top:1px solid var(--line);padding:6px max(8px,env(safe-area-inset-right,0px)) calc(6px + env(safe-area-inset-bottom,0px)) max(8px,env(safe-area-inset-left,0px));display:flex;justify-content:center}
 nav.tabs .inner{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;width:100%;max-width:520px}
-nav.tabs button{border:0;background:transparent;padding:6px 4px;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11.5px;font-weight:600;color:var(--muted);position:relative}
-nav.tabs button svg{width:22px;height:22px}
-nav.tabs button[aria-current="page"]{color:var(--accent);background:var(--accent-soft)}
+nav.tabs button{border:0;background:transparent;padding:6px 4px;border-radius:8px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;font-weight:600;color:var(--muted);position:relative;touch-action:manipulation;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+nav.tabs button svg{width:22px;height:22px;flex:none}
+nav.tabs button:active{background:var(--accent-soft)}
+nav.tabs button[aria-current="page"]{color:var(--accent);background:var(--accent-soft);font-weight:700}
 nav.tabs button[aria-current="page"] svg{color:var(--coral)}
-nav.tabs .badge{position:absolute;top:2px;right:calc(50% - 22px);min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--bad);color:#fff;font-size:10px;font-family:var(--f-mono);display:grid;place-items:center}
-.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;border:0;background:var(--coral);color:var(--coral-ink);border-radius:28px;height:52px;padding:0 20px 0 16px;display:flex;align-items:center;gap:8px;font-weight:700;box-shadow:0 6px 20px rgba(20,30,60,.25)}
+nav.tabs .badge{position:absolute;top:1px;right:calc(50% - 25px);min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--bad);color:var(--accent-ink);font-size:12px;font-weight:600;font-family:var(--f-mono);line-height:1;display:grid;place-items:center} /* text 6.47:1 light, 5.23:1 dark */
+#railSettings{display:none}
+.fab{position:fixed;right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:6;border:0;background:var(--coral);color:var(--coral-ink);border-radius:28px;height:52px;padding:0 20px 0 16px;display:flex;align-items:center;gap:8px;font-weight:700;box-shadow:var(--shadow-float);touch-action:manipulation;-webkit-user-select:none;user-select:none}
 .fab svg{width:20px;height:20px}
 body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
-@media (min-width:960px){
-  body{padding-left:96px}
-  .app{max-width:1180px;padding-inline:24px}
-  nav.tabs{top:0;bottom:0;right:auto;width:96px;flex-direction:column;justify-content:flex-start;align-items:stretch;border-top:0;border-right:1px solid var(--line);padding:84px 8px 16px}
+@media (hover:hover) and (pointer:fine){
+  nav.tabs button:not([aria-current="page"]):hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
+  header.top .iconbtn:hover{border-color:var(--ink)}
+  .fab:hover{background:color-mix(in srgb,var(--coral) 88%,var(--ink))}
+}
+/* Bar turned sideways: lower, icon beside label (as Android and iOS do in landscape) */
+@media (orientation:landscape) and (max-height:599.98px){
+  html{scroll-padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  nav.tabs{padding-block:4px calc(4px + env(safe-area-inset-bottom,0px))}
+  nav.tabs button{flex-direction:row;justify-content:center;gap:8px;min-height:44px;padding:0 10px}
+  nav.tabs .badge{position:static}
+  .fab{bottom:calc(64px + env(safe-area-inset-bottom,0px))}
+  body.hasjob .fab{bottom:calc(120px + env(safe-area-inset-bottom,0px))}
+}
+/* Rail */
+@media (min-width:700px) and (min-height:600px){
+  body{padding-left:calc(96px + env(safe-area-inset-left,0px))}
+  html{scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))} /* above the Add clothes button */
+  header.top #rulesBtn{display:none}
+  nav.tabs{top:0;right:auto;width:calc(96px + env(safe-area-inset-left,0px));flex-direction:column;justify-content:flex-start;align-items:stretch;border-top:0;border-right:1px solid var(--line);padding:84px 8px calc(16px + env(safe-area-inset-bottom,0px)) calc(8px + env(safe-area-inset-left,0px));overflow-y:auto}
   nav.tabs .inner{grid-template-columns:1fr;grid-auto-rows:min-content;gap:6px;max-width:none}
-  nav.tabs button{padding:10px 4px;font-size:12px}
+  nav.tabs button{padding:10px 4px}
   nav.tabs button svg{width:24px;height:24px}
-  .fab{bottom:24px;right:24px}
-  body.hasjob .fab{bottom:84px}
+  nav.tabs #railSettings{display:flex;margin-top:auto}
+  .fab{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px))}
+  body.hasjob .fab{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+}
+@media (min-width:960px){.app{max-width:1180px;padding-inline:24px}}
+/* Wide rail: the header becomes the top of the rail */
+@media (min-width:1280px) and (min-height:600px){
+  body{padding-left:calc(208px + env(safe-area-inset-left,0px))}
+  header.top{position:fixed;top:env(safe-area-inset-top,0px);left:env(safe-area-inset-left,0px);width:208px;min-height:0;z-index:7;background:none;border-bottom:0;flex-wrap:wrap;row-gap:8px;padding:16px 16px 0 24px}
+  header.top .holibadge{left:46px;top:38px}
+  header.top .status{margin-left:0} /* its own line under the logo; the longest status (fr Synchronisation, 137px) fits the 168px */
+  nav.tabs{width:calc(208px + env(safe-area-inset-left,0px));padding:96px 12px calc(16px + env(safe-area-inset-bottom,0px)) calc(12px + env(safe-area-inset-left,0px))}
+  nav.tabs .inner{gap:4px}
+  nav.tabs button{flex-direction:row;justify-content:flex-start;gap:12px;min-height:48px;padding:0 12px;font-size:14px}
+  nav.tabs .badge{position:static;margin-left:auto}
+  section.tab{padding-top:24px}
 }
 
 /* ===== 7. Toasts ===== */
@@ -134,16 +177,17 @@ body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 .toast .toastx{flex:none;width:44px;height:44px;margin:-10px -4px -10px 0;border:0;background:none;color:inherit;display:grid;place-items:center;padding:0}
 .toast .toastx svg{width:18px;height:18px}
 body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
-@media (min-width:960px){.toast{bottom:24px}}
+@media (min-width:700px) and (min-height:600px){.toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}}
 
 /* ===== 8. Job bar (background photo jobs) ===== */
-.jobbar{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow);font-size:13px;max-width:560px;margin:0 auto}
+.jobbar{position:fixed;left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow);font-size:13px;max-width:560px;margin:0 auto}
 .jobbar .jt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .jobbar .jp{width:64px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
 .jobbar .jp i{display:block;height:100%;background:var(--coral);border-radius:3px}
 .jobbar .spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--coral);flex:none}
 @media (prefers-reduced-motion:no-preference){.jobbar .spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}}
-@media (min-width:960px){.jobbar{left:112px;right:24px;bottom:16px}}
+@media (min-width:700px) and (min-height:600px){.jobbar{left:calc(112px + env(safe-area-inset-left,0px));right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
+@media (min-width:1280px) and (min-height:600px){.jobbar{left:calc(224px + env(safe-area-inset-left,0px))}}
 
 /* ===== Screens (original order) ===== */
 
@@ -271,7 +315,7 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 
 /* sign-in logo and version line */
 .gate .logo{width:52px;height:52px}
-.version{margin:28px 0 0;text-align:center;font-family:var(--f-mono);font-size:11px;letter-spacing:.08em;color:var(--muted)}
+.version{margin:28px 0 0;text-align:center;font-size:12px;color:var(--muted)}
 
 /* v1.4 usability */
 #occChips{flex-wrap:wrap}
@@ -587,7 +631,7 @@ a.lirow{text-decoration:none;color:inherit}
 .editbar span{flex:1;min-width:140px}
 .editbar .btn svg{width:16px;height:16px;margin-right:6px}
 /* v1.24 piece preview */
-.piecebig{position:relative;width:100%;aspect-ratio:1/1;max-height:56vh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
+.piecebig{position:relative;width:100%;aspect-ratio:1/1;max-height:56vh;max-height:56svh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
 .ppager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-4px 0 0}
 .ppager .ppg{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--raised);color:var(--ink);display:grid;place-items:center;flex:none;padding:0}
 .ppager .ppg svg{width:22px;height:22px}
@@ -720,7 +764,7 @@ button.worn-ok.linkish{background:none;border:0;font:inherit;cursor:pointer;padd
   #fits>*{grid-column:2;min-width:0}
   #fits>.fit.hero{grid-column:1;grid-row:1 / span 40;position:sticky;top:12px}
   #fits>.empty{grid-column:1 / -1}
-  .fit.hero .flatlay{aspect-ratio:auto;height:clamp(300px,calc(100vh - 400px),600px)}
+  .fit.hero .flatlay{aspect-ratio:auto;height:clamp(300px,calc(100vh - 400px),600px);height:clamp(300px,calc(100dvh - 400px),600px)}
   #fits .altrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;margin:0;padding:0}
   #fits .altrow .alt2{flex:none}
   #careBody>div,#shopBody>div{display:block!important;columns:2 360px;column-gap:16px}
@@ -729,8 +773,13 @@ button.worn-ok.linkish{background:none;border:0;font:inherit;cursor:pointer;padd
 }
 /* phones and small tablets turned sideways: keep the outfit board inside the screen */
 @media (orientation:landscape) and (max-height:600px) and (max-width:959px){
-  .fit.hero .flatlay{aspect-ratio:auto;height:calc(100vh - 150px);min-height:240px}
-  .flatlay{max-height:calc(100vh - 150px)}
+  .fit.hero .flatlay{aspect-ratio:auto;height:calc(100vh - 150px);height:calc(100svh - 150px);min-height:240px}
+  .flatlay{max-height:calc(100vh - 150px);max-height:calc(100svh - 150px)}
 }
 .viewer .vnote{margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:#c9ccd3}
 
+/* ===== Mouse (Phase 7): a mouse cannot swipe and these rows hide their scrollbar, so they wrap instead, at every
+   width. Touch (phones, iPad) keeps the sideways swipe. Screen phases may replace a row with tabs or arrows. ===== */
+@media (hover:hover) and (pointer:fine){
+  .chips,#occChips.scrollrow,#styleChips.scrollrow{flex-wrap:wrap;overflow-x:visible}
+}

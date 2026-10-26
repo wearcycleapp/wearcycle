@@ -20,7 +20,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 Owner's choice, 2026-10-25 (Phase 6): **direction A, "Kit", on phones and direction B, "Lookbook", from 700px** (iPad and Windows). Mockups: docs/design/direction/ (a.html and b.html; index.html compares the three directions). B applies only when the viewport is at least 700px wide and at least 600px tall, `@media (min-width:700px) and (min-height:600px)`; otherwise A (owner, 2026-10-25). Phones get A in portrait and in landscape; the iPad and Windows get B whenever their viewport meets both minimums; a browser window under 600px tall gets A at any width. Where an older rule in the screen sections said otherwise (occasion tabs and a lookbook on phones, v1.41's hero-left layout on wide screens), this choice replaces it, and those sections are updated below.
 
-Both keep the brand and the decided rules: ink, the cream garment canvas and the condensed display type; coral only where DESIGN.md puts it (Wear this, the #1 rank, the active tab icon, the active pager dot, progress); selected states in ink (a fill or a 2px underline) with aria-pressed; flat containers. The shell (tab bar, rail) stays as today until Phase 7.
+Both keep the brand and the decided rules: ink, the cream garment canvas and the condensed display type; coral only where DESIGN.md puts it (Wear this, the #1 rank, the active tab icon, the active pager dot, progress); selected states in ink (a fill or a 2px underline) with aria-pressed; flat containers. The shell follows the same condition since Phase 7: the bottom bar with A, the rail with B (Navigation shell below).
 
 | | A: below 700px wide or below 600px tall (phones) | B: at least 700px wide and 600px tall |
 | --- | --- | --- |
@@ -36,7 +36,7 @@ Both keep the brand and the decided rules: ink, the cream garment canvas and the
 Measured on the mockups in Chromium (2026-10-25): "Wear this" shows without scrolling at 360x800, 390x844 and 412x915 (A), and at 744x1133, 820x1180, 1024x1366, 1133x744, 1180x820, 1366x1024, 1366x768, 1536x864 and 1920x1080 (B). That needed one change to B as first shown: the side-by-side spread starts at 1100px instead of 1200px, because at 1200px the page-turn layout put "Wear this" 258px and 209px below the visible area on iPad landscape (1133x744 and 1180x820). b.html is updated.
 
 Open points decided by the owner, 2026-10-25:
-- Height. B applies only when the viewport is at least 700px wide and at least 600px tall; otherwise A. Phones in landscape (844x390, 915x412) get A, which at 844x390 showed "Wear this" at 197 to 245px on the mockups; B there ended it at 850px (the installed app allows any orientation, manifest.webmanifest "orientation": "any"). The navigation shell uses the same condition where it makes sense; the Phase 7 proposal says where it does not, and why.
+- Height. B applies only when the viewport is at least 700px wide and at least 600px tall; otherwise A. Phones in landscape (844x390, 915x412) get A, which at 844x390 showed "Wear this" at 197 to 245px on the mockups; B there ended it at 850px (the installed app allows any orientation, manifest.webmanifest "orientation": "any"). The navigation shell uses the same condition since Phase 7; the exceptions and why are under Navigation shell.
 - Closet tiles keep the wear count at every width (Closet rule below). B's mockup tile showed the condition only; the B tile adds the count.
 - Closet flags show the same short words at every width, no icons, so no flag has to be learned.
 - Windows: "Wear this" shows without scrolling in a 1366x630 viewport (a 1366x768 screen minus browser bars and taskbar). On the B mockup at 1366x768 it ended at 713px, so B's board is sized by viewport height where needed. Measured in Phase 8 (Outfits).
@@ -47,13 +47,32 @@ To settle in each screen's proposal (workflow step 2):
 
 ## Navigation shell (Phase 7)
 
-Rules: DESIGN.md Layout and the plan's Phase 7 (700 to 959px, Settings at the bottom of the rail from 960px, a wider labelled rail from 1280px, hover only with a mouse, mouse-reachable rows, keyboard order, dvh with a vh fallback).
+Rules: DESIGN.md Layout and the plan's Phase 7. Built in Phase 7 (v1.52.0); proposal approved by the owner on 2026-10-25 with the four recommended options (landscape bar, header scrolls, hover on the shell only, rows wrap with a mouse at every width).
 
-### Known issues to fix in this phase
-- The header lost `position:sticky` in v1.38: the holiday-badge rule `header.top{position:relative}` overrode it (Phase 5 merged both into one rule, styles.css:97, so today it reads `position:relative`). Decide whether the header sticks again.
-- With `position:relative`, `top:env(safe-area-inset-top,0px)` moves the header down by the inset, on top of `:root`'s `padding-top` with the same inset (index.html sets `viewport-fit=cover`), so in the installed app on a phone with a notch the header may sit one inset lower than intended. Not verified on a device.
-- Overridden declarations (2): `.version` font-family and letter-spacing (styles.css:274), always replaced by the `!important` typography rule (styles.css:489).
-- Dark mode: the Care tab's count badge (`nav.tabs .badge`, styles.css:114) is white on `--bad` #f2668b, 2.98:1, below 4.5:1 for text (light: white on #b4233c, 6.47:1; ink on #f2668b would be 5.23:1). Found on the Phase 6 mockups, which use today's shell; tools/check.mjs takes detector snapshots in light at 390px only (tools/check.mjs:592), so its reports did not show it.
+The shell follows the direction condition (Chosen direction), so a screen never mixes B with the phone bar:
+
+| Viewport | Shell |
+| --- | --- |
+| Below 700px wide or below 600px tall | Bottom bar (Outfits, Closet, Care, Shop); Settings in the header, a 44px button; Add clothes above the bar (Closet only) |
+| Landscape and below 600px tall (phones turned sideways, short windows) | The same bar, lower: icon beside label, 53px plus the bottom inset (was 66px) |
+| At least 700px wide and 600px tall | 96px left rail, icons over labels, Settings at its bottom; the header (logo, wordmark, status) stays at the top of the page |
+| Also at least 1280px wide | 208px rail; the header (logo, wordmark, status) sits at the top of the rail and leaves the page; labels beside icons; the Care count at the end of its row; Settings at the bottom |
+
+- Why phones turned sideways keep a bar: the owner's condition gives them direction A, and both platforms do the same (Android shows a navigation bar when the window's width or height is compact, and compact height, under 480dp, covers 99.78% of phones in landscape: developer.android.com, adaptive navigation and window size classes; Apple's tab bar shows icon and title side by side in landscape: HIG, Tab bars).
+- Where the condition does not apply: the wide rail also needs 1280px; sheets keep centring from 700px wide (Phase 12); the screen rules that switch at 960px (Outfits beside its options, Care and Shop in two columns, larger Closet tiles) stay on width until their phases move them to the B condition.
+- Header: scrolls with the page (not sticky, as since v1.38), 59px tall with or without the Settings button. The holiday badge is placed by CSS (`header.top .holibadge`) in every layout.
+- Current tab: Accent text at weight 700 on Accent-soft, coral icon, aria-current="page". The Care count is 12px Accent-ink on Bad (6.47:1 light, 5.23:1 dark).
+- Order in the page: header, navigation (tabs, then the rail's Settings), Add clothes, then the screen. A focused control scrolls above the bar or Add clothes (`scroll-padding-bottom`).
+- Mouse, only inside `(hover: hover) and (pointer: fine)`: tabs and Settings get an ink tint and ink label, the header's Settings border turns ink, Add clothes darkens; the occasion, style and category rows wrap at every width (touch keeps the sideways swipe). Hover on other buttons and chips comes with each screen's phase.
+- Safe areas: `:root` pads top and bottom, `body` pads left and right; the bar, rail, Add clothes, toasts and job bar add the insets on their own edges.
+- Viewport units: a vh line stays as the fallback, then dvh where the element follows the visible height (the sticky outfit board on wide screens) or svh where it must fit the first screen (the outfit board on phones turned sideways, the piece preview picture).
+
+### Known issues fixed in this phase (v1.52.0)
+- The header lost `position:sticky` in v1.38 (the holiday-badge rule `header.top{position:relative}` overrode it). Owner, 2026-10-25: it keeps scrolling with the page.
+- With `position:relative`, `top:env(safe-area-inset-top,0px)` moved the header down by the inset on top of `:root`'s padding with the same inset: with a 47px inset (Chromium's safe-area emulation) it was drawn at 94px and covered 29px of the day row. The offset is gone; the header now sits at 47px. Real inset values on devices are still to be seen on hardware.
+- Overridden declarations (2): `.version` font-family and letter-spacing, removed (the version line is 12px).
+- Dark mode: the Care count was white on #f2668b, 2.98:1; now Accent-ink (ink in dark), 5.23:1.
+- Also found and fixed: Add clothes' shadow, rgba(20,30,60,.25), was a faint blue halo on the dark page (9 of the 11 detector warnings, dark-glow); it is now the token `--shadow-float` (ink at 25% in light, black in dark).
 
 ## Outfits (EDITORIAL)
 

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.51.3';
+const APP_VERSION='1.52.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -712,7 +712,7 @@ function applyHolidayLook(){
   let badge=top.querySelector('.holibadge'); if(badge) badge.remove();
   let bar=document.getElementById('holiBar'); if(bar) bar.remove();
   if(!h) return;
-  const lg=top.querySelector('.logo'); lg.insertAdjacentHTML('afterend',`<span class="holibadge" aria-hidden="true" style="color:${h.accent};left:${lg.offsetLeft+lg.offsetWidth-14}px;top:${lg.offsetTop+lg.offsetHeight-14}px"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span>`);
+  const lg=top.querySelector('.logo'); lg.insertAdjacentHTML('afterend',`<span class="holibadge" aria-hidden="true" style="color:${h.accent}"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span>`);
   top.insertAdjacentHTML('afterend',`<div id="holiBar" class="holibar" style="--hb:${h.accent}"><span class="hbicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span><span class="hbtxt"><b>${h.inDays===0?h.hello:h.label}</b>${h.inDays===0?'':`<span>${whenLabel(h.inDays)}</span>`}</span><button class="btn sm" data-theme-go="${h.id}">Themed outfits</button></div>`);
 }
 function renderAll(){ applyHolidayLook(); renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.textContent='Wearcycle v'+APP_VERSION; }
@@ -1967,7 +1967,7 @@ document.addEventListener('click',async e=>{
   if(ds.stepOpt){ S.sel=(S.sel+(+ds.stepOpt)+S.fits.length)%S.fits.length; if(S.sel) guard(); renderOutfits(); return; }
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
-  if(t.id==='rulesBtn'){ openSettings(); return; }
+  if(t.id==='rulesBtn'||t.id==='railSettings'){ openSettings(); return; }
   switch(ds.act){
     case 'camBatch': { closeSheet(); if(S.busy) return; const shots=await openCamera('batch'); addPhotos(shots); return; }
     case 'bulk': { closeSheet(); if(S.busy) return; const files=await pickFiles(true); addPhotos(files); return; }

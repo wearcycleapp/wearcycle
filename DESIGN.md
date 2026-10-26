@@ -204,7 +204,7 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 - **Title** (800, 24px): sheet titles and the greeting. Rule: Heading 20 to 24px on phones, 22 to 26px on desktop.
 - **Body** (400, 15px, line-height 1.45): descriptions and details; 15 to 16px on desktop. Prose up to about 62ch (.lede).
 - **Label** (600, 13px): field labels, buttons (14px), chips (14px), garment names (14px).
-- **Small** (13 to 14px) and **Micro** (12px minimum). Today several labels are smaller than 12px: the header status (11px), tab labels (11.5px), condition tags (11.5px) and badges (10px). Rule: raise them to 12px when their screen phase rewrites them.
+- **Small** (13 to 14px) and **Micro** (12px minimum). Labels smaller than 12px are raised when their phase rewrites them: the header status, tab labels, the Care count and the version line are 12px since Phase 7; condition tags (11.5px) wait for Closet.
 
 ### Named Rules
 **The Right Face Rule.** Display type is for page titles, outfit and look numbers, large numbers (+N) and short editorial labels. Never for paragraphs, controls or user-typed garment names: those are Figtree, because names may be typed in any script.
@@ -215,26 +215,25 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 
 ## Layout
 
-A single column on phones with 16px gutters and a fixed bottom tab bar; from 960px a left rail and a wider workspace.
+A single column on phones with 16px gutters and a fixed bottom tab bar; from 700px wide and 600px tall a left rail (with Settings) and a wider workspace; from 1280px a wider labelled rail that carries the wordmark.
 
 - **Spacing:** 4px base: 4, 8, 12, 16, 24, 32, 48, 64, 96. Major sections 32 to 48px apart on phones, 48 to 80px on desktop. Today some gaps use 10px and 14px; screen phases move them onto the scale.
-- **Breakpoints (today, erratum 4):** max-width 380px and 460px (small phones), min-width 700px (sheets centre), min-width 960px (wide layout), and landscape with max-height 600px and max-width 959px (the outfit board stays inside the screen).
-- **Wide layout (v1.41, 960px and up):** the bottom bar becomes a 96px left rail; .app widens from 760px to 1180px; Outfits shows the hero outfit (sticky) beside its alternatives; Care and Shop flow in two columns; closet tiles grow from 150px to 180px minimum.
+- **Breakpoints (today, erratum 4, Phase 7):** max-width 380px and 460px (small phones); min-width 700px (sheets centre); the shell and direction B at min-width 700px and min-height 600px, and the wide rail at min-width 1280px and min-height 600px; landscape with max-height 599.98px (the lower bar); min-width 960px (the screens' wide rules until their phases) and landscape with max-height 600px and max-width 959px (the outfit board stays inside the screen).
+- **Wide layout (v1.41, 960px and up):** .app widens from 760px to 1180px; Outfits shows the hero outfit (sticky) beside its alternatives; Care and Shop flow in two columns; closet tiles grow from 150px to 180px minimum. Since Phase 7 the rail itself follows the shell condition (below).
 - **Review widths (not breakpoints):** 360 and 390 (Android), 820 and 1180 (iPad portrait and landscape), 1366 and 1920 (Windows).
 
-### Width bands (rule)
-- **Under 700px**, Android phones (about 360 to 412px): bottom tab bar (Outfits, Closet, Care, Shop); Settings from the header icon; Add clothes button above the bar; single column; sheets slide up.
-- **700 to 959px**, iPad portrait (744 to 834px) and phones turned sideways: bottom bar or rail is decided in Phase 7 with screenshots. No 760px column floating in empty space: grids gain columns; Outfits may show alternatives beside the outfit; sheets centre.
-- **960 to 1279px**, iPad landscape (1133 to 1210px), iPad 13-inch portrait (1024 to 1032px), small windows: 96px rail with icons and labels plus Settings at the bottom of the rail; content up to 1180px; outfit beside alternatives.
-- **1280px and up**, Windows browsers (1366, 1536, 1920px) and iPad Pro 13-inch landscape (1376px): a wider rail (about 200px) with the wordmark, labels and Settings; gallery and editorial screens up to about 1280px; sheets up to about 720px.
+### Width bands (rule; the shell as built in Phase 7, docs/design/SCREENS.md Navigation shell)
+- **Under 700px wide or under 600px tall**, Android phones (about 360 to 412px) in portrait and turned sideways, short windows: bottom tab bar (Outfits, Closet, Care, Shop); Settings from the header (44px button); Add clothes button above the bar; single column; sheets slide up (centred from 700px wide). Turned sideways (landscape, under 600px tall) the bar is lower, icon beside label.
+- **700 to 1279px wide and at least 600px tall**, iPad portrait (744 to 1032px) and landscape (1133 to 1210px), small windows: 96px rail with icons over labels and Settings at the bottom of the rail; the header stays at the top of the page; content up to 1180px from 960px. No 760px column floating in empty space: grids gain columns; Outfits may show alternatives beside the outfit (screen phases).
+- **1280px and up, at least 600px tall**, Windows browsers (1366, 1536, 1920px) and iPad Pro 13-inch landscape (1376px): a 208px rail with the logo, wordmark and status at its top (the header leaves the page), labels beside icons and Settings at the bottom; content 1180px today, gallery and editorial screens up to about 1280px when their phases decide; sheets up to about 720px.
 
-Active rail item: ink text, heavier weight, coral icon (as today). Tab names stay Outfits, Closet, Care, Shop (already translated). Device sizes come from the PhotoPrism device table (iPad) and StatCounter Canada, September 2026 (Windows).
+Active rail item: Accent text at weight 700 on Accent-soft, coral icon. Tab names stay Outfits, Closet, Care, Shop (already translated); the rail's Settings uses the existing "Settings" string. Device sizes come from the PhotoPrism device table (iPad) and StatCounter Canada, September 2026 (Windows).
 
 ### Input and browsers
-- Phones and the iPad are touch first; an iPad with a trackpad can hover. Windows is mouse and keyboard. styles.css has no :hover rules today; add them only inside @media (hover: hover) and (pointer: fine).
-- Horizontal rows (.chips, occasion and style rows) hide their scrollbars today (styles.css:66, 623). With a mouse, wrap them or add arrow buttons from 960px, so every option is reachable without Shift and the wheel.
-- Keyboard: logical Tab order, visible focus, Escape closes sheets.
-- iPad: every iPad browser in Canada uses WebKit. styles.css uses 100vh in 3 declarations (694, 703, 704) and no dvh: use dvh with a vh fallback. Install to the Home Screen: WebKit deletes a site's storage after 7 days of Safari use without a visit, and Home Screen apps keep their own count, which protects the offline copy and the cut-out model.
+- Phones and the iPad are touch first; an iPad with a trackpad can hover. Windows is mouse and keyboard. Every :hover rule sits inside @media (hover: hover) and (pointer: fine) (Phase 7: the shell controls; each screen phase adds its own).
+- Horizontal rows (.chips, occasion and style rows) hide their scrollbars. With a mouse they wrap at every width (Phase 7, owner 2026-10-25), so every option is reachable without Shift and the wheel; touch keeps the sideways swipe.
+- Keyboard: logical Tab order (header, navigation, Add clothes, then the screen), visible focus, focused controls scrolled clear of the bar (scroll-padding-bottom), Escape closes sheets.
+- iPad: every iPad browser in Canada uses WebKit. Viewport units (Phase 7): a vh line as the fallback, then dvh (the sticky outfit board on wide screens) or svh (the outfit board on phones turned sideways, the piece preview picture). -webkit-text-size-adjust: 100% stops iOS enlarging text in landscape. Install to the Home Screen: WebKit deletes a site's storage after 7 days of Safari use without a visit, and Home Screen apps keep their own count, which protects the offline copy and the cut-out model.
 - Windows uses Chromium, the same engine as Claude's container, so automated screenshots are close (fonts and scrollbars differ). The app does no user-agent sniffing.
 
 ## Elevation & Depth
@@ -245,7 +244,7 @@ Today the soft shadow also sits on outfit cards, closet cards, panels and stat t
 
 ### Shadow Vocabulary
 - **Soft** (`box-shadow: 0 1px 2px rgba(27,36,51,.08), 0 4px 14px rgba(27,36,51,.06)`; dark `0 1px 2px rgba(0,0,0,.4)`): the --shadow token; sheets and toasts.
-- **Floating action** (`box-shadow: 0 6px 20px rgba(20,30,60,.25)`): the Add clothes button.
+- **Floating action** (`--shadow-float`: `0 6px 20px rgba(27,36,51,.25)`; dark `0 2px 8px rgba(0,0,0,.5)`): the Add clothes button. Until Phase 7 it was rgba(20,30,60,.25) in both themes, a faint blue halo on the dark page (detector dark-glow).
 - **Garment** (`filter: drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))`): cut-outs on the cream canvas, so garments sit on the board rather than float.
 
 ### Named Rules
@@ -269,7 +268,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - **Primary:** Ink fill with white text (accent and accent-ink).
 - **Main action ("Wear this"):** Coral fill with Ink text, 48px tall, 700 weight, 15px. One per screen.
 - **Danger / Ghost / Small:** Bad text and border; transparent; 40px minimum height.
-- **Hover / Focus:** no hover rules today; add them only for mouse input. Focus is a 2px accent outline offset 2px (:focus-visible).
+- **Hover / Focus:** hover only for mouse input (the shell since Phase 7; buttons and chips with their screens). Focus is a 2px accent outline offset 2px (:focus-visible).
 
 ### Chips
 - **Style:** Surface background, 1px Line border, Muted text, 600 weight, 44px minimum height (40px for small chips).
@@ -301,8 +300,8 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - **Error:** Bad text at 13.5px below the field.
 
 ### Navigation
-- **Phone:** fixed bottom bar on Raised with a top border, four tabs, 22px icons over 11.5px labels; the active tab gets Accent text on Accent-soft and a coral icon (aria-current="page"); the Care tab carries a count badge.
-- **960px and up:** a 96px left rail with 24px icons; Settings is still a header icon today (Phase 7 proposes moving it to the bottom of the rail).
+- **Bar (under 700px wide or under 600px tall):** fixed bottom bar on Raised with a top border, four tabs, 22px icons over 12px labels (icon beside label in landscape); the active tab gets Accent text at weight 700 on Accent-soft and a coral icon (aria-current="page"); the Care tab carries a 12px count, Accent-ink on Bad. Settings is the header's 44px button.
+- **Rail (700px wide and 600px tall):** a 96px left rail with 24px icons and Settings at its bottom; from 1280px a 208px rail with the logo, wordmark and status at its top, labels beside icons and the Care count at the end of its row.
 
 ### Sheets, toasts and job bar
 - **Sheets:** one openSheet(html) for every sheet; slide up on phones, centre from 700px; Background fill; sticky action row; Escape closes.
