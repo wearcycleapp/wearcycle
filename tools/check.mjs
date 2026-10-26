@@ -335,9 +335,9 @@ const PICTURES = () => {
     out.shown++; if (k > 1.1) out.upscaled++; out.worst = Math.max(out.worst, Math.round(k * 10) / 10);
   }
   const b = document.querySelector('.fit.hero [data-wear]');
-  if (b) { const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const top = cy >= 0 && cy < innerHeight ? document.elementFromPoint(cx, cy) : null;
-    out.wear = { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, visible: r.top >= 0 && r.bottom <= innerHeight && !!top && b.contains(top) }; }
+  if (b) { const r = b.getBoundingClientRect(), cx = r.left + r.width / 2; // its top and bottom edges must both be uncovered
+    const on = y => { const e = y >= 0 && y < innerHeight ? document.elementFromPoint(cx, y) : null; return !!e && b.contains(e); };
+    out.wear = { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, visible: r.top >= 0 && r.bottom <= innerHeight && on(r.top + 2) && on(r.bottom - 2) }; }
   return out;
 };
 // Image bytes over the network: <img> requests and Supabase Storage downloads (photos, cut-outs). Thumbnails are data:
@@ -431,9 +431,9 @@ async function flows(browser, base, state, data) {
   { // Definition of done (UI_REVIEW.md): a gate like axe, compared with the baseline rather than failing the tooling.
     where = 'flows-wear-this';
     const r = await page.evaluate(() => { const b = document.querySelector('.fit.hero [data-wear]'); if (!b) return { missing: true };
-      const x = b.getBoundingClientRect(); const cx = x.left + x.width / 2, cy = x.top + x.height / 2;
-      const top = cy >= 0 && cy < innerHeight ? document.elementFromPoint(cx, cy) : null;
-      return { top: Math.round(x.top), bottom: Math.round(x.bottom), vh: innerHeight, onTop: !!top && b.contains(top) }; });
+      const x = b.getBoundingClientRect(), cx = x.left + x.width / 2; // top and bottom edges both uncovered (the bar sits over the page)
+      const on = y => { const e = y >= 0 && y < innerHeight ? document.elementFromPoint(cx, y) : null; return !!e && b.contains(e); };
+      return { top: Math.round(x.top), bottom: Math.round(x.bottom), vh: innerHeight, onTop: on(x.top + 2) && on(x.bottom - 2) }; });
     R.wearThis = { visible: !r.missing && r.bottom <= r.vh && r.top >= 0 && r.onTop,
       detail: r.missing ? 'no "Wear this" button on Outfits' : 'button at ' + r.top + '-' + r.bottom + 'px, viewport ' + r.vh + 'px' + (r.onTop ? '' : ', covered or off screen') };
   }
@@ -676,9 +676,8 @@ async function main() {
   if (!A.worstCase) {
     T.wearThisVisible = R.wearThis ? R.wearThis.visible : null;
     if (R.wearThis) {
-      const must = A.strict || (base && base.wearThisVisible === true);
-      check('"Wear this" visible at 390x844 without scrolling', R.wearThis.visible ? 'PASS' : must ? 'FAIL' : 'REVIEW',
-        R.wearThis.detail + (R.wearThis.visible || must ? '' : ' (not yet: Phase 8 target)'));
+      // Required since Phase 8 (v1.53.0): Outfits is built for it (docs/design/SCREENS.md, Outfits).
+      check('"Wear this" visible at 390x844 without scrolling', R.wearThis.visible ? 'PASS' : 'FAIL', R.wearThis.detail);
     }
     if (!A.noAxe) gate('axe-core: no serious or critical issues', G.axeSerious, base && base.axeSerious, true, gnote('axeSerious'));
     gate('No English left in French and Japanese', G.englishLeft, base && base.englishLeft, true, gnote('englishLeft'));
@@ -688,8 +687,8 @@ async function main() {
   if (R.wearSizes) {
     const req = R.wearSizes.filter(x => x.required), miss = req.filter(x => !x.visible), at = x => x.missing ? 'no button' : x.top + '-' + x.bottom + ' of ' + x.vh;
     T.wearThisSizes = req.length - miss.length + ' of ' + req.length;
-    check('"Wear this" visible without scrolling at the ' + req.length + ' sizes in SCREENS.md', miss.length ? 'REVIEW' : 'PASS',
-      T.wearThisSizes + (miss.length ? '; not at ' + miss.map(x => x.size + ' (' + at(x) + ')').join(', ') + ' (Phase 8 target)' : ''));
+    check('"Wear this" visible without scrolling at the ' + req.length + ' sizes in SCREENS.md', miss.length ? 'FAIL' : 'PASS',
+      T.wearThisSizes + (miss.length ? '; not at ' + miss.map(x => x.size + ' (' + at(x) + ')').join(', ') : ''));
     check('"Wear this" on phones turned sideways', 'INFO', R.wearSizes.filter(x => !x.required).map(x => x.size + ' ' + (x.visible ? 'visible (' + at(x) + ')' : at(x))).join('; '));
   }
   const first = caps.filter(c => c.theme === 'light' && c.lang === 'en');

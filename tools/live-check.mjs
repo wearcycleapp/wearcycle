@@ -178,9 +178,9 @@ const PICTURES = () => {
     out.shown++; if (k > 1.1) out.upscaled++; out.worst = Math.max(out.worst, Math.round(k * 10) / 10);
   }
   const b = document.querySelector('.fit.hero [data-wear]');
-  if (b) { const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-    const top = cy >= 0 && cy < innerHeight ? document.elementFromPoint(cx, cy) : null;
-    out.wear = { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, visible: r.top >= 0 && r.bottom <= innerHeight && !!top && b.contains(top) }; }
+  if (b) { const r = b.getBoundingClientRect(), cx = r.left + r.width / 2; // its top and bottom edges must both be uncovered
+    const on = y => { const e = y >= 0 && y < innerHeight ? document.elementFromPoint(cx, y) : null; return !!e && b.contains(e); };
+    out.wear = { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, visible: r.top >= 0 && r.bottom <= innerHeight && on(r.top + 2) && on(r.bottom - 2) }; }
   return out;
 };
 // Image bytes over the network: <img> requests and Supabase Storage downloads (photos, cut-outs); thumbnails are data:
