@@ -157,6 +157,8 @@ async function waitApp(page) {
 }
 const sheetOpen = page => page.evaluate(() => !!document.querySelector('#sheetRoot .sheet'));
 async function closeSheet(page) { if (!(await sheetOpen(page))) return; await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#sheetRoot').innerHTML, null, { timeout: 5000 }); }
+// Settings: the header button with the bottom bar, the rail's last button with the rail (Phase 7).
+const SETTINGS_BTN = '#rulesBtn:visible, #railSettings:visible';
 async function goTab(page, tab) { await closeSheet(page); await page.click('nav.tabs button[data-tab="' + tab + '"]'); await page.waitForSelector('#tab-' + tab + ':not([hidden])'); await settle(page); }
 async function openSheet(page, sel, label) { const el = await page.$(sel); if (!el) return label + ' (no control)'; await el.click(); await page.waitForSelector('#sheetRoot .sheet', { timeout: 8000 }); await closeSheet(page); return label; }
 const brokenImages = page => page.evaluate(() => { const imgs = [...document.images].filter(i => i.getClientRects().length && i.getAttribute('src'));
@@ -213,7 +215,7 @@ async function deviceChecks(browser, engine, dev, state) {
       const done = [];
       await goTab(page, 'outfits'); done.push(await openSheet(page, '.fit.hero [data-swap]', 'piece preview'));
       await goTab(page, 'closet'); done.push(await openSheet(page, '#closetGrid .card', 'item editor'));
-      done.push(await openSheet(page, '#rulesBtn', 'settings'));
+      done.push(await openSheet(page, SETTINGS_BTN, 'settings'));
       return done.join(', '); });
     await step(tag + 'no horizontal overflow', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { await goTab(page, t);
       const o = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth); if (o > 1) throw new Error(t + ' is ' + o + 'px too wide'); } return 'four tabs'; });

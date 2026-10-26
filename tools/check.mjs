@@ -229,6 +229,8 @@ async function waitApp(page) {
 }
 const sheetOpen = page => page.evaluate(() => !!document.querySelector('#sheetRoot .sheet'));
 async function closeSheet(page) { if (!(await sheetOpen(page))) return; await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#sheetRoot').innerHTML, null, { timeout: 5000 }); }
+// Settings: the header button with the bottom bar, the rail's last button with the rail (Phase 7).
+const SETTINGS_BTN = '#rulesBtn:visible, #railSettings:visible';
 async function goTab(page, tab) { await closeSheet(page); await page.click('nav.tabs button[data-tab="' + tab + '"]'); await page.waitForSelector('#tab-' + tab + ':not([hidden])'); }
 async function openSheetBy(page, selector) { await page.click(selector); await page.waitForSelector('#sheetRoot .sheet', { timeout: 5000 }); }
 
@@ -323,7 +325,7 @@ async function openView(page, view) {
   if (['outfits', 'closet', 'care', 'shop'].includes(view)) { await goTab(page, view); return true; }
   if (view === 'preview') { await goTab(page, 'outfits'); const s = await page.$('.fit.hero [data-swap][data-slot="top"]') || await page.$('.fit.hero [data-swap]'); if (!s) return false; await s.click(); await page.waitForSelector('#sheetRoot .sheet'); return true; }
   if (view === 'editor') { await goTab(page, 'closet'); const c = await page.$('#closetGrid .card'); if (!c) return false; await c.click(); await page.waitForSelector('#sheetRoot .sheet'); return true; }
-  if (view === 'settings') { await goTab(page, 'outfits'); await openSheetBy(page, '#rulesBtn'); return true; }
+  if (view === 'settings') { await goTab(page, 'outfits'); await openSheetBy(page, SETTINGS_BTN); return true; }
   return false;
 }
 async function captureSet(browser, base, state, { dev, theme, lang, data, tag, snapshots, runAxe }) {
@@ -421,7 +423,7 @@ async function flows(browser, base, state, data) {
   });
   await step('Each sheet opens and closes', async () => {
     const SHEETS = [
-      ['Settings', null, '#rulesBtn'], ['Adjust', 'outfits', '.fit.hero [data-act="adjust"]'], ['Outfit diary', 'outfits', '[data-act="diary"]'],
+      ['Settings', null, SETTINGS_BTN], ['Adjust', 'outfits', '.fit.hero [data-act="adjust"]'], ['Outfit diary', 'outfits', '[data-act="diary"]'],
       ['Weather', 'outfits', '[data-wx="edit"]'], ['What I wore', 'outfits', '[data-act="logOther"]'], ['Piece preview', 'outfits', '.fit.hero [data-swap]'],
       ['Item editor', 'closet', '#closetGrid .card'], ['Closet stats', 'closet', '[data-act="stats"]'], ['Add clothes', 'closet', '#addBtn'],
       ['Your style', 'settings', '[data-act="styles"]'], ['How Wearcycle decides', 'settings', '[data-act="help"]'], ['Style palette', 'adjust', '[data-act="palettes"]'],
@@ -430,20 +432,20 @@ async function flows(browser, base, state, data) {
     for (const [label, where_, sel] of SHEETS) {
       where = 'flows-sheet-' + label;
       await closeSheet(page);
-      if (where_ === 'settings') await openSheetBy(page, '#rulesBtn');
+      if (where_ === 'settings') await openSheetBy(page, SETTINGS_BTN);
       else if (where_ === 'adjust') { await goTab(page, 'outfits'); await openSheetBy(page, '.fit.hero [data-act="adjust"]'); }
       else if (where_) await goTab(page, where_);
       const el = await page.$(sel); assert(el, label + ': control ' + sel + ' not found');
       await el.click(); await page.waitForSelector('#sheetRoot .sheet', { timeout: 5000 });
       await closeSheet(page); done.push(label);
     }
-    await openSheetBy(page, '#rulesBtn');
+    await openSheetBy(page, SETTINGS_BTN);
     const x = await page.$('#sheetRoot [data-close]'); assert(x, 'Settings has no close button');
     await x.click(); await page.waitForFunction(() => !document.querySelector('#sheetRoot').innerHTML);
     return done.length + ' sheets (Escape), plus the close button';
   });
   await step('Theme switches (Settings, Appearance)', async () => {
-    where = 'flows-theme'; await closeSheet(page); await openSheetBy(page, '#rulesBtn');
+    where = 'flows-theme'; await closeSheet(page); await openSheetBy(page, SETTINGS_BTN);
     const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
     await page.click('[data-theme-set="dark"]'); await page.waitForTimeout(50);
     const dark = await bg(); assert(dark === 'rgb(18, 22, 30)', 'dark background is ' + dark);
@@ -452,11 +454,11 @@ async function flows(browser, base, state, data) {
     await closeSheet(page); return 'dark ' + dark + ', light ' + light;
   });
   await step('Language switches (Settings, Language)', async () => {
-    where = 'flows-language'; await closeSheet(page); await openSheetBy(page, '#rulesBtn');
+    where = 'flows-language'; await closeSheet(page); await openSheetBy(page, SETTINGS_BTN);
     await Promise.all([page.waitForEvent('load'), page.selectOption('#langSel', 'fr')]); await waitApp(page);
     const fr = await page.evaluate(() => ({ lang: document.documentElement.lang, tab: document.querySelector('nav.tabs button[data-tab="outfits"]').textContent.trim() }));
     assert(fr.lang === 'fr' && fr.tab !== 'Outfits', 'French not applied (' + JSON.stringify(fr) + ')');
-    await openSheetBy(page, '#rulesBtn');
+    await openSheetBy(page, SETTINGS_BTN);
     await Promise.all([page.waitForEvent('load'), page.selectOption('#langSel', 'en')]); await waitApp(page);
     const en = await page.evaluate(() => document.querySelector('nav.tabs button[data-tab="outfits"]').textContent.trim());
     assert(en === 'Outfits', 'English not restored (' + en + ')');
@@ -549,8 +551,8 @@ async function compareTo(folder) {
 }
 
 /* ---------- quality gates ---------- */
-function totals() {
-  const caps = R.captures.filter(c => !c.na && !c.error);
+function totals(keep = () => true) {
+  const caps = R.captures.filter(c => !c.na && !c.error && keep(c));
   return {
     axeSerious: caps.reduce((n, c) => n + (c.axe || []).reduce((m, v) => m + v.nodes, 0), 0),
     englishLeft: caps.reduce((n, c) => n + (c.english || []).length, 0),
@@ -558,8 +560,8 @@ function totals() {
     userNamesCut: caps.reduce((n, c) => n + (c.userTruncated || []).length, 0),
   };
 }
-function gate(name, value, baseValue, strictZero) {
-  if (baseValue != null) return check(name, value <= baseValue ? 'PASS' : 'FAIL', value + ' (baseline ' + baseValue + ')');
+function gate(name, value, baseValue, strictZero, note) {
+  if (baseValue != null) return check(name, value <= baseValue ? 'PASS' : 'FAIL', value + ' (baseline ' + baseValue + ')' + (note || ''));
   if (strictZero && A.strict) return check(name, value === 0 ? 'PASS' : 'FAIL', String(value));
   check(name, value === 0 ? 'PASS' : 'REVIEW', value + (value ? ' (no baseline yet: recorded for Phase 4)' : ''));
 }
@@ -613,8 +615,14 @@ async function main() {
   check('No horizontal overflow', wide.length ? 'FAIL' : 'PASS', wide.length ? wide.map(c => c.name + ' +' + c.overflowX + 'px ' + c.wide.slice(0, 2).join(' ')).slice(0, 5).join('; ') : 'all views');
   check('No console errors', R.console.length ? 'FAIL' : 'PASS', R.console.length ? R.console.slice(0, 4).map(c => c.where + ': ' + c.text).join(' | ') : '');
   check('Network stays local (Supabase, Open-Meteo stubbed)', R.unexpectedHosts.size ? 'FAIL' : 'PASS', R.unexpectedHosts.size ? 'blocked: ' + [...R.unexpectedHosts].join(', ') : R.writes.length + ' writes and ' + R.functions.length + ' function calls answered locally');
-  let base = null; if (A.baseline) base = JSON.parse(readFileSync(path.resolve(A.baseline), 'utf8')).totals || null;
+  let base = null, baseDevices = null;
+  if (A.baseline) { const bs = JSON.parse(readFileSync(path.resolve(A.baseline), 'utf8')); base = bs.totals || null; baseDevices = new Set((bs.captures || []).map(c => c.device)); }
   const T = totals();
+  // Gate against the baseline only on the devices it has: a device added later (phone-land, Phase 7) has nothing to
+  // compare with. The summary keeps the totals over every device.
+  const later = baseDevices ? [...new Set(R.captures.map(c => c.device))].filter(d => !baseDevices.has(d)) : [];
+  const G = later.length ? totals(c => baseDevices.has(c.device)) : T;
+  const gnote = k => later.length ? '; ' + later.join(', ') + ' not in the baseline, all devices ' + T[k] : '';
   if (!A.worstCase) {
     T.wearThisVisible = R.wearThis ? R.wearThis.visible : null;
     if (R.wearThis) {
@@ -622,10 +630,10 @@ async function main() {
       check('"Wear this" visible at 390x844 without scrolling', R.wearThis.visible ? 'PASS' : must ? 'FAIL' : 'REVIEW',
         R.wearThis.detail + (R.wearThis.visible || must ? '' : ' (not yet: Phase 8 target)'));
     }
-    if (!A.noAxe) gate('axe-core: no serious or critical issues', T.axeSerious, base && base.axeSerious, true);
-    gate('No English left in French and Japanese', T.englishLeft, base && base.englishLeft, true);
+    if (!A.noAxe) gate('axe-core: no serious or critical issues', G.axeSerious, base && base.axeSerious, true, gnote('axeSerious'));
+    gate('No English left in French and Japanese', G.englishLeft, base && base.englishLeft, true, gnote('englishLeft'));
   }
-  gate('No app text cut off or spilling (all languages)', T.textOverflow, base && base.textOverflow, false);
+  gate('No app text cut off or spilling (all languages)', G.textOverflow, base && base.textOverflow, false, gnote('textOverflow'));
   check('Piece names cut with an ellipsis', 'INFO', T.userNamesCut + ' (user-typed names may be truncated; listed per view in summary.json)');
   let det = null;
   if (!A.noDetector && !A.worstCase) {
