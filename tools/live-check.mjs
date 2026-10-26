@@ -164,6 +164,36 @@ async function openSheet(page, sel, label) { const el = await page.$(sel); if (!
 const brokenImages = page => page.evaluate(() => { const imgs = [...document.images].filter(i => i.getClientRects().length && i.getAttribute('src'));
   return { shown: imgs.length, broken: imgs.filter(i => i.complete && !i.naturalWidth).length }; });
 
+// Pictures in the first screen of the open tab: how many are drawn larger than their file (one file pixel over more
+// than 1.1 device pixels looks soft), and where "Wear this" sits. Same measure as tools/check.mjs.
+const PICTURES = () => {
+  const dpr = devicePixelRatio, out = { shown: 0, upscaled: 0, worst: 0 };
+  for (const i of document.querySelectorAll('section.tab:not([hidden]) img')) {
+    const r = i.getBoundingClientRect(); if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight || !i.naturalWidth || !i.checkVisibility()) continue;
+    const cs = getComputedStyle(i), px = v => parseFloat(v) || 0;
+    const w = r.width - px(cs.paddingLeft) - px(cs.paddingRight) - px(cs.borderLeftWidth) - px(cs.borderRightWidth);
+    const h = r.height - px(cs.paddingTop) - px(cs.paddingBottom) - px(cs.borderTopWidth) - px(cs.borderBottomWidth);
+    const sx = w / i.naturalWidth, sy = h / i.naturalHeight, fit = cs.objectFit;
+    const k = (fit === 'contain' || fit === 'scale-down' ? Math.min(sx, sy) : Math.max(sx, sy)) * dpr;
+    out.shown++; if (k > 1.1) out.upscaled++; out.worst = Math.max(out.worst, Math.round(k * 10) / 10);
+  }
+  const b = document.querySelector('.fit.hero [data-wear]');
+  if (b) { const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const top = cy >= 0 && cy < innerHeight ? document.elementFromPoint(cx, cy) : null;
+    out.wear = { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, visible: r.top >= 0 && r.bottom <= innerHeight && !!top && b.contains(top) }; }
+  return out;
+};
+// Image bytes over the network: <img> requests and Supabase Storage downloads (photos, cut-outs); thumbnails are data:
+// URLs inside the items rows and are not counted. Bytes only, so the public log stays free of names and URLs.
+function countImageBytes(page) {
+  const net = { bytes: 0, files: 0 };
+  page.on('requestfinished', req => { let u; try { u = new URL(req.url()); } catch { return; } if (!/^https?:$/.test(u.protocol)) return;
+    if (!(req.resourceType() === 'image' || (u.host === SB_HOST && req.method() === 'GET' && u.pathname.startsWith('/storage/v1/object/')))) return;
+    req.sizes().then(z => { net.bytes += z.responseBodySize; net.files++; }).catch(() => {}); });
+  return net;
+}
+const kb = n => Math.round(n / 1024) + ' KB';
+
 async function signIn(browser) {
   const { ctx, log } = await guardedContext(browser, DEVICES.chromium[0]);
   const page = await ctx.newPage();
@@ -184,7 +214,7 @@ async function signIn(browser) {
 async function deviceChecks(browser, engine, dev, state) {
   const tag = engine + ' ' + dev.id + ': ';
   const { ctx, log } = await guardedContext(browser, dev, { storageState: state });
-  const page = await ctx.newPage(); let imgs = { shown: 0, broken: 0 };
+  const page = await ctx.newPage(); let imgs = { shown: 0, broken: 0 }; const net = countImageBytes(page), perTab = {};
   try {
     await step(tag + 'app opens signed in', async () => { await page.goto(BASE + '/'); await waitApp(page);
       if (await sheetOpen(page)) { const h = (await page.textContent('#sheetRoot h3').catch(() => '')) || 'a sheet'; await closeSheet(page).catch(() => {}); return { status: 'REVIEW', detail: 'opened with "' + h.trim().slice(0, 40) + '" on top' }; }
@@ -205,11 +235,18 @@ async function deviceChecks(browser, engine, dev, state) {
         if (ok(r)) return 'outfit with ' + r.pieces + ' pieces and "Wear this" on ' + r.occ + '; ' + first.occ + ' showed the empty state (' + first.why + ')';
       }
       return { status: 'REVIEW', detail: 'empty state on every occasion: ' + first.why }; });
+    await step(tag + 'outfits: pictures and "Wear this"', async () => { await settle(page); const p = await page.evaluate(PICTURES);
+      perTab.outfits = { bytes: net.bytes, files: net.files }; // everything up to here: opening the app on Outfits
+      const d = 'first screen ' + p.shown + ' pictures, ' + p.upscaled + ' drawn larger than their file' + (p.upscaled ? ' (up to ' + p.worst + 'x)' : '') + '; "Wear this" '
+        + (p.wear ? (p.wear.visible ? 'visible' : 'not visible') + ' at ' + p.wear.top + '-' + p.wear.bottom + ' of ' + p.wear.vh + 'px' : 'not shown');
+      return { status: p.wear && !p.wear.visible ? 'REVIEW' : 'PASS', detail: d }; });
     await step(tag + 'weather (Open-Meteo)', async () => { const l = await page.getAttribute('[data-wx="edit"]', 'aria-label').catch(() => null);
       if (l && /^Weather: .*\d/.test(l)) return 'forecast shown';
       return { status: 'REVIEW', detail: l ? 'no forecast in the label' : 'no forecast (weather off or no location for this account)' }; });
-    await step(tag + 'every tab opens', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { await goTab(page, t);
-      const b = await brokenImages(page); imgs.shown += b.shown; imgs.broken += b.broken; } return 'outfits, closet, care, shop'; });
+    await step(tag + 'every tab opens', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { const b0 = net.bytes, f0 = net.files; await goTab(page, t);
+      const b = await brokenImages(page); imgs.shown += b.shown; imgs.broken += b.broken; if (t !== 'outfits') perTab[t] = { bytes: net.bytes - b0, files: net.files - f0 }; } return 'outfits, closet, care, shop'; });
+    await step(tag + 'image bytes per screen (first open)', async () => ['outfits', 'closet', 'care', 'shop'].filter(t => perTab[t])
+      .map(t => t + (t === 'outfits' ? ' ' : ' +') + kb(perTab[t].bytes) + ' in ' + perTab[t].files + ' files').join(', '));
     await step(tag + 'photos and cut-outs load', async () => { if (imgs.broken) throw new Error(imgs.broken + ' of ' + imgs.shown + ' images broken'); return imgs.shown + ' images, none broken'; });
     await step(tag + 'sheets open and close', async () => {
       const done = [];

@@ -320,6 +320,51 @@ async function axe(page, sheet) {
     .map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.length, targets: v.nodes.slice(0, 3).map(n => n.target.join(' ')) }));
 }
 
+/* ---------- pictures and "Wear this" (same measure in tools/live-check.mjs) ---------- */
+// Pictures in the first screen of the open tab: how many are drawn larger than their file (one file pixel over more
+// than 1.1 device pixels looks soft; the 256px thumbnails at a large size do), and where "Wear this" sits.
+const PICTURES = () => {
+  const dpr = devicePixelRatio, out = { shown: 0, upscaled: 0, worst: 0 };
+  for (const i of document.querySelectorAll('section.tab:not([hidden]) img')) {
+    const r = i.getBoundingClientRect(); if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight || !i.naturalWidth || !i.checkVisibility()) continue;
+    const cs = getComputedStyle(i), px = v => parseFloat(v) || 0;
+    const w = r.width - px(cs.paddingLeft) - px(cs.paddingRight) - px(cs.borderLeftWidth) - px(cs.borderRightWidth);
+    const h = r.height - px(cs.paddingTop) - px(cs.paddingBottom) - px(cs.borderTopWidth) - px(cs.borderBottomWidth);
+    const sx = w / i.naturalWidth, sy = h / i.naturalHeight, fit = cs.objectFit;
+    const k = (fit === 'contain' || fit === 'scale-down' ? Math.min(sx, sy) : Math.max(sx, sy)) * dpr;
+    out.shown++; if (k > 1.1) out.upscaled++; out.worst = Math.max(out.worst, Math.round(k * 10) / 10);
+  }
+  const b = document.querySelector('.fit.hero [data-wear]');
+  if (b) { const r = b.getBoundingClientRect(), cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    const top = cy >= 0 && cy < innerHeight ? document.elementFromPoint(cx, cy) : null;
+    out.wear = { top: Math.round(r.top), bottom: Math.round(r.bottom), vh: innerHeight, visible: r.top >= 0 && r.bottom <= innerHeight && !!top && b.contains(top) }; }
+  return out;
+};
+// Image bytes over the network: <img> requests and Supabase Storage downloads (photos, cut-outs). Thumbnails are data:
+// URLs inside the items rows, so they are not counted here.
+function countImageBytes(page) {
+  const net = { bytes: 0, files: 0 };
+  page.on('requestfinished', req => { let u; try { u = new URL(req.url()); } catch { return; } if (!/^https?:$/.test(u.protocol)) return;
+    if (!(req.resourceType() === 'image' || (u.host === SB_HOST && req.method() === 'GET' && u.pathname.startsWith('/storage/v1/object/')))) return;
+    req.sizes().then(z => { net.bytes += z.responseBodySize; net.files++; }).catch(() => {}); });
+  return net;
+}
+// "Wear this" at every size in docs/design/SCREENS.md (Chosen direction and Outfits), plus phones turned sideways.
+const WEAR_SIZES = [[360, 800, 3, 1, 1], [390, 844, 3, 1, 1], [412, 915, 3, 1, 1], [744, 1133, 2, 1, 1], [820, 1180, 2, 1, 1], [1024, 1366, 2, 1, 1],
+  [1133, 744, 2, 1, 1], [1180, 820, 2, 1, 1], [1366, 1024, 1, 0, 1], [1366, 768, 1, 0, 1], [1366, 630, 1, 0, 1], [1536, 864, 1, 0, 1], [1920, 1080, 1, 0, 1],
+  [844, 390, 3, 1, 0], [915, 412, 3, 1, 0]]; // width, height, pixel ratio, touch, required
+async function wearSizes(browser, base, state, data) {
+  R.wearSizes = [];
+  for (const [w, h, dpr, touch, req] of WEAR_SIZES) {
+    const dev = { id: w + 'x' + h, width: w, height: h, dpr, touch: !!touch };
+    const ctx = await newContext(browser, base, dev, { data, storageState: state }); const page = await ctx.newPage();
+    watchConsole(page, () => 'wear-' + dev.id);
+    try { await page.goto(base + '/index.html'); await waitApp(page);
+      const p = await page.evaluate(PICTURES); R.wearSizes.push({ size: dev.id, required: !!req, ...(p.wear || { visible: false, missing: true }), shown: p.shown, upscaled: p.upscaled, worst: p.worst });
+    } finally { await ctx.close(); }
+  }
+}
+
 /* ---------- views ---------- */
 async function openView(page, view) {
   if (['outfits', 'closet', 'care', 'shop'].includes(view)) { await goTab(page, view); return true; }
@@ -332,8 +377,10 @@ async function captureSet(browser, base, state, { dev, theme, lang, data, tag, s
   const ctx = await newContext(browser, base, dev, { theme, lang, data, storageState: state });
   const page = await ctx.newPage(); let where = tag;
   watchConsole(page, () => where);
+  const net = countImageBytes(page);
   await page.goto(base + '/index.html'); await waitApp(page);
   const texts = userTexts(data);
+  let seen = { bytes: 0, files: 0 };
   for (const view of views) {
     where = tag + '-' + view;
     const cap = { name: where, device: dev.id, theme, lang, view };
@@ -345,6 +392,8 @@ async function captureSet(browser, base, state, { dev, theme, lang, data, tag, s
       await page.screenshot({ path: file, fullPage: A.fullPage, scale: A.cssPixels ? 'css' : 'device', animations: 'disabled', caret: 'hide' });
       const inSheet = ['preview', 'editor', 'settings'].includes(view);
       Object.assign(cap, await pageFacts(page, lang, texts, inSheet));
+      if (!inSheet) { cap.pictures = await page.evaluate(PICTURES); delete cap.pictures.wear; }
+      cap.img = { kb: Math.round((net.bytes - seen.bytes) / 1024), files: net.files - seen.files }; seen = { ...net }; // the first view includes the app opening
       if (runAxe && !A.noAxe) cap.axe = await axe(page, inSheet);
       if (snapshots) { // static copy for the detector: scripts removed, blob: images (cut-outs) inlined as data URLs,
         // hidden elements removed (only what is on screen counts)
@@ -586,6 +635,7 @@ async function main() {
     check('Sign-in', 'PASS', R.auth.mode + ': ' + R.auth.reason);
     if (!A.worstCase) {
       await flows(browser, server.base, state, data);
+      if (views.includes('outfits')) await wearSizes(browser, server.base, state, data);
       const sets = [];
       for (const dev of devices) for (const theme of ['light', 'dark']) sets.push({ dev, theme, lang: 'en' });
       if (devices.includes(DEV['phone-360'])) for (const lang of ['fr', 'ja']) sets.push({ dev: DEV['phone-360'], theme: 'light', lang });
@@ -635,6 +685,18 @@ async function main() {
   }
   gate('No app text cut off or spilling (all languages)', G.textOverflow, base && base.textOverflow, false, gnote('textOverflow'));
   check('Piece names cut with an ellipsis', 'INFO', T.userNamesCut + ' (user-typed names may be truncated; listed per view in summary.json)');
+  if (R.wearSizes) {
+    const req = R.wearSizes.filter(x => x.required), miss = req.filter(x => !x.visible), at = x => x.missing ? 'no button' : x.top + '-' + x.bottom + ' of ' + x.vh;
+    T.wearThisSizes = req.length - miss.length + ' of ' + req.length;
+    check('"Wear this" visible without scrolling at the ' + req.length + ' sizes in SCREENS.md', miss.length ? 'REVIEW' : 'PASS',
+      T.wearThisSizes + (miss.length ? '; not at ' + miss.map(x => x.size + ' (' + at(x) + ')').join(', ') + ' (Phase 8 target)' : ''));
+    check('"Wear this" on phones turned sideways', 'INFO', R.wearSizes.filter(x => !x.required).map(x => x.size + ' ' + (x.visible ? 'visible (' + at(x) + ')' : at(x))).join('; '));
+  }
+  const first = caps.filter(c => c.theme === 'light' && c.lang === 'en');
+  const pics = first.filter(c => c.view === 'outfits' && c.pictures);
+  if (pics.length) check('Outfits: pictures drawn larger than their file (first screen)', 'INFO', pics.map(c => c.device + ' ' + c.pictures.upscaled + ' of ' + c.pictures.shown + (c.pictures.upscaled ? ' (up to ' + c.pictures.worst + 'x)' : '')).join('; '));
+  const devs = [...new Set(first.filter(c => c.img).map(c => c.device))];
+  if (devs.length) check('Image bytes per screen (fixture images, first open)', 'INFO', devs.map(d => d + ' ' + ['outfits', 'closet', 'care', 'shop'].map(v => { const c = first.find(x => x.device === d && x.view === v && x.img); return c ? v + ' ' + c.img.kb + ' KB/' + c.img.files : ''; }).filter(Boolean).join(', ')).join('; '));
   let det = null;
   if (!A.noDetector && !A.worstCase) {
     try { det = detector(); const snap = det.snapshots || { warnings: 0, advisories: 0, hiddenElementsExcluded: {} };
@@ -649,7 +711,7 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, render: R.render, totals: T, checks: R.checks, compare: R.compare, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',
