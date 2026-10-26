@@ -59,7 +59,7 @@ The shell follows the direction condition (Chosen direction), so a screen never 
 | Also at least 1280px wide | 208px rail; the header (logo, wordmark, status) sits at the top of the rail and leaves the page; labels beside icons; the Care count at the end of its row; Settings at the bottom |
 
 - Why phones turned sideways keep a bar: the owner's condition gives them direction A, and both platforms do the same (Android shows a navigation bar when the window's width or height is compact, and compact height, under 480dp, covers 99.78% of phones in landscape: developer.android.com, adaptive navigation and window size classes; Apple's tab bar shows icon and title side by side in landscape: HIG, Tab bars).
-- Where the condition does not apply: the wide rail also needs 1280px; sheets keep centring from 700px wide (Phase 12); the screen rules that switch at 960px (Outfits beside its options, Care and Shop in two columns, larger Closet tiles) stay on width until their phases move them to the B condition.
+- Where the condition does not apply: the wide rail also needs 1280px; sheets keep centring from 700px wide (Phase 12); the screen rules that switch at 960px (Care and Shop in two columns, larger Closet tiles) stay on width until their phases move them to the B condition; Outfits follows the B condition since Phase 8.
 - Header: scrolls with the page (not sticky, as since v1.38), 59px tall with or without the Settings button. The holiday badge is placed by CSS (`header.top .holibadge`) in every layout.
 - Current tab: Accent text at weight 700 on Accent-soft, coral icon, aria-current="page". The Care count is 12px Accent-ink on Bad (6.47:1 light, 5.23:1 dark).
 - Order in the page: header, navigation (tabs, then the rail's Settings), Add clothes, then the screen. A focused control scrolls above the bar or Add clothes (`scroll-padding-bottom`).
@@ -76,27 +76,45 @@ The shell follows the direction condition (Chosen direction), so a screen never 
 
 ## Outfits (EDITORIAL)
 
-Phone order (direction A: below 700px wide or below 600px tall; see Chosen direction):
+Built in Phase 8 (v1.53.0). Proposal approved by the owner on 2026-10-26 with the four recommended options: build A and B as shown; clear the stored "Show outfits as" choice once; from 1100px the selected look is the largest, with Wear this under it; a piece without a cut-out drawn large uses its photo, downloaded once and kept at 1024px on the device.
 
-1. Day, weather, greeting and diary in one row, with the style menu (only when 2 or more styles are picked).
-2. Occasion selector (all six at once).
-3. Hero outfit: rank, match label, style, the kit, Wear this and share, the first reason with "N more reasons", palette.
-4. Wearing today strip: thumbnails and Edit, one line.
-5. More options as an index: 02, 03 and so on, each with small pictures, piece names and match.
+Direction A (below 700px wide or below 600px tall), top to bottom:
 
-- Banners, laundry and holiday notices stay below the greeting row in a compact form and never push the hero below the first screen at 390px.
-- Occasion selector (Work, Going out, Formal, Sport, Home, Chores): aria-pressed kept; each target at least 40px tall. A: a 3 by 2 grid, selected is an ink fill; long translations wrap inside their cell. B: text tabs in the display face that scroll sideways when they do not fit, selected is ink with a 2px ink underline; usable with a mouse (wrap or arrow buttons).
-- Keep: tap a piece to preview, Swap for another, Back to suggestion, leave a piece out, Wear this, share, log, diary, weather, style row, holiday chip.
-- "Wear this" is visible without scrolling at 390 x 844, at 1366 x 630 (owner, 2026-10-25), and on the iPad and Windows sizes measured under Chosen direction.
-- Wide (direction B: at least 700px wide and 600px tall): the looks as pages, today's pick first and the next one peeking, with arrows, dots and a count; from 1100px all looks side by side, today's pick largest; Wear this under today's pick; Why this outfit below. This replaces v1.41's hero-left, alternatives-right layout.
-- Code: renderOutfits (app.js:804) with heroCard, flatlay, paletteStrip, altRow, tile and todayLine.
+1. Day row: the day (22px, display face); the weather (a button: temperatures, opens the weather settings) and the greeting on the line below; the style menu, a button "Style / All my styles" that opens a sheet with the choices (only when 2 or more styles are picked); the diary.
+2. Occasions: all six at once in a 3 by 2 grid, the selected one an ink fill (aria-pressed), 40px targets; long translations wrap inside their cell. A holiday near (holidaysSoon(14)) makes the grid 4 columns with the holiday spanning two (a coral dot marks it; selected in ink), so one holiday adds no row.
+3. The outfit: rank, title, style and match, Adjust (44px). The kit: the main garments (layer, top or dress, t-shirt underneath, bottom) as 4:5 pictures with their category and name; shoes, belt and accessories in one row of small squares with their names (a dress alone brings the shoes up to the main row). The flat-lay board instead when chosen in Adjust, as tall as the first screen allows.
+4. Wear this and share, right under the outfit; then the tap hint or Back to suggestion; + Wear a t-shirt underneath, + Wear a belt; the first reason (a note first, if there is one) and "N more reasons" (every other reason and the ranking rule); the palette with the weather advice; the cut-out note; Wore something else? Log it.
+5. Wearing today (after logging): one line, the label, up to 8 thumbnails and Edit.
+6. More options: an index, one row per option (64px or taller): its number (02, 03...), small pictures of the top, bottom and shoes, the piece names and the match; New ideas in the heading.
 
-### Known issues to fix in this phase
-- Overridden declarations (47), each always beaten by a later rule for the same selector: `.greet` font-size 28px and 26px (final 24px); `.todaybar` gap; `.wxpill` height and padding; `.worn-ok` color; `.alts-h` align-items; `.tile .cap .k` (5: mono font, size, letter-spacing, uppercase, color); `.withbelt>.tile` height; `.withbelt .tile .swap` top 58px and 62px; `.beltband` (8: the absolute position, offsets, heights, border, shadow of v1.8 before v1.8.1); `.beltband .bimg` width; `.beltband .blab` font-size and white-space; `.beltband .blab .k` (5); `.flatlay` the v1.9 striped background; `.fl` padding 0 and 3% (final 8px); `.fl.small` padding 6%; `.fl img` radius and shadow; `.fl img.cut` filter; `.fl svg.glyph` width and height; `.fl.fold img.cut` (4); `.layerseg .lab` (3).
-- Unused rules: no element in the markup carries these classes (checked against the 766 class attributes in app.js and index.html, 2026-10-25): the old card board `.fits`, `.board`, `.main`, `.pair`, `.pair.two`, `.fit-meta` and `.fit.hero .fit-meta`; `.score`, `.score .num`, `.score .lbl`, `.score .btn`, `.score .lbl b`; the v1.5 weather card `.wxcard`, `.wxcard.setup`, `.wxic`, `.wxtxt` and its children, `.wxwhere`, `.advice`, `.wxcard .advice`, `.wxcard>.btn`; `.layerseg`, `.layerseg .lab`, `.layerseg .chip`; the v1.5 alternatives list `.alt`, `.alt .rank`, `.strip`, `.alt-l`, `.alt-l .bars i`; `.hint.center`; `.altgrid`; `.logother`; `.viewsw` and `.viewsw .chip`; `.fl.fold`, `.fl.fold img.cut`, `.fl.fold.iscut::after`. Also take `.layerseg .lab` and `.wxwhere` out of the typography rule's selector list and `.viewsw .chip` out of `.presets .chip,.viewsw .chip`.
-- `.side` (old board column, styles.css:163) also matches the camera's side buttons (`.cam .side`); check the camera before removing it.
-- Detector side-tab warning: `.askcard` (the laundry reminder and the dress-code question) has a 3px coral left border; the other flagged rule, `.advice`, is unused.
+Phones turned sideways (A, at least 700px wide and under 600px tall): the occasions in one row of six; the kit on the left, sized by the screen height; the header, Wear this and the reasons on the right.
 
+Direction B (at least 700px wide and 600px tall):
+
+- Day row: the day (52px; 56px from 1100px), "Good morning · weather" below, the diary on the right.
+- Occasions as text tabs in the display face (20px, uppercase by CSS), the selected one in ink with a 2px ink underline; the row scrolls sideways when it does not fit (wraps with a mouse). Style as text tabs under them, beside them from 1100px.
+- The looks as square flat-lay pages (fitLooks in app.js sizes the selected board so Wear this ends inside the window, never under 240px). Below 1100px: the selected page with the next one peeking (the previous one on the last page), turned with 44px arrows, dot buttons (24 by 44px with an 8px mark, the current one coral), "1 of 4", a swipe on the board or the arrow keys. From 1100px: every look side by side, the selected one first and largest (the others at most 80% of it); clicking one selects it. Only the selected page has pieces to tap, Adjust, Wear this and share; New ideas under the looks.
+- Then Wearing today, then "Why this outfit?" (display face, 24px): every reason with the ranking rule; the palette, the weather advice and the cut-out note beside them; Wore something else? Log it. The laundry reminder takes one line.
+
+Both: selected states in ink; coral only on Wear this, the #1 rank and the active pager dot; no card around the outfit (flat); the garment canvas stays cream in both themes. "Show outfits as" (Adjust): with no stored choice, A shows the kit and B the board; a choice is stored under wearcycle.outfitView (the pre-1.53 key wearcycle.view is cleared once, owner 2026-10-26).
+
+Pictures by drawn size times pixel density: the kit's main pictures and the selected board's large cells use the cut-out, or without one the photo reduced on the device to 1024px and kept in the cut-out cache (downloaded only when the 256px thumbnail would be drawn more than 1.1x its size; sign-out clears the cache); small squares, index pictures and Wearing today use the thumbnail; other looks use the cut-out or the thumbnail. One download per cut-out (requests in flight are shared; a file the server does not return is not asked for again in that session).
+
+"Wear this" is visible without scrolling, with its top and bottom edges uncovered, at the 13 sizes under Chosen direction (tools/check.mjs fails otherwise) and on phones turned sideways. Measured on v1.53.0 in Chromium with the fixture closet: 695 to 743px at 390x844 (bar from 778px), 654 to 702px at 360x800 (bar from 734px), 566 to 614px at 1366x630, 277 to 325px at 844x390. Not covered: with the holiday bar, two holidays and a laundry reminder at once (fixture clock moved to 25 October), the button sits at 907 to 955px at 390x844 and 699 to 747px at 1366x630 (still visible at 820x1180); the outfit itself still starts in the first screen. The offline banner moves it to 766 to 814px at 390x844.
+
+Code: renderOutfits, heroCard (A), optionIndex and optRow (A), lookbook, lookCur, lookAlt and fitLooks (B), whySection (B), kitHtml, kitPic, flatlay, cutNote, todayLine, renderStyleChips and openStyleMenu, hydrateCuts, hydratePhotos and medUrl (app.js).
+
+### Known issues fixed in this phase (v1.53.0)
+- Overridden declarations (47) and the unused rules listed in Phase 6: removed first, with no visible change (all 112 screenshots identical to the pixel). `.side` was checked against the camera: `.cam .side` sets display:grid and its buttons hold one grid item, so the removed flex-direction and gap never applied there.
+- "Wear this" below the first screen at 12 of the 13 sizes (950 to 998px at 390x844, 761 to 809px at 1366x630): now visible at all 13.
+- Pager dots of 8 by 8px (axe target-size, serious, on every Outfits view) and 36 by 32px arrows: replaced by the index on phones; 24 by 44px dot buttons and 44px arrows from 700x600.
+- The coral side stripe on `.askcard` (detector side-tab warning) and the unused `.advice`: removed.
+- Coral as a selected state (the selected option's pill, the selected holiday chip): now ink.
+- The board's focus order (top, accessories, then trousers and shoes): now the reading order; focus stays on the pager control, dot or index row after a keyboard selection.
+- Smooth scrolling on selecting an option ignored reduced motion: now instant when the system asks for reduced motion.
+- The same cut-out downloaded up to 20 times when Outfits opened (cutUrl had no shared request): one download per cut-out; opening Outfits went from 478 KB in 87 files to 60 KB in 9 files on phones (43 KB in 8 files from 1100px), fixture closet.
+- Pictures drawn up to 1.7x (2x at 820px) larger than their files: the large pictures now use the cut-out or the 1024px photo copy. The fixture's own files are small (560px photos, cut-outs about 230px wide once trimmed), so the check still reports up to 1.8x there.
+- Also found and fixed: `.dot` and `.pcount` were generic names shared with the Closet and the piece sheet, so the pager rules are scoped to `.pgr`.
 
 ## Closet (GALLERY)
 

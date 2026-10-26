@@ -575,6 +575,8 @@ I18N.load("tl",{
 "{0} items marked": "{0} item na may markang",
 "{0} note": "{0} tala",
 "{0} notes": "{0} tala",
+"{0} more reasons": "{0} pang dahilan",
+"{0} more reason": "{0} pang dahilan",
 "{a} per wear so far.": "{a} kada suot sa ngayon.",
 "{a} per wear": "{a} kada suot",
 "{0} photo shows the background. Claude finds each piece and crops around it (one small request per photo).": "{0} litrato ang kita pa ang background. Hinahanap ni Claude ang bawat piraso at kino-crop ito (isang maliit na request bawat litrato).",

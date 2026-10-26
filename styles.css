@@ -200,22 +200,6 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .ex{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:1px 5px;border-radius:3px}
 
 /* outfit board */
-.fit{background:var(--raised);border-radius:12px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;min-width:0}
-.tile{position:relative;border:0;padding:0;background:var(--raised);border-radius:8px;overflow:hidden;display:block;width:100%;text-align:left}
-.tile .vis{display:grid;place-items:center;height:96px;background:var(--surface)}
-.tile.sm .vis{height:64px}
-.tile.xs .vis{height:56px}
-.tile img{width:100%;height:100%;object-fit:contain;display:block}
-.tile svg.glyph{width:62%;height:78%}
-.tile.xs svg.glyph,.tile.sm svg.glyph{width:46%;height:70%}
-.tile .cap{font-size:12px;padding:4px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted);border-top:1px solid var(--line)}
-.tile .swap{position:absolute;top:5px;right:5px;width:22px;height:22px;border-radius:50%;background:var(--raised);display:grid;place-items:center;opacity:.85;box-shadow:var(--shadow)}
-.tile .swap svg{width:12px;height:12px}
-.why{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
-.why li{display:flex;gap:6px}
-.why li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;margin-top:7px;background:var(--good)}
-.why li.neg::before{background:var(--bad)}
-.worn-ok{font-weight:600;font-size:14px}
 
 .empty{background:var(--raised);border:1px dashed var(--line);border-radius:12px;padding:22px 18px;display:flex;flex-direction:column;gap:12px}
 .empty ol{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
@@ -306,7 +290,6 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .version{margin:28px 0 0;text-align:center;font-size:12px;color:var(--muted)}
 
 /* v1.4 usability */
-#occChips{flex-wrap:wrap}
 .li.care{flex-wrap:wrap}
 .li.care .txt{flex:1 1 180px}
 .li.care .acts{flex:1 1 100%;justify-content:flex-start;padding-left:64px}
@@ -323,51 +306,17 @@ details.rules summary{cursor:pointer;font-weight:700;color:var(--ink);padding:8p
 details.rules p{margin:8px 0}
 
 /* v1.5 advisor: weather, ranked hero outfit, larger cropped photos */
-.tile img.cover,.card .vis img.cover,.mini img.cover{object-fit:cover}
-.tile img.fitted,.card .vis img.fitted{object-fit:contain}
+.card .vis img.cover,.mini img.cover{object-fit:cover}
+.card .vis img.fitted{object-fit:contain}
 .card .vis img.cover{object-fit:cover}
-.fit.hero{overflow:hidden}
-.fit-h{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
-.rank{font-family:var(--f-display);font-weight:800;font-size:26px;line-height:1;min-width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--ink);flex:none}
-.rank.top{background:var(--coral);color:var(--coral-ink)}
-.rk-l{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13px;color:var(--muted)}
-.rk-l b{font-size:16px;color:var(--ink)}
-.bars{display:inline-flex;gap:3px;flex:none}
-.bars i{width:7px;height:16px;border-radius:2px;background:var(--line)}
-.bars i.on{background:var(--good)}
-.board2{background:var(--board);padding:10px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.board2.n3 .tile:last-child,.board2.n1 .tile{grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}
-.board2 .tile .vis{height:auto;aspect-ratio:1/1}
-.board2 .tile .cap{font-size:13px;color:var(--ink);padding:6px 8px;white-space:normal;line-height:1.25;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.tile .cap .k{display:block}
-.board2 .tile .swap{width:28px;height:28px}
-.board2 .tile .swap svg{width:14px;height:14px}
-.accrow{background:var(--board);padding:0 10px 10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px}
-.accrow .tile .vis{height:auto;aspect-ratio:1/1}
-.accrow .tile .cap{font-size:11px;padding:3px 6px}
-.accrow .tile .cap .k{font-size:9px}
-.alts{display:flex;flex-direction:column;gap:8px}
-.alts-h{display:flex;gap:8px;margin-top:4px}
 .mini{width:52px;height:52px;flex:none;border-radius:8px;overflow:hidden;background:var(--surface);display:grid;place-items:center}
 .mini img{width:100%;height:100%;object-fit:contain}
 .mini svg.glyph{width:70%;height:70%}
 .seg.s3{grid-template-columns:repeat(3,1fr)}
 .seg.s3 button b{font-family:var(--f-body);font-size:14px}
 @media (max-width:380px){.mini{width:44px;height:44px}}
-#fits{display:flex;flex-direction:column;gap:14px}
-.alts-h{align-items:center}
-.board2 .tile .vis,.accrow .tile .vis{position:relative;overflow:hidden;min-height:0}
-.board2 .tile .vis img,.accrow .tile .vis img{position:absolute;inset:0;width:100%;height:100%}
-.board2.n5 .tile:last-child{grid-column:1/-1;justify-self:center;width:calc(50% - 5px)}
-.addunder{align-self:flex-start}
 
-/* v1.8: belt worn over the trousers, logging sheet */
-.withbelt{position:relative;min-width:0}
-.beltband{border-radius:8px;padding:0;overflow:hidden;display:flex;align-items:stretch;background:var(--raised);text-align:left;z-index:1}
-.beltband .bimg{flex:none;position:relative;overflow:hidden;background:var(--surface)}
-.beltband .bimg img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.beltband .bimg svg.glyph{width:100%;height:100%}
-.beltband .blab{flex:1;min-width:0;padding:4px 8px;line-height:1.2;display:flex;flex-direction:column;justify-content:center;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+/* logging sheet (v1.8) */
 .hint.today{background:var(--good-soft);color:var(--ink);padding:8px 12px;border-radius:8px}
 .pickrow{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin}
 .pick{flex:none;width:84px;border:2px solid var(--line);background:var(--raised);border-radius:10px;padding:4px;display:flex;flex-direction:column;gap:4px;align-items:center}
@@ -375,61 +324,40 @@ details.rules p{margin:8px 0}
 .pick .pn{font-size:11px;line-height:1.2;color:var(--muted);text-align:center;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .pick[aria-pressed="true"]{border-color:var(--coral);background:var(--accent-soft)}
 .pick[aria-pressed="true"] .pn{color:var(--ink);font-weight:600}
-.beltband .blab{white-space:normal;font-size:11.5px}
-.beltband .blab>span+*{display:block}
-.beltband .bn{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.beltband .bimg{width:52px}
-.beltband .bn{max-height:2.4em;line-height:1.2}
-/* v1.8.1: belt strip sits above the trousers instead of covering them */
-.board2{align-items:start}
-.withbelt{display:flex;flex-direction:column;gap:6px}
-.withbelt>.tile{height:auto}
-.beltband{position:static;left:auto;right:auto;top:auto;width:100%;height:50px;box-shadow:none;border:1px solid var(--line)}
-.withbelt .tile .swap{top:5px}
-.withbelt .beltband{order:-1}
 
 /* v1.9 flat-lay board */
-.flatlay{position:relative;aspect-ratio:4/5;margin:10px 10px 0;border-radius:10px;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.flatlay{position:relative;aspect-ratio:4/5;margin:0;border-radius:12px;overflow:hidden;touch-action:pan-y;user-select:none;-webkit-user-select:none}
 .fl{position:absolute;border:0;background:none;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent}
 .fl img{max-width:100%;max-height:100%;object-fit:contain;display:block;pointer-events:none}
 .fl img.cut{border-radius:0;box-shadow:none}
 .fl svg.glyph{pointer-events:none}
-.fl:focus-visible{outline:2px solid var(--coral);outline-offset:2px}
-.cutnote{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:8px 10px 0;padding:8px 10px;border-radius:8px;background:var(--accent-soft);font-size:13px}
+.fl:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
 /* v1.9.1 board polish: calm studio backdrop, consistent shadows, padded cells */
 .flatlay{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--board-mid) 70%,var(--board-edge) 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.04)}
 .fl img{border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,.12),0 6px 14px rgba(0,0,0,.10)}
 .fl img.cut{filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
 .fl:active img{transform:scale(.97)}
-@media (prefers-reduced-motion:no-preference){.fl img{transition:transform .12s ease}}
+@media (prefers-reduced-motion:no-preference){.fl img{transition:transform .12s cubic-bezier(.23,1,.32,1)}}
 .fl svg.glyph{display:block;flex:1 1 auto;width:100%;height:100%;min-width:0;min-height:0}
 .fl{padding:8px}
 .fl.small{padding:4px}
 
 /* v1.10 palette strip, palette picker, mini-board options */
-.palette{display:flex;align-items:center;gap:10px;padding:12px 14px 0}
 .sws{display:inline-flex;flex:none}
 .sws .sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--raised);margin-left:-6px;box-shadow:0 0 0 1px var(--line)}
 .sws .sw:first-child{margin-left:0}
 .palette .pl{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13px;line-height:1.3}
 .palette .pl b{font-weight:600}
 .palette .pl span{color:var(--muted);font-size:12px}
-.alt2{border:1px solid var(--line);background:var(--raised);border-radius:12px;padding:6px;display:flex;flex-direction:column;gap:6px;text-align:left;min-width:0}
 .flatlay.mini{margin:0;border-radius:8px;pointer-events:none;display:block}
 .flatlay.mini .fl{padding:3px}
 .flatlay.mini .fl img{box-shadow:none;border-radius:4px}
-.flatlay.mini .rank{position:absolute;top:6px;left:6px;min-width:30px;height:30px;font-size:17px;border-radius:8px;background:var(--raised);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.2)}
-.alt2-l{display:flex;align-items:center;gap:6px;padding:0 2px 2px;font-size:12px;font-weight:600;color:var(--muted)}
-.alt2-l .sws .sw{width:14px;height:14px;margin-left:-4px;border-width:1.5px}
-.alt2-l .ml{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.alt2-l .bars i{width:4px;height:10px}
 .palopt{display:flex;align-items:center;gap:12px;border:2px solid var(--line);background:var(--raised);border-radius:12px;padding:12px;text-align:left;width:100%}
 .palopt[aria-pressed="true"]{border-color:var(--coral)}
 .palopt .pl{display:flex;flex-direction:column;font-size:14px;min-width:0}
 .palopt .pl span{color:var(--muted);font-size:12.5px}
 .palopt .sws .sw{width:20px;height:20px}
-.alt2{align-items:stretch}
 .flatlay.mini{width:100%;height:auto}
 .palopt .sws{max-width:46%;flex-wrap:wrap;row-gap:4px}
 .palopt .sws .sw-empty{background:transparent;border:2px dashed var(--line);box-shadow:none}
@@ -437,59 +365,15 @@ details.rules p{margin:8px 0}
 .chip.pcol{display:inline-flex;align-items:center;gap:8px;min-height:40px}
 .chip.pcol .sw{width:18px;height:18px;border-radius:50%;box-shadow:0 0 0 1px var(--line);flex:none}
 
-/* ===== v1.11 Outfits redesign: picture first, quieter chrome ===== */
-.todaybar{display:flex;align-items:center;margin-top:2px}
-.greet{font-family:var(--f-display);line-height:1;text-transform:none;letter-spacing:.01em;margin:0}
-.greet small{display:block;font-family:var(--f-body);font-size:13px;font-weight:500;color:var(--muted);letter-spacing:0;margin-top:4px}
-.wxpill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;border:1px solid var(--line);background:var(--raised);font-weight:600;font-size:14px;color:var(--ink)}
-.wxpill svg{width:20px;height:20px;color:var(--coral)}
-.wxpill.add{color:var(--muted)}
-#occChips.scrollrow{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scroll-snap-type:x proximity}
-#occChips .chip{scroll-snap-align:start}
-.fit.hero .fit-h{padding:12px 12px 12px 14px;gap:12px;border-bottom:0}
-.fit.hero .rank{min-width:36px;height:36px;font-size:20px;border-radius:10px}
-.fit.hero .rk-l b{font-size:17px}
-.fit.hero .rk-l span{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
-.fit.hero .rk-l .bars i{width:5px;height:12px}
-.fit.hero .flatlay{margin:0 10px}
-.pager{display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 0 2px}
-.pager .dot{width:8px;height:8px;border-radius:50%;border:0;padding:0;background:var(--line)}
-.pager .dot[aria-current="true"]{background:var(--coral);width:22px;border-radius:4px}
-.pager .pg{width:36px;height:32px;border:0;background:none;color:var(--muted);font-size:22px;line-height:1}
-.fit.hero .palette{padding:12px 14px 0}
-.ctarow{display:flex;gap:10px;padding:14px 14px 0}
-.worn-ok{flex:1;display:flex;align-items:center;justify-content:center;height:48px;border-radius:12px;background:var(--good-soft);color:var(--good)}
-.fit.hero .addunder{margin:10px 14px 0}
-.fit.hero .addrow{display:flex;flex-wrap:wrap;gap:0 8px}
-.fit.hero .addrow .addunder{margin:10px 0 0 14px}
-.fit.hero .addrow .addunder+.addunder{margin-left:0}
-details.whybox{margin:12px 14px 0;border-top:1px solid var(--line);padding-top:10px}
-details.whybox summary{cursor:pointer;font-weight:600;font-size:14px;list-style:none;display:flex;align-items:center;gap:8px;min-height:32px}
-details.whybox summary::-webkit-details-marker{display:none}
-details.whybox summary::after{content:"›";margin-left:auto;font-size:20px;color:var(--muted);transition:transform .15s}
-details.whybox[open] summary::after{transform:rotate(90deg)}
-.warnn{font-size:12px;font-weight:600;color:var(--warn);background:var(--warn-soft);padding:2px 8px;border-radius:999px}
-details.whybox .why{margin:6px 0 8px}
-.alts-h h3{font-size:16px}
-.altrow{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:2px 16px 6px;scroll-snap-type:x mandatory}
-.altrow .alt2{flex:0 0 44%;scroll-snap-align:start}
 
 /* typography: one body font for labels, sentence case, readable sizes */
-.tile .cap .k,.panel-h .count,.ex,.tag,.beltband .blab .k,.version,.opt em{
+.panel-h .count,.ex,.tag,.version,.opt em{
   font-family:var(--f-body)!important;text-transform:none!important;letter-spacing:0!important}
-.tile .cap .k,.beltband .blab .k{font-size:11.5px;font-weight:600;color:var(--muted)}
 .tag{font-size:11.5px;font-weight:600;border:0;padding:0;display:inline-flex;align-items:center;gap:5px}
 .tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
 .ex{font-size:11px;font-weight:600;padding:1px 6px;border-radius:999px}
 .opt em{font-size:12.5px;font-weight:600}
 .panel-h .count{font-size:13px}
-.greet{white-space:nowrap}
-.wxpill{white-space:nowrap;flex:none}
-.todaybar #wx{flex:none}
-#occChips.scrollrow{scroll-padding-inline:16px}
-.alt2-l .sws{display:none}
-.greet{font-size:24px}
-.wxpill{padding:0 12px;height:38px}
 
 /* v1.11 studio closet cards (the job bar moved to the shared layer) */
 .card .vis.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
@@ -512,7 +396,6 @@ details.more .field{margin-top:14px}
 .helpdoc b{color:var(--ink)}
 
 /* v1.14 diary, stats, price */
-.todaybar{gap:8px}
 .cal-h{display:flex;align-items:center;justify-content:space-between}
 .cal-h b{font-size:16px}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
@@ -545,17 +428,12 @@ details.more .field{margin-top:14px}
 .gate .card2 .btn.cta{width:100%}
 .gate a{color:inherit}
 a.lirow{text-decoration:none;color:inherit}
-.todaybar .greet{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
-.todaybar .greet small{overflow:hidden;text-overflow:ellipsis}
-@media (max-width:380px){.greet{font-size:21px}.wxpill{padding:0 10px;font-size:13px}.wxpill svg{width:18px;height:18px}}
 
 /* v1.15.2: cut-outs stay inside the closet card photo area (tall jeans used to spill over the text) */
 .card .vis{position:relative;overflow:hidden}
 .card .vis img{position:absolute;inset:0;width:100%;height:100%}
 .card .vis.studio img{object-fit:contain;padding:10px;box-sizing:border-box}
 .ex.wash{background:var(--warn-soft);color:var(--warn)}
-.askcard{background:var(--accent-soft);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;border-left:3px solid var(--coral)}
-.askcard span{font-size:13.5px;color:var(--muted)}
 .dresspanel label.row{font-size:14px}
 
 /* v1.18 drop-off finder */
@@ -568,13 +446,6 @@ a.lirow{text-decoration:none;color:inherit}
 .photo .pv.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .photo .pv img.cut{padding:6px;box-sizing:border-box;filter:drop-shadow(0 3px 5px rgba(50,35,20,.2))}
 .langsel{min-height:40px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--raised);color:var(--ink);max-width:150px}
-/* v1.23 make tap-to-change obvious, and offer a way back */
-.taphint{display:flex;align-items:center;justify-content:center;gap:6px;margin:8px 0 0;font-size:13px;color:var(--muted)}
-.taphint .swap{position:static;display:inline-grid;width:20px;height:20px;place-items:center}
-.taphint .swap svg{width:14px;height:14px}
-.editbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:10px 0 0;padding:8px 10px;border-radius:12px;background:var(--warn-soft);color:var(--ink);font-size:13.5px}
-.editbar span{flex:1;min-width:140px}
-.editbar .btn svg{width:16px;height:16px;margin-right:6px}
 /* v1.24 piece preview */
 .piecebig{position:relative;width:100%;aspect-ratio:1/1;max-height:56vh;max-height:56svh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
 .ppager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-4px 0 0}
@@ -603,16 +474,6 @@ a.lirow{text-decoration:none;color:inherit}
 /* v1.26 style card illustrations: a wide strip on top of each card */
 .stylecard .styleart{display:block;width:100%;height:auto;aspect-ratio:200/64;border-radius:10px;background:#ece8e2;margin-bottom:6px}
 .stylecard b{color:var(--ink)}
-/* v1.27 style row on the Outfits screen and style tag on each outfit */
-.stylerow{margin-top:-4px}
-.stylerow .rowlab{align-self:center;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;padding-right:2px;flex:none}
-.stylerow .chip{min-height:36px;padding:6px 12px;font-size:13.5px}
-.stylehint{margin:-6px 0 0;font-size:13px}
-.stylepill{font-style:normal;font-size:11.5px;font-weight:600;margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--ink);white-space:nowrap}
-#styleChips.scrollrow{flex-wrap:nowrap;overflow-x:auto;margin:0 -16px;padding:0 16px 2px;scroll-padding-inline:16px;scrollbar-width:none}
-#styleChips.scrollrow::-webkit-scrollbar{display:none}
-#styleChips .chip{flex:none}
-.rk-l b .stylepill{vertical-align:2px}
 /* v1.28 coming up: season and holidays */
 .seaprevs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
 .seaprev{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);text-align:center}
@@ -623,8 +484,6 @@ a.lirow{text-decoration:none;color:inherit}
 .li.ess .txt b{white-space:normal}
 .li.hol .sws{display:flex;flex:none;margin-top:3px}
 .li.hol .sws .sw{width:16px;height:16px;border-radius:50%;margin-right:-4px;border:2px solid var(--raised)}
-.chip.holchip{border-color:var(--coral)}
-.chip.holchip[aria-pressed="true"]{background:var(--coral);color:var(--coral-ink);border-color:var(--coral)}
 
 /* privacy */
 .consent{display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.4;color:var(--muted);margin:2px 0 4px}
@@ -656,14 +515,6 @@ a.idea.shop .go{align-self:flex-end;margin-top:4px}
 button.hint.today.linkish{display:block;width:100%;text-align:left;background:none;border:0;padding:0;font:inherit;color:var(--muted);cursor:pointer}
 button.hint.today.linkish .chev{color:var(--ink)}
 
-/* wearing today card (v1.34.1) */
-.todaycard{background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
-.todaycard .tc-h{display:flex;align-items:center;justify-content:space-between}
-.todaycard .tc-row{display:flex;gap:6px;overflow-x:auto;background:none;border:0;padding:0;cursor:pointer}
-.todaycard .tc-th{width:44px;height:44px;flex:none;border-radius:8px;overflow:hidden;background:var(--bg);display:grid;place-items:center}
-.todaycard .tc-th img{width:100%;height:100%;object-fit:cover}
-.todaycard .tc-th svg{width:26px;height:26px}
-button.worn-ok.linkish{background:none;border:0;font:inherit;cursor:pointer;padding:0}
 
 /* outfits around one piece (v1.35) */
 .pincard{display:flex;gap:12px;align-items:center;background:var(--raised);border:1px solid var(--coral);border-radius:14px;padding:10px 12px;margin-bottom:12px}
@@ -701,30 +552,236 @@ button.worn-ok.linkish{background:none;border:0;font:inherit;cursor:pointer;padd
 .zoomhint.sm svg{width:11px;height:11px}
 
 /* ---------- wide screens: web and tablets in landscape (v1.41) ----------
-   960px and up: Outfits shows the outfit beside its alternatives, Care and Shop flow in two columns, and the
-   closet grid gets larger tiles (the rail, page width, toasts and job bar are in the shared layer). Short
-   landscape screens keep the outfit board within the screen height. */
+   960px and up: Care and Shop flow in two columns, and the closet grid gets larger tiles (the rail, page width,
+   toasts and job bar are in the shared layer; Outfits follows its own directions since Phase 8). */
 @media (min-width:960px){
-  #fits{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(320px,1fr);gap:20px;align-items:start}
-  #fits>*{grid-column:2;min-width:0}
-  #fits>.fit.hero{grid-column:1;grid-row:1 / span 40;position:sticky;top:12px}
-  #fits>.empty{grid-column:1 / -1}
-  .fit.hero .flatlay{aspect-ratio:auto;height:clamp(300px,calc(100vh - 400px),600px);height:clamp(300px,calc(100dvh - 400px),600px)}
-  #fits .altrow{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));overflow:visible;margin:0;padding:0}
-  #fits .altrow .alt2{flex:none}
   #careBody>div,#shopBody>div{display:block!important;columns:2 360px;column-gap:16px}
   #careBody>div>*,#shopBody>div>*{break-inside:avoid;margin-bottom:16px}
   .grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
 }
-/* phones and small tablets turned sideways: keep the outfit board inside the screen */
-@media (orientation:landscape) and (max-height:600px) and (max-width:959px){
-  .fit.hero .flatlay{aspect-ratio:auto;height:calc(100vh - 150px);height:calc(100svh - 150px);min-height:240px}
-  .flatlay{max-height:calc(100vh - 150px);max-height:calc(100svh - 150px)}
-}
 .viewer .vnote{margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:#c9ccd3}
+
+/* ===== Outfits (Phase 8). Direction A, "Kit" (the base rules here): below 700px wide or below 600px tall. Direction B,
+   "Lookbook": at least 700px wide and 600px tall; every look side by side from 1100px (app.js renderOutfits picks the
+   markup for A or B). Flat: the outfit sits on the page and the garments on the cream canvas, no cards around them.
+   Selected states are ink (a fill in A, a 2px underline in B); coral marks Wear this, the #1 rank and the active
+   pager dot only. ===== */
+#tab-outfits{gap:12px}
+#fits{display:flex;flex-direction:column;gap:16px}
+#tab-outfits .iconbtn{width:44px;height:44px}
+#tab-outfits .linkbtn{margin:0;min-height:44px}
+/* day row: day, weather and greeting; the style menu (A); the diary */
+.todaybar{display:grid;grid-template-columns:minmax(min-content,1fr) minmax(0,auto) auto;grid-template-areas:"day sel diary" "sub sub sub";align-items:center;column-gap:8px}
+.dayblk{display:contents}
+.greet{grid-area:day;font-family:var(--f-display);font-size:22px;line-height:1;text-transform:none;letter-spacing:.01em;margin:0}
+#styleSel{grid-area:sel;min-width:0}
+.todaybar>[data-act="diary"]{grid-area:diary}
+.daysub{grid-area:sub;display:flex;align-items:center;flex-wrap:wrap;gap:0 6px;margin:2px 0 0;font-size:13px;line-height:18px;color:var(--muted)}
+.daysub #wx:not(:empty)::after{content:"·";margin-left:6px}
+.wxpill{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin-block:-12px;padding:0;border:0;background:none;font:inherit;font-weight:600;color:var(--ink);white-space:nowrap;cursor:pointer}
+.wxpill svg{width:18px;height:18px;color:var(--muted)}
+.wxpill.add{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+.stylebtn{position:relative;display:grid;grid-template-columns:minmax(0,auto);align-content:center;min-height:44px;max-width:100%;padding:3px 30px 3px 10px;border:1px solid var(--line);border-radius:8px;background:var(--raised);color:var(--ink);font:inherit;text-align:left;cursor:pointer}
+.stylebtn .k{font-size:12px;font-weight:500;line-height:1.2;color:var(--muted)}
+.stylebtn .v{font-size:14px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
+.stylebtn svg{position:absolute;right:8px;top:50%;width:16px;height:16px;margin-top:-8px;color:var(--muted)}
+.stylehint{margin:-6px 0 0;font-size:13px}
+/* occasions: all six at once, a 3 by 2 grid; the selected one is an ink fill. A holiday gets its own row and a dot. */
+.selrow{display:flex;flex-direction:column;gap:8px}
+.occsel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:6px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
+.occ{min-height:40px;padding:4px 6px;border:0;border-radius:8px;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;line-height:1.15;overflow-wrap:break-word;hyphens:auto;cursor:pointer}
+.occ[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
+.occsel.has-hol{grid-template-columns:repeat(4,minmax(0,1fr))}
+.occ.hol{grid-column:span 2}
+.occ.hol::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--coral);vertical-align:1px}
+/* the selected outfit: header, kit (or board), Wear this right under it, then the first reason */
+.fit.hero{display:flex;flex-direction:column;gap:12px;min-width:0}
+.fit-h{display:flex;align-items:center;gap:10px;min-width:0}
+.rank{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1;min-width:40px;height:40px;padding:0 4px;border-radius:8px;display:grid;place-items:center;background:var(--accent-soft);color:var(--ink);flex:none}
+.rank.top{background:var(--coral);color:var(--coral-ink)}
+.rk-l{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.rk-l b{font-size:16px;font-weight:700;color:var(--ink);line-height:1.25}
+.rk-l>span{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:13px;color:var(--muted)}
+.stylepill{font-style:normal;font-size:12px;font-weight:600;margin-left:8px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--ink);white-space:nowrap;vertical-align:2px}
+.bars{display:inline-flex;gap:2px;flex:none}
+.bars i{width:5px;height:12px;border-radius:2px;background:var(--line)}
+.bars i.on{background:var(--good)}
+.herokit,.herometa{display:flex;flex-direction:column;gap:12px;min-width:0}
+.herokit{gap:8px}
+/* the flat-lay board when chosen in Adjust: as tall as the first screen allows, so Wear this stays in view */
+.kitv .flatlay{aspect-ratio:auto;height:calc(100vh - 470px);height:calc(100svh - 470px);min-height:280px;max-height:calc((100vw - 32px) * 1.25)}
+.kit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;touch-action:pan-y}
+.kit.n3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.kit.n4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.kitsm{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:8px}
+.kt{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+.kpic{position:relative;display:grid;place-items:center;aspect-ratio:4/5;border-radius:12px;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.kt.sm .kpic{aspect-ratio:1/1;border-radius:10px}
+/* narrow but tall windows (680x800): the main pictures give way so Wear this stays in the first screen */
+.kitv .kit .kpic{max-height:max(160px,calc(100vh - 616px));max-height:max(160px,calc(100svh - 616px))}
+.kpic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
+.kpic img.fitted{object-fit:contain}
+.kpic img.cut{object-fit:contain;padding:8%;box-sizing:border-box;filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
+.kt.sm .kpic img.cut{padding:10%}
+.kpic svg.glyph{width:58%;height:58%}
+.kn{display:flex;flex-direction:column;min-width:0}
+.kn .k{font-size:12px;font-weight:500;color:var(--muted);line-height:1.3}
+.kn .nm{font-size:13px;font-weight:600;line-height:1.25;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.kt.sm .nm{font-size:12px;font-weight:500;color:var(--muted)}
+.kt:focus-visible{outline:none}
+.kt:focus-visible .kpic{outline:2px solid var(--accent);outline-offset:2px}
+.taphint{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;color:var(--muted)}
+.taphint .swap{display:inline-grid;width:20px;height:20px;place-items:center}
+.taphint .swap svg{width:14px;height:14px}
+.editbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0;padding:8px 10px;border-radius:12px;background:var(--warn-soft);color:var(--ink);font-size:13.5px}
+.editbar span{flex:1;min-width:140px}
+.editbar .btn svg{width:16px;height:16px;margin-right:6px}
+.ctarow{display:flex;gap:8px}
+.worn-ok{flex:1;display:flex;align-items:center;justify-content:center;min-height:48px;border-radius:12px;background:var(--good-soft);color:var(--good);font-weight:600;font-size:14px}
+button.worn-ok.linkish{border:0;font:inherit;font-weight:600;cursor:pointer;padding:0 12px}
+.addrow{display:flex;flex-wrap:wrap;gap:8px}
+.why{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4;color:var(--muted)}
+.why li{display:flex;gap:8px}
+.why li::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;margin-top:7px;background:var(--good)}
+.why li.neg::before{background:var(--bad)}
+.why1{color:var(--ink)}
+details.whybox summary{display:inline-flex;align-items:center;gap:8px;min-height:44px;list-style:none;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+details.whybox summary::-webkit-details-marker{display:none}
+details.whybox summary svg{width:18px;height:18px;color:var(--muted)}
+details.whybox[open] summary svg{transform:rotate(180deg)}
+details.whybox .why{margin:2px 0 10px}
+.warnn{font-size:12px;font-weight:600;color:var(--warn);background:var(--warn-soft);padding:2px 8px;border-radius:999px}
+.palette{display:flex;align-items:center;gap:10px}
+.palette .pl{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13px;line-height:1.35}
+.palette .pl b{font-weight:600}
+.palette .pl span{color:var(--muted);font-size:13px}
+.cutnote{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:10px;background:var(--accent-soft);font-size:13px}
+.cutnote>span{flex:1 1 160px}
+.cutnote .btn{white-space:nowrap}
+.askcard{background:var(--accent-soft);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:6px}
+.askcard span{font-size:13.5px;color:var(--muted)}
+/* Wearing today: one line under the outfit, thumbnails and Edit */
+.todaystrip{display:flex;align-items:center;gap:10px;min-height:56px;padding:6px 0;border-block:1px solid var(--line)}
+.todaystrip>b{font-size:14px;flex:none}
+.todaystrip .tc-row{display:flex;align-items:center;gap:4px;flex:1;min-width:0;min-height:44px;overflow:hidden;padding:0;border:0;background:none;cursor:pointer}
+.tc-th{width:36px;height:36px;flex:none;border-radius:8px;overflow:hidden;background:var(--surface);display:grid;place-items:center}
+.tc-th img{width:100%;height:100%;object-fit:cover}
+.tc-th img.fitted{object-fit:contain}
+.tc-th svg{width:24px;height:24px}
+/* more options (A): an index, one row per option with its number, small pictures, piece names and match */
+.alts{display:flex;flex-direction:column;gap:4px}
+.alts-h{display:flex;align-items:center;gap:8px}
+.alts-h h3{flex:1;font-size:16px}
+.optlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.optlist li{border-bottom:1px solid var(--line)}
+.orow{width:100%;display:flex;align-items:center;gap:10px;min-height:64px;padding:10px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.orow .onum{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1;min-width:28px;color:var(--ink)}
+.ominis{display:flex;gap:4px;flex:none}
+.om{width:40px;height:40px;border-radius:6px;overflow:hidden;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.om img{width:100%;height:100%;object-fit:cover}
+.om img.fitted{object-fit:contain}
+.om svg.glyph{width:70%;height:70%}
+.otx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.otx b{font-size:13px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.otx>span{display:flex;align-items:center;flex-wrap:wrap;gap:6px;font-size:12px;color:var(--muted)}
+@media (max-width:380px){.ominis .om:nth-child(3){display:none}}
+/* A, wider than 700px but under 600px tall (phones turned sideways, short windows): the kit beside Wear this */
+@media (min-width:700px) and (max-height:599.98px){
+  .occsel{grid-template-columns:repeat(6,minmax(0,1fr))}
+  .occsel.has-hol{grid-template-columns:repeat(8,minmax(0,1fr))}
+  .fit.hero.kitv{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"kit head" "kit meta";column-gap:24px;row-gap:12px;align-items:start}
+  .kitv>.fit-h{grid-area:head}
+  .kitv>.herokit{grid-area:kit}
+  .kitv>.herometa{grid-area:meta}
+  .kitv .kit .kpic{max-height:calc(100vh - 130px);max-height:calc(100svh - 130px)}
+  .kitv .flatlay{aspect-ratio:auto;height:calc(100vh - 130px);height:calc(100svh - 130px);min-height:240px}
+}
+/* ===== Direction B: at least 700px wide and 600px tall ===== */
+@media (min-width:700px) and (min-height:600px){
+  #tab-outfits{gap:16px}
+  #fits{gap:24px}
+  .todaybar{display:flex;align-items:flex-start;gap:8px}
+  .dayblk{display:block;flex:1 1 auto;min-width:0}
+  .greet{font-size:52px}
+  .daysub{font-size:15px;line-height:22px;margin-top:10px}
+  .daysub .hello{order:-1}
+  .daysub #wx:not(:empty)::after{content:none}
+  .daysub .hello:not(:empty)::after{content:"·";margin-left:6px}
+  .daysub #wx:empty+.hello::after{content:none}
+  .selrow{gap:4px}
+  /* occasions as text tabs in the display face; the selected one in ink with a 2px ink underline */
+  .occsel{display:flex;gap:28px;padding:0;border:0;border-radius:0;background:none;box-shadow:inset 0 -1px 0 var(--line);overflow-x:auto;scrollbar-width:none}
+  .occsel::-webkit-scrollbar{display:none}
+  .occ{flex:none;min-height:44px;padding:0;border-radius:0;font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.02em;text-transform:uppercase;line-height:1;box-shadow:inset 0 -2px 0 transparent}
+  .occ[aria-pressed="true"]{background:none;color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+  .occ.hol::before{vertical-align:3px}
+  .styletabs{display:flex;align-items:center;gap:18px;overflow-x:auto;scrollbar-width:none}
+  .styletabs::-webkit-scrollbar{display:none}
+  .styletabs .rowlab{flex:none;font-size:13px;font-weight:500;color:var(--muted)}
+  .stab{flex:none;min-height:40px;padding:0;border:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;box-shadow:inset 0 -2px 0 transparent;cursor:pointer}
+  .stab[aria-pressed="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+  .stylehint{margin:0}
+  /* the laundry reminder on one line: the question on the left, its three buttons on the right */
+  .washcard{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:16px;align-items:center}
+  .washcard>.row{grid-column:2;grid-row:1/3}
+  /* the looks: square boards; the selected page first, sized by fitLooks (app.js) through --cur */
+  .lb{--cur:58%;display:flex;flex-direction:column;gap:12px}
+  .lb-view{display:flex;gap:16px;overflow:hidden;align-items:flex-start}
+  .lb-view.atend{justify-content:flex-end}
+  .look{flex:none;width:var(--cur);min-width:0;display:flex;flex-direction:column;gap:12px}
+  .look .fit-h{min-height:44px}
+  .rank{font-size:28px;min-width:48px;height:44px}
+  .look .flatlay{aspect-ratio:1/1;width:100%}
+  .look.alt{padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer}
+  .look.alt .flatlay{display:block;pointer-events:none}
+  .look.alt .rk-l b{font-size:15px;font-weight:600}
+  .look .kit .kpic{max-height:calc(var(--cur) * .75)}
+  .lbnav{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;min-height:44px}
+  .pgr{grid-column:2;display:flex;align-items:center}
+  .lbnav #shuffleBtn{grid-column:3;justify-self:end}
+  .lbone{grid-column:1/3;margin:0;font-size:14px}
+  .lbone b{color:var(--ink);margin-right:4px}
+  .pgr .pg{width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;border-radius:999px;background:none;color:var(--ink);cursor:pointer}
+  .pgr .pg svg{width:22px;height:22px}
+  .pgr .dot{width:24px;height:44px;display:grid;place-items:center;padding:0;border:0;background:none;cursor:pointer}
+  .pgr .dot::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--muted)}
+  .pgr .dot[aria-current="true"]::before{width:22px;background:var(--coral)}
+  .pgr .dot[aria-current="true"]{width:34px}
+  .pgr .pcount{margin:0 8px;font-size:13px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  /* Why this outfit: every reason, with the palette, the weather advice and the cut-out note beside them */
+  .whysec{display:flex;flex-direction:column;gap:14px;padding-top:24px;border-top:1px solid var(--line)}
+  .whysec h3{display:flex;align-items:center;gap:10px;font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1}
+  .whycols{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:24px;align-items:start}
+  .whymain,.whyside{display:flex;flex-direction:column;gap:12px;min-width:0}
+}
+@media (min-width:1100px) and (min-height:600px){
+  .greet{font-size:56px}
+  .selrow{flex-direction:row;align-items:flex-end;justify-content:space-between;gap:24px;box-shadow:inset 0 -1px 0 var(--line)}
+  .occsel{box-shadow:none;flex:0 1 auto;min-width:0}
+  .styletabs{flex:0 1 auto;min-width:0}
+  /* every look side by side: the selected one first and largest (--cur), the others up to --alt */
+  .lb.spread .lb-view{display:grid;grid-template-columns:var(--cur) repeat(3,minmax(0,var(--alt,1fr)));overflow:visible}
+  .lb.spread.n2 .lb-view{grid-template-columns:var(--cur) minmax(0,var(--alt,1fr))}
+  .lb.spread.n3 .lb-view{grid-template-columns:var(--cur) repeat(2,minmax(0,var(--alt,1fr)))}
+  .lb.spread.n1 .lb-view{grid-template-columns:var(--cur)}
+  .lb.spread .look{width:auto}
+}
+@media (hover:hover) and (pointer:fine){
+  .occ:not([aria-pressed="true"]):hover,.stab:not([aria-pressed="true"]):hover{color:var(--ink)}
+  .kt:hover .nm,.orow:hover .otx b,.look.alt:hover .rk-l b{text-decoration:underline;text-underline-offset:3px}
+  .pgr .pg:hover{background:var(--accent-soft)}
+  .pgr .dot:not([aria-current="true"]):hover::before{background:var(--ink)}
+  .wxpill:hover span{text-decoration:underline;text-underline-offset:3px}
+  .stylebtn:hover{border-color:var(--ink)}
+}
+@media (prefers-reduced-motion:no-preference){
+  .kt .kpic{transition:transform .12s cubic-bezier(.23,1,.32,1)}
+  .kt:active .kpic{transform:scale(.98)}
+  details.whybox summary svg{transition:transform .15s cubic-bezier(.23,1,.32,1)}
+}
 
 /* ===== Mouse (Phase 7): a mouse cannot swipe and these rows hide their scrollbar, so they wrap instead, at every
    width. Touch (phones, iPad) keeps the sideways swipe. Screen phases may replace a row with tabs or arrows. ===== */
 @media (hover:hover) and (pointer:fine){
-  .chips,#occChips.scrollrow,#styleChips.scrollrow{flex-wrap:wrap;overflow-x:visible}
+  .chips,.occsel,.styletabs{flex-wrap:wrap;overflow-x:visible}
 }

@@ -219,12 +219,12 @@ A single column on phones with 16px gutters and a fixed bottom tab bar; from 700
 
 - **Spacing:** 4px base: 4, 8, 12, 16, 24, 32, 48, 64, 96. Major sections 32 to 48px apart on phones, 48 to 80px on desktop. Today some gaps use 10px and 14px; screen phases move them onto the scale.
 - **Breakpoints (today, erratum 4, Phase 7):** max-width 380px and 460px (small phones); min-width 700px (sheets centre); the shell and direction B at min-width 700px and min-height 600px, and the wide rail at min-width 1280px and min-height 600px; landscape with max-height 599.98px (the lower bar); min-width 960px (the screens' wide rules until their phases) and landscape with max-height 600px and max-width 959px (the outfit board stays inside the screen).
-- **Wide layout (v1.41, 960px and up):** .app widens from 760px to 1180px; Outfits shows the hero outfit (sticky) beside its alternatives; Care and Shop flow in two columns; closet tiles grow from 150px to 180px minimum. Since Phase 7 the rail itself follows the shell condition (below).
+- **Wide layout (v1.41, 960px and up):** .app widens from 760px to 1180px; Care and Shop flow in two columns; closet tiles grow from 150px to 180px minimum. Since Phase 7 the rail follows the shell condition and since Phase 8 Outfits follows its directions (A below 700px wide or 600px tall, B from 700x600, every look side by side from 1100px; docs/design/SCREENS.md).
 - **Review widths (not breakpoints):** 360 and 390 (Android), 820 and 1180 (iPad portrait and landscape), 1366 and 1920 (Windows).
 
 ### Width bands (rule; the shell as built in Phase 7, docs/design/SCREENS.md Navigation shell)
 - **Under 700px wide or under 600px tall**, Android phones (about 360 to 412px) in portrait and turned sideways, short windows: bottom tab bar (Outfits, Closet, Care, Shop); Settings from the header (44px button); Add clothes button above the bar; single column; sheets slide up (centred from 700px wide). Turned sideways (landscape, under 600px tall) the bar is lower, icon beside label.
-- **700 to 1279px wide and at least 600px tall**, iPad portrait (744 to 1032px) and landscape (1133 to 1210px), small windows: 96px rail with icons over labels and Settings at the bottom of the rail; the header stays at the top of the page; content up to 1180px from 960px. No 760px column floating in empty space: grids gain columns; Outfits may show alternatives beside the outfit (screen phases).
+- **700 to 1279px wide and at least 600px tall**, iPad portrait (744 to 1032px) and landscape (1133 to 1210px), small windows: 96px rail with icons over labels and Settings at the bottom of the rail; the header stays at the top of the page; content up to 1180px from 960px. No 760px column floating in empty space: grids gain columns; Outfits shows its looks as pages (side by side from 1100px).
 - **1280px and up, at least 600px tall**, Windows browsers (1366, 1536, 1920px) and iPad Pro 13-inch landscape (1376px): a 208px rail with the logo, wordmark and status at its top (the header leaves the page), labels beside icons and Settings at the bottom; content 1180px today, gallery and editorial screens up to about 1280px when their phases decide; sheets up to about 720px.
 
 Active rail item: Accent text at weight 700 on Accent-soft, coral icon. Tab names stay Outfits, Closet, Care, Shop (already translated); the rail's Settings uses the existing "Settings" string. Device sizes come from the PhotoPrism device table (iPad) and StatCounter Canada, September 2026 (Windows).
@@ -240,7 +240,7 @@ Active rail item: Accent text at weight 700 on Accent-soft, coral icon. Tab name
 
 Rule (plan 7.4, confirmed by the owner 2026-10-19): flat by default. In light mode shadows belong only to overlays and floating elements: sheets, the Add clothes button and toasts. Dark mode conveys depth with contrast and borders. No glows.
 
-Today the soft shadow also sits on outfit cards, closet cards, panels and stat tiles (styles.css:160, 193, 204, 541); each screen phase removes it from its own containers.
+Today the soft shadow also sits on closet cards, panels and stat tiles; each screen phase removes it from its own containers (Outfits has no card since Phase 8).
 
 ### Shadow Vocabulary
 - **Soft** (`box-shadow: 0 1px 2px rgba(27,36,51,.08), 0 4px 14px rgba(27,36,51,.06)`; dark `0 1px 2px rgba(0,0,0,.4)`): the --shadow token; sheets and toasts.
@@ -255,7 +255,7 @@ Today the soft shadow also sits on outfit cards, closet cards, panels and stat t
 Gently rounded, with the pill shape reserved for meaning.
 
 - **Rule (plan 7.4):** controls 8px; garment canvas 12px; large compositions 12 to 16px; sheet top corners 20 to 24px. Pills (999px) only where the shape means something: a removable or toggle chip.
-- **Today:** buttons, icon buttons, inputs and tiles 8px; closet cards 10px; outfit cards, panels and the main action 12px; piece preview and cards added after v1.24 14px; sheets 16px (20 to 24px once Phase 12 rewrites the sheets); chips, weather pill and status pills 999px.
+- **Today:** buttons, icon buttons, inputs and tiles 8px; closet cards 10px; panels, the garment canvas (kit pictures, outfit boards) and the main action 12px; piece preview and cards added after v1.24 14px; sheets 16px (20 to 24px once Phase 12 rewrites the sheets); chips, weather pill and status pills 999px.
 - **Icons:** inline SVG, 24px viewBox, stroke 1.8 to 2, currentColor, as today. Use them where they help recognition, not on every heading. Life-cycle icons (wear, wash, repair, rotate, donate, recycle) may be added with a consistent stroke and size.
 
 ## Components
@@ -272,15 +272,16 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 
 ### Chips
 - **Style:** Surface background, 1px Line border, Muted text, 600 weight, 44px minimum height (40px for small chips).
-- **State:** selected is an Ink fill with Background text and aria-pressed="true". The holiday chip today uses a coral border and fill (decision 1 adds a second cue).
+- **State:** selected is an Ink fill with Background text and aria-pressed="true". On Outfits (Phase 8) the occasions are a grid (phones) or text tabs with a 2px ink underline (from 700x600); a holiday carries a coral dot and is selected in ink like the others.
 
 ### Garment imagery (signature)
 - Three kinds of image must all look right: phone photos, cut-outs on the cream canvas, and SVG glyphs filled with the piece's main color. Design for an empty closet too (a new user has 0 items).
 - Do not cover garments with badges, shrink them to fit details, or surround them with chrome.
-- Use 256px thumbnails only where the image is shown small (rendered width times device pixel ratio up to 256); full photos or cut-outs for large tiles, the hero, the preview and the viewer (Phase 9 measures this).
+- Use 256px thumbnails only where the image is shown small (rendered width times device pixel ratio up to 256); full photos or cut-outs for large tiles, the hero, the preview and the viewer. Outfits (Phase 8): cut-outs, or a 1024px copy of the photo made on the device and kept with the cut-outs, where a piece is drawn large; thumbnails where they stay sharp. Closet and garment detail: Phase 9.
 
 ### Outfit board (signature)
-- The flat-lay board (.flatlay, 4:5) lays the outfit's pieces on the cream canvas with garment shadows; tapping a piece opens its preview. The rank badge, match label, palette strip and "Wear this" sit around the board, never on the garments.
+- The flat-lay board (.flatlay) lays the outfit's pieces on the cream canvas with garment shadows; tapping a piece opens its preview. Square on the iPad and Windows (direction B, sized so "Wear this" stays in the window), 4:5 or as tall as the first screen allows on phones when chosen in Adjust. The rank badge, match label, palette strip and "Wear this" sit around the board, never on the garments.
+- The kit (phones, direction A, Phase 8): the main garments as 4:5 pictures on the cream canvas with their category and name, then shoes, belt and accessories as small named squares. Garment names stay in Figtree.
 
 ### Intelligence and numbers
 - Use the existing match labels (Excellent, Great, Good, Fair, Weak) rather than raw scores.
@@ -312,7 +313,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - Motion follows wardrobe behaviour: an outfit swap, a piece going into the wash, a piece coming back, a sheet moving.
 - Durations: fast 120 to 180ms; normal 200 to 280ms; editorial 300 to 450ms.
 - Every animation sits inside @media (prefers-reduced-motion: no-preference). No continuous or decorative motion. These rules win over review-animations (which wants under 300ms and gentler motion under reduced motion) and over Impeccable's animate defaults.
-- Today: toast entrance 0.2s ease-out, camera flash 0.25s, board piece press 0.12s and the job spinner sit inside the query; two disclosure chevrons rotate in 0.15s outside it (styles.css:479, 515).
+- Today: toast entrance 0.2s ease-out, camera flash 0.25s, the outfit's piece press 0.12s (board and kit, scale .97 and .98, cubic-bezier(.23,1,.32,1)) and the job spinner sit inside the query; the Outfits reasons chevron turns in 0.15s inside it (Phase 8); the Settings disclosure chevron still turns in 0.15s outside it.
 
 ## Do's and Don'ts
 
@@ -335,4 +336,4 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - **Don't** leave large unused desktop space caused by a phone max-width.
 - **Don't** set user-typed garment names in the display face.
 - **Don't** shrink text to solve crowding, or truncate translated labels to hide overflow.
-- **Don't** add a colored side stripe thicker than 1px to a card or callout; today .advice and .askcard (styles.css:310, 568) carry 3px coral left borders, which the detector flags.
+- **Don't** add a colored side stripe thicker than 1px to a card or callout; the 3px coral borders on .advice and .askcard were removed in Phase 8.

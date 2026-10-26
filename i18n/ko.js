@@ -575,6 +575,8 @@ I18N.load("ko",{
 "{0} items marked": "아이템 {0}개에",
 "{0} note": "주의 {0}건",
 "{0} notes": "주의 {0}건",
+"{0} more reasons": "이유 {0}개 더 보기",
+"{0} more reason": "이유 {0}개 더 보기",
 "{a} per wear so far.": "지금까지 착용당 {a}.",
 "{a} per wear": "착용당 {a}",
 "{0} photo shows the background. Claude finds each piece and crops around it (one small request per photo).": "사진 {0}장에 배경이 보여요. Claude가 각 아이템을 찾아 주변을 잘라요(사진당 작은 요청 1회).",

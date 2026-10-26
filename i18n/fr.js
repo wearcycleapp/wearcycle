@@ -575,6 +575,8 @@ I18N.load("fr",{
 "{0} items marked": "{0} articles marqués",
 "{0} note": "{0} note",
 "{0} notes": "{0} notes",
+"{0} more reasons": "{0} raisons de plus",
+"{0} more reason": "{0} raison de plus",
 "{a} per wear so far.": "{a} par port jusqu’ici.",
 "{a} per wear": "{a} par port",
 "{0} photo shows the background. Claude finds each piece and crops around it (one small request per photo).": "{0} photo montre l’arrière-plan. Claude repère chaque pièce et recadre autour (une petite requête par photo).",

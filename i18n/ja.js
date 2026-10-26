@@ -575,6 +575,8 @@ I18N.load("ja",{
 "{0} items marked": "{0}件のアイテムに印",
 "{0} note": "注意{0}件",
 "{0} notes": "注意{0}件",
+"{0} more reasons": "ほかの理由{0}件",
+"{0} more reason": "ほかの理由{0}件",
 "{a} per wear so far.": "これまでの1回あたり{a}。",
 "{a} per wear": "1回あたり{a}",
 "{0} photo shows the background. Claude finds each piece and crops around it (one small request per photo).": "{0}枚の写真に背景が写っています。Claudeが各アイテムを見つけて周りをトリミングします（写真1枚につき小さなリクエスト1回）。",

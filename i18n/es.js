@@ -575,6 +575,8 @@ I18N.load("es",{
 "{0} items marked": "{0} prendas marcadas",
 "{0} note": "{0} nota",
 "{0} notes": "{0} notas",
+"{0} more reasons": "{0} razones más",
+"{0} more reason": "{0} razón más",
 "{a} per wear so far.": "{a} por uso hasta ahora.",
 "{a} per wear": "{a} por uso",
 "{0} photo shows the background. Claude finds each piece and crops around it (one small request per photo).": "{0} foto muestra el fondo. Claude encuentra cada prenda y recorta alrededor (una pequeña solicitud por foto).",

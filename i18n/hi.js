@@ -575,6 +575,8 @@ I18N.load("hi",{
 "{0} items marked": "{0} आइटम पर",
 "{0} note": "{0} नोट",
 "{0} notes": "{0} नोट",
+"{0} more reasons": "{0} और कारण",
+"{0} more reason": "{0} और कारण",
 "{a} per wear so far.": "अब तक हर बार पहनने की लागत {a}।",
 "{a} per wear": "{a} प्रति बार",
 "{0} photo shows the background. Claude finds each piece and crops around it (one small request per photo).": "{0} फ़ोटो में बैकग्राउंड दिख रहा है। Claude हर पीस ढूँढकर उसके आस-पास क्रॉप करता है (हर फ़ोटो के लिए एक छोटा अनुरोध)।",

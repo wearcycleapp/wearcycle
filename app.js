@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.52.0';
+const APP_VERSION='1.53.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -21,7 +21,7 @@ let sb=null, UID=null, EMAIL='';
 
 /* ---------- state ---------- */
 const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:30,checkDays:365,unusedDays:730,wx:{on:false}},
-  occ:'work',layerMode:'auto',sel:0,view:(LS.get('wearcycle.view')||'board'),fits:[],fitKey:'',seed:Date.now()%100000,cat:'all',tab:'outfits',
+  occ:'work',layerMode:'auto',sel:0,viewSet:(LS.get('wearcycle.outfitView')||''),fits:[],fitKey:'',seed:Date.now()%100000,cat:'all',tab:'outfits',
   loaded:false,online:navigator.onLine,fromCache:false,busy:false,installEvt:null};
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
@@ -97,17 +97,24 @@ function rotateStyle(){
 }
 function setStyleToday(k){ S.styleToday=k||undefined; LS.set('wearcycle.styleDay',{day:todayISO(),k:k||''}); S.fitKey=''; renderOutfits(); }
 function renderStyleChips(){
-  const box=$('#styleChips'); if(!box) return; const hint=$('#styleHint');
+  const box=$('#styleChips'); if(!box) return; const hint=$('#styleHint'), sel=$('#styleSel');
   const keys=STYLE_OCC.includes(S.occ)?dayStyles():[];
-  if(keys.length<2){ box.hidden=true; box.innerHTML=''; if(hint) hint.hidden=true; return; } box.hidden=false;
+  if(keys.length<2){ box.hidden=true; box.innerHTML=''; if(sel) sel.innerHTML=''; if(hint) hint.hidden=true; return; }
   const cur=S.styleToday==='rotate'||keys.includes(S.styleToday)?S.styleToday:'';
   if(hint){ const r=cur==='rotate'?rotateStyle():(STYLES[cur]?cur:null);
     const top=S.fits&&S.fits[0]; const short=r&&STYLES[r]&&top&&top.style!==r;
     const msg=(cur==='rotate'&&r?'Rotating styles: today is '+styleName(r)+'.':'')+(short?(cur==='rotate'?' ':'')+'Not enough '+STYLES[r].label+' pieces for a full outfit, so these are the closest.':'');
     hint.hidden=!msg; hint.textContent=msg; }
-  const chip=(k,l,notr)=>`<button class="chip" data-stoday="${esc(k)}" aria-pressed="${cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`;
-  box.innerHTML=`<span class="rowlab">Style</span>`+chip('','All my styles')+chip('rotate','Rotate')+keys.map(k=>STYLES[k]?chip(k,STYLES[k].label):chip(k,styleName(k),1)).join('');
+  const all=[['','All my styles'],['rotate','Rotate']].concat(keys.map(k=>STYLES[k]?[k,STYLES[k].label]:[k,styleName(k),1]));
+  if(dirB()){ if(sel) sel.innerHTML=''; box.hidden=false;
+    box.innerHTML=`<span class="rowlab">Style</span>`+all.map(([k,l,notr])=>`<button class="stab" data-stoday="${esc(k)}" aria-pressed="${cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`).join(''); }
+  else { box.hidden=true; box.innerHTML=''; const c=all.find(x=>x[0]===cur)||all[0];
+    if(sel) sel.innerHTML=`<button class="stylebtn" data-act="styleMenu" aria-haspopup="dialog"><span class="k">Style</span><span class="v"${c[2]?' data-notr':''}>${esc(c[1])}</span>${CHEV_D}</button>`; }
+  S.styleOpts={all,cur,msg:hint&&!hint.hidden?hint.textContent:''};
 }
+// Direction A: the style menu opens a sheet with the same choices as B's style tabs.
+function openStyleMenu(){ const o=S.styleOpts; if(!o) return;
+  openSheet(sheetHead('Style today')+`<div class="chips" role="group" aria-label="Style" style="flex-wrap:wrap">${o.all.map(([k,l,notr])=>`<button class="chip" data-stoday="${esc(k)}" aria-pressed="${o.cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`).join('')}</div>${o.msg?`<p class="hint">${esc(o.msg)}</p>`:''}`); }
 function styleKey(){ const t=styleTarget(S.occ); return t?(t.ids.join(',')+'/'+t.looks.map(l=>l.id).join(',')+'/'+t.weight):'-'; }
 function canWrite(){ return S.online && !!sb; }
 function cacheKey(){ return 'wardrobe.cache.'+UID; }
@@ -370,13 +377,20 @@ async function trimAlpha(png){
   return b;
 }
 const cutKey=path=>new URL('cutouts/'+path,location.href).href;
-async function cutUrl(it){
-  if(!it||!it.cut) return '';
-  if(CUT.urls.has(it.cut)) return CUT.urls.get(it.cut);
+// One download per cut-out: every render of the screen asks again, so a request already on its way is shared
+// (before v1.53, opening Outfits fetched the same file up to 20 times).
+const cutPending=new Map(), cutGone=new Set(); // cutGone: files the server did not return while online (not asked again)
+function cutUrl(it){
+  if(!it||!it.cut||cutGone.has(it.cut)) return Promise.resolve('');
+  if(CUT.urls.has(it.cut)) return Promise.resolve(CUT.urls.get(it.cut));
+  if(!cutPending.has(it.cut)){ const key=it.cut; cutPending.set(key,cutLoad(it).finally(()=>cutPending.delete(key))); }
+  return cutPending.get(it.cut);
+}
+async function cutLoad(it){
   let blob=null;
   try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(cutKey(it.cut)); let clean=false;
     if(hit){ blob=await hit.blob(); clean=hit.headers.get('X-Clean')==='2'; }
-    if(!blob&&sb&&S.online){ const {data}=await sb.storage.from('photos').download(it.cut); if(data) blob=data; }
+    if(!blob&&sb&&S.online){ const {data}=await sb.storage.from('photos').download(it.cut); if(data) blob=data; else cutGone.add(it.cut); }
     if(blob&&!clean){ try{ blob=await trimAlpha(blob); }catch(e){} c.put(cutKey(it.cut),new Response(blob,{headers:{'Content-Type':blob.type||'image/webp','X-Clean':'2'}})); } }catch(e){}
   if(!blob) return '';
   if(enhanceOn()){ try{ blob=await enhanceBlob(blob,{mask:true,target:colorLum((it.colors||[])[0])}); }catch(e){} }
@@ -797,7 +811,8 @@ function renderWx(){
   const wet=d.snow?' · snow':d.rain?' · rain':'';
   box.innerHTML=`<button class="wxpill" data-wx="edit" aria-label="Weather: ${tdeg(d.tempMin)} to ${tdeg(d.tempMax)}, ${esc(d.sky)}. Change">${WX_ICON}<span>${tdeg(d.tempMin).replace(/[CF]$/,'')}–${tdeg(d.tempMax)}${wet}</span></button>`;
 }
-function greeting(){ const h=new Date().getHours(); const d=new Date().toLocaleDateString(I18N.locale,{weekday:'long'}); return esc(d)+`<small>${h<12?'Good morning':h<18?'Good afternoon':'Good evening'}</small>`; }
+function dayName(){ return new Date().toLocaleDateString(I18N.locale,{weekday:'long'}); }
+function helloWord(){ const h=new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; }
 function adviceText(){
   const w=wxForScore(), d=WXC.data; if(!w||!d) return '';
   const {lo,hi}=wxFeel(w); const out=[];
@@ -832,10 +847,25 @@ async function autoWash(){
   for(const it of due) await patchItem(it.id,{dirty:false,wearsSinceWash:0,dirtyOn:undefined});
   toast(due.length+' piece'+(due.length===1?'':'s')+' back from the wash after '+washDays()+' days.',5000);
 }
+/* ---------- Outfits (Phase 8) ----------
+   Direction A, "Kit", below 700px wide or 600px tall: the occasions as a 3 by 2 grid, the kit (every piece named),
+   Wear this, the first reason, then the other options as a numbered index. Direction B, "Lookbook", from 700x600:
+   occasions as text tabs, square flat-lay pages you turn, Why this outfit below; from 1100px every look side by side.
+   Both draw the same outfits and keep every action; renderOutfits picks the markup and redraws when the window
+   crosses a switch (docs/design/SCREENS.md, Outfits). */
+const MQ_B=matchMedia('(min-width:700px) and (min-height:600px)'), MQ_W=matchMedia('(min-width:1100px) and (min-height:600px)');
+const dirB=()=>MQ_B.matches;
+// "Show outfits as" (Adjust): with no stored choice, phones show the kit and wider screens the flat-lay board.
+const viewNow=()=>S.viewSet||(dirB()?'board':'pieces');
+LS.del('wearcycle.view'); // the choice stored before v1.53 is cleared once (owner, 2026-10-26); new choices use wearcycle.outfitView
+[MQ_B,MQ_W].forEach(q=>{ const f=()=>{ if(S.loaded) renderOutfits(); }; if(q.addEventListener) q.addEventListener('change',f); else if(q.addListener) q.addListener(f); });
+const pad2=n=>String(n).padStart(2,'0');
+const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function renderOutfits(){
-  renderWx(); const g=$('#greet'); if(g) g.innerHTML=greeting();
+  renderWx(); const g=$('#greet'); if(g) g.textContent=dayName(); const hl=$('#hello'); if(hl) hl.textContent=helloWord();
   const hol=holidaysSoon(14); if(S.theme&&!themeNow()) S.theme=undefined;
-  $('#occChips').innerHTML=hol.map(h=>`<button class="chip holchip" data-theme-occ="${h.id}" aria-pressed="${S.theme===h.id}">${h.label}</button>`).join('')+OCCASIONS.map(o=>`<button class="chip" data-occ="${o.id}" aria-pressed="${S.occ===o.id&&!S.theme}">${o.label}</button>`).join('');
+  $('#occChips').classList.toggle('has-hol',hol.length>0);
+  $('#occChips').innerHTML=hol.map(h=>`<button class="occ hol" data-theme-occ="${h.id}" aria-pressed="${S.theme===h.id}">${h.label}</button>`).join('')+OCCASIONS.map(o=>`<button class="occ" data-occ="${o.id}" aria-pressed="${S.occ===o.id&&!S.theme}">${o.label}</button>`).join('');
   const th=$('#themeHint'); if(th){ const h=S.theme&&hol.concat(holidaysSoon(30)).find(x=>x.id===S.theme); th.hidden=!h; th.textContent=h?h.label+': '+whenLabel(h.inDays).toLowerCase()+'. '+h.tip:''; }
   const box=$('#fits');
   if(!S.loaded){ box.innerHTML='<p class="hint">Loading your closet…</p>'; return; }
@@ -850,60 +880,138 @@ function renderOutfits(){
       <div class="row"><button class="btn" data-tab-go="shop">Open shopping list</button></div></div>`; return;
   }
   if(S.sel>=S.fits.length) S.sel=0;
-  const others=S.fits.map((f,i)=>i===S.sel?'':altRow(f,i)).join('');
   setTimeout(hydrateCuts,0);
   const ask=S.occ==='work'&&!S.settings.work&&!S.examples.length?`<div class="askcard"><b>What is the dress code at your work?</b><span>Wearcycle sorts your clothes for Work from it. Change it any time in Settings.</span>
     <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}">${esc(d.label)}</button>`).join('')}</div></div>`:'';
-  box.innerHTML=ask+pinCard()+washCard()+todayLine()+heroCard(S.fits[S.sel],S.sel)+
-    `<div class="alts"><div class="alts-h"><h3>${S.fits.length>1?'More options':'Only one outfit fits'}</h3><span class="spacer"></span><button class="btn sm" id="shuffleBtn">New ideas</button></div>
-     ${S.fits.length>1?`<div class="altrow">${others}</div>`:`<p class="hint">Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`}</div>`;
+  const top=ask+pinCard()+washCard();
+  if(dirB()){ box.innerHTML=top+lookbook()+todayLine()+whySection(); fitLooks(); }
+  else box.innerHTML=top+heroCard(S.fits[S.sel],S.sel)+todayLine()+optionIndex();
+  setTimeout(hydratePhotos,0);
 }
 const CHEV_L='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
 const CHEV_R='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
 const SWAP_ICON='<span class="swap" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></span>';
-function tile(it,slot,i,size){
-  if(!it) return '';
-  const acc=slot.startsWith('acc');
-  return `<button class="tile ${size||''}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to see it">${acc?'':SWAP_ICON}<div class="vis">${visual(it)}</div><div class="cap"><span class="k">${esc(slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&size==='open')?'Top, worn open':CAT[it.cat].label)}</span>${esc(it.name)}</div></button>`;
-}
 const ADJ_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>';
 const UNDO_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg>';
 const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
-function heroCard(f,i){
-  const o=hydrate(f.ids); const m=match(f);
-  const core=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom],o.shoes&&['shoes',o.shoes]].filter(Boolean);
+const CHEV_D='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
+// Header of the selected outfit: rank (the #1 pick in coral), title, style, match label; Adjust on the right.
+function fitHead(f,i){ const m=match(f); const title=f.edited?'Your version':i===0?'Today’s pick':'Option '+f.rank;
+  return `<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}" aria-hidden="true">${pad2(f.rank)}</span><span class="rk-l"><b>${title}${f.style&&STYLES[f.style]?`<em class="stylepill">${STYLES[f.style].label}</em>`:''}</b><span>${m.label}${bars(m.bars)}</span></span>
+    <button class="iconbtn" data-act="adjust" aria-label="Adjust: outer layer, view and palette">${ADJ_ICON}</button></header>`; }
+function tapBar(f,i){ return f.edited&&f.orig?`<div class="editbar"><span>You changed this outfit.</span><button class="btn sm" data-revert="${i}">${UNDO_ICON}Back to suggestion</button></div>`
+  :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to see it or swap it</span></p>`; }
+function ctaRow(f,i){ return `<div class="ctarow">${f.worn?'<button class="worn-ok linkish" data-act="todaylog">✓ Logged as worn today · Correct</button>':`<button class="btn cta grow" data-wear="${i}">Wear this</button>`}
+  <button class="btn iconb" data-act="share" aria-label="Share this outfit">${SHARE_ICON}</button></div>`; }
+function addRow(f,i,o){
   const canAddUnder=o.top&&!o.under&&layeredOver(o.top)&&swapCandidates(o,'under',allItems(),S.occ,ctx()).length;
-  const beltK=o.bottom?o.acc.findIndex(a=>a.cat==='belt'):-1; const rest=o.acc.map((a,k)=>[a,k]).filter(([a,k])=>k!==beltK);
-  const title=f.edited?'Your version':i===0?'Today’s pick':'Option '+f.rank;
-  const head=`<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}">${f.rank}</span><span class="rk-l"><b>${title}${f.style&&STYLES[f.style]?`<em class="stylepill">${STYLES[f.style].label}</em>`:''}</b><span>${m.label}${bars(m.bars)}</span></span>
-    <button class="iconbtn" data-act="adjust" aria-label="Adjust: outer layer, view and palette">${ADJ_ICON}</button></header>`;
-  const n=S.fits.length;
-  const nav=n>1?`<div class="pager"><button class="pg" data-step-opt="-1" aria-label="Previous option">‹</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===i}"></button>`).join('')}<button class="pg" data-step-opt="1" aria-label="Next option">›</button></div>`:'';
-  const visual=S.view==='board'?flatlay(o,i):`<div class="board2 n${core.length}">${core.map(([k,it])=>k==='bottom'&&beltK>=0?beltOn(it,o.acc[beltK],beltK,i):tile(it,k,i,k==='top'&&o.under&&canOpen(o.top)?'open':'')).join('')}</div>
-    ${rest.length?`<div class="accrow">${rest.map(([a,k])=>tile(a,'acc'+k,i,'xs')).join('')}</div>`:''}`;
-  const tapbar=f.edited&&f.orig?`<div class="editbar"><span>You changed this outfit.</span><button class="btn sm" data-revert="${i}">${UNDO_ICON}Back to suggestion</button></div>`
-    :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to see it or swap it</span></p>`;
   const canAddBelt=!f.worn&&o.bottom&&!(o.acc||[]).some(a=>a.cat==='belt')&&beltOpts(o).length>0;
-  return `<article class="fit hero">${head}${visual}${tapbar}${nav}${heroMeta(f,i,o,canAddUnder,canAddBelt)}</article>`;
+  return canAddUnder||canAddBelt?`<div class="addrow">${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}${canAddBelt?`<button class="btn sm ghost addunder" data-addbelt="${i}">+ Wear a belt</button>`:''}</div>`:'';
 }
+// Reasons without the color-harmony line (the palette strip shows that one).
+function reasonsOf(f,o){ const hw=WardrobeLogic.harmony(coreOf(o).map(primary).filter(c=>COLORS[c])).why; return f.reasons.filter(r=>r.t!==hw); }
+const whyLi=r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`;
+const notesPill=n=>n?` <span class="warnn">${n} note${n>1?'s':''}</span>`:'';
+function rankNote(){ return `<p class="hint">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?', today’s weather':''}${S.settings.palette&&S.settings.palette!=='any'?' and your palette':''}. Tap any piece to swap it.</p>`; }
+// Direction A: the selected outfit as a kit (or the flat-lay board when chosen in Adjust), Wear this right under it,
+// then the tap hint (or Back to suggestion), the first reason (a note first, if there is one) and "N more reasons".
+function heroCard(f,i){
+  const o=hydrate(f.ids), rs=reasonsOf(f,o), first=rs.find(r=>r.neg)||rs[0], rest=rs.filter(r=>r!==first);
+  return `<article class="fit hero kitv">${fitHead(f,i)}
+    <div class="herokit">${viewNow()==='board'?flatlay(o,i,true):kitHtml(o,i)}</div>
+    <div class="herometa">${ctaRow(f,i)}${tapBar(f,i)}${addRow(f,i,o)}
+      ${first?`<ul class="why why1">${whyLi(first)}</ul>`:''}
+      <details class="whybox"><summary>${rest.length?(rest.length===1?'1 more reason':rest.length+' more reasons'):'Why this outfit?'}${notesPill(rest.filter(r=>r.neg).length)}${CHEV_D}</summary>${rest.length?`<ul class="why">${rest.map(whyLi).join('')}</ul>`:''}${rankNote()}</details>
+      ${paletteStrip(o)}${cutNote(o)}
+      <button class="linkbtn" data-act="logOther">Wore something else? Log it</button></div></article>`;
+}
+// Direction A: the other options as an index, one row each: number, small pictures, piece names and match.
+function optionIndex(){
+  const n=S.fits.length;
+  return `<section class="alts" aria-labelledby="altsH"><div class="alts-h"><h3 id="altsH">${n>1?'More options':'Only one outfit fits'}</h3><button class="btn sm" id="shuffleBtn">New ideas</button></div>
+    ${n>1?`<ol class="optlist">${S.fits.map((f,i)=>i===S.sel?'':optRow(f,i)).join('')}</ol>`:`<p class="hint">Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`}</section>`;
+}
+function optRow(f,i){ const o=hydrate(f.ids), m=match(f), names=coreOf(o).map(x=>x.name).join(', ');
+  const pics=[o.onepiece||o.top,!o.onepiece&&o.bottom,o.shoes].filter(Boolean);
+  return `<li><button class="orow" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(names)}"><span class="onum" aria-hidden="true">${pad2(f.rank)}</span>
+    <span class="ominis" aria-hidden="true">${pics.map(it=>`<span class="om">${smallPic(it)}</span>`).join('')}</span>
+    <span class="otx" aria-hidden="true"><b data-notr>${esc(names)}</b><span>${m.label}${bars(m.bars)}</span></span></button></li>`; }
+// Direction B: the looks as pages. Below 1100px the selected page with the next one peeking (the previous one on the
+// last page), turned with the arrows, the dots, a swipe or the arrow keys; from 1100px every look side by side,
+// the selected one first and largest. Only the selected page has pieces to tap and "Wear this".
+function lookbook(){
+  const n=S.fits.length, sel=S.sel, spread=MQ_W.matches;
+  const order=spread?[sel].concat(S.fits.map((f,k)=>k).filter(k=>k!==sel)):n<2?[sel]:sel<n-1?[sel,sel+1]:[sel-1,sel];
+  const nav=n>1&&!spread?`<div class="pgr"><button class="pg" data-step-opt="-1" aria-label="Previous option">${CHEV_L}</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===sel}"></button>`).join('')}<span class="pcount">${sel+1} of ${n}</span><button class="pg" data-step-opt="1" aria-label="Next option">${CHEV_R}</button></div>`:'';
+  const one=n<2?`<p class="hint lbone"><b>Only one outfit fits</b> Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`:'';
+  return `<section class="lb ${spread?'spread':'pager'} n${n}" aria-label="Outfits"><div class="lb-view${!spread&&n>1&&sel===n-1?' atend':''}">${order.map(k=>k===sel?lookCur(S.fits[k],k):lookAlt(S.fits[k],k)).join('')}</div>
+    <div class="lbnav">${nav}${one}<button class="btn sm" id="shuffleBtn">New ideas</button></div></section>`;
+}
+function lookCur(f,i){ const o=hydrate(f.ids);
+  return `<article class="look cur fit hero">${fitHead(f,i)}<div class="stage">${viewNow()==='board'?flatlay(o,i,true):kitHtml(o,i)}</div>${ctaRow(f,i)}${tapBar(f,i)}${addRow(f,i,o)}</article>`; }
+function lookAlt(f,i){ const o=hydrate(f.ids), m=match(f);
+  const cells=flOrder(flCells(o)).map(c=>`<span class="fl ${c.small?'small':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${flVisual(c.it)}</span>`).join('');
+  return `<button class="look alt" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(coreOf(o).map(x=>x.name).join(', '))}"><span class="fit-h" aria-hidden="true"><span class="rank ${i===0&&!f.edited?'top':''}">${pad2(f.rank)}</span><span class="rk-l"><b>${m.label}</b><span>${bars(m.bars)}</span></span></span><span class="flatlay">${cells}</span></button>`; }
+// Direction B: every reason for the selected look, with the palette, the weather advice and the cut-out note beside.
+function whySection(){ const f=S.fits[S.sel]; if(!f) return ''; const o=hydrate(f.ids), rs=reasonsOf(f,o);
+  return `<section class="whysec" aria-labelledby="whyH"><h3 id="whyH">Why this outfit?${notesPill(rs.filter(r=>r.neg).length)}</h3>
+    <div class="whycols"><div class="whymain">${rs.length?`<ul class="why">${rs.map(whyLi).join('')}</ul>`:''}${rankNote()}</div><div class="whyside">${paletteStrip(o)}${cutNote(o)}</div></div>
+    <button class="linkbtn" data-act="logOther">Wore something else? Log it</button></section>`; }
+// Direction B: the selected board is square and sized so "Wear this" stays in the first screen (SCREENS.md: every
+// iPad and Windows size, 1366x630 included), never more than its share of the row, and never under 240px.
+function fitLooks(){
+  const lb=document.querySelector('#fits .lb'); if(!lb||!lb.isConnected) return;
+  const cur=lb.querySelector('.look.cur'), stage=cur&&cur.querySelector('.stage'), cta=cur&&cur.querySelector('.ctarow'); if(!stage||!cta) return;
+  const n=S.fits.length, W=lb.clientWidth, G=16, spread=lb.classList.contains('spread');
+  const byW=spread?(W-G*(n-1))*1.6/(1.6+n-1):(n>1?W*0.58:Math.min(W,720));
+  let size=byW;
+  for(let k=0;k<3;k++){
+    lb.style.setProperty('--cur',Math.floor(size)+'px');
+    const s=stage.getBoundingClientRect(), c=cta.getBoundingClientRect();
+    const avail=window.innerHeight-(s.top+window.scrollY)-(c.bottom-s.bottom)-16;
+    size=Math.max(Math.min(byW,240),Math.min(byW,s.width*avail/Math.max(1,s.height)));
+  }
+  lb.style.setProperty('--cur',Math.floor(size)+'px');
+  if(spread&&n>1) lb.style.setProperty('--alt',Math.floor(Math.min(size/1.25,(W-size-G*(n-1))/(n-1)))+'px');
+}
+let fitRaf=0; window.addEventListener('resize',()=>{ cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(fitLooks); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>fitLooks());
+// The kit (direction A): the main garments as 4:5 pictures with category and name, then shoes, belt and
+// accessories in one row with their names. A dress alone brings the shoes up to the main row.
+function kitHtml(o,i){
+  const main=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom]].filter(Boolean);
+  const small=(o.shoes?[['shoes',o.shoes]]:[]).concat(o.acc.map((a,k)=>['acc'+k,a]));
+  if(main.length<2&&small.length&&small[0][0]==='shoes') main.push(small.shift());
+  const kind=(slot,it)=>slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&o.under&&canOpen(o.top))?'Top, worn open':CAT[it.cat].label;
+  const piece=(slot,it,big)=>`<button class="kt${big?'':' sm'}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to see it"><span class="kpic">${kitPic(it,big)}</span><span class="kn" aria-hidden="true">${big?`<span class="k">${esc(kind(slot,it))}</span>`:''}<span class="nm" data-notr>${esc(it.name)}</span></span></button>`;
+  return `<div class="kit n${main.length}" data-swipe="1">${main.map(([s,it])=>piece(s,it,1)).join('')}</div>${small.length?`<div class="kitsm">${small.map(([s,it])=>piece(s,it,0)).join('')}</div>`:''}`;
+}
+// Pictures by drawn size: the cut-out (on the cream canvas) or the full photo where a piece is drawn large, the
+// thumbnail where it stays sharp (hydratePhotos measures and upgrades).
+function kitPic(it,big){ const src=thumbSrc(it); if(!src) return glyph(it);
+  return `<img src="${esc(src)}" alt="" class="${it.box?'fitted':'cover'}"${big&&it.cut?` data-cut="${esc(it.id)}"`:big&&it.photo&&!isEx(it)?` data-photo="${esc(it.id)}"`:''}>`; }
+function smallPic(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="" loading="lazy" class="${it.box?'fitted':'cover'}">`:glyph(it); }
+// A piece without a cut-out drawn larger than its thumbnail: its photo, downloaded once, reduced on the device to
+// 1024px (the cut-outs' size) and kept with the cut-outs, so later opens download nothing. Sign-out clears that cache.
+const MED=new Map();
+function medUrl(it){ const key=it.photo; if(MED.has(key)) return MED.get(key);
+  const p=(async()=>{ let blob=null; const k=cutKey('m1024/'+key);
+    try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(k); if(hit) blob=await hit.blob();
+      if(!blob&&sb&&S.online){ blob=await shrink(await photoBlob(key),1024); if(blob) await c.put(k,new Response(blob,{headers:{'Content-Type':blob.type||'image/jpeg'}})); } }catch(e){}
+    return blob?URL.createObjectURL(blob):''; })();
+  MED.set(key,p); p.then(u=>{ if(!u) MED.delete(key); }); return p; }
+function hydratePhotos(){ document.querySelectorAll('#fits img[data-photo]').forEach(img=>{
+  const go=()=>{ if(!img.isConnected||!img.dataset.photo) return; const r=img.getBoundingClientRect(); if(!r.width) return;
+    if(Math.max(r.width,r.height)*(window.devicePixelRatio||1)<=(img.naturalWidth||0)*1.1) return;
+    const it=byId(img.dataset.photo); img.removeAttribute('data-photo'); if(!it||!it.photo) return;
+    medUrl(it).then(u=>{ if(u&&img.isConnected) img.src=u; }); };
+  if(img.complete) go(); else img.addEventListener('load',go,{once:true}); }); }
 // The outfit's color story: one swatch per main piece (in wearing order) and the harmony rule it follows.
 function paletteStrip(o){
   const core=coreOf(o); const h=WardrobeLogic.harmony(core.map(primary).filter(c=>COLORS[c]));
   const adv=adviceText();
   return `<div class="palette"><span class="sws">${core.filter(i=>COLORS[primary(i)]).map(i=>`<span class="sw" style="background:${COLORS[primary(i)].hex}" title="${esc(primary(i))}: ${esc(i.name)}"></span>`).join('')}</span>
     <span class="pl"><b>${esc(h.why)}</b>${adv?`<span>${esc(adv)}</span>`:''}</span></div>`;
-}
-function heroMeta(f,i,o,canAddUnder,canAddBelt){
-  const hw=WardrobeLogic.harmony(coreOf(o).map(primary).filter(c=>COLORS[c])).why;
-  const rs=f.reasons.filter(r=>r.t!==hw); const warn=rs.filter(r=>r.neg).length;
-  return `${paletteStrip(o)}
-    <div class="ctarow">${f.worn?'<button class="worn-ok linkish" data-act="todaylog">✓ Logged as worn today · Correct</button>':`<button class="btn cta grow" data-wear="${i}">Wear this</button>`}
-      <button class="btn iconb" data-act="share" aria-label="Share this outfit">${SHARE_ICON}</button></div>
-    ${canAddUnder||canAddBelt?`<div class="addrow">${canAddUnder?`<button class="btn sm ghost addunder" data-addunder="${i}">+ Wear a t-shirt underneath</button>`:''}${canAddBelt?`<button class="btn sm ghost addunder" data-addbelt="${i}">+ Wear a belt</button>`:''}</div>`:''}
-    <details class="whybox"><summary>Why this outfit?${warn?` <span class="warnn">${warn} note${warn>1?'s':''}</span>`:''}</summary>
-      <ul class="why">${rs.map(r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`).join('')}</ul>
-      <p class="hint">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?', today’s weather':''}${S.settings.palette&&S.settings.palette!=='any'?' and your palette':''}. Tap any piece to swap it.</p></details>
-    <button class="linkbtn" data-act="logOther">Wore something else? Log it</button>`;
 }
 function palNow(){ return paletteOf(S.settings.palette||'any',S.settings.paletteCustom); }
 function palDesc(p){ return (S.settings.palette==='custom'&&p.colors)?p.colors.join(', '):p.desc; }
@@ -912,7 +1020,7 @@ function openAdjust(){
   openSheet(sheetHead('Adjust')+`
    <div class="field"><span class="lab">Outer layer</span><div class="chips">${[['auto','Auto'+(wxForScore()?(auto?' (on today)':' (off today)'):'')],['on','Always add'],['off','None']].map(([k,l])=>`<button class="chip" data-layer="${k}" aria-pressed="${S.layerMode===k}">${l}</button>`).join('')}</div>
      <p class="hint">Auto adds a jacket or coat when it is below 15° or wet.</p></div>
-   <div class="field"><span class="lab">Show outfits as</span><div class="chips"><button class="chip" data-view="board" aria-pressed="${S.view==='board'}">Flat-lay</button><button class="chip" data-view="pieces" aria-pressed="${S.view!=='board'}">Pieces</button></div></div>
+   <div class="field"><span class="lab">Show outfits as</span><div class="chips"><button class="chip" data-view="board" aria-pressed="${viewNow()==='board'}">Flat-lay</button><button class="chip" data-view="pieces" aria-pressed="${viewNow()!=='board'}">Pieces</button></div></div>
    <div class="field"><span class="lab">Style palette</span><button class="btn" data-act="palettes" style="justify-content:space-between">${esc(pal.label)}<span class="hint">Change</span></button></div>`);
 }
 /* Flat-lay board, laid out in wearing order so every outfit reads the same way:
@@ -936,29 +1044,19 @@ function flCells(o){
   else if(o.shoes) cells.push({slot:'shoes',it:o.shoes,x:R.x,y:4+colH*0.35,w:R.w,h:colH*0.3});
   return cells;
 }
-function flatlay(o,i){
-  const miss=[];
-  const parts=flCells(o).map(c=>{ if(needsCut(c.it)) miss.push(c.it);
-    return `<button class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%" data-swap="${i}" data-slot="${c.slot}" aria-label="${esc(CAT[c.it.cat].label)}: ${esc(c.it.name)}. Tap to see it">${flVisual(c.it)}</button>`; });
-  const note=miss.length&&!CUT.busy?`<div class="cutnote"><span>${miss.length} piece${miss.length>1?'s':''} still on the floor photo.</span><button class="btn sm primary" data-act="cutOutfit">Make cut-outs</button></div>`:(CUT.busy?'<div class="cutnote"><span>Making cut-outs… you can keep using the app.</span></div>':'');
-  return `<div class="flatlay" data-swipe="1">${parts.join('')}</div>${note}`;
+// Board cells in reading order for the keyboard: the upper body, then trousers and shoes, then the accessories row.
+const flOrder=cells=>cells.slice().sort((a,b)=>(a.small?1:0)-(b.small?1:0));
+function flatlay(o,i,big){
+  const parts=flOrder(flCells(o)).map(c=>`<button class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%" data-swap="${i}" data-slot="${c.slot}" aria-label="${esc(CAT[c.it.cat].label)}: ${esc(c.it.name)}. Tap to see it">${flVisual(c.it,big&&!c.small)}</button>`);
+  return `<div class="flatlay" data-swipe="1">${parts.join('')}</div>`;
 }
-function flVisual(it){ const src=thumbSrc(it); return `<img ${it.cut?`data-cut="${esc(it.id)}"`:''} src="${esc(src||'')}" alt="" ${src?'':'hidden'}>${src?'':glyph(it)}`; }
+// Pieces of the selected outfit still on their floor photo, with the button that makes their cut-outs.
+function cutNote(o){ const miss=flCells(o).map(c=>c.it).filter(needsCut);
+  return miss.length&&!CUT.busy?`<div class="cutnote"><span>${miss.length} piece${miss.length>1?'s':''} still on the floor photo.</span><button class="btn sm primary" data-act="cutOutfit">Make cut-outs</button></div>`:(CUT.busy?'<div class="cutnote"><span>Making cut-outs… you can keep using the app.</span></div>':''); }
+function flVisual(it,big){ const src=thumbSrc(it); return `<img ${it.cut?`data-cut="${esc(it.id)}"`:big&&src&&it.photo&&!isEx(it)?`data-photo="${esc(it.id)}"`:''} src="${esc(src||'')}" alt="" ${src?'':'hidden'}>${src?'':glyph(it)}`; }
 // After each render, swap in the transparent cut-outs (loaded from the phone's cache, or downloaded once).
 function hydrateCuts(){ document.querySelectorAll('img[data-cut]').forEach(img=>{ const it=byId(img.dataset.cut); cutUrl(it).then(u=>{ if(u&&img.isConnected){ img.src=u; img.hidden=false; img.classList.add('cut'); CUT.missing.delete(it.id); }
     else if(!u&&it&&it.cut&&S.online&&!CUT.missing.has(it.id)){ CUT.missing.add(it.id); if(ED&&ED.id===it.id) drawEditor(); } }); }); }
-// The belt is drawn as a band across the top of the trousers tile, where it is worn; it swaps on its own.
-function beltOn(bottom,belt,k,i){
-  return `<div class="withbelt">${tile(bottom,'bottom',i)}<button class="beltband" data-swap="${i}" data-slot="acc${k}" aria-label="Belt: ${esc(belt.name)}. Tap to see it"><span class="bimg">${visual(belt)}</span><span class="blab"><span class="k">Belt</span><span class="bn">${esc(belt.name)}</span></span></button></div>`;
-}
-function altRow(f,i){
-  const o=hydrate(f.ids); const m=match(f);
-  const cells=flCells(o).map(c=>`<span class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${flVisual(c.it)}</span>`).join('');
-  const sws=coreOf(o).map(primary).filter(c=>COLORS[c]).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('');
-  return `<button class="alt2" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(coreOf(o).map(x=>x.name).join(', '))}">
-    <span class="flatlay mini">${cells}<span class="rank">#${f.rank}</span></span>
-    <span class="alt2-l"><span class="sws">${sws}</span><span class="ml">${m.label}</span>${bars(m.bars)}</span></button>`;
-}
 function renderCloset(){ setTimeout(hydrateCuts,0);
   const items=allItems().filter(isActive);
   const counts={}; for(const it of items) counts[it.cat]=(counts[it.cat]||0)+1;
@@ -1776,9 +1874,7 @@ function todayLine(){
   const es=allLog().filter(e=>e.date===todayISO()); if(!es.length) return '';
   const names=[...new Set(es.flatMap(e=>e.items))].map(byId).filter(Boolean).filter(i=>!ACCESSORY.includes(i.cat)).map(i=>i.name);
   const all=[...new Set(es.flatMap(e=>e.items))].map(byId).filter(Boolean);
-  return `<div class="todaycard"><div class="tc-h"><b>Wearing today</b><button class="btn sm" data-act="todaylog">Edit</button></div>
-    <button class="tc-row" data-act="todaylog" aria-label="Logged today: ${esc(names.join(', '))}">${all.slice(0,8).map(it=>`<span class="tc-th">${visual(it)}</span>`).join('')}</button>
-    <span class="hint">Logged today: ${esc(names.join(', ')||es.length+' outfit')}</span></div>`;
+  return `<div class="todaystrip"><b>Wearing today</b><button class="tc-row" data-act="todaylog" aria-label="Logged today: ${esc(names.join(', ')||es.length+' outfit')}">${all.slice(0,8).map(it=>`<span class="tc-th">${smallPic(it)}</span>`).join('')}</button><button class="btn sm" data-act="todaylog">Edit</button></div>`;
 }
 // An edited outfit remembers the suggestion it came from, so it can go back.
 function editedFit(f,o){ const r=scoreOutfit(o,S.occ,ctx()); return {ids:idsOf(o),score:r.score,reasons:r.reasons,style:r.style,rank:f.rank,edited:true,orig:f.orig||f}; }
@@ -1957,14 +2053,16 @@ document.addEventListener('click',async e=>{
   if(ds.wcode){ S.settings.work={code:ds.wcode}; setDressCode(S.settings.work); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); if($('#sheetRoot').innerHTML&&document.querySelector('.dresspanel')) openSettings(); else closeSheet(); toast('Work dress code: '+DRESS_CODES[ds.wcode].label+'. Your closet was re-sorted.'); return; }
   if(ds.pcol&&PCOL){ if(PCOL.has(ds.pcol)) PCOL.delete(ds.pcol); else PCOL.add(ds.pcol); t.setAttribute('aria-pressed',PCOL.has(ds.pcol)); const er=$('#pc-err'); if(er) er.textContent=''; return; }
   if(ds.pal){ S.settings.palette=ds.pal; saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast(ds.pal==='any'?'No palette preference.':'Ranking now favors '+PALETTES[ds.pal].label.toLowerCase()+'.'); return; }
-  if(ds.view){ S.view=ds.view; LS.set('wearcycle.view',S.view); renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
+  if(ds.view){ S.viewSet=ds.view; LS.set('wearcycle.outfitView',ds.view); renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
-  if(ds.sel!==undefined){ S.sel=+ds.sel; if(S.sel) guard(); renderOutfits(); document.querySelector('.fit.hero')?.scrollIntoView({behavior:'smooth',block:'start'}); return; }
+  if(ds.sel!==undefined){ const kb=e.detail===0, dot=t.classList.contains('dot'); S.sel=+ds.sel; if(S.sel) guard(); renderOutfits();
+    if(!dirB()) document.querySelector('.fit.hero')?.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});
+    if(kb) document.querySelector(dot?'.dot[data-sel="'+ds.sel+'"]':'.fit.hero [data-swap]')?.focus({preventScroll:dirB()}); return; }
   if(ds.addunder!==undefined){ const f=S.fits[+ds.addunder]; if(!f) return; const o=hydrate(f.ids); const c=swapCandidates(o,'under',allItems(),S.occ,ctx()); if(!c.length) return;
     o.under=c[0]; S.fits[+ds.addunder]=editedFit(f,o); renderOutfits(); return; }
   if(ds.addbelt!==undefined){ const k=+ds.addbelt, f=S.fits[k]; if(!f) return; const o=hydrate(f.ids); const c=beltOpts(o); if(!c.length) return;
     o.acc=(o.acc||[]).concat([c[0]]); S.fits[k]=editedFit(f,o); renderOutfits(); toast('Added '+c[0].name+'. Tap it to choose another belt.'); return; }
-  if(ds.stepOpt){ S.sel=(S.sel+(+ds.stepOpt)+S.fits.length)%S.fits.length; if(S.sel) guard(); renderOutfits(); return; }
+  if(ds.stepOpt){ S.sel=(S.sel+(+ds.stepOpt)+S.fits.length)%S.fits.length; if(S.sel) guard(); renderOutfits(); if(e.detail===0) document.querySelector('[data-step-opt="'+ds.stepOpt+'"]')?.focus({preventScroll:true}); return; }
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
   if(t.id==='rulesBtn'||t.id==='railSettings'){ openSettings(); return; }
@@ -1987,6 +2085,7 @@ document.addEventListener('click',async e=>{
     case 'addLook': addLook(); return;
     case 'scanStyles': scanStyles(); return;
     case 'adjust': openAdjust(); return;
+    case 'styleMenu': openStyleMenu(); return;
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
     case 'todaylog': openTodayLog(); return;
@@ -2021,7 +2120,7 @@ document.addEventListener('click',async e=>{
   }
   if(ds.themeSet){ themeSet(ds.themeSet); document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===ds.themeSet))); return; }
   if(ds.pstyle){ readEditorFields(); const cur=pieceStyles(ED.it); ED.it.styles=cur.includes(ds.pstyle)?cur.filter(x=>x!==ds.pstyle):cur.concat([ds.pstyle]); if(!ED.it.styles.length) ED.it.styles=[]; drawEditor(); return; }
-  if(ds.stoday!==undefined){ setStyleToday(ds.stoday); return; }
+  if(ds.stoday!==undefined){ const inSheet=!!t.closest('#sheetRoot'); setStyleToday(ds.stoday); if(inSheet){ closeSheet(); $('#styleSel .stylebtn')?.focus(); } return; }
   if(ds.styleTog){ const st=styleSet(), k=ds.styleTog; if(st.pick.includes(k)) st.pick=st.pick.filter(x=>x!==k); else st.pick.push(k);
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.styleWork!==undefined){ const st=styleSet(), k=ds.styleWork; st.work=!k?[]:(st.work.includes(k)?st.work.filter(x=>x!==k):st.work.concat([k])); saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
@@ -2100,7 +2199,10 @@ document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e
   if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.',6000); } });
 // Arrow keys step through the piece preview's options (keyboards on Windows and iPad).
 document.addEventListener('keydown',e=>{ if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test((e.target||{}).tagName||'')){
-  const b=document.querySelector('#sheetRoot [data-pstep="'+(e.key==='ArrowLeft'?'-1':'1')+'"]'); if(b){ e.preventDefault(); b.click(); } } });
+  const b=document.querySelector('#sheetRoot [data-pstep="'+(e.key==='ArrowLeft'?'-1':'1')+'"]'); if(b){ e.preventDefault(); b.click(); return; }
+  if(!$('#sheetRoot').innerHTML&&e.target.closest&&e.target.closest('#fits .lb')&&S.fits.length>1){ e.preventDefault(); const dot=e.target.classList.contains('dot');
+    S.sel=(S.sel+(e.key==='ArrowLeft'?S.fits.length-1:1))%S.fits.length; if(S.sel) guard(); renderOutfits();
+    document.querySelector(dot?'.dot[aria-current="true"]':'.look.cur [data-swap]')?.focus({preventScroll:true}); } } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
