@@ -169,7 +169,7 @@ const brokenImages = page => page.evaluate(() => { const imgs = [...document.ima
 const PICTURES = () => {
   const dpr = devicePixelRatio, out = { shown: 0, upscaled: 0, worst: 0 };
   for (const i of document.querySelectorAll('section.tab:not([hidden]) img')) {
-    const r = i.getBoundingClientRect(); if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight || !i.naturalWidth || !i.checkVisibility()) continue;
+    const r = i.getBoundingClientRect(); if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth || !i.naturalWidth || !i.checkVisibility() || i.closest('[inert]')) continue; // off screen sideways or on another page
     const cs = getComputedStyle(i), px = v => parseFloat(v) || 0;
     const w = r.width - px(cs.paddingLeft) - px(cs.paddingRight) - px(cs.borderLeftWidth) - px(cs.borderRightWidth);
     const h = r.height - px(cs.paddingTop) - px(cs.paddingBottom) - px(cs.borderTopWidth) - px(cs.borderBottomWidth);
