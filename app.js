@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.53.2';
+const APP_VERSION='1.53.3';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1077,11 +1077,12 @@ function kitHtml(o,i){
   const piece=(slot,it,big)=>`<button class="kt${big?'':' sm'}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to see it"><span class="kpic">${kitPic(it,big)}</span><span class="kn" aria-hidden="true">${big?`<span class="k">${esc(kind(slot,it))}</span>`:''}<span class="nm" data-notr>${esc(it.name)}</span></span></button>`;
   return `<div class="kit n${main.length}" data-swipe="1">${main.map(([s,it])=>piece(s,it,1)).join('')}</div>${small.length?`<div class="kitsm">${small.map(([s,it])=>piece(s,it,0)).join('')}</div>`:''}`;
 }
-// Pictures by drawn size: the cut-out (on the cream canvas) or the full photo where a piece is drawn large, the
-// thumbnail where it stays sharp (hydratePhotos measures and upgrades).
+// Pictures: the cut-out (on the cream canvas) wherever a piece has one, large or small (owner, 2026-10-27: one look
+// for the whole outfit); without one, the full photo where a piece is drawn large (hydratePhotos measures and
+// upgrades) and the thumbnail where it is drawn small. Cut-outs are downloaded once and kept on the phone.
 function kitPic(it,big){ const src=thumbSrc(it); if(!src) return glyph(it);
-  return `<img src="${esc(src)}" alt="" class="${it.box?'fitted':'cover'}"${big&&it.cut?` data-cut="${esc(it.id)}"`:big&&it.photo&&!isEx(it)?` data-photo="${esc(it.id)}"`:''}>`; }
-function smallPic(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="" loading="lazy" class="${it.box?'fitted':'cover'}">`:glyph(it); }
+  return `<img src="${esc(src)}" alt="" class="${it.box?'fitted':'cover'}"${it.cut?` data-cut="${esc(it.id)}"`:big&&it.photo&&!isEx(it)?` data-photo="${esc(it.id)}"`:''}>`; }
+function smallPic(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="" loading="lazy" class="${it.box?'fitted':'cover'}"${it.cut?` data-cut="${esc(it.id)}"`:''}>`:glyph(it); }
 // A piece without a cut-out drawn larger than its thumbnail: its photo, downloaded once, reduced on the device to
 // 1024px (the cut-outs' size) and kept with the cut-outs, so later opens download nothing. Sign-out clears that cache.
 const MED=new Map();

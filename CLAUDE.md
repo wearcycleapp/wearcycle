@@ -99,8 +99,8 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
 - Mouse and keyboard: hover styles only inside @media (hover: hover) and
   (pointer: fine); horizontal rows usable with a mouse; every control
   reachable by keyboard.
-- Pick images by rendered size: 256px thumbnails only where the image is
-  shown small; cut-outs or photos for large tiles and the hero.
+- Images: a piece's cut-out wherever it has one, large or small (owner,
+  2026-10-27). Without one: 256px thumbnail small, photo for large tiles.
 
 ## Design skills (.claude/skills): Wearcycle rules win
 - Pinned: Impeccable 4.5.2 (tag skill-v4.5.2), mobile-native, break-ui,
