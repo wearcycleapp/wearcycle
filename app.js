@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.53.1';
+const APP_VERSION='1.53.2';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -890,10 +890,10 @@ function renderOutfits(){
   const ask=S.occ==='work'&&!S.settings.work&&!S.examples.length?`<div class="askcard"><b>What is the dress code at your work?</b><span>Wearcycle sorts your clothes for Work from it. Change it any time in Settings.</span>
     <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}">${esc(d.label)}</button>`).join('')}</div></div>`:'';
   const top=remA+ask+pinCard();
-  if(B){ box.innerHTML=top+lookbook()+todayLine()+whySection(); fitLooks(); }
+  if(B){ box.innerHTML=top+lookbook()+todayLine()+whySection(); fitLooks(); pagerSync(); }
   else { box.innerHTML=top+heroCard(S.fits[S.sel],S.sel)+todayLine()+optionIndex(); fitKit(); }
   // once more on the next frame: in other languages the text is translated after this render (i18n.js) and can wrap
-  cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); });
+  cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); pagerSync(); });
   setTimeout(hydratePhotos,0);
 }
 /* The day's notes on one line (v1.53.1): holidays in the next two weeks (the chosen one as an ink pill) and the
@@ -983,19 +983,57 @@ function optRow(f,i){ const o=hydrate(f.ids), m=match(f), names=coreOf(o).map(x=
   return `<li><button class="orow" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(names)}"><span class="onum" aria-hidden="true">${pad2(f.rank)}</span>
     <span class="ominis" aria-hidden="true">${pics.map(it=>`<span class="om">${smallPic(it)}</span>`).join('')}</span>
     <span class="otx" aria-hidden="true"><b data-notr>${esc(names)}</b><span>${m.label}${bars(m.bars)}</span></span></button></li>`; }
-// Direction B: the looks as pages. Below 1100px the selected page with the next one peeking (the previous one on the
-// last page), turned with the arrows, the dots, a swipe or the arrow keys; from 1100px every look side by side,
-// the selected one first and largest. Only the selected page has pieces to tap and "Wear this".
+// Direction B: the looks as pages. Below 1100px one look per page, the full width of the column, in a row the browser
+// scrolls: a swipe moves the page with the finger and snaps to the next one (CSS scroll snap), and the arrows, the
+// dots and the arrow keys scroll there too; the page that settles becomes the selected one (pagerSettle). Pages other
+// than the selected one are inert, so Tab and screen readers see one outfit. From 1100px every look side by side, the
+// selected one first and largest. Only the selected look has pieces to tap and "Wear this" there.
 function lookbook(){
   const n=S.fits.length, sel=S.sel, spread=MQ_W.matches;
-  const order=spread?[sel].concat(S.fits.map((f,k)=>k).filter(k=>k!==sel)):n<2?[sel]:sel<n-1?[sel,sel+1]:[sel-1,sel];
-  const nav=n>1&&!spread?`<div class="pgr"><button class="pg" data-step-opt="-1" aria-label="Previous option">${CHEV_L}</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===sel}"></button>`).join('')}<span class="pcount">${sel+1} of ${n}</span><button class="pg" data-step-opt="1" aria-label="Next option">${CHEV_R}</button></div>`:'';
+  if(!spread) return pagerBook();
+  const order=[sel].concat(S.fits.map((f,k)=>k).filter(k=>k!==sel));
   const one=n<2?`<p class="hint lbone"><b>Only one outfit fits</b> Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`:'';
-  return `<section class="lb ${spread?'spread':'pager'} n${n}" aria-label="Outfits"><div class="lb-view${!spread&&n>1&&sel===n-1?' atend':''}">${order.map(k=>k===sel?lookCur(S.fits[k],k):lookAlt(S.fits[k],k)).join('')}</div>
+  return `<section class="lb spread n${n}" aria-label="Outfits"><div class="lb-view">${order.map(k=>k===sel?lookCur(S.fits[k],k):lookAlt(S.fits[k],k)).join('')}</div>
+    <div class="lbnav">${one}<button class="btn sm" id="shuffleBtn">New ideas</button></div></section>`;
+}
+function pagerBook(){
+  const n=S.fits.length, sel=S.sel;
+  const nav=n>1?`<div class="pgr"><button class="pg" data-step-opt="-1" aria-label="Previous option">${CHEV_L}</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===sel}"></button>`).join('')}<span class="pcount">${sel+1} of ${n}</span><button class="pg" data-step-opt="1" aria-label="Next option">${CHEV_R}</button></div>`:'';
+  const one=n<2?`<p class="hint lbone"><b>Only one outfit fits</b> Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`:'';
+  return `<section class="lb pager n${n}" aria-label="Outfits"><div class="lb-view">${S.fits.map((f,k)=>lookCur(f,k,k===sel)).join('')}</div>
     <div class="lbnav">${nav}${one}<button class="btn sm" id="shuffleBtn">New ideas</button></div></section>`;
 }
-function lookCur(f,i){ const o=hydrate(f.ids);
-  return `<article class="look cur fit hero">${fitHead(f,i)}<div class="stage">${viewNow()==='board'?flatlay(o,i,true):kitHtml(o,i)}</div>${ctaRow(f,i)}${tapBar(f,i)}${addRow(f,i,o)}</article>`; }
+// Scroll the pager to the selected page at once (after a redraw or a resize), without animation.
+function pagerSync(){ const v=document.querySelector('#fits .lb.pager .lb-view'), p=v&&v.querySelector('.look[data-k="'+S.sel+'"]'); if(!p||!v.clientWidth) return;
+  v.style.scrollSnapType='none'; v.scrollLeft=p.offsetLeft-v.firstElementChild.offsetLeft; v.style.scrollSnapType=''; }
+// The page the pager settled on becomes the selected outfit: the pages, the dots and Why this outfit follow, without
+// redrawing the pages (a redraw would interrupt the swipe and reload pictures).
+function pagerPick(k){ const lb=document.querySelector('#fits .lb.pager'); if(!lb||!S.fits[k]) return;
+  S.sel=k; if(k) guard();
+  lb.querySelectorAll('.lb-view>.look').forEach(p=>{ const on=+p.dataset.k===k; p.classList.toggle('cur',on); p.classList.toggle('fit',on); p.classList.toggle('hero',on); p.inert=!on; });
+  pagerMark(k);
+  const ws=document.querySelector('#fits .whysec'); if(ws) ws.outerHTML=whySection();
+  setTimeout(hydratePhotos,0); }
+// The dots and "2 of 4" follow the page nearest the middle while the row moves; the rest waits for it to settle.
+function pagerMark(k){ const lb=document.querySelector('#fits .lb.pager'); if(!lb) return;
+  lb.querySelectorAll('.pgr .dot').forEach(d=>{ const on=String(+d.dataset.sel===k); if(d.getAttribute('aria-current')!==on) d.setAttribute('aria-current',on); });
+  const pc=lb.querySelector('.pcount'), t=(k+1)+' of '+S.fits.length; if(pc&&pc.dataset.k!==String(k)){ pc.dataset.k=k; pc.textContent=t; } }
+function pagerNear(v){ const x0=v.firstElementChild.offsetLeft; let best=null, d=Infinity;
+  v.querySelectorAll(':scope>.look').forEach(p=>{ const e=Math.abs(p.offsetLeft-x0-v.scrollLeft); if(e<d){ d=e; best=+p.dataset.k; } }); return best; }
+function pagerSettle(){ const v=document.querySelector('#fits .lb.pager .lb-view'); if(!v||!v.clientWidth) return;
+  const best=pagerNear(v); if(best==null) return; if(best!==S.sel) pagerPick(best); else pagerMark(best); }
+// Arrows, dots and arrow keys in the pager: select the page and scroll to it, smoothly for a tap or click, at once
+// from the keyboard (review-animations: keyboard-initiated actions get no animation) or when motion is reduced.
+function pagerGo(k,kb){ const v=document.querySelector('#fits .lb.pager .lb-view'); if(!v||!dirB()||MQ_W.matches) return false;
+  const n=S.fits.length; k=(k+n)%n; const p=v.querySelector('.look[data-k="'+k+'"]'); if(!p) return false;
+  pagerPick(k); v.scrollTo({left:p.offsetLeft-v.firstElementChild.offsetLeft,behavior:kb||reduceMotion()?'auto':'smooth'}); return true; }
+let pagerT=0;
+document.addEventListener('scroll',e=>{ if(!e.target.matches||!e.target.matches('.lb.pager .lb-view')||!e.target.clientWidth) return;
+  const k=pagerNear(e.target); if(k!=null) pagerMark(k);
+  if('onscrollend' in window) return; clearTimeout(pagerT); pagerT=setTimeout(pagerSettle,120); },true);
+document.addEventListener('scrollend',e=>{ if(e.target.matches&&e.target.matches('.lb.pager .lb-view')) pagerSettle(); },true);
+function lookCur(f,i,cur=true){ const o=hydrate(f.ids);
+  return `<article class="look${cur?' cur fit hero':''}" data-k="${i}"${cur?'':' inert'}>${fitHead(f,i)}<div class="stage">${viewNow()==='board'?flatlay(o,i,true):kitHtml(o,i)}</div>${ctaRow(f,i)}${tapBar(f,i)}${addRow(f,i,o)}</article>`; }
 function lookAlt(f,i){ const o=hydrate(f.ids), m=match(f);
   const cells=flOrder(flCells(o)).map(c=>`<span class="fl ${c.small?'small':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${flVisual(c.it)}</span>`).join('');
   return `<button class="look alt" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(coreOf(o).map(x=>x.name).join(', '))}"><span class="fit-h" aria-hidden="true"><span class="rank ${i===0&&!f.edited?'top':''}">${pad2(f.rank)}</span><span class="rk-l"><b>${m.label}</b><span>${bars(m.bars)}</span></span></span><span class="flatlay">${cells}</span></button>`; }
@@ -1009,20 +1047,26 @@ function whySection(){ const f=S.fits[S.sel]; if(!f) return ''; const o=hydrate(
 function fitLooks(){
   const lb=document.querySelector('#fits .lb'); if(!lb||!lb.isConnected||!lb.clientWidth) return; // hidden (another tab): goTab sizes it on return
   const cur=lb.querySelector('.look.cur'), stage=cur&&cur.querySelector('.stage'), cta=cur&&cur.querySelector('.ctarow'); if(!stage||!cta) return;
-  const n=S.fits.length, W=lb.clientWidth, G=16, spread=lb.classList.contains('spread');
-  const byW=spread?(W-G*(n-1))*1.6/(1.6+n-1):(n>1?W*0.58:Math.min(W,720));
-  let size=byW;
-  for(let k=0;k<3;k++){
-    lb.style.setProperty('--cur',Math.floor(size)+'px');
-    const s=stage.getBoundingClientRect(), c=cta.getBoundingClientRect();
-    const avail=window.innerHeight-(s.top+window.scrollY)-(c.bottom-s.bottom)-16;
-    size=Math.max(Math.min(byW,240),Math.min(byW,s.width*avail/Math.max(1,s.height)));
-  }
-  lb.style.setProperty('--cur',Math.floor(size)+'px');
+  const n=S.fits.length, W=lb.clientWidth, G=16, spread=lb.classList.contains('spread'), pager=lb.classList.contains('pager');
+  // The pager keeps its arrows and dots in the first screen too: they are the only sign that more outfits follow.
+  // side: Wear this and the rest beside the board instead of under it (the board fills the height, not the width).
+  const nav=pager&&n>1?lb.querySelector('.lbnav'):null;
+  const fit=(byW,side)=>{ let size=byW;
+    for(let k=0;k<3;k++){
+      lb.style.setProperty('--cur',Math.floor(size)+'px');
+      const s=stage.getBoundingClientRect(), c=(nav||cta).getBoundingClientRect();
+      const avail=window.innerHeight-(s.top+window.scrollY)-Math.max(0,c.bottom-s.bottom)-16;
+      size=Math.max(Math.min(byW,240),Math.min(byW,s.width*avail/Math.max(1,s.height)));
+    }
+    lb.style.setProperty('--cur',Math.floor(size)+'px'); return size; };
+  if(pager) lb.classList.remove('side');
+  let size=fit(spread?(W-G*(n-1))*1.6/(1.6+n-1):W,false);
+  // a page wider than its board by a 300px column (short windows, Windows): put that column beside the board
+  if(pager&&W-size>=324){ lb.classList.add('side'); size=fit(W-324,true); }
   if(spread&&n>1) lb.style.setProperty('--alt',Math.floor(Math.min(size/1.25,(W-size-G*(n-1))/(n-1)))+'px');
 }
-let fitRaf=0; window.addEventListener('resize',()=>{ cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); }); });
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitLooks(); fitKit(); });
+let fitRaf=0; window.addEventListener('resize',()=>{ cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); pagerSync(); }); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitLooks(); fitKit(); pagerSync(); });
 // The kit (direction A): the main garments as 4:5 pictures with category and name, then shoes, belt and
 // accessories in one row with their names. A dress alone brings the shoes up to the main row.
 function kitHtml(o,i){
@@ -1047,7 +1091,7 @@ function medUrl(it){ const key=it.photo; if(MED.has(key)) return MED.get(key);
       if(!blob&&sb&&S.online){ blob=await shrink(await photoBlob(key),1024); if(blob) await c.put(k,new Response(blob,{headers:{'Content-Type':blob.type||'image/jpeg'}})); } }catch(e){}
     return blob?URL.createObjectURL(blob):''; })();
   MED.set(key,p); p.then(u=>{ if(!u) MED.delete(key); }); return p; }
-function hydratePhotos(){ document.querySelectorAll('#fits img[data-photo]').forEach(img=>{
+function hydratePhotos(){ document.querySelectorAll('#fits img[data-photo]').forEach(img=>{ if(img.closest('.lb.pager .look:not(.cur)')) return; // other pages: when they are turned to
   const go=()=>{ if(!img.isConnected||!img.dataset.photo) return; const r=img.getBoundingClientRect(); if(!r.width) return;
     if(Math.max(r.width,r.height)*(window.devicePixelRatio||1)<=(img.naturalWidth||0)*1.1) return;
     const it=byId(img.dataset.photo); img.removeAttribute('data-photo'); if(!it||!it.photo) return;
@@ -2053,7 +2097,7 @@ function goTab(tab){
   for(const b of document.querySelectorAll('nav.tabs button')){ if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
   for(const s of document.querySelectorAll('section.tab')) s.hidden=s.id!=='tab-'+tab;
   renderStatus(); window.scrollTo(0,0);
-  if(tab==='outfits'){ fitLooks(); fitKit(); } // sized again here: a resize or rotation while Outfits was hidden could not measure it
+  if(tab==='outfits'){ fitLooks(); fitKit(); pagerSync(); } // sized again here: a resize or rotation while Outfits was hidden could not measure it
 }
 
 document.addEventListener('click',async e=>{
@@ -2105,6 +2149,7 @@ document.addEventListener('click',async e=>{
   if(ds.pal){ S.settings.palette=ds.pal; saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast(ds.pal==='any'?'No palette preference.':'Ranking now favors '+PALETTES[ds.pal].label.toLowerCase()+'.'); return; }
   if(ds.view){ S.viewSet=ds.view; LS.set('wearcycle.outfitView',ds.view); renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
   if(ds.layer){ S.layerMode=ds.layer; renderOutfits(); if($('#sheetRoot').innerHTML) openAdjust(); return; }
+  if(ds.sel!==undefined&&t.classList.contains('dot')&&pagerGo(+ds.sel,e.detail===0)) return;
   if(ds.sel!==undefined){ const kb=e.detail===0, dot=t.classList.contains('dot'); S.sel=+ds.sel; if(S.sel) guard(); renderOutfits();
     if(!dirB()) document.querySelector('.fit.hero')?.scrollIntoView({behavior:reduceMotion()?'auto':'smooth',block:'start'});
     if(kb) document.querySelector(dot?'.dot[data-sel="'+ds.sel+'"]':'.fit.hero [data-swap]')?.focus({preventScroll:dirB()}); return; }
@@ -2112,6 +2157,7 @@ document.addEventListener('click',async e=>{
     o.under=c[0]; S.fits[+ds.addunder]=editedFit(f,o); renderOutfits(); return; }
   if(ds.addbelt!==undefined){ const k=+ds.addbelt, f=S.fits[k]; if(!f) return; const o=hydrate(f.ids); const c=beltOpts(o); if(!c.length) return;
     o.acc=(o.acc||[]).concat([c[0]]); S.fits[k]=editedFit(f,o); renderOutfits(); toast('Added '+c[0].name+'. Tap it to choose another belt.'); return; }
+  if(ds.stepOpt&&pagerGo(S.sel+(+ds.stepOpt),e.detail===0)) return;
   if(ds.stepOpt){ S.sel=(S.sel+(+ds.stepOpt)+S.fits.length)%S.fits.length; if(S.sel) guard(); renderOutfits(); if(e.detail===0) document.querySelector('[data-step-opt="'+ds.stepOpt+'"]')?.focus({preventScroll:true}); return; }
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
@@ -2236,7 +2282,7 @@ document.addEventListener('click',async e=>{
   }
 });
 let SW0=null;
-document.addEventListener('pointerdown',e=>{ const b=e.target.closest('[data-swipe]'); SW0=b?{x:e.clientX,y:e.clientY,t:Date.now()}:null; },{passive:true});
+document.addEventListener('pointerdown',e=>{ const b=e.target.closest('[data-swipe]'); SW0=b&&!b.closest('.lb.pager')?{x:e.clientX,y:e.clientY,t:Date.now()}:null; },{passive:true});
 document.addEventListener('pointerup',e=>{ if(!SW0) return; const dx=e.clientX-SW0.x, dy=e.clientY-SW0.y; const quick=Date.now()-SW0.t<700; SW0=null;
   if(quick&&Math.abs(dx)>60&&Math.abs(dy)<50&&S.fits.length>1){ S.sel=(S.sel+(dx<0?1:S.fits.length-1))%S.fits.length; if(S.sel) guard(); swiped=Date.now(); renderOutfits(); } },{passive:true});
 let swiped=0;
@@ -2252,6 +2298,7 @@ document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e
 document.addEventListener('keydown',e=>{ if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test((e.target||{}).tagName||'')){
   const b=document.querySelector('#sheetRoot [data-pstep="'+(e.key==='ArrowLeft'?'-1':'1')+'"]'); if(b){ e.preventDefault(); b.click(); return; }
   if(!$('#sheetRoot').innerHTML&&e.target.closest&&e.target.closest('#fits .lb')&&S.fits.length>1){ e.preventDefault(); const dot=e.target.classList.contains('dot');
+    if(pagerGo(S.sel+(e.key==='ArrowLeft'?-1:1),true)){ if(!dot) document.querySelector('.look.cur [data-swap]')?.focus({preventScroll:true}); else document.querySelector('.dot[aria-current="true"]')?.focus({preventScroll:true}); return; }
     S.sel=(S.sel+(e.key==='ArrowLeft'?S.fits.length-1:1))%S.fits.length; if(S.sel) guard(); renderOutfits();
     document.querySelector(dot?'.dot[aria-current="true"]':'.look.cur [data-swap]')?.focus({preventScroll:true}); } } });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });

@@ -752,7 +752,6 @@ details.whybox .why{margin:2px 0 10px}
   /* the looks: square boards; the selected page first, sized by fitLooks (app.js) through --cur */
   .lb{--cur:58%;display:flex;flex-direction:column;gap:12px}
   .lb-view{display:flex;gap:16px;overflow:hidden;align-items:flex-start}
-  .lb-view.atend{justify-content:flex-end}
   .look{flex:none;width:var(--cur);min-width:0;display:flex;flex-direction:column;gap:12px}
   .look .fit-h{min-height:44px}
   .rank{font-size:28px;min-width:48px;height:44px}
@@ -761,6 +760,17 @@ details.whybox .why{margin:2px 0 10px}
   .look.alt .flatlay{display:block;pointer-events:none}
   .look.alt .rk-l b{font-size:15px;font-weight:600}
   .look .kit .kpic{max-height:calc(var(--cur) * .75)}
+  /* below 1100px: one look per page, the full width of the column, in a row the browser scrolls and snaps page by
+     page, so a swipe moves with the finger; the look's own parts keep the board's width (--cur, fitLooks) */
+  .lb.pager .lb-view{gap:24px;margin-block:-4px;padding-block:4px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none}
+  .lb.pager .lb-view::-webkit-scrollbar{display:none}
+  .lb.pager .look{flex:0 0 100%;width:100%;scroll-snap-align:start;scroll-snap-stop:always}
+  .lb.pager .look>*{width:var(--cur);max-width:100%}
+  .lb.pager .flatlay,.lb.pager .kit{touch-action:pan-x pan-y}
+  /* short windows: the board sized by the height, its header, Wear this and the rest in a column beside it */
+  .lb.pager.side .look{display:grid;grid-template-columns:var(--cur) minmax(0,1fr);column-gap:24px;row-gap:12px;align-content:start}
+  .lb.pager.side .look>*{grid-column:2;width:auto}
+  .lb.pager.side .look>.stage{grid-column:1;grid-row:1/span 6;width:var(--cur)}
   .lbnav{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:8px;min-height:44px}
   .pgr{grid-column:2;display:flex;align-items:center}
   .lbnav #shuffleBtn{grid-column:3;justify-self:end}
