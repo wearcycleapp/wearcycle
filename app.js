@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.53.3';
+const APP_VERSION='1.53.4';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -890,10 +890,10 @@ function renderOutfits(){
   const ask=S.occ==='work'&&!S.settings.work&&!S.examples.length?`<div class="askcard"><b>What is the dress code at your work?</b><span>Wearcycle sorts your clothes for Work from it. Change it any time in Settings.</span>
     <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}">${esc(d.label)}</button>`).join('')}</div></div>`:'';
   const top=remA+ask+pinCard();
-  if(B){ box.innerHTML=top+lookbook()+todayLine()+whySection(); fitLooks(); pagerSync(); }
+  if(B){ box.innerHTML=top+lookbook()+todayLine()+whySection(); fitLooks(); const tr=pagerTrack(); if(tr) tr.addEventListener('wheel',pagerWheel,{passive:false}); }
   else { box.innerHTML=top+heroCard(S.fits[S.sel],S.sel)+todayLine()+optionIndex(); fitKit(); }
   // once more on the next frame: in other languages the text is translated after this render (i18n.js) and can wrap
-  cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); pagerSync(); });
+  cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); });
   setTimeout(hydratePhotos,0);
 }
 /* The day's notes on one line (v1.53.1): holidays in the next two weeks (the chosen one as an ink pill) and the
@@ -983,9 +983,10 @@ function optRow(f,i){ const o=hydrate(f.ids), m=match(f), names=coreOf(o).map(x=
   return `<li><button class="orow" data-sel="${i}" aria-label="Option ${f.rank}, ${m.label}: ${esc(names)}"><span class="onum" aria-hidden="true">${pad2(f.rank)}</span>
     <span class="ominis" aria-hidden="true">${pics.map(it=>`<span class="om">${smallPic(it)}</span>`).join('')}</span>
     <span class="otx" aria-hidden="true"><b data-notr>${esc(names)}</b><span>${m.label}${bars(m.bars)}</span></span></button></li>`; }
-// Direction B: the looks as pages. Below 1100px one look per page, the full width of the column, in a row the browser
-// scrolls: a swipe moves the page with the finger and snaps to the next one (CSS scroll snap), and the arrows, the
-// dots and the arrow keys scroll there too; the page that settles becomes the selected one (pagerSettle). Pages other
+// Direction B: the looks as pages. Below 1100px one look per page, the full width of the column, in a row (.lb-track)
+// that follows the finger and turns at most one page per swipe (pagerDrag, v1.53.4: the browser's own scroll snap
+// let a mid-size swipe on the owner's tablet run on to the last look); the arrows, the dots, the arrow keys and a
+// touchpad's sideways swipe turn it too. The page turned to becomes the selected one (pagerPick). Pages other
 // than the selected one are inert, so Tab and screen readers see one outfit. From 1100px every look side by side, the
 // selected one first and largest. Only the selected look has pieces to tap and "Wear this" there.
 function lookbook(){
@@ -1000,38 +1001,58 @@ function pagerBook(){
   const n=S.fits.length, sel=S.sel;
   const nav=n>1?`<div class="pgr"><button class="pg" data-step-opt="-1" aria-label="Previous option">${CHEV_L}</button>${S.fits.map((x,k)=>`<button class="dot" data-sel="${k}" aria-label="Option ${k+1}" aria-current="${k===sel}"></button>`).join('')}<span class="pcount">${sel+1} of ${n}</span><button class="pg" data-step-opt="1" aria-label="Next option">${CHEV_R}</button></div>`:'';
   const one=n<2?`<p class="hint lbone"><b>Only one outfit fits</b> Add or tag more pieces for ${esc(OCC[S.occ].label.toLowerCase())} to get more options.</p>`:'';
-  return `<section class="lb pager n${n}" aria-label="Outfits"><div class="lb-view">${S.fits.map((f,k)=>lookCur(f,k,k===sel)).join('')}</div>
+  return `<section class="lb pager n${n}" aria-label="Outfits"><div class="lb-view"><div class="lb-track" style="--k:${sel}">${S.fits.map((f,k)=>lookCur(f,k,k===sel)).join('')}</div></div>
     <div class="lbnav">${nav}${one}<button class="btn sm" id="shuffleBtn">New ideas</button></div></section>`;
 }
-// Scroll the pager to the selected page at once (after a redraw or a resize), without animation.
-function pagerSync(){ const v=document.querySelector('#fits .lb.pager .lb-view'), p=v&&v.querySelector('.look[data-k="'+S.sel+'"]'); if(!p||!v.clientWidth) return;
-  v.style.scrollSnapType='none'; v.scrollLeft=p.offsetLeft-v.firstElementChild.offsetLeft; v.style.scrollSnapType=''; }
+// Move the row to page k: --k picks the page (a share of the row's width, so a resize needs nothing); while a finger
+// drags it, an inline transform in pixels holds it instead (one element restyled per move, not a custom property that
+// every page would recompute: review-animations). glide: slide there (only without reduced motion, styles.css).
+const pagerTrack=()=>document.querySelector('#fits .lb.pager .lb-track');
+function pagerSet(k,glide){ const tr=pagerTrack(); if(!tr) return; tr.classList.toggle('glide',!!glide); tr.style.setProperty('--k',k); tr.style.transform=''; }
 // The page the pager settled on becomes the selected outfit: the pages, the dots and Why this outfit follow, without
 // redrawing the pages (a redraw would interrupt the swipe and reload pictures).
 function pagerPick(k){ const lb=document.querySelector('#fits .lb.pager'); if(!lb||!S.fits[k]) return;
   S.sel=k; if(k) guard();
-  lb.querySelectorAll('.lb-view>.look').forEach(p=>{ const on=+p.dataset.k===k; p.classList.toggle('cur',on); p.classList.toggle('fit',on); p.classList.toggle('hero',on); p.inert=!on; });
+  lb.querySelectorAll('.lb-track>.look').forEach(p=>{ const on=+p.dataset.k===k; p.classList.toggle('cur',on); p.classList.toggle('fit',on); p.classList.toggle('hero',on); p.inert=!on; });
   pagerMark(k);
   const ws=document.querySelector('#fits .whysec'); if(ws) ws.outerHTML=whySection();
   setTimeout(hydratePhotos,0); }
-// The dots and "2 of 4" follow the page nearest the middle while the row moves; the rest waits for it to settle.
+// The dots and "2 of 4" follow the page the finger is about to turn to; the rest waits for the release.
 function pagerMark(k){ const lb=document.querySelector('#fits .lb.pager'); if(!lb) return;
   lb.querySelectorAll('.pgr .dot').forEach(d=>{ const on=String(+d.dataset.sel===k); if(d.getAttribute('aria-current')!==on) d.setAttribute('aria-current',on); });
   const pc=lb.querySelector('.pcount'), t=(k+1)+' of '+S.fits.length; if(pc&&pc.dataset.k!==String(k)){ pc.dataset.k=k; pc.textContent=t; } }
-function pagerNear(v){ const x0=v.firstElementChild.offsetLeft; let best=null, d=Infinity;
-  v.querySelectorAll(':scope>.look').forEach(p=>{ const e=Math.abs(p.offsetLeft-x0-v.scrollLeft); if(e<d){ d=e; best=+p.dataset.k; } }); return best; }
-function pagerSettle(){ const v=document.querySelector('#fits .lb.pager .lb-view'); if(!v||!v.clientWidth) return;
-  const best=pagerNear(v); if(best==null) return; if(best!==S.sel) pagerPick(best); else pagerMark(best); }
-// Arrows, dots and arrow keys in the pager: select the page and scroll to it, smoothly for a tap or click, at once
-// from the keyboard (review-animations: keyboard-initiated actions get no animation) or when motion is reduced.
-function pagerGo(k,kb){ const v=document.querySelector('#fits .lb.pager .lb-view'); if(!v||!dirB()||MQ_W.matches) return false;
-  const n=S.fits.length; k=(k+n)%n; const p=v.querySelector('.look[data-k="'+k+'"]'); if(!p) return false;
-  pagerPick(k); v.scrollTo({left:p.offsetLeft-v.firstElementChild.offsetLeft,behavior:kb||reduceMotion()?'auto':'smooth'}); return true; }
-let pagerT=0;
-document.addEventListener('scroll',e=>{ if(!e.target.matches||!e.target.matches('.lb.pager .lb-view')||!e.target.clientWidth) return;
-  const k=pagerNear(e.target); if(k!=null) pagerMark(k);
-  if('onscrollend' in window) return; clearTimeout(pagerT); pagerT=setTimeout(pagerSettle,120); },true);
-document.addEventListener('scrollend',e=>{ if(e.target.matches&&e.target.matches('.lb.pager .lb-view')) pagerSettle(); },true);
+// Arrows, dots and arrow keys in the pager: select the page and slide to it on a tap or click, at once from the
+// keyboard (review-animations: keyboard-initiated actions get no animation) or when motion is reduced.
+function pagerGo(k,kb){ const tr=pagerTrack(); if(!tr||!dirB()||MQ_W.matches) return false;
+  const n=S.fits.length; k=(k+n)%n; if(!S.fits[k]) return false;
+  pagerPick(k); pagerSet(k,!kb&&!reduceMotion()); return true; }
+// A finger (or pen) on the row: it follows the finger sideways (vertical moves stay with the page, touch-action pan-y),
+// and on release turns one page when the drag passed a fifth of the width or ended in a flick that way, never more;
+// otherwise it goes back. Past the first or last look it moves at a third of the finger's speed and goes back.
+const PGD={id:null};
+document.addEventListener('pointerdown',e=>{ if(e.pointerType==='mouse'||!e.isPrimary||S.fits.length<2) return;
+  const tr=e.target.closest&&e.target.closest('#fits .lb.pager .lb-track'); if(!tr) return;
+  PGD.id=e.pointerId; PGD.x0=e.clientX; PGD.y0=e.clientY; PGD.on=false; PGD.d=0; PGD.w=tr.clientWidth||1; PGD.pts=[[e.timeStamp,e.clientX]]; },{passive:true});
+document.addEventListener('pointermove',e=>{ if(e.pointerId!==PGD.id) return; const tr=pagerTrack(); if(!tr){ PGD.id=null; return; }
+  const dx=e.clientX-PGD.x0, dy=e.clientY-PGD.y0;
+  if(!PGD.on){ if(Math.abs(dx)<8&&Math.abs(dy)<8) return; if(Math.abs(dy)>Math.abs(dx)){ PGD.id=null; return; }
+    // caught mid-slide: start from where the row is drawn now, not from where it was going
+    const m=new DOMMatrixReadOnly(getComputedStyle(tr).transform), gap=parseFloat(getComputedStyle(tr).columnGap)||0;
+    PGD.base=-S.sel*(PGD.w+gap); PGD.from=m.m41-PGD.base; PGD.on=true; tr.classList.remove('glide'); try{ tr.setPointerCapture(e.pointerId); }catch(err){} }
+  const n=S.fits.length; let d=PGD.from+dx; if((S.sel===0&&d>0)||(S.sel===n-1&&d<0)) d/=3; d=Math.max(-PGD.w,Math.min(PGD.w,d));
+  PGD.d=d; PGD.pts.push([e.timeStamp,e.clientX]); if(PGD.pts.length>6) PGD.pts.shift();
+  tr.style.transform='translateX('+(PGD.base+d)+'px)'; pagerMark(Math.max(0,Math.min(n-1,S.sel+(d<-PGD.w/2?1:d>PGD.w/2?-1:0)))); },{passive:true});
+function pagerDragEnd(e){ if(e.pointerId!==PGD.id) return; PGD.id=null; if(!PGD.on) return; swiped=Date.now();
+  const p=PGD.pts, a=p[0], b=p[p.length-1], v=(b[1]-a[1])/Math.max(1,b[0]-a[0]), d=PGD.d, n=S.fits.length; // v: px per ms over the last moves
+  let k=S.sel; if(e.type==='pointerup'&&(Math.abs(d)>PGD.w*0.2||(Math.abs(v)>0.3&&Math.sign(v)===Math.sign(d)))) k=Math.max(0,Math.min(n-1,k+(d<0?1:-1)));
+  if(k!==S.sel) pagerPick(k); else pagerMark(k);
+  pagerSet(k,!reduceMotion()); }
+document.addEventListener('pointerup',pagerDragEnd,{passive:true});
+document.addEventListener('pointercancel',pagerDragEnd,{passive:true});
+// A touchpad's sideways swipe (two fingers) turns one page per gesture; the gesture ends after 250 ms without events.
+function pagerWheel(e){ if(Math.abs(e.deltaX)<=Math.abs(e.deltaY)) return; e.preventDefault();
+  const W=pagerWheel; if(e.timeStamp-(W.t||0)>250){ W.acc=0; W.done=false; } W.t=e.timeStamp; if(W.done) return; W.acc+=e.deltaX;
+  if(Math.abs(W.acc)>40){ W.done=true; const k=Math.max(0,Math.min(S.fits.length-1,S.sel+(W.acc>0?1:-1))); if(k!==S.sel){ pagerPick(k); pagerSet(k,!reduceMotion()); } } }
 function lookCur(f,i,cur=true){ const o=hydrate(f.ids);
   return `<article class="look${cur?' cur fit hero':''}" data-k="${i}"${cur?'':' inert'}>${fitHead(f,i)}<div class="stage">${viewNow()==='board'?flatlay(o,i,true):kitHtml(o,i)}</div>${ctaRow(f,i)}${tapBar(f,i)}${addRow(f,i,o)}</article>`; }
 function lookAlt(f,i){ const o=hydrate(f.ids), m=match(f);
@@ -1065,8 +1086,8 @@ function fitLooks(){
   if(pager&&W-size>=324){ lb.classList.add('side'); size=fit(W-324,true); }
   if(spread&&n>1) lb.style.setProperty('--alt',Math.floor(Math.min(size/1.25,(W-size-G*(n-1))/(n-1)))+'px');
 }
-let fitRaf=0; window.addEventListener('resize',()=>{ cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); pagerSync(); }); });
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitLooks(); fitKit(); pagerSync(); });
+let fitRaf=0; window.addEventListener('resize',()=>{ cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); }); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitLooks(); fitKit(); });
 // The kit (direction A): the main garments as 4:5 pictures with category and name, then shoes, belt and
 // accessories in one row with their names. A dress alone brings the shoes up to the main row.
 function kitHtml(o,i){
@@ -2098,7 +2119,7 @@ function goTab(tab){
   for(const b of document.querySelectorAll('nav.tabs button')){ if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
   for(const s of document.querySelectorAll('section.tab')) s.hidden=s.id!=='tab-'+tab;
   renderStatus(); window.scrollTo(0,0);
-  if(tab==='outfits'){ fitLooks(); fitKit(); pagerSync(); } // sized again here: a resize or rotation while Outfits was hidden could not measure it
+  if(tab==='outfits'){ fitLooks(); fitKit(); } // sized again here: a resize or rotation while Outfits was hidden could not measure it
 }
 
 document.addEventListener('click',async e=>{
@@ -2112,7 +2133,7 @@ document.addEventListener('click',async e=>{
     else { const z=+d.vzoom; z===0?viewerSet(1,0,0):zoomAt(VW.s*(z>0?1.5:1/1.5),0,0); } return; }
   const vw=e.target.closest('[data-view]'); if(vw&&!e.target.closest('button')){ openViewer(vw.dataset.view); return; }
   const t=e.target.closest('button,[data-scrim]'); if(!t) return;
-  if(Date.now()-swiped<400 && t.closest('[data-swipe]')) return;
+  if(Date.now()-swiped<400 && t.closest('[data-swipe],.lb-track')) return;
   const ds=t.dataset;
   // camera overlay
   if(ds.cam){
