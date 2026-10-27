@@ -1036,7 +1036,7 @@ I18N.load("hi",{
 "See outfits": "आउटफ़िट देखें",
 "Holidays": "त्योहार",
 "Themed outfits": "थीम वाले आउटफ़िट",
-"Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.": "आपके चालू किए हर त्योहार से दो हफ़्ते पहले, आउटफ़िट स्क्रीन पर एक चिप उसके रंगों में लुक सुझाती है।",
+"Two weeks before each holiday you keep on, the Outfits screen suggests looks in its colors.": "आपके चालू किए हर त्योहार से दो हफ़्ते पहले, आउटफ़िट स्क्रीन उसके रंगों में लुक सुझाती है।",
 "Tomorrow": "कल",
 "In {0} days": "{0} दिन में",
 "{a} colors: {b}": "{a} के रंग: {b}",

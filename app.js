@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.53.0';
+const APP_VERSION='1.53.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -700,7 +700,8 @@ async function addPhotos(blobs){
 
 /* ---------- rendering ---------- */
 /* Holiday look: from a few days before each holiday you keep on (Settings > Holidays) until the day itself, the app's
-   accent color, a small badge on the logo and a greeting bar change to that holiday. Off with "Holiday look". */
+   accent color, a small badge on the logo and a greeting bar change to that holiday (on Outfits the reminders line
+   stands in for the bar). Off with "Holiday look". */
 const HOLI_LOOK={
   halloween:{before:7,accent:'#f07f1a',hello:'Happy Halloween',icon:'<path d="M12 6c-5 0-8 3-8 7.5S7 21 12 21s8-3 8-7.5S17 6 12 6z"/><path d="M12 6V3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>'},
   thanksgiving_ca:{before:4,accent:'#b5651d',hello:'Happy Thanksgiving',icon:'<path d="M12 2c3 3 7 5 7 10a7 7 0 0 1-14 0c0-5 4-7 7-10z"/><path d="M12 9v13" stroke="#fff" stroke-width="1.6"/>'},
@@ -855,26 +856,31 @@ async function autoWash(){
    crosses a switch (docs/design/SCREENS.md, Outfits). */
 const MQ_B=matchMedia('(min-width:700px) and (min-height:600px)'), MQ_W=matchMedia('(min-width:1100px) and (min-height:600px)');
 const dirB=()=>MQ_B.matches;
+const MQ_AUP=matchMedia('(max-width:699.98px)'); // A upright: the reminders line goes above the outfit; wider, in the day row
 // "Show outfits as" (Adjust): with no stored choice, phones show the kit and wider screens the flat-lay board.
 const viewNow=()=>S.viewSet||(dirB()?'board':'pieces');
 LS.del('wearcycle.view'); // the choice stored before v1.53 is cleared once (owner, 2026-10-26); new choices use wearcycle.outfitView
-[MQ_B,MQ_W].forEach(q=>{ const f=()=>{ if(S.loaded) renderOutfits(); }; if(q.addEventListener) q.addEventListener('change',f); else if(q.addListener) q.addListener(f); });
+[MQ_B,MQ_W,MQ_AUP].forEach(q=>{ const f=()=>{ if(S.loaded) renderOutfits(); }; if(q.addEventListener) q.addEventListener('change',f); else if(q.addListener) q.addListener(f); });
 const pad2=n=>String(n).padStart(2,'0');
 const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function renderOutfits(){
   renderWx(); const g=$('#greet'); if(g) g.textContent=dayName(); const hl=$('#hello'); if(hl) hl.textContent=helloWord();
   const hol=holidaysSoon(14); if(S.theme&&!themeNow()) S.theme=undefined;
-  $('#occChips').classList.toggle('has-hol',hol.length>0);
-  $('#occChips').innerHTML=hol.map(h=>`<button class="occ hol" data-theme-occ="${h.id}" aria-pressed="${S.theme===h.id}">${h.label}</button>`).join('')+OCCASIONS.map(o=>`<button class="occ" data-occ="${o.id}" aria-pressed="${S.occ===o.id&&!S.theme}">${o.label}</button>`).join('');
-  const th=$('#themeHint'); if(th){ const h=S.theme&&hol.concat(holidaysSoon(30)).find(x=>x.id===S.theme); th.hidden=!h; th.textContent=h?h.label+': '+whenLabel(h.inDays).toLowerCase()+'. '+h.tip:''; }
-  const box=$('#fits');
+  // Holidays are chosen from the reminders line (Reminders sheet), not from the occasions: as tabs they wrapped the
+  // tab row with a mouse in Japanese and Tagalog and pushed Wear this out of a 1366x630 window (v1.53.1).
+  const B=dirB(), inDay=!MQ_AUP.matches;
+  $('#occChips').innerHTML=OCCASIONS.map(o=>`<button class="occ" data-occ="${o.id}" aria-pressed="${S.occ===o.id&&!S.theme}">${o.label}</button>`).join('');
+  const th=$('#themeHint'); if(th){ const h=B&&S.theme&&hol.concat(holidaysSoon(30)).find(x=>x.id===S.theme); th.hidden=!h; th.textContent=h?h.label+': '+whenLabel(h.inDays).toLowerCase()+'. '+h.tip:''; }
+  const box=$('#fits'), slot=$('#remSlot'), rem=remLine();
+  if(slot) slot.innerHTML=inDay?rem:'';
   if(!S.loaded){ box.innerHTML='<p class="hint">Loading your closet…</p>'; return; }
   if(!allItems().length){ box.innerHTML=emptyCloset(); return; }
+  const remA=inDay?'':rem;
   if(S.fitKey!==fitKeyNow()) regenerate();
   renderStyleChips();
   if(!S.fits.length){
     const names={top:'tops',bottom:'bottoms',shoes:'shoes'}; const occ=OCC[S.occ];
-    box.innerHTML=washCard()+`<div class="empty"><h3>Not enough for ${esc(occ.label.toLowerCase())} yet</h3>
+    box.innerHTML=remA+`<div class="empty"><h3>Not enough for ${esc(occ.label.toLowerCase())} yet</h3>
       <p class="hint">Missing: ${(S.missing||[]).map(m=>names[m]).join(', ')} tagged for ${esc(occ.label.toLowerCase())} in condition ${occ.min}/5 or better. Tag existing items for this occasion in Closet, or see the Shop tab.</p>
       ${!washCard()&&allItems().some(i=>isActive(i)&&i.dirty)?`<p class="hint"><b>${(n=>n+(n===1?' piece is':' pieces are'))(allItems().filter(i=>isActive(i)&&i.dirty).length)} in the wash.</b> Mark them clean in Closet when they are ready.</p><div class="row"><button class="btn" data-laundry-go="1">Open laundry</button></div>`:''}
       <div class="row"><button class="btn" data-tab-go="shop">Open shopping list</button></div></div>`; return;
@@ -883,10 +889,51 @@ function renderOutfits(){
   setTimeout(hydrateCuts,0);
   const ask=S.occ==='work'&&!S.settings.work&&!S.examples.length?`<div class="askcard"><b>What is the dress code at your work?</b><span>Wearcycle sorts your clothes for Work from it. Change it any time in Settings.</span>
     <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}">${esc(d.label)}</button>`).join('')}</div></div>`:'';
-  const top=ask+pinCard()+washCard();
-  if(dirB()){ box.innerHTML=top+lookbook()+todayLine()+whySection(); fitLooks(); }
-  else box.innerHTML=top+heroCard(S.fits[S.sel],S.sel)+todayLine()+optionIndex();
+  const top=remA+ask+pinCard();
+  if(B){ box.innerHTML=top+lookbook()+todayLine()+whySection(); fitLooks(); }
+  else { box.innerHTML=top+heroCard(S.fits[S.sel],S.sel)+todayLine()+optionIndex(); fitKit(); }
+  // once more on the next frame: in other languages the text is translated after this render (i18n.js) and can wrap
+  cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); });
   setTimeout(hydratePhotos,0);
+}
+/* The day's notes on one line (v1.53.1): holidays in the next two weeks (the chosen one as an ink pill) and the
+   laundry question. Upright phones: above the outfit. From 700px wide (B, and A on a phone turned sideways): in the
+   day row, where it costs no height. It opens Reminders, which holds every action these notes had: Themed outfits
+   per holiday; All clean, Choose, Not yet. While it shows on Outfits, the holiday bar under the header is hidden
+   there (styles.css); Closet, Care and Shop keep the bar. */
+const WASH_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="3" width="16" height="18" rx="2.5"/><circle cx="12" cy="13" r="4.5"/><path d="M8 6.5h.01M11 6.5h.01"/></svg>';
+const holIcon=(h,cls)=>{ const L=HOLI_LOOK[h.id]; return L?`<svg class="${cls}" style="--hc:${L.accent}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">${L.icon}</svg>`:`<i class="rdot" aria-hidden="true"></i>`; };
+const holName=h=>h.inDays===0&&HOLI_LOOK[h.id]?HOLI_LOOK[h.id].hello:h.label;
+const inWash=()=>allItems().filter(i=>isActive(i)&&i.dirty).length;
+function remLine(){
+  if(!S.loaded||!allItems().length) return '';
+  const hol=holidaysSoon(14), wash=washCard()?inWash():0; if(!hol.length&&!wash) return '';
+  const items=hol.map(h=>`<span class="ri${S.theme===h.id?' on':''}">${holIcon(h,'rico')}<span>${holName(h)}</span></span>`);
+  if(wash) items.push(`<span class="ri">${WASH_ICON}<span>In the wash</span><em class="rn">${wash}</em></span>`);
+  return `<button class="remline" data-act="reminders" aria-haspopup="dialog">${items.join('')}${CHEV_R}</button>`;
+}
+function openReminders(){
+  const hol=holidaysSoon(14), wc=washCard();
+  openSheet(`<div class="remsheet">${sheetHead('Reminders')}
+    ${hol.length?`<div class="field"><span class="lab">Holidays</span><ul class="remlist">${hol.map(h=>`<li class="remrow"><span class="remic">${holIcon(h,'')}</span>
+      <span class="remtx"><b>${holName(h)}</b><span>${whenLabel(h.inDays)}</span></span>
+      <button class="chip" data-theme-occ="${h.id}" aria-pressed="${S.theme===h.id}">Themed outfits</button>${h.tip?`<span class="remtip">${esc(h.tip)}</span>`:''}</li>`).join('')}</ul></div>`:''}
+    ${wc?`<div class="field"><span class="lab">Laundry</span>${wc}</div>`:''}</div>`);
+  const sh=$('#sheetRoot .sheet'), h=sh&&sh.querySelector('.sheet-h h3'); if(h){ h.id='remH'; sh.setAttribute('aria-labelledby','remH'); } // the dialog's name
+}
+/* Direction A, upright: when notes above the outfit (the reminders line, the offline banner, a question card) push
+   Wear this under the tab bar, the kit's main pictures (or the board) give way, down to 100px (200px for the board),
+   so Wear this stays in the first screen. Without such notes nothing changes. */
+function fitKit(){
+  const hero=document.querySelector('#fits .fit.hero.kitv'); if(!hero||!hero.getClientRects().length) return;
+  hero.style.removeProperty('--kmax'); hero.style.removeProperty('--fmax');
+  const cta=hero.querySelector('.ctarow'); if(!cta||!MQ_AUP.matches) return;
+  const nav=document.querySelector('nav.tabs'), nr=nav&&nav.getClientRects().length?nav.getBoundingClientRect():null;
+  const limit=(nr&&nr.top>innerHeight/2?nr.top:innerHeight)-8;
+  const over=Math.ceil(cta.getBoundingClientRect().bottom+window.scrollY-limit); if(over<=0) return;
+  const pic=hero.querySelector('.kit .kpic'), fl=hero.querySelector('.herokit .flatlay');
+  if(pic) hero.style.setProperty('--kmax',Math.max(100,Math.floor(pic.getBoundingClientRect().height-over))+'px');
+  else if(fl) hero.style.setProperty('--fmax',Math.max(200,Math.floor(fl.getBoundingClientRect().height-over))+'px');
 }
 const CHEV_L='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>';
 const CHEV_R='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>';
@@ -960,7 +1007,7 @@ function whySection(){ const f=S.fits[S.sel]; if(!f) return ''; const o=hydrate(
 // Direction B: the selected board is square and sized so "Wear this" stays in the first screen (SCREENS.md: every
 // iPad and Windows size, 1366x630 included), never more than its share of the row, and never under 240px.
 function fitLooks(){
-  const lb=document.querySelector('#fits .lb'); if(!lb||!lb.isConnected) return;
+  const lb=document.querySelector('#fits .lb'); if(!lb||!lb.isConnected||!lb.clientWidth) return; // hidden (another tab): goTab sizes it on return
   const cur=lb.querySelector('.look.cur'), stage=cur&&cur.querySelector('.stage'), cta=cur&&cur.querySelector('.ctarow'); if(!stage||!cta) return;
   const n=S.fits.length, W=lb.clientWidth, G=16, spread=lb.classList.contains('spread');
   const byW=spread?(W-G*(n-1))*1.6/(1.6+n-1):(n>1?W*0.58:Math.min(W,720));
@@ -974,8 +1021,8 @@ function fitLooks(){
   lb.style.setProperty('--cur',Math.floor(size)+'px');
   if(spread&&n>1) lb.style.setProperty('--alt',Math.floor(Math.min(size/1.25,(W-size-G*(n-1))/(n-1)))+'px');
 }
-let fitRaf=0; window.addEventListener('resize',()=>{ cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(fitLooks); });
-if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>fitLooks());
+let fitRaf=0; window.addEventListener('resize',()=>{ cancelAnimationFrame(fitRaf); fitRaf=requestAnimationFrame(()=>{ fitLooks(); fitKit(); }); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitLooks(); fitKit(); });
 // The kit (direction A): the main garments as 4:5 pictures with category and name, then shoes, belt and
 // accessories in one row with their names. A dress alone brings the shoes up to the main row.
 function kitHtml(o,i){
@@ -1423,7 +1470,7 @@ function openSettings(){
    <label class="li"><div class="txt"><b>Enhance how photos look</b><span>Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.</span></div><input type="checkbox" id="enhanceT" ${enhanceOn()?'checked':''}></label>
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
    <h3>Holidays</h3>
-   <div class="panel"><div class="li"><div class="txt"><b>Themed outfits</b><span>Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.</span>
+   <div class="panel"><div class="li"><div class="txt"><b>Themed outfits</b><span>Two weeks before each holiday you keep on, the Outfits screen suggests looks in its colors.</span>
      <div class="chips" style="flex-wrap:wrap;margin-top:8px">${Object.entries(HOLIDAYS).filter(([k,h])=>!h.region||h.region===region()).map(([k,h])=>`<button type="button" class="chip" data-hol-tog="${k}" aria-pressed="${!holidaysOff().includes(k)}">${h.label}</button>`).join('')}</div></div></div>
    <label class="li"><div class="txt"><b>Holiday look</b><span>A few days before each holiday you keep on, the app takes on its colors with a small greeting.</span></div><input type="checkbox" id="holiLookT" ${S.settings.holidayLook===false?'':'checked'}></label></div>
    <h3>Work dress code</h3>
@@ -2006,6 +2053,7 @@ function goTab(tab){
   for(const b of document.querySelectorAll('nav.tabs button')){ if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
   for(const s of document.querySelectorAll('section.tab')) s.hidden=s.id!=='tab-'+tab;
   renderStatus(); window.scrollTo(0,0);
+  if(tab==='outfits'){ fitLooks(); fitKit(); } // sized again here: a resize or rotation while Outfits was hidden could not measure it
 }
 
 document.addEventListener('click',async e=>{
@@ -2034,6 +2082,8 @@ document.addEventListener('click',async e=>{
   if(ds.toastx){ clearTimeout(toast.t); $('#toastRoot').innerHTML=''; return; }
   if(ds.scrim && e.target===t){ closeSheet(); return; }
   if(ds.close!==undefined){ closeSheet(); return; }
+  // Reminders: an action taken in the sheet closes it first; after Themed outfits or Not yet, focus returns to the line.
+  if(t.closest('.remsheet')&&(ds.themeOcc||ds.laundryGo||ds.act==='allClean'||ds.act==='washSnooze')){ closeSheet(); if(!ds.laundryGo) setTimeout(()=>{ const r=$('.remline'); if(r) r.focus(); },0); }
   if(ds.tab){ goTab(ds.tab); return; }
   if(ds.tabGo){ goTab(ds.tabGo); return; }
   if(ds.laundryGo){ S.cat='laundry'; goTab('closet'); renderCloset(); return; }
@@ -2085,6 +2135,7 @@ document.addEventListener('click',async e=>{
     case 'addLook': addLook(); return;
     case 'scanStyles': scanStyles(); return;
     case 'adjust': openAdjust(); return;
+    case 'reminders': openReminders(); return;
     case 'styleMenu': openStyleMenu(); return;
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;

@@ -586,14 +586,35 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .stylebtn .v{font-size:14px;font-weight:600;line-height:1.2;overflow-wrap:anywhere}
 .stylebtn svg{position:absolute;right:8px;top:50%;width:16px;height:16px;margin-top:-8px;color:var(--muted)}
 .stylehint{margin:-6px 0 0;font-size:13px}
-/* occasions: all six at once, a 3 by 2 grid; the selected one is an ink fill. A holiday gets its own row and a dot. */
+/* occasions: all six at once, a 3 by 2 grid; the selected one is an ink fill. Holidays are in the reminders line. */
 .selrow{display:flex;flex-direction:column;gap:8px}
 .occsel{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;padding:6px;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line)}
 .occ{min-height:40px;padding:4px 6px;border:0;border-radius:8px;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;line-height:1.15;overflow-wrap:break-word;hyphens:auto;cursor:pointer}
 .occ[aria-pressed="true"]{background:var(--ink);color:var(--bg);font-weight:700}
-.occsel.has-hol{grid-template-columns:repeat(4,minmax(0,1fr))}
-.occ.hol{grid-column:span 2}
-.occ.hol::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:50%;background:var(--coral);vertical-align:1px}
+/* the day's notes on one line (holidays coming up, the laundry question); it opens Reminders with all their actions.
+   Upright phones: above the outfit, full width. From 700px wide: in the day row. The selected holiday is an ink pill. */
+.remslot:empty{display:none}
+.remline{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:4px 14px;width:100%;min-height:44px;padding:6px 32px 6px 12px;border:0;border-radius:12px;background:var(--surface);box-shadow:inset 0 0 0 1px var(--line);color:var(--ink);font:inherit;font-size:14px;font-weight:600;line-height:1.2;text-align:left;cursor:pointer;user-select:none;-webkit-user-select:none}
+.remline>svg{position:absolute;right:8px;top:50%;width:18px;height:18px;margin-top:-9px;color:var(--muted)}
+.ri{display:inline-flex;align-items:center;gap:5px;min-height:28px;min-width:0}
+.ri>svg{width:18px;height:18px;flex:none;color:var(--muted)}
+.ri>svg.rico{color:var(--hc)}
+.ri.on{margin-inline:-6px;padding:0 10px 0 6px;border-radius:999px;background:var(--ink);color:var(--bg)}
+.ri.on>svg.rico{color:inherit}
+.rdot{width:8px;height:8px;flex:none;border-radius:50%;background:var(--coral)}
+.rn{display:inline-grid;place-items:center;min-width:20px;height:20px;padding:0 6px;border-radius:999px;background:var(--accent-soft);color:var(--ink);font-style:normal;font-size:12px;font-weight:700;font-variant-numeric:tabular-nums}
+/* Reminders sheet: each holiday with its date, tip and Themed outfits; the laundry question with its three buttons */
+.remsheet{display:flex;flex-direction:column;gap:14px}
+.remlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+.remrow{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:4px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.remtip{grid-column:2/4;font-size:13px;color:var(--muted)}
+.remic{width:28px;height:28px;display:grid;place-items:center}
+.remic svg{width:24px;height:24px;color:var(--hc)}
+.remtx{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:14px}
+.remtx>span{font-size:13px;color:var(--muted)}
+.remsheet .washcard{display:flex;align-items:flex-start;padding:0;background:none;border-radius:0}
+/* while the line shows on Outfits, the holiday bar under the header is not repeated there */
+body:has(#tab-outfits:not([hidden]) .remline) #holiBar{display:none}
 /* the selected outfit: header, kit (or board), Wear this right under it, then the first reason */
 .fit.hero{display:flex;flex-direction:column;gap:12px;min-width:0}
 .fit-h{display:flex;align-items:center;gap:10px;min-width:0}
@@ -609,7 +630,7 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .herokit,.herometa{display:flex;flex-direction:column;gap:12px;min-width:0}
 .herokit{gap:8px}
 /* the flat-lay board when chosen in Adjust: as tall as the first screen allows, so Wear this stays in view */
-.kitv .flatlay{aspect-ratio:auto;height:calc(100vh - 470px);height:calc(100svh - 470px);min-height:280px;max-height:calc((100vw - 32px) * 1.25)}
+.kitv .flatlay{aspect-ratio:auto;height:calc(100vh - 470px);height:calc(100svh - 470px);min-height:min(280px,var(--fmax,280px));max-height:min(var(--fmax,100vh),calc((100vw - 32px) * 1.25))}
 .kit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;touch-action:pan-y}
 .kit.n3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .kit.n4{grid-template-columns:repeat(4,minmax(0,1fr))}
@@ -617,8 +638,9 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .kt{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 .kpic{position:relative;display:grid;place-items:center;aspect-ratio:4/5;border-radius:12px;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .kt.sm .kpic{aspect-ratio:1/1;border-radius:10px}
-/* narrow but tall windows (680x800): the main pictures give way so Wear this stays in the first screen */
-.kitv .kit .kpic{max-height:max(160px,calc(100vh - 616px));max-height:max(160px,calc(100svh - 616px))}
+/* narrow but tall windows (680x800), and notes stacked above the outfit (--kmax from fitKit, app.js): the main
+   pictures give way so Wear this stays in the first screen */
+.kitv .kit .kpic{max-height:max(160px,calc(100vh - 616px));max-height:min(var(--kmax,100vh),max(160px,calc(100svh - 616px)))}
 .kpic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;pointer-events:none}
 .kpic img.fitted{object-fit:contain}
 .kpic img.cut{object-fit:contain;padding:8%;box-sizing:border-box;filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
@@ -687,8 +709,10 @@ details.whybox .why{margin:2px 0 10px}
 @media (max-width:380px){.ominis .om:nth-child(3){display:none}}
 /* A, wider than 700px but under 600px tall (phones turned sideways, short windows): the kit beside Wear this */
 @media (min-width:700px) and (max-height:599.98px){
+  .todaybar{grid-template-columns:minmax(min-content,auto) minmax(0,1fr) minmax(0,auto) auto;grid-template-areas:"day rem sel diary" "sub sub sub sub"}
+  .remslot{grid-area:rem;justify-self:end;min-width:0}
+  .remslot .remline{width:auto}
   .occsel{grid-template-columns:repeat(6,minmax(0,1fr))}
-  .occsel.has-hol{grid-template-columns:repeat(8,minmax(0,1fr))}
   .fit.hero.kitv{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);grid-template-areas:"kit head" "kit meta";column-gap:24px;row-gap:12px;align-items:start}
   .kitv>.fit-h{grid-area:head}
   .kitv>.herokit{grid-area:kit}
@@ -708,13 +732,14 @@ details.whybox .why{margin:2px 0 10px}
   .daysub #wx:not(:empty)::after{content:none}
   .daysub .hello:not(:empty)::after{content:"·";margin-left:6px}
   .daysub #wx:empty+.hello::after{content:none}
+  .remslot{flex:0 1 auto;min-width:0;max-width:min(560px,55%)}
+  .remslot .remline{width:auto}
   .selrow{gap:4px}
   /* occasions as text tabs in the display face; the selected one in ink with a 2px ink underline */
   .occsel{display:flex;gap:28px;padding:0;border:0;border-radius:0;background:none;box-shadow:inset 0 -1px 0 var(--line);overflow-x:auto;scrollbar-width:none}
   .occsel::-webkit-scrollbar{display:none}
   .occ{flex:none;min-height:44px;padding:0;border-radius:0;font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.02em;text-transform:uppercase;line-height:1;box-shadow:inset 0 -2px 0 transparent}
   .occ[aria-pressed="true"]{background:none;color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
-  .occ.hol::before{vertical-align:3px}
   .styletabs{display:flex;align-items:center;gap:18px;overflow-x:auto;scrollbar-width:none}
   .styletabs::-webkit-scrollbar{display:none}
   .styletabs .rowlab{flex:none;font-size:13px;font-weight:500;color:var(--muted)}
@@ -773,6 +798,7 @@ details.whybox .why{margin:2px 0 10px}
   .pgr .dot:not([aria-current="true"]):hover::before{background:var(--ink)}
   .wxpill:hover span{text-decoration:underline;text-underline-offset:3px}
   .stylebtn:hover{border-color:var(--ink)}
+  .remline:hover{box-shadow:inset 0 0 0 1px var(--ink)}
 }
 @media (prefers-reduced-motion:no-preference){
   .kt .kpic{transition:transform .12s cubic-bezier(.23,1,.32,1)}

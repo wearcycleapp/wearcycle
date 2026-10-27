@@ -1036,7 +1036,7 @@ I18N.load("tl",{
 "See outfits": "Tingnan ang mga outfit",
 "Holidays": "Mga holiday",
 "Themed outfits": "Mga outfit na may tema",
-"Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.": "Dalawang linggo bago ang bawat holiday na naka-on, may chip sa screen ng Outfit na nagmumungkahi ng mga look sa mga kulay nito.",
+"Two weeks before each holiday you keep on, the Outfits screen suggests looks in its colors.": "Dalawang linggo bago ang bawat holiday na naka-on, nagmumungkahi ang screen ng Outfit ng mga look sa mga kulay nito.",
 "Tomorrow": "Bukas",
 "In {0} days": "Sa loob ng {0} araw",
 "{a} colors: {b}": "Mga kulay ng {a}: {b}",

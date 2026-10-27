@@ -1036,7 +1036,7 @@ I18N.load("ko",{
 "See outfits": "코디 보기",
 "Holidays": "기념일",
 "Themed outfits": "테마 코디",
-"Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.": "켜 둔 기념일의 2주 전부터 코디 화면에 칩이 나타나 그 기념일 색으로 코디를 추천해요.",
+"Two weeks before each holiday you keep on, the Outfits screen suggests looks in its colors.": "켜 둔 기념일의 2주 전부터 코디 화면에서 그 기념일 색으로 코디를 추천해요.",
 "Tomorrow": "내일",
 "In {0} days": "{0}일 후",
 "{a} colors: {b}": "{a} 색: {b}",

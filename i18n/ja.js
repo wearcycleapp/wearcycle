@@ -1036,7 +1036,7 @@ I18N.load("ja",{
 "See outfits": "コーデを見る",
 "Holidays": "祝日・行事",
 "Themed outfits": "テーマ別コーデ",
-"Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.": "オンにした祝日・行事の2週間前から、コーデ画面のチップがその色を使ったスタイルを提案します。",
+"Two weeks before each holiday you keep on, the Outfits screen suggests looks in its colors.": "オンにした祝日・行事の2週間前から、コーデ画面でその色を使ったスタイルを提案します。",
 "Tomorrow": "明日",
 "In {0} days": "{0}日後",
 "{a} colors: {b}": "{a}の色：{b}",

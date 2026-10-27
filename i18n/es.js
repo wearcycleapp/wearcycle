@@ -1036,7 +1036,7 @@ I18N.load("es",{
 "See outfits": "Ver conjuntos",
 "Holidays": "Festividades",
 "Themed outfits": "Conjuntos temáticos",
-"Two weeks before each holiday you keep on, a chip on the Outfits screen suggests looks in its colors.": "Dos semanas antes de cada festividad que tengas activada, una etiqueta en la pantalla Conjuntos sugiere looks en sus colores.",
+"Two weeks before each holiday you keep on, the Outfits screen suggests looks in its colors.": "Dos semanas antes de cada festividad que tengas activada, la pantalla Conjuntos sugiere looks en sus colores.",
 "Tomorrow": "Mañana",
 "In {0} days": "En {0} días",
 "{a} colors: {b}": "Colores de {a}: {b}",

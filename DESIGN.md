@@ -272,7 +272,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 
 ### Chips
 - **Style:** Surface background, 1px Line border, Muted text, 600 weight, 44px minimum height (40px for small chips).
-- **State:** selected is an Ink fill with Background text and aria-pressed="true". On Outfits (Phase 8) the occasions are a grid (phones) or text tabs with a 2px ink underline (from 700x600); a holiday carries a coral dot and is selected in ink like the others.
+- **State:** selected is an Ink fill with Background text and aria-pressed="true". On Outfits (Phase 8) the occasions are a grid (phones) or text tabs with a 2px ink underline (from 700x600); holidays are not occasions there since v1.53.1: they sit in the reminders line, and the chosen one is an ink pill.
 
 ### Garment imagery (signature)
 - Three kinds of image must all look right: phone photos, cut-outs on the cream canvas, and SVG glyphs filled with the piece's main color. Design for an empty closet too (a new user has 0 items).

@@ -78,31 +78,38 @@ The shell follows the direction condition (Chosen direction), so a screen never 
 
 Built in Phase 8 (v1.53.0). Proposal approved by the owner on 2026-10-26 with the four recommended options: build A and B as shown; clear the stored "Show outfits as" choice once; from 1100px the selected look is the largest, with Wear this under it; a piece without a cut-out drawn large uses its photo, downloaded once and kept at 1024px on the device.
 
+Follow-up v1.53.1 (busy mornings), approved by the owner on 2026-10-26 with both recommended options: build the fold as shown; fold the holidays on wide screens too. The holiday bar, the holiday choices and the laundry reminder become one reminders line that opens the Reminders sheet.
+
 Direction A (below 700px wide or below 600px tall), top to bottom:
 
 1. Day row: the day (22px, display face); the weather (a button: temperatures, opens the weather settings) and the greeting on the line below; the style menu, a button "Style / All my styles" that opens a sheet with the choices (only when 2 or more styles are picked); the diary.
-2. Occasions: all six at once in a 3 by 2 grid, the selected one an ink fill (aria-pressed), 40px targets; long translations wrap inside their cell. A holiday near (holidaysSoon(14)) makes the grid 4 columns with the holiday spanning two (a coral dot marks it; selected in ink), so one holiday adds no row.
+2. Occasions: all six at once in a 3 by 2 grid, the selected one an ink fill (aria-pressed), 40px targets; long translations wrap inside their cell. Holidays are not in the grid (v1.53.1).
+2a. The reminders line (only when there is something to say), full width, 44px or taller: each holiday in the next 14 days with its icon and name (its greeting on the day itself; the chosen one an ink pill), then "In the wash" with the count when the laundry question is due, and a chevron. It wraps, never truncates (two rows at 360px in English). It opens Reminders: per holiday its date, its tip and a Themed outfits chip (pressed in ink when chosen); the laundry question with All clean, Choose and Not yet. An action closes the sheet; after Themed outfits or Not yet, focus returns to the line. Choosing an occasion leaves the holiday. The holiday tip under the occasions is shown on wide screens only.
 3. The outfit: rank, title, style and match, Adjust (44px). The kit: the main garments (layer, top or dress, t-shirt underneath, bottom) as 4:5 pictures with their category and name; shoes, belt and accessories in one row of small squares with their names (a dress alone brings the shoes up to the main row). The flat-lay board instead when chosen in Adjust, as tall as the first screen allows.
 4. Wear this and share, right under the outfit; then the tap hint or Back to suggestion; + Wear a t-shirt underneath, + Wear a belt; the first reason (a note first, if there is one) and "N more reasons" (every other reason and the ranking rule); the palette with the weather advice; the cut-out note; Wore something else? Log it.
 5. Wearing today (after logging): one line, the label, up to 8 thumbnails and Edit.
 6. More options: an index, one row per option (64px or taller): its number (02, 03...), small pictures of the top, bottom and shoes, the piece names and the match; New ideas in the heading.
 
-Phones turned sideways (A, at least 700px wide and under 600px tall): the occasions in one row of six; the kit on the left, sized by the screen height; the header, Wear this and the reasons on the right.
+Phones turned sideways (A, at least 700px wide and under 600px tall): the reminders line in the day row, between the day and the style menu; the occasions in one row of six; the kit on the left, sized by the screen height; the header, Wear this and the reasons on the right.
+
+Upright phones (below 700px wide): when notes above the outfit (the reminders line, the offline banner, the dress-code question, outfits around one piece) would push Wear this under the bar, fitKit (app.js) makes the kit's main pictures shorter, down to 100px (the board down to 200px). Nothing changes when they fit.
 
 Direction B (at least 700px wide and 600px tall):
 
-- Day row: the day (52px; 56px from 1100px), "Good morning · weather" below, the diary on the right.
-- Occasions as text tabs in the display face (20px, uppercase by CSS), the selected one in ink with a 2px ink underline; the row scrolls sideways when it does not fit (wraps with a mouse). Style as text tabs under them, beside them from 1100px.
+- Day row: the day (52px; 56px from 1100px), "Good morning · weather" below, the reminders line (at most 55% of the row, 560px) and the diary on the right.
+- Occasions as text tabs in the display face (20px, uppercase by CSS), the selected one in ink with a 2px ink underline; the row scrolls sideways when it does not fit (wraps with a mouse). Holidays are chosen from the reminders line, not the tabs: as tabs they wrapped the row with a mouse in Japanese and Tagalog (Wear this at 588 to 636px and 625 to 673px of 630). Style as text tabs under them, beside them from 1100px.
 - The looks as square flat-lay pages (fitLooks in app.js sizes the selected board so Wear this ends inside the window, never under 240px). Below 1100px: the selected page with the next one peeking (the previous one on the last page), turned with 44px arrows, dot buttons (24 by 44px with an 8px mark, the current one coral), "1 of 4", a swipe on the board or the arrow keys. From 1100px: every look side by side, the selected one first and largest (the others at most 80% of it); clicking one selects it. Only the selected page has pieces to tap, Adjust, Wear this and share; New ideas under the looks.
-- Then Wearing today, then "Why this outfit?" (display face, 24px): every reason with the ranking rule; the palette, the weather advice and the cut-out note beside them; Wore something else? Log it. The laundry reminder takes one line.
+- Then Wearing today, then "Why this outfit?" (display face, 24px): every reason with the ranking rule; the palette, the weather advice and the cut-out note beside them; Wore something else? Log it.
 
-Both: selected states in ink; coral only on Wear this, the #1 rank and the active pager dot; no card around the outfit (flat); the garment canvas stays cream in both themes. "Show outfits as" (Adjust): with no stored choice, A shows the kit and B the board; a choice is stored under wearcycle.outfitView (the pre-1.53 key wearcycle.view is cleared once, owner 2026-10-26).
+Both: the holiday bar under the header is hidden on Outfits while the reminders line shows (CSS :has); Closet, Care and Shop keep it. Selected states in ink; coral only on Wear this, the #1 rank and the active pager dot; no card around the outfit (flat); the garment canvas stays cream in both themes. "Show outfits as" (Adjust): with no stored choice, A shows the kit and B the board; a choice is stored under wearcycle.outfitView (the pre-1.53 key wearcycle.view is cleared once, owner 2026-10-26).
 
 Pictures by drawn size times pixel density: the kit's main pictures and the selected board's large cells use the cut-out, or without one the photo reduced on the device to 1024px and kept in the cut-out cache (downloaded only when the 256px thumbnail would be drawn more than 1.1x its size; sign-out clears the cache); small squares, index pictures and Wearing today use the thumbnail; other looks use the cut-out or the thumbnail. One download per cut-out (requests in flight are shared; a file the server does not return is not asked for again in that session).
 
-"Wear this" is visible without scrolling, with its top and bottom edges uncovered, at the 13 sizes under Chosen direction (tools/check.mjs fails otherwise) and on phones turned sideways. Measured on v1.53.0 in Chromium with the fixture closet: 695 to 743px at 390x844 (bar from 778px), 654 to 702px at 360x800 (bar from 734px), 566 to 614px at 1366x630, 277 to 325px at 844x390. Not covered: with the holiday bar, two holidays and a laundry reminder at once (fixture clock moved to 25 October), the button sits at 907 to 955px at 390x844 and 699 to 747px at 1366x630 (still visible at 820x1180); the outfit itself still starts in the first screen. The offline banner moves it to 766 to 814px at 390x844.
+"Wear this" is visible without scrolling, with its top and bottom edges uncovered, at the 13 sizes under Chosen direction (tools/check.mjs fails otherwise) and on phones turned sideways. Measured on v1.53.0 in Chromium with the fixture closet: 695 to 743px at 390x844 (bar from 778px), 654 to 702px at 360x800 (bar from 734px), 566 to 614px at 1366x630, 277 to 325px at 844x390 (unchanged in v1.53.1).
 
-Code: renderOutfits, heroCard (A), optionIndex and optRow (A), lookbook, lookCur, lookAlt and fitLooks (B), whySection (B), kitHtml, kitPic, flatlay, cutNote, todayLine, renderStyleChips and openStyleMenu, hydrateCuts, hydratePhotos and medUrl (app.js).
+Busy morning (v1.53.1; closet.json "busyMorning", 25 October 8:30: Halloween in 6 days, Diwali in 14, the holiday bar, a laundry reminder): tools/check.mjs fails unless Wear this is visible at 390x844 and 1366x630. Measured: 679 to 727px at 390x844, 566 to 614px at 1366x630, 677 to 725px at 360x800 (kit pictures 103px), 751 to 799px at 820x1180, 277 to 325px at 844x390; v1.53.0 had 907 to 955, 699 to 747, 905 to 953, 916 to 964 and 524 to 572. Offline, with the banner on top: 720 to 768px at 390x844 on a quiet morning and on a busy one (v1.53.0: 766 to 814 and 974 to 1022).
+
+Code: renderOutfits, remLine and openReminders, fitKit (A), heroCard (A), optionIndex and optRow (A), lookbook, lookCur, lookAlt and fitLooks (B), whySection (B), kitHtml, kitPic, flatlay, cutNote, todayLine, renderStyleChips and openStyleMenu, hydrateCuts, hydratePhotos and medUrl (app.js).
 
 ### Known issues fixed in this phase (v1.53.0)
 - Overridden declarations (47) and the unused rules listed in Phase 6: removed first, with no visible change (all 112 screenshots identical to the pixel). `.side` was checked against the camera: `.cam .side` sets display:grid and its buttons hold one grid item, so the removed flex-direction and gap never applied there.
@@ -115,6 +122,12 @@ Code: renderOutfits, heroCard (A), optionIndex and optRow (A), lookbook, lookCur
 - The same cut-out downloaded up to 20 times when Outfits opened (cutUrl had no shared request): one download per cut-out; opening Outfits went from 478 KB in 87 files to 60 KB in 9 files on phones (43 KB in 8 files from 1100px), fixture closet.
 - Pictures drawn up to 1.7x (2x at 820px) larger than their files: the large pictures now use the cut-out or the 1024px photo copy. The fixture's own files are small (560px photos, cut-outs about 230px wide once trimmed), so the check still reports up to 1.8x there.
 - Also found and fixed: `.dot` and `.pcount` were generic names shared with the Closet and the piece sheet, so the pager rules are scoped to `.pgr`.
+
+### Fixed in v1.53.1
+- Busy mornings pushed Wear this off the first screen (above): the holiday bar, the holiday choices and the laundry card are folded into the reminders line.
+- Resizing a window or turning an iPad while another tab was open left the board mis-sized (at 1366x768 resized to 1300x700: 1044px wide, Wear this at 1351px of 700). fitLooks now skips a hidden screen and goTab sizes it on return (346px, 653px, the same as a fresh open).
+- The board was sized before i18n.js translated the page, so longer translated text could push Wear this down; it is sized again on the next frame.
+- Settings > Holidays said "a chip on the Outfits screen"; it now says the Outfits screen suggests looks in the holiday's colors (six languages).
 
 ## Closet (GALLERY)
 
