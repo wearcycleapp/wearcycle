@@ -1,6 +1,7 @@
 {
  "_about": "Sample closet for tools/check.mjs: invented pieces with synthetic images (tools/fixtures/img). Not real user data.",
  "now": "2026-10-14T08:30:00-04:00",
+ "busyMorning": "2026-10-25T08:30:00-04:00",
  "timezone": "America/Toronto",
  "locale": "en-CA",
  "user": {

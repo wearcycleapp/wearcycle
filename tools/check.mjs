@@ -365,6 +365,24 @@ async function wearSizes(browser, base, state, data) {
   }
 }
 
+// Busy morning (owner, 2026-10-26): the fixture clock moved to closet.json "busyMorning", when Halloween and Diwali are
+// both within two weeks, the holiday bar is on and the laundry question is due (a piece in the wash since Oct 11).
+// "Wear this" must stay fully visible at 390x844 and 1366x630; 360x800 and 820x1180 are reported.
+const BUSY_SIZES = [[390, 844, 3, 1, 1], [1366, 630, 1, 0, 1], [360, 800, 3, 1, 0], [820, 1180, 2, 1, 0]];
+async function busyMorning(browser, base, state, data) {
+  R.busy = []; if (!CLOSET.busyMorning) return;
+  for (const [w, h, dpr, touch, req] of BUSY_SIZES) {
+    const dev = { id: w + 'x' + h, width: w, height: h, dpr, touch: !!touch };
+    const ctx = await newContext(browser, base, dev, { data, storageState: state }); await ctx.clock.setFixedTime(new Date(CLOSET.busyMorning));
+    const page = await ctx.newPage(); watchConsole(page, () => 'busy-' + dev.id);
+    try { await page.goto(base + '/index.html'); await waitApp(page);
+      const s = await page.evaluate(() => ({ holidays: holidaysSoon(14).length, bar: !!holidayNow(), wash: !!washCard() }));
+      const p = await page.evaluate(PICTURES);
+      R.busy.push({ size: dev.id, required: !!req, busy: s.holidays >= 2 && s.bar && s.wash, state: s, ...(p.wear || { visible: false, missing: true }) });
+    } finally { await ctx.close(); }
+  }
+}
+
 /* ---------- views ---------- */
 async function openView(page, view) {
   if (['outfits', 'closet', 'care', 'shop'].includes(view)) { await goTab(page, view); return true; }
@@ -635,7 +653,7 @@ async function main() {
     check('Sign-in', 'PASS', R.auth.mode + ': ' + R.auth.reason);
     if (!A.worstCase) {
       await flows(browser, server.base, state, data);
-      if (views.includes('outfits')) await wearSizes(browser, server.base, state, data);
+      if (views.includes('outfits')) { await wearSizes(browser, server.base, state, data); await busyMorning(browser, server.base, state, data); }
       const sets = [];
       for (const dev of devices) for (const theme of ['light', 'dark']) sets.push({ dev, theme, lang: 'en' });
       if (devices.includes(DEV['phone-360'])) for (const lang of ['fr', 'ja']) sets.push({ dev: DEV['phone-360'], theme: 'light', lang });
@@ -691,6 +709,14 @@ async function main() {
       T.wearThisSizes + (miss.length ? '; not at ' + miss.map(x => x.size + ' (' + at(x) + ')').join(', ') : ''));
     check('"Wear this" on phones turned sideways', 'INFO', R.wearSizes.filter(x => !x.required).map(x => x.size + ' ' + (x.visible ? 'visible (' + at(x) + ')' : at(x))).join('; '));
   }
+  if (R.busy && R.busy.length) {
+    const at = x => x.missing ? 'no button' : (x.visible ? 'visible ' : 'not visible ') + x.top + '-' + x.bottom + ' of ' + x.vh;
+    const off = R.busy.filter(x => !x.busy), req = R.busy.filter(x => x.required), miss = req.filter(x => !x.visible);
+    check('Busy morning reached (two holidays, the holiday bar, a laundry reminder)', off.length ? 'FAIL' : 'PASS',
+      off.length ? off.map(x => x.size + ' ' + JSON.stringify(x.state)).join('; ') : R.busy.length + ' sizes at ' + CLOSET.busyMorning);
+    check('"Wear this" visible on a busy morning at ' + req.map(x => x.size).join(' and '), miss.length || off.length ? 'FAIL' : 'PASS', req.map(x => x.size + ' ' + at(x)).join('; '));
+    check('"Wear this" on a busy morning, other sizes', 'INFO', R.busy.filter(x => !x.required).map(x => x.size + ' ' + at(x)).join('; '));
+  }
   const first = caps.filter(c => c.theme === 'light' && c.lang === 'en');
   const pics = first.filter(c => c.view === 'outfits' && c.pictures);
   if (pics.length) check('Outfits: pictures drawn larger than their file (first screen)', 'INFO', pics.map(c => c.device + ' ' + c.pictures.upscaled + ' of ' + c.pictures.shown + (c.pictures.upscaled ? ' (up to ' + c.pictures.worst + 'x)' : '')).join('; '));
@@ -710,7 +736,7 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, render: R.render, totals: T, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',
