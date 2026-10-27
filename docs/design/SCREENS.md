@@ -187,15 +187,16 @@ Sections map to groups in renderCare and careFlags. Added on 2026-10-27 (owner, 
 
 ## Shop (STYLIST INTELLIGENCE)
 
-Erratum 2 applies (owner decision, 13 October 2026).
+Built in v1.55.0 (Phase 11 brought forward; proposal "Wearcycle Shop redesign" approved by the owner on 2026-10-27; critique .impeccable/critique/2026-10-27T19-10-00Z__app-js.md). This replaces erratum 2's order (versatility first, owner 13 October 2026).
 
-- Order (as built in renderShop, app.js:1027): department question if unset, coming season, replace, more outfits from one purchase (versaPanel, app.js:1030; v1.48), gaps per occasion, build toward a style, ideas from Claude.
-- Lead element: versatility() from v1.48.0 (logic.js:477): new color pairings as the large number, plus the owned pieces each purchase pairs with. Per-occasion gaps from gaps() go below.
-- For each gap: what is missing, why (have X of Y), the best color with "+N outfits" as the large element, then the shop link.
-- Shop values equal main exactly, for the versatility() list as well as for gaps(). Since v1.54.0 (owner, 2026-10-27): shoe targets 3 for work and 2 for going out; a pair worn on 16 or more of the last 30 days keeps that occasion's shoe gap open while the count is at most the target, with a reason line per pair; Replace also lists top, bottom and shoe pieces below the work or going-out bar when that occasion is short of their kind.
-- No "works with" counts; Care has no "Ready again".
-- Covered occasions: one calm line, for example "Covered: 5 tops, 3 bottoms, 2 shoes".
-- Never invent a purchase need; never encourage buying to fill the screen.
+- One answer first: a summary line ("{0} buys would help most." with the covered occasions, or "Nothing to buy right now. Every occasion is covered."), then Buy next with at most three cards.
+- Buy next, in order, from needs the app already computes (never an invented need): pieces on the Replace list (condition 1, or below the work or going-out bar where that occasion is short of their kind); Work and Going out gaps from gaps() (with the shoe rotation), each with its best color; the top versatility() pick; other occasions' gaps. One card per kind and color. Each card: a 56px garment glyph in the suggested color on the cream canvas, why (Worn out in Bad, the occasion and count, or Most new pairings), the name, "+N outfits" in the display face, the reason lines (tired shoes, Replaces ...), the owned pieces it pairs with as small cut-outs, and Shop. The rest of the versatility list sits under "N more ideas". With no need at all, Buy next is not shown and the versatility list is one folded row.
+- By occasion: one row per occasion; a covered one is one line; a gap row opens the details in place (meters, reason lines, colors with +N outfits, shop links).
+- Coming up: the season row (date, "N of M ready", "N to add") opens the missing items, one "Ready: ..." line, the two preview outfits and the bring-out and storage lines; the holidays row opens each holiday with its tip, owned colors and See outfits.
+- Build toward a style: per style a row with "have of total" and "N to add" or Complete, then only the pieces to add; "Show the N you own" opens the owned essentials (each opens the piece).
+- Ideas from Claude and the department question unchanged.
+- Rows that open are buttons with aria-expanded (44px or taller); the open state is kept for the session (S.shopOpen). One column below 700x600; from 700x600 two columns: left the summary and Buy next and By occasion, right Coming up, Build toward a style and Ideas from Claude. The 960px columns rule no longer applies to Shop.
+- Measured with the fixture closet: phone 4,710px (5.6 screens) to about 2.3 screens folded; French at 360px 6.3 to 2.6; 820 4.0 to 1.1; 1366x768 3.3 to 1.6.
 
 ### Known issues to fix in this phase
 - Overridden declarations (2): `.opt em` font-family and font-size (styles.css:227).

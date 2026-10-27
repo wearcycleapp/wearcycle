@@ -551,12 +551,72 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .zoomhint.sm{width:18px;height:18px;right:3px;bottom:3px}
 .zoomhint.sm svg{width:11px;height:11px}
 
+/* ---------- Shop (v1.55.0): the answer first, the rest folded ----------
+   One column on phones; from 700x600 (the direction B condition) what you act on on the left, what you plan with
+   on the right. Rows that open in place are buttons with aria-expanded; every row is 44px or taller. */
+.shopv{display:flex;flex-direction:column;gap:16px}
+.scol{display:flex;flex-direction:column;gap:16px;min-width:0}
+.ssum{margin:0;font-size:15px;line-height:1.4}
+.ssum b{font-weight:700}
+.ssum span{color:var(--muted)}
+.cw{text-transform:capitalize}
+.buy{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.bsw{width:56px;height:70px;flex:none;border-radius:10px;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.bsw svg.glyph{width:42px;height:42px}
+.bt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.bt>b{font-size:15px;font-weight:600}
+.bwhy{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.bwhy.bad{color:var(--bad)}
+.big{font-family:var(--f-display);font-weight:800;font-size:22px;line-height:1.05;letter-spacing:.01em;margin-top:2px}
+.big small{font-family:var(--f-body);font-weight:600;font-size:12.5px;color:var(--muted);letter-spacing:0;margin-left:2px}
+.bsub{font-size:12.5px;color:var(--muted)}
+.pairs{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)}
+.pairs>span{margin-right:2px}
+.pairs i{width:30px;height:30px;border-radius:6px;overflow:hidden;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.pairs i img{width:100%;height:100%;object-fit:cover}
+.pairs i img.fitted,.pairs i img.cut{object-fit:contain}
+.pairs i img.cut{padding:8%;box-sizing:border-box}
+.pairs i svg.glyph{width:70%;height:70%}
+.buy .bgo{flex:none;align-self:center;text-decoration:none;color:var(--ink)}
+.srow{display:flex;align-items:center;gap:10px;width:100%;min-height:52px;padding:8px 14px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:inherit;text-align:left}
+button.srow{cursor:pointer}
+.srow>b{flex:none;min-width:84px;max-width:45%;font-size:15px;font-weight:600}
+.srow .st{flex:1;min-width:0;font-size:13.5px;color:var(--muted)}
+.srow .st.ok{color:var(--good);font-weight:600}
+.srow .chev{flex:none;color:var(--muted);transition:transform .15s cubic-bezier(.23,1,.32,1)}
+.srow[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.srow b:only-of-type+.st:empty{display:none}
+.spill{flex:none;font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:var(--warn-soft);color:var(--warn)}
+.spill.good{background:var(--good-soft);color:var(--ink)}
+.spill.good::before{content:"✓ ";color:var(--good)}
+.sdet{border-bottom:1px solid var(--line);display:flex;flex-direction:column}
+.sdet>.hint,.sdet>.sh4{padding:8px 14px 0}
+.sdet>.seaprevs{padding:0 14px 12px}
+.sdet .need:last-child{border-bottom:0}
+.sh4{margin:0;font-size:13.5px;font-weight:600}
+.panel>.hint.sp{padding:10px 14px 0}
+.lrow{display:flex;align-items:center;gap:10px;min-height:48px;padding:6px 14px;border:0;border-bottom:1px solid var(--line);background:none;color:inherit;text-decoration:none;font:inherit;text-align:left;width:100%}
+button.lrow{cursor:pointer}
+.lrow .t{flex:1;min-width:0;display:flex;flex-direction:column}
+.lrow .t b{font-size:14px;font-weight:500}
+.lrow .t span{font-size:12.5px;color:var(--muted)}
+.lrow .mark{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;flex:none;font-weight:700;font-size:13px;background:var(--accent-soft);color:var(--muted)}
+.lrow.have .mark{background:var(--good-soft);color:var(--good)}
+.lrow .go{flex:none;font-size:13px;font-weight:600;color:var(--ink);white-space:nowrap}
+.panel>:last-child.srow,.panel>:last-child.lrow,.panel>:last-child.buy,.panel>.sdet:last-child,.sdet>:last-child.lrow{border-bottom:0}
+@media (hover:hover) and (pointer:fine){ button.srow:hover,button.lrow:hover,a.lrow:hover{background:var(--surface)} }
+@media (prefers-reduced-motion:reduce){ .srow .chev{transition:none} }
+@media (min-width:700px) and (min-height:600px){
+  .shopv{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px 20px;align-items:start}
+  .shopv>.ssum,.shopv>.panel{grid-column:1/-1}
+}
+
 /* ---------- wide screens: web and tablets in landscape (v1.41) ----------
    960px and up: Care and Shop flow in two columns, and the closet grid gets larger tiles (the rail, page width,
    toasts and job bar are in the shared layer; Outfits follows its own directions since Phase 8). */
 @media (min-width:960px){
-  #careBody>div,#shopBody>div{display:block!important;columns:2 360px;column-gap:16px}
-  #careBody>div>*,#shopBody>div>*{break-inside:avoid;margin-bottom:16px}
+  #careBody>div{display:block!important;columns:2 360px;column-gap:16px}
+  #careBody>div>*{break-inside:avoid;margin-bottom:16px}
   .grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
 }
 .viewer .vnote{margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:#c9ccd3}

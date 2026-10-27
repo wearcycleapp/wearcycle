@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.54.0';
+const APP_VERSION='1.55.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -41,26 +41,6 @@ function fmtDay(iso){ return new Date(iso+'T12:00').toLocaleDateString(I18N.loca
 function whenLabel(n){ return n===0?'Today':n===1?'Tomorrow':'In '+n+' days'; }
 function miniBoard(o){ const cells=flCells(o).map(c=>`<span class="fl ${c.small?'small':''} ${c.it.cut?'iscut':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${flVisual(c.it)}</span>`).join('');
   return `<span class="flatlay mini">${cells}</span>`; }
-function comingUp(items){
-  const out=[]; const w=wxSet(); const plan=seasonPlan(Date.now(),wxOn()?w.lat:NaN);
-  if(plan){ const se=SEASONS[plan.id]; const list=seasonChecklist(plan.id,items); const ok=list.filter(x=>x.have.length>=x.need).length;
-    const rot=seasonRotation(plan.id,items,Date.now());
-    const prev=['work','out'].map(occ=>{ const c=Object.assign(ctx(),{wx:se.wx,style:styleTarget(occ),theme:null}); const r=suggest(items,occ,c,{n:1,layer:true}); const f=r.outfits[0];
-      return f?`<div class="seaprev">${miniBoard(f.o)}<span>${OCC[occ].label}</span></div>`:''; }).join('');
-    out.push(`<div><h3 style="margin:0">${plan.upcoming?'Coming up: '+se.label:se.label}</h3><p class="hint" style="margin:4px 0 0">${plan.upcoming?'Starts '+fmtDay(plan.start)+'. ':''}${se.desc}</p></div>
-     <div class="panel"><div class="panel-h"><h3>${'Ready for '+se.label.toLowerCase()+'?'}</h3><span class="count">${ok} of ${list.length}</span></div>
-      ${list.map(x=>{ const done=x.have.length>=x.need; const inner=`<span class="mark">${done?'✓':'+'}</span><div class="txt"><b>${x.label}</b><span>${x.have.length} of ${x.need}</span><span data-notr>${x.have.length?' · ':''}${esc(x.have.slice(0,3).map(i=>i.name).join(', '))}</span></div>`;
-        return done?`<div class="li ess have">${inner}</div>`:`<a class="li lirow ess shop" href="${shopUrl(shopQ(x.label))}" target="_blank" rel="noopener">${inner}${SHOP_GO}</a>`; }).join('')}
-      ${prev?`<div class="li"><div class="txt"><b>${'What you would wear on a '+se.label.toLowerCase()+' day'}</b><div class="seaprevs">${prev}</div></div></div>`:''}
-      ${rot.bringOut.length?`<div class="li"><div class="txt"><b>Bring these out</b><span data-notr>${esc(rot.bringOut.slice(0,8).map(i=>i.name).join(', '))}</span></div></div>`:''}
-      ${rot.store.length?`<div class="li"><div class="txt"><b>Can go into storage</b><span data-notr>${esc(rot.store.slice(0,8).map(i=>i.name).join(', '))}</span></div></div>`:''}
-     </div>`); }
-  const hs=holidaysSoon(30);
-  if(hs.length){ out.push(`<div class="panel"><div class="panel-h"><h3>Holidays coming up</h3><span class="count">${hs.length}</span></div>
-    ${hs.map(h=>{ const own=h.colors.map(c=>[c,items.filter(i=>isActive(i)&&primary(i)===c).length]);
-      return `<div class="li hol"><span class="sws">${h.colors.slice(0,4).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><div class="txt"><b>${h.label} · ${fmtDay(h.date)}</b><span>${h.tip}</span><span>${'You own: '+own.map(([c,n])=>I18N.t(c)+' '+n).join(' · ')}</span></div><div class="acts"><button class="btn sm" data-theme-go="${h.id}">See outfits</button></div></div>`; }).join('')}</div>`); }
-  return out.join('');
-}
 /* ---------- styles ----------
    Picked styles (up to three, plus looks learned from photos) guide Work and Going out; Work can have its own.
    With nothing picked, the style is learned from what was worn (5+ logged outfits in 120 days), at half weight.
@@ -1249,39 +1229,90 @@ function renderCare(){
   box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+out.join('')+'</div>';
 }
 let ideasState={busy:false,list:null,err:''};
+// Shop (v1.55.0, owner 2026-10-27): one answer first (Buy next, at most three), everything else folded into rows
+// that open in place. Two columns from 700x600. Numbers come from gaps(), versatility(), the Replace rule and the
+// season and style lists; nothing here invents a need.
+S.shopOpen=new Set();
+function fold(id,label,status,pill,body,open){ const on=open??S.shopOpen.has(id);
+  return `<button type="button" class="srow" data-fold="${id}" aria-expanded="${on}"><b>${label}</b><span class="st">${status}</span>${pill||''}<span class="chev" aria-hidden="true">›</span></button><div class="sdet" id="fold-${id}" ${on?'':'hidden'}>${body}</div>`; }
+function pillHtml(t,good){ return `<span class="spill${good?' good':''}">${t}</span>`; }
+function buyCard(c){ return `<div class="buy"><span class="bsw" aria-hidden="true">${glyph({cat:c.cat,colors:[c.color]})}</span><div class="bt"><span class="bwhy${c.bad?' bad':''}">${c.why}</span><b>${c.title}</b>${c.big?`<span class="big">${c.big}</span>`:''}${c.sub||''}${c.pairs&&c.pairs.length?`<span class="pairs"><span>Pairs with</span>${c.pairs.slice(0,3).map(it=>`<i title="${esc(it.name)}">${smallPic(it)}</i>`).join('')}</span>`:''}</div><a class="btn sm bgo" href="${shopUrl(c.q)}" target="_blank" rel="noopener">Shop</a></div>`; }
 function renderShop(){
   const box=$('#shopBody'); const items=allItems().filter(isActive);
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():''; return; }
+  setTimeout(hydrateCuts,0);
   const g=gaps(items,allLog(),Date.now()); const slotName={top:'Tops',bottom:'Bottoms',shoes:'Shoes'};
-  const blocks=g.map(x=>{
-    const o=OCC[x.occ];
-    const body=x.needs.length?x.needs.map(n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" role="img" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
-      ${(n.tired||[]).length?`<div class="opt">Another pair lets your shoes rest between wears.</div>${n.tired.map(x=>`<div class="opt hint"><span data-notr>${esc(x.item.name)}</span>: <span>Worn on ${x.days} of the last 30 days.</span></div>`).join('')}`:''}
-      <div class="opt">Add ${n.target-n.have}: ${esc(n.idea)}</div>
-      <div class="opt">${n.colors.map(c=>`<a class="shopc" href="${shopUrl(shopQ(c.color,n.idea))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[c.color].hex}"></span>${c.color} <em>${c.adds?'+'+c.adds+' outfit'+(c.adds===1?'':'s'):'pairs widely'}</em></a>`).join(' &nbsp;or&nbsp; ')}</div>
-      <div class="opt"><a class="shoplink" href="${shopUrl(shopQ(n.idea))}" target="_blank" rel="noopener">Shop ${esc(n.idea)} ›</a></div></div>`).join('')
-      :`<div class="need"><span class="done">Covered: ${x.have.top} tops, ${x.have.bottom} bottoms, ${x.have.shoes} shoes ready.</span></div>`;
-    return `<div class="panel"><div class="panel-h"><h3>${o.label}</h3><span class="count">${x.needs.length?x.needs.length+' gap'+(x.needs.length>1?'s':''):'ready'}</span></div>${body}</div>`;
-  });
+  const pl=(n,one,many)=>(n===1?one:many).replace('{0}',n);
   // Replace: retired pieces, and pieces below the work or going-out bar when that occasion is short of their kind.
   const short=(occ,cat)=>g.some(x=>x.occ===occ&&x.needs.some(n=>n.slot===cat));
   const retire=items.filter(it=>(it.cond??4)<=1||((it.cond??4)<=3&&['top','bottom','shoes'].includes(it.cat)&&(it.occ||[]).some(o=>(o==='work'||o==='out')&&short(o,it.cat))));
-  const repl=retire.length?`<div class="panel"><div class="panel-h"><h3>Replace</h3><span class="count">${retire.length}</span></div>${retire.map(it=>`<div class="li stripe-retire">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>Replace with a ${esc(primary(it)||'')} ${esc(CAT[it.cat].label.toLowerCase())} for ${esc((it.occ||[]).map(o=>OCC[o]?.label.toLowerCase()).filter(Boolean).join(', ')||'the same use')}.</span></div><div class="acts"><a class="btn sm" href="${shopUrl(shopQ(primary(it),CAT[it.cat].label.toLowerCase()))}" target="_blank" rel="noopener">Shop</a></div></div>`).join('')}</div>`:'';
+  const v=versatility(items,5);
+  // Buy next, in order: worn out and needed; work and going-out gaps; the top pairing pick; other occasions' gaps.
+  const cands=[], seen=new Set(), add=c=>{ if(seen.has(c.key)) return; seen.add(c.key); cands.push(c); };
+  for(const it of retire) add({key:'r'+it.id,cat:it.cat,color:primary(it)||'grey',bad:1,why:'Worn out',title:`<span class="cw">${esc(primary(it)||'')}</span> · <span>${esc(CAT[it.cat].label.toLowerCase())}</span>`,
+    sub:`<span class="bsub">${'Replaces '}<span data-notr>${esc(it.name)}</span></span>`,q:shopQ(primary(it),CAT[it.cat].label.toLowerCase()),need:1});
+  const gapCard=(x,n)=>{ const c=n.colors[0]||{}; return {key:n.slot+'|'+(c.color||''),cat:n.slot,color:c.color||'grey',why:`<span>${OCC[x.occ].label}</span> · <span>${slotName[n.slot]}</span> · <span>${n.have} of ${n.target}</span>`,
+    title:`<span class="cw">${esc(c.color||'')}</span> · <span>${esc(n.idea)}</span>`,big:c.adds?`+${c.adds} <small>${c.adds===1?'outfit':'outfits'}</small>`:'',
+    sub:(n.tired||[]).map(t=>`<span class="bsub"><span data-notr>${esc(t.item.name)}</span>: <span>Worn on ${t.days} of the last 30 days.</span></span>`).join(''),q:shopQ(c.color,n.idea),need:1}; };
+  for(const x of g.filter(x=>x.occ==='work'||x.occ==='out')) for(const n of x.needs) add(gapCard(x,n));
+  const vCard=r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,why:'Most new pairings',title:`<span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span>`,
+    big:`+${r.adds} <small>${r.adds===1?'outfit':'outfits'}</small>`,sub:`<span class="bsub">${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span>`,pairs:r.pairs,q:shopQ(r.color,r.label.toLowerCase())});
+  const needAny=retire.length||g.some(x=>x.needs.length);
+  if(needAny&&v.list[0]) add(vCard(v.list[0]));
+  for(const x of g.filter(x=>x.occ!=='work'&&x.occ!=='out')) for(const n of x.needs) add(gapCard(x,n));
+  const shown=needAny?cands.slice(0,3):[];
+  const moreIdeas=v.list.filter(r=>!shown.some(c=>c.key===r.slot+'|'+r.color));
+  const covered=g.filter(x=>!x.needs.length).map(x=>OCC[x.occ].label);
+  const summary=needAny?`<p class="ssum"><b>${pl(shown.length,'1 buy would help most.','{0} buys would help most.')}</b>${covered.length?` <span>${'Covered: '+covered.join(', ')+'.'}</span>`:''}</p>`
+    :`<p class="ssum"><b>Nothing to buy right now. Every occasion is covered.</b></p>`;
+  const ideaRows=moreIdeas.map(r=>`<a class="lrow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b><span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span></b><span>+${r.adds} ${r.adds===1?'outfit':'outfits'} · ${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span></span>${SHOP_GO}</a>`).join('');
+  const buy=shown.length?`<section class="panel" aria-labelledby="h-buy"><div class="panel-h"><h3 id="h-buy">Buy next</h3><span class="count">${shown.length}</span></div>${shown.map(buyCard).join('')}
+      ${moreIdeas.length?fold('ideas',pl(moreIdeas.length,'1 more idea','{0} more ideas'),'','',ideaRows):''}</section>`
+    :(moreIdeas.length?`<section class="panel">${fold('ideas','More outfits from one purchase',pl(moreIdeas.length,'1 idea','{0} ideas'),'',ideaRows)}</section>`:'');
+  // By occasion: one row each; a covered one is one line, a gap opens the details in place.
+  const needHtml=n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" role="img" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
+      ${(n.tired||[]).length?`<div class="opt">Another pair lets your shoes rest between wears.</div>${n.tired.map(x=>`<div class="opt hint"><span data-notr>${esc(x.item.name)}</span>: <span>Worn on ${x.days} of the last 30 days.</span></div>`).join('')}`:''}
+      <div class="opt">Add ${n.target-n.have}: ${esc(n.idea)}</div>
+      <div class="opt">${n.colors.map(c=>`<a class="shopc" href="${shopUrl(shopQ(c.color,n.idea))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[c.color].hex}"></span>${c.color} <em>${c.adds?'+'+c.adds+' outfit'+(c.adds===1?'':'s'):'pairs widely'}</em></a>`).join(' &nbsp;or&nbsp; ')}</div>
+      <div class="opt"><a class="shoplink" href="${shopUrl(shopQ(n.idea))}" target="_blank" rel="noopener">Shop ${esc(n.idea)} ›</a></div></div>`;
+  const occRows=g.map(x=>x.needs.length
+    ?fold('occ-'+x.occ,OCC[x.occ].label,x.needs.map(n=>`<span>${slotName[n.slot]}</span> <span>${n.have} of ${n.target}</span>`).join(' · '),pillHtml(x.needs.length===1?'1 gap':x.needs.length+' gaps'),x.needs.map(needHtml).join(''))
+    :`<div class="srow plain"><b>${OCC[x.occ].label}</b><span class="st ok">Covered: ${x.have.top} tops, ${x.have.bottom} bottoms, ${x.have.shoes} shoes ready.</span></div>`).join('');
+  const gapN=g.filter(x=>x.needs.length).length;
+  const occ=`<section class="panel" aria-labelledby="h-occ"><div class="panel-h"><h3 id="h-occ">By occasion</h3><span class="count">${gapN?pl(gapN,'1 with gaps','{0} with gaps'):'ready'}</span></div>${occRows}</section>`;
+  // Coming up: the season and the holidays, a row each.
+  const coming=[]; const w=wxSet(); const plan=seasonPlan(Date.now(),wxOn()?w.lat:NaN);
+  if(plan){ const se=SEASONS[plan.id]; const list=seasonChecklist(plan.id,items); const okL=list.filter(x=>x.have.length>=x.need), miss=list.filter(x=>x.have.length<x.need);
+    const rot=seasonRotation(plan.id,items,Date.now());
+    const prev=['work','out'].map(o=>{ const c=Object.assign(ctx(),{wx:se.wx,style:styleTarget(o),theme:null}); const r=suggest(items,o,c,{n:1,layer:true}); const f=r.outfits[0];
+      return f?`<div class="seaprev">${miniBoard(f.o)}<span>${OCC[o].label}</span></div>`:''; }).join('');
+    const body=`<p class="hint">${plan.upcoming?'Starts '+fmtDay(plan.start)+'. ':''}${se.desc}</p>
+      ${miss.map(x=>`<a class="lrow shop" href="${shopUrl(shopQ(x.label))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b>${x.label}</b><span>${x.have.length} of ${x.need}</span><span data-notr>${esc(x.have.slice(0,3).map(i=>i.name).join(', '))}</span></span>${SHOP_GO}</a>`).join('')}
+      ${okL.length?`<p class="hint"><span>${'Ready: '+okL.map(x=>x.label.toLowerCase()).join(', ')}</span></p>`:''}
+      ${prev?`<p class="sh4">${'What you would wear on a '+se.label.toLowerCase()+' day'}</p><div class="seaprevs">${prev}</div>`:''}
+      ${rot.bringOut.length?`<p class="hint"><b>Bring these out</b> <span data-notr>${esc(rot.bringOut.slice(0,8).map(i=>i.name).join(', '))}</span></p>`:''}
+      ${rot.store.length?`<p class="hint"><b>Can go into storage</b> <span data-notr>${esc(rot.store.slice(0,8).map(i=>i.name).join(', '))}</span></p>`:''}`;
+    coming.push(fold('season',se.label,`${plan.upcoming?`<span>${fmtDay(plan.start)}</span> · `:''}<span>${okL.length} of ${list.length} ready</span>`,miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1),body)); }
+  const hs=holidaysSoon(30);
+  if(hs.length) coming.push(fold('holidays','Holidays',hs.map(h=>`<span>${h.label}</span> <span>${fmtDay(h.date)}</span>`).join(' · '),'',hs.map(h=>{ const own=h.colors.map(c=>[c,items.filter(i=>isActive(i)&&primary(i)===c).length]);
+      return `<div class="li hol"><span class="sws">${h.colors.slice(0,4).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><div class="txt"><b>${h.label} · ${fmtDay(h.date)}</b><span>${h.tip}</span><span>${'You own: '+own.map(([c,n])=>I18N.t(c)+' '+n).join(' · ')}</span></div><div class="acts"><button class="btn sm" data-theme-go="${h.id}">See outfits</button></div></div>`; }).join('')));
+  const comingP=coming.length?`<section class="panel" aria-labelledby="h-coming"><div class="panel-h"><h3 id="h-coming">Coming up</h3></div>${coming.join('')}</section>`:'';
+  // Build toward a style: what to add per style; the owned essentials behind one row.
+  const st=styleSet(); const lr=learned(); const keys=[...new Set(st.pick.length?st.pick.concat(st.work):lr.ids.concat(st.work))];
+  let ownedRows='', ownedN=0;
+  const styleBody=keys.map(k=>{ const ess=STYLES[k]?essentials(k,items):essentials(looks().find(l=>l.id===k)||{},items); const have=ess.filter(e=>e.have), miss=ess.filter(e=>!e.have);
+      ownedN+=have.length; ownedRows+=have.map(e=>`<button type="button" class="lrow ess have" data-edit="${esc(e.have.id)}"><span class="mark">✓</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b><span data-notr>${esc(e.have.name)}</span></span><span class="chev" aria-hidden="true">›</span></button>`).join('');
+      return `<div class="srow plain"><b ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</b><span class="st">${have.length} of ${ess.length}</span>${miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1)}</div>
+        ${miss.map(e=>`<a class="lrow shop" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></span>${SHOP_GO}</a>`).join('')}`; }).join('');
+  const styleP=keys.length?`<section class="panel" aria-labelledby="h-style"><div class="panel-h"><h3 id="h-style">Build toward a style</h3></div><p class="hint sp">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p>${styleBody}${ownedN?fold('owned',pl(ownedN,'Show the 1 you own','Show the {0} you own'),'','',ownedRows):''}</section>`
+    :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
   const list=ideasState.list;
   const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
      ${list?list.map(x=>`<a class="idea shop" href="${shopUrl([x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?(COLORS[x.color]?shopQ(x.color):x.color):'',x.item].filter(Boolean).join(' '))}" target="_blank" rel="noopener"><b>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${esc(OCC[x.occasion]?.label||x.occasion||'')}${x.pairsWith&&x.pairsWith.length?' · pairs with '+esc(x.pairsWith.join(', ')):''}</span><span>${esc(x.why||'')}</span>${SHOP_GO}</a>`).join(''):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
-  const st=styleSet(); const lr=learned(); const keys=[...new Set(st.pick.length?st.pick.concat(st.work):lr.ids.concat(st.work))];
-  const build=keys.length?keys.map(k=>{ const ess=STYLES[k]?essentials(k,items):essentials(looks().find(l=>l.id===k)||{},items); const have=ess.filter(e=>e.have).length;
-      return `<div class="panel"><div class="panel-h"><h3 ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</h3><span class="count">${have} of ${ess.length}</span></div>
-       ${ess.map(e=>e.have?`<button class="li lirow ess have" data-edit="${esc(e.have.id)}"><span class="mark">✓</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b><span data-notr>${esc(e.have.name)}</span></div><span class="chev">›</span></button>`
-         :`<a class="li lirow ess shop" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener"><span class="mark">+</span><div class="txt"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></div>${SHOP_GO}</a>`).join('')}</div>`; }).join('')
-    :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
-  const buildH=`<div><h3 style="margin:0">Build toward a style</h3><p class="hint" style="margin:4px 0 0">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p></div>`;
   const ask=S.settings.dept?'':`<div class="panel"><div class="li"><div class="txt"><b>Which department do you shop in?</b><span>${DEPT_HINT}</span>${deptChips()}</div></div></div>`;
-  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+ask+comingUp(items)+repl+versaPanel(items)+blocks.join('')+(keys.length?buildH:'')+build+ai+'</div>';
+  box.innerHTML=`<div class="shopv">${summary}${ask}<div class="scol">${buy}${occ}</div><div class="scol">${comingP}${styleP}${ai}</div></div>`;
 }
-// More outfits from one purchase: the pieces that open the most new color pairings with what is owned (logic.js versatility).
 function versaPanel(items){
   const v=versatility(items,5); if(!v.list.length) return '';
   const pl=(n,one,many)=>(n===1?one:many).replace('{0}',n);
@@ -2252,6 +2283,8 @@ document.addEventListener('click',async e=>{
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.styleWork!==undefined){ const st=styleSet(), k=ds.styleWork; st.work=!k?[]:(st.work.includes(k)?st.work.filter(x=>x!==k):st.work.concat([k])); saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
+  if(ds.fold){ const id=ds.fold, on=t.getAttribute('aria-expanded')!=='true'; if(on) S.shopOpen.add(id); else S.shopOpen.delete(id);
+    t.setAttribute('aria-expanded',String(on)); const el=document.getElementById('fold-'+id); if(el){ el.hidden=!on; if(on) setTimeout(hydrateCuts,0); } return; }
   if(ds.repairmark){ if(await patchItem(ds.repairmark,{repair:true,repairOn:todayISO()})) toast('Marked as needing repair.'); return; }
   if(ds.homechores){ if(await patchItem(ds.homechores,{occ:['home','chores']})) toast('Now for home and chores.'); return; }
   if(ds.fixed){ if(await patchItem(ds.fixed,{repair:undefined,repairNote:undefined,repairOn:undefined,repairOk:undefined})) toast('Fixed. Back in every outfit it suits.'); return; }
