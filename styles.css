@@ -106,6 +106,25 @@ html{scroll-padding-bottom:calc(80px + env(safe-area-inset-bottom,0px))} /* a fo
 section.tab{padding-top:16px;display:flex;flex-direction:column;gap:16px}
 header.top{position:relative;z-index:5;background:var(--bg);display:flex;align-items:center;gap:12px;min-height:59px;padding-block:8px 6px;border-bottom:1px solid var(--line)} /* 59px with or without the Settings button */
 header.top .iconbtn{margin-left:auto;width:44px;height:44px}
+/* Language button (v1.57.0): globe and the current language in its own name, before Settings */
+.langbtn{display:inline-flex;align-items:center;gap:6px;min-height:44px;min-width:44px;padding:0 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:600 13px/1 var(--f-body);white-space:nowrap;flex:none}
+.langbtn svg{width:18px;height:18px;flex:none}
+header.top .langbtn{margin-left:auto}
+header.top .langbtn+.iconbtn{margin-left:0}
+header.top .status:not(.hidden){margin-left:auto}
+header.top .status:not(.hidden)+.langbtn{margin-left:0}
+@media (max-width:379.98px){ header.top .langbtn .ln{display:none} }
+#railLang{display:none}
+.banner.langask b{display:inline-flex;align-items:center;gap:8px}
+.banner.langask svg{width:18px;height:18px;flex:none}
+.langlist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}
+.langopt{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 14px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:500 16px var(--f-body);text-align:left;cursor:pointer}
+.langopt:last-child{border-bottom:0}
+.langopt[aria-pressed="true"]{font-weight:700}
+.langopt .mark{color:var(--good);font-weight:700}
+.li.langrow{align-items:center}
+.li.langrow .lgl{width:24px;height:24px;flex:none;color:var(--muted)}
+.li.langrow .lgl svg{width:24px;height:24px}
 header.top .holibadge{left:22px;top:34px} /* bottom-right of the 36px logo */
 .brandrow{display:flex;align-items:center;gap:10px}
 .logo{width:36px;height:36px;flex:none;display:block}
@@ -130,7 +149,8 @@ nav.tabs .badge{position:absolute;top:1px;right:calc(50% - 25px);min-width:18px;
 body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 @media (hover:hover) and (pointer:fine){
   nav.tabs button:not([aria-current="page"]):hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
-  header.top .iconbtn:hover{border-color:var(--ink)}
+  header.top .iconbtn:hover,.langbtn:hover{border-color:var(--ink)}
+  .langopt:hover{background:var(--surface)}
   .fab:hover{background:color-mix(in srgb,var(--coral) 88%,var(--ink))}
 }
 /* Bar turned sideways: lower, icon beside label (as Android and iOS do in landscape) */
@@ -146,12 +166,13 @@ body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 @media (min-width:700px) and (min-height:600px){
   body{padding-left:calc(96px + env(safe-area-inset-left,0px))}
   html{scroll-padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))} /* above the Add clothes button */
-  header.top #rulesBtn{display:none}
+  header.top #rulesBtn,header.top #langBtn{display:none}
   nav.tabs{top:0;right:auto;width:calc(96px + env(safe-area-inset-left,0px));flex-direction:column;justify-content:flex-start;align-items:stretch;border-top:0;border-right:1px solid var(--line);padding:84px 8px calc(16px + env(safe-area-inset-bottom,0px)) calc(8px + env(safe-area-inset-left,0px));overflow-y:auto}
   nav.tabs .inner{grid-template-columns:1fr;grid-auto-rows:min-content;gap:6px;max-width:none}
   nav.tabs button{padding:10px 4px}
   nav.tabs button svg{width:24px;height:24px}
-  nav.tabs #railSettings{display:flex;margin-top:auto}
+  nav.tabs #railLang{display:flex;margin-top:auto}
+  nav.tabs #railSettings{display:flex}
   .fab{right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(24px + env(safe-area-inset-bottom,0px))}
   body.hasjob .fab{bottom:calc(84px + env(safe-area-inset-bottom,0px))}
 }

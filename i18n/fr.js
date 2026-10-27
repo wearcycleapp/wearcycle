@@ -1342,5 +1342,6 @@ I18N.load("fr",{
 "My wish list": "Ma liste de souhaits",
 "{a}, size {b}": "{a}, taille {b}",
 "Note: {a}": "Note : {a}",
-"Wish list item: {c} {l}": "{l} {c}"
+"Wish list item: {c} {l}": "{l} {c}",
+"Keep": "Garder"
 });

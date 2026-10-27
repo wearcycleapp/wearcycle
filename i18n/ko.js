@@ -1342,5 +1342,6 @@ I18N.load("ko",{
 "My wish list": "내 위시리스트",
 "{a}, size {b}": "{a}, 사이즈 {b}",
 "Note: {a}": "메모: {a}",
-"Wish list item: {c} {l}": "{c} {l}"
+"Wish list item: {c} {l}": "{c} {l}",
+"Keep": "유지"
 });

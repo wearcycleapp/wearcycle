@@ -1342,5 +1342,6 @@ I18N.load("tl",{
 "My wish list": "Ang wish list ko",
 "{a}, size {b}": "{a}, sukat {b}",
 "Note: {a}": "Tala: {a}",
-"Wish list item: {c} {l}": "{l} na kulay {c}"
+"Wish list item: {c} {l}": "{l} na kulay {c}",
+"Keep": "Panatilihin"
 });

@@ -1342,5 +1342,6 @@ I18N.load("hi",{
 "My wish list": "मेरी विश लिस्ट",
 "{a}, size {b}": "{a}, साइज़ {b}",
 "Note: {a}": "नोट: {a}",
-"Wish list item: {c} {l}": "{c} {l}"
+"Wish list item: {c} {l}": "{c} {l}",
+"Keep": "रखें"
 });

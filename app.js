@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.56.0';
+const APP_VERSION='1.57.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -711,11 +711,27 @@ function applyHolidayLook(){
   top.insertAdjacentHTML('afterend',`<div id="holiBar" class="holibar" style="--hb:${h.accent}"><span class="hbicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span><span class="hbtxt"><b>${h.inDays===0?h.hello:h.label}</b>${h.inDays===0?'':`<span>${whenLabel(h.inDays)}</span>`}</span><button class="btn sm" data-theme-go="${h.id}">Themed outfits</button></div>`);
 }
 function renderAll(){ applyHolidayLook(); renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.textContent='Wearcycle v'+APP_VERSION; }
+// Language (v1.57.0, owner 2026-10-27): a globe button in the header and the rail with the current language's own
+// name, a sheet listing the seven languages each in its own name, the first row of Settings, and a one-time
+// suggestion when the phone's language is one Wearcycle has but the app shows another (never switched silently).
+const LANG_ASK={es:['Wearcycle también está en español.','Usar español'],fr:['Wearcycle est aussi offert en français.','Utiliser le français'],
+  tl:['Mayroon ding Wearcycle sa Tagalog.','Gamitin ang Tagalog'],hi:['Wearcycle हिन्दी में भी उपलब्ध है।','हिन्दी इस्तेमाल करें'],
+  ja:['Wearcycleは日本語でも使えます。','日本語にする'],ko:['Wearcycle은 한국어로도 쓸 수 있어요.','한국어로 보기'],en:['Wearcycle is also in English.','Use English']};
+const GLOBE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3Z"/></svg>';
+function langName(c){ return (I18N.langs.find(l=>l[0]===c)||[c,c])[1]; }
+function phoneLang(){ const codes=I18N.langs.map(l=>l[0]); for(const n of (navigator.languages||[navigator.language||''])){ let c=String(n||'').toLowerCase().split('-')[0]; if(c==='fil') c='tl'; if(codes.includes(c)) return c; } return null; }
+function langSuggest(){ let chosen=null; try{ chosen=localStorage.getItem('wearcycle.lang'); }catch(e){}
+  if(chosen||LS.get('wearcycle.langAsked')) return ''; const p=phoneLang(); if(!p||p===I18N.lang||!LANG_ASK[p]) return '';
+  return `<div class="banner langask" lang="${p}"><div style="flex:1" data-notr><b>${GLOBE_ICON}${esc(LANG_ASK[p][0])}</b></div><button class="btn sm primary" data-lang-use="${p}" data-notr>${esc(LANG_ASK[p][1])}</button><button class="btn sm ghost" data-act="langKeep"><span>Keep</span> <span data-notr>${esc(langName(I18N.lang))}</span></button></div>`; }
+function openLangs(){ openSheet(sheetHead('Language')+`<p class="hint">Item names you typed stay as they are.</p>
+   <div class="langlist" role="group" aria-label="Language">${I18N.langs.map(([c,n])=>`<button type="button" class="langopt" data-lang-use="${c}" aria-pressed="${c===I18N.lang}" lang="${c}" data-notr>${esc(n)}${c===I18N.lang?'<span class="mark" aria-hidden="true">✓</span>':''}</button>`).join('')}</div>`); }
 function renderStatus(){
+  document.querySelectorAll('#langBtn .ln,#railLang .ln').forEach(e=>{ e.textContent=langName(I18N.lang); });
   const st=$('#status'); let b='';
   if(!S.online){ st.textContent='Offline'; st.className='status warn'; b='<div class="banner"><div><b>You are offline.</b> Showing the last saved copy. Changes and Claude need a connection.</div></div>'; }
   else if(S.fromCache){ st.textContent='Syncing'; st.className='status'; }
   else { st.textContent=''; st.className='status ok hidden'; }
+  b+=langSuggest();
   if(S.online && S.installEvt && !LS.get('wardrobe.installDismissed')) b+='<div class="banner" style="background:var(--accent-soft)"><div style="flex:1"><b style="color:var(--accent)">Install Wearcycle</b> to open it from your home screen like any app.</div><button class="btn sm primary" data-act="install">Install</button><button class="btn sm ghost" data-act="installNo">Later</button></div>';
   $('#banner').innerHTML=b;
   $('#addBtn').hidden=S.tab!=='closet';
@@ -1590,12 +1606,13 @@ function applyStyleFields(it,r){
 }
 function openSettings(){
   openSheet(sheetHead('Settings')+`
+   <div class="panel"><div class="li langrow"><span class="lgl" aria-hidden="true">${GLOBE_ICON}</span><div class="txt"><b>Language</b><span>Item names you typed stay as they are.</span></div><div class="acts">${langSelect('langSel')}</div></div></div>
    <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs privately to your account.</span></div><div class="acts"><button class="btn sm" data-act="chpass">Change password</button><button class="btn sm" data-act="signout">Sign out</button></div></div>
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
    <h3>Appearance</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Light or dark</b><span>Auto follows your phone's setting.</span>
      <div class="chips" style="margin-top:8px">${[['auto','Auto'],['light','Light mode'],['dark','Dark mode']].map(([k,l])=>`<button type="button" class="chip" data-theme-set="${k}" aria-pressed="${themeGet()===k}">${l}</button>`).join('')}</div></div></div>
-   <div class="li"><div class="txt"><b>Language</b><span>Item names you typed stay as they are.</span></div><div class="acts">${langSelect('langSel')}</div></div></div>
+</div>
    <h3>Style</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Shopping department</b><span>${DEPT_HINT} Any: searches cover both; style lists use menswear pieces.</span>${deptChips()}</div></div>
    <button class="li lirow" data-act="styles"><div class="txt"><b>Your style</b><span>${esc(styleSummary())}</span></div><span class="chev">›</span></button>
@@ -2257,6 +2274,8 @@ document.addEventListener('click',async e=>{
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
   if(t.id==='rulesBtn'||t.id==='railSettings'){ openSettings(); return; }
+  if(t.id==='langBtn'||t.id==='railLang'){ openLangs(); return; }
+  if(ds.langUse){ LS.set('wearcycle.langAsked',true); if(ds.langUse===I18N.lang){ try{ localStorage.setItem('wearcycle.lang',ds.langUse); }catch(e){} closeSheet(); renderStatus(); return; } I18N.setLang(ds.langUse); return; }
   switch(ds.act){
     case 'camBatch': { closeSheet(); if(S.busy) return; const shots=await openCamera('batch'); addPhotos(shots); return; }
     case 'bulk': { closeSheet(); if(S.busy) return; const files=await pickFiles(true); addPhotos(files); return; }
@@ -2304,6 +2323,7 @@ document.addEventListener('click',async e=>{
       else toast('Not installed. You can install any time from Chrome\u2019s menu: Install app or Add to Home screen.',6000); }
     else toast('To install, open Chrome\u2019s menu and choose Install app or Add to Home screen.',6000);
     return;
+    case 'langKeep': LS.set('wearcycle.langAsked',true); try{ localStorage.setItem('wearcycle.lang',I18N.lang); }catch(e){} renderStatus(); return;
     case 'installNo': LS.set('wardrobe.installDismissed',true); renderStatus(); return;
     case 'chpass': askNewPassword(true); return;
     case 'signout': closeSheet(); LS.del(cacheKey()); try{ await caches.delete('wearcycle-cutouts'); }catch(e){} await sb.auth.signOut(); return;

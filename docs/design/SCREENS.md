@@ -64,6 +64,7 @@ The shell follows the direction condition (Chosen direction), so a screen never 
 - Current tab: Accent text at weight 700 on Accent-soft, coral icon, aria-current="page". The Care count is 12px Accent-ink on Bad (6.47:1 light, 5.23:1 dark).
 - Order in the page: header, navigation (tabs, then the rail's Settings), Add clothes, then the screen. A focused control scrolls above the bar or Add clothes (`scroll-padding-bottom`).
 - Mouse, only inside `(hover: hover) and (pointer: fine)`: tabs and Settings get an ink tint and ink label, the header's Settings border turns ink, Add clothes darkens; the occasion, style and category rows wrap at every width (touch keeps the sideways swipe). Hover on other buttons and chips comes with each screen's phase.
+- Language (v1.57.0, owner 2026-10-27): a globe button with the current language in its own name (English, Español, 日本語) sits before Settings in the header (globe only below 380px wide), and above Settings in the rail. It opens the Language sheet (openLangs): one 48px row per language, the current one bold with a ✓. Settings opens with the Language row first. A suggestion banner, written in the phone's language, offers that language once to people who use the app in English while their phone is set to a supported language (i18n.js keeps English for existing users): "Use" switches, "Keep English" stores the choice; either stops the banner (wearcycle.langAsked).
 - Safe areas: `:root` pads top and bottom, `body` pads left and right; the bar, rail, Add clothes, toasts and job bar add the insets on their own edges.
 - Viewport units: a vh line stays as the fallback, then dvh where the element follows the visible height (the sticky outfit board on wide screens) or svh where it must fit the first screen (the outfit board on phones turned sideways, the piece preview picture).
 
@@ -206,7 +207,7 @@ Built in v1.55.0 (Phase 11 brought forward; proposal "Wearcycle Shop redesign" a
 ## Settings and other sheets (QUIET UTILITY)
 
 - Group headings, aligned rows, whitespace, restrained dividers. No cards inside cards.
-- Keep every group: Install, Appearance, Style, Weather, Photos, Holidays, Work dress code, Laundry, Reminders, Help, Privacy and your data, account (openSettings, app.js:1269).
+- Keep every group: Language (first, v1.57.0), Install, Appearance, Style, Weather, Photos, Holidays, Work dress code, Laundry, Reminders, Help, Privacy and your data, account (openSettings, app.js:1269).
 - Same treatment for: Add clothes, Adjust, Condition check, Your style, Style palette, Weather, What I wore, Outfit diary, Closet stats, How Wearcycle decides, Delete my data, Choose a new password, What is this?, consent. All open through openSheet (app.js:1051).
 
 ### Known issues to fix in this phase

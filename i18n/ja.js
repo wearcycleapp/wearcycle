@@ -1342,5 +1342,6 @@ I18N.load("ja",{
 "My wish list": "欲しいものリスト",
 "{a}, size {b}": "{a}、サイズ {b}",
 "Note: {a}": "メモ：{a}",
-"Wish list item: {c} {l}": "{c}の{l}"
+"Wish list item: {c} {l}": "{c}の{l}",
+"Keep": "このまま"
 });
