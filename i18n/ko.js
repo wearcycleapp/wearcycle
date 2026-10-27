@@ -474,7 +474,6 @@ I18N.load("ko",{
 "Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.": "출근과 외출은 4/5, 운동과 실내는 3/5, 집안일은 2/5 이상이 필요해요. 캐주얼 의류가 3/5나 2/5로 떨어지면 자동으로 실내와 집안일용으로 옮겨져요. 1/5는 기부 목록으로 가요.",
 "Work dress code": "직장 복장 규정",
 "Work dress code.": "직장 복장 규정.",
-"Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.": "출근: 상의 5벌(평일 하루에 하나), 하의 3벌, 신발 2켤레. 외출, 운동, 실내: 3, 2, 1. 집안일: 2, 1, 1. 색상은 새 아이템이 지금 가진 옷과 만들 수 있는 좋은 조합의 수에 따라 순위가 매겨져요.",
 "Works as a t-shirt under an open shirt": "열어 입은 셔츠 안에 티셔츠로 입을 수 있음",
 "Worn": "사용감 있음",
 "Worn out": "많이 낡음",
@@ -1200,7 +1199,7 @@ I18N.load("ko",{
 "Not getting picked": "선택되지 않는 아이템",
 "Pieces that are in none of the top suggestions for any occasion right now, and why.": "지금 어떤 상황에서도 상위 추천에 들지 못한 아이템과 그 이유예요.",
 "In the wash: it returns to suggestions when you mark it clean.": "세탁 중: 세탁 완료로 표시하면 다시 추천에 포함돼요.",
-"Marked as needing repair.": "수선 필요로 표시됐어요.",
+"Marked as needing repair.": "수선 필요로 표시했어요.",
 "No occasions set, so it is never suggested. Open it and pick where you would wear it.": "상황이 설정되지 않아 추천되지 않아요. 열어서 입을 상황을 선택하세요.",
 "No color set, so it cannot be matched. Open it and pick its color.": "색상이 설정되지 않아 매칭할 수 없어요. 열어서 색상을 선택하세요.",
 "Set for {a}, but nothing to pair it with there yet.": "{a}용으로 설정됐지만 아직 함께 입을 아이템이 없어요.",
@@ -1299,5 +1298,12 @@ I18N.load("ko",{
 "Open the piece and tap Make cut-out to try again.": "아이템을 열고 배경 제거를 눌러 다시 시도하세요.",
 "Open each one marked Review to confirm the details.": "검토 표시가 있는 아이템을 하나씩 열어 내용을 확인하세요.",
 "+ Wear a belt": "+ 벨트 하기",
-"Added {a}. Tap it to choose another belt.": "{a}을(를) 추가했어요. 눌러서 다른 벨트를 고를 수 있어요."
+"Added {a}. Tap it to choose another belt.": "{a}을(를) 추가했어요. 눌러서 다른 벨트를 고를 수 있어요.",
+"Give them a rest": "좀 쉬게 해 주세요",
+"Shoes need a day to air out between wears.": "신발은 신은 뒤 하루는 바람을 쐬어야 해요.",
+"Worn on {0} of the last {1} days.": "최근 {1}일 중 {0}일 신었어요.",
+"Another pair lets your shoes rest between wears.": "한 켤레가 더 있으면 신발을 번갈아 쉬게 할 수 있어요.",
+"Home and chores": "집과 집안일",
+"Now for home and chores.": "이제 집과 집안일용이에요.",
+"Work: 5 tops (one per weekday), 3 bottoms, 3 pairs of shoes. Going out: 3, 2, 2. Sport and home: 3, 2, 1. Chores: 2, 1, 1. Shoes need a day to air out between wears, so a pair worn on more than half of the last 30 days asks for one more pair. Colors are ranked by how many good combinations a new piece would create with what you own.": "출근: 상의 5벌(평일 하루에 하나), 하의 3벌, 신발 3켤레. 외출: 3, 2, 2. 운동, 실내: 3, 2, 1. 집안일: 2, 1, 1. 신발은 신은 뒤 하루는 바람을 쐬어야 해서, 최근 30일 중 절반 넘게 신은 신발이 있으면 한 켤레를 더 권해요. 색상은 새 아이템이 지금 가진 옷과 만들 수 있는 좋은 조합의 수에 따라 순위가 매겨져요."
 });

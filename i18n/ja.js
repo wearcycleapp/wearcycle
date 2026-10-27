@@ -474,7 +474,6 @@ I18N.load("ja",{
 "Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.": "仕事とお出かけは4/5、スポーツと家は3/5、家事は2/5が必要です。カジュアルな服が3/5または2/5に下がると、自動で家と家事用になります。1/5は寄付リストへ移ります。",
 "Work dress code": "職場の服装規定",
 "Work dress code.": "職場の服装規定。",
-"Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.": "仕事：トップス5点（平日1日1点）、ボトムス3点、靴2足。お出かけ、スポーツ、家：3、2、1。家事：2、1、1。色は、新しいアイテムが手持ちの服と作る良い組み合わせの数が多い順に並びます。",
 "Works as a t-shirt under an open shirt": "前を開けたシャツの下にTシャツとして着られる",
 "Worn": "使用感あり",
 "Worn out": "着古し",
@@ -1200,7 +1199,7 @@ I18N.load("ja",{
 "Not getting picked": "選ばれないアイテム",
 "Pieces that are in none of the top suggestions for any occasion right now, and why.": "現在、どのシーンでも上位の提案に入っていないアイテムとその理由です。",
 "In the wash: it returns to suggestions when you mark it clean.": "洗濯中：洗濯済みにすると提案に戻ります。",
-"Marked as needing repair.": "要修理に設定されています。",
+"Marked as needing repair.": "修理が必要として登録しました。",
 "No occasions set, so it is never suggested. Open it and pick where you would wear it.": "シーンが設定されていないため、提案されません。開いて、着るシーンを選んでください。",
 "No color set, so it cannot be matched. Open it and pick its color.": "色が設定されていないため、組み合わせられません。開いて色を選んでください。",
 "Set for {a}, but nothing to pair it with there yet.": "{a}に設定されていますが、まだ合わせられるアイテムがありません。",
@@ -1299,5 +1298,12 @@ I18N.load("ja",{
 "Open the piece and tap Make cut-out to try again.": "アイテムを開いて「切り抜きを作成」をタップし、もう一度お試しください。",
 "Open each one marked Review to confirm the details.": "「要確認」の付いたアイテムを開いて、内容を確認してください。",
 "+ Wear a belt": "+ ベルトを着ける",
-"Added {a}. Tap it to choose another belt.": "{a}を追加しました。タップすると別のベルトを選べます。"
+"Added {a}. Tap it to choose another belt.": "{a}を追加しました。タップすると別のベルトを選べます。",
+"Give them a rest": "休ませてあげましょう",
+"Shoes need a day to air out between wears.": "靴は履いた後、1日休ませて湿気を抜く必要があります。",
+"Worn on {0} of the last {1} days.": "直近{1}日のうち{0}日着用。",
+"Another pair lets your shoes rest between wears.": "もう1足あれば、靴を交互に休ませられます。",
+"Home and chores": "家と家事",
+"Now for home and chores.": "家と家事用にしました。",
+"Work: 5 tops (one per weekday), 3 bottoms, 3 pairs of shoes. Going out: 3, 2, 2. Sport and home: 3, 2, 1. Chores: 2, 1, 1. Shoes need a day to air out between wears, so a pair worn on more than half of the last 30 days asks for one more pair. Colors are ranked by how many good combinations a new piece would create with what you own.": "仕事：トップス5点（平日1日1点）、ボトムス3点、靴3足。お出かけ：3、2、2。スポーツ、家：3、2、1。家事：2、1、1。靴は履いた後に1日休ませる必要があるため、直近30日の半分を超えて履いた靴があると、もう1足をおすすめします。色は、新しいアイテムが手持ちの服と作る良い組み合わせの数が多い順に並びます。"
 });

@@ -167,13 +167,13 @@ Code: renderOutfits, remLine and openReminders, fitKit (A), heroCard (A), option
 
 ## Care (LIFECYCLE)
 
-Sections map to groups that already exist in renderCare (app.js:980) and careFlags (logic.js:424). No new states.
+Sections map to groups in renderCare and careFlags. Added on 2026-10-27 (owner, v1.54.0): "Give them a rest" (shoeLoad in logic.js: shoes worn on 16 or more of the last 30 days) and four more actions on "Moved down a level".
 
 | Section | Existing groups | Actions kept |
 | --- | --- | --- |
 | Repair | To repair | Fixed, Find a tailor / cobbler / watch repair, Open |
-| Check | Condition check due; Moved down a level | Check, Recheck |
-| Rotate | Not getting picked | See outfits with this, Open |
+| Check | Condition check due; Moved down a level | Check, Recheck; on Moved down also Repair, Home and chores, Mark donated, Mark recycled |
+| Rotate | Not getting picked; Give them a rest | See outfits with this, Open |
 | Let go | Donate or recycle; Donated or recycled (history); drop-off guidance | Mark donated, Mark recycled, Donation drop-offs, Textile recycling, Open |
 
 - Show only sections that have items; when nothing needs attention, say so in one calm line.
@@ -192,7 +192,7 @@ Erratum 2 applies (owner decision, 13 October 2026).
 - Order (as built in renderShop, app.js:1027): department question if unset, coming season, replace, more outfits from one purchase (versaPanel, app.js:1030; v1.48), gaps per occasion, build toward a style, ideas from Claude.
 - Lead element: versatility() from v1.48.0 (logic.js:477): new color pairings as the large number, plus the owned pieces each purchase pairs with. Per-occasion gaps from gaps() go below.
 - For each gap: what is missing, why (have X of Y), the best color with "+N outfits" as the large element, then the shop link.
-- Shop values equal main exactly, for the versatility() list as well as for gaps(). logic.js stays untouched.
+- Shop values equal main exactly, for the versatility() list as well as for gaps(). Since v1.54.0 (owner, 2026-10-27): shoe targets 3 for work and 2 for going out; a pair worn on 16 or more of the last 30 days keeps that occasion's shoe gap open while the count is at most the target, with a reason line per pair; Replace also lists top, bottom and shoe pieces below the work or going-out bar when that occasion is short of their kind.
 - No "works with" counts; Care has no "Ready again".
 - Covered occasions: one calm line, for example "Covered: 5 tops, 3 bottoms, 2 shoes".
 - Never invent a purchase need; never encourage buying to fill the screen.

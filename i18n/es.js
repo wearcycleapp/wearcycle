@@ -474,7 +474,6 @@ I18N.load("es",{
 "Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.": "Trabajo y salir necesitan 4/5, deporte y casa 3/5, quehaceres 2/5. Una prenda casual que baja a 3/5 o 2/5 pasa automáticamente a casa y quehaceres. Con 1/5 va a la lista para donar.",
 "Work dress code": "Código de vestimenta del trabajo",
 "Work dress code.": "Código de vestimenta del trabajo.",
-"Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.": "Trabajo: 5 prendas superiores (una por día laboral), 3 inferiores, 2 pares de calzado. Salir, deporte y casa: 3, 2, 1. Quehaceres: 2, 1, 1. Los colores se ordenan según cuántas buenas combinaciones crearía una prenda nueva con lo que ya tienes.",
 "Works as a t-shirt under an open shirt": "Sirve como camiseta debajo de una camisa abierta",
 "Worn": "Usado",
 "Worn out": "Gastado",
@@ -1200,7 +1199,7 @@ I18N.load("es",{
 "Not getting picked": "No se eligen",
 "Pieces that are in none of the top suggestions for any occasion right now, and why.": "Prendas que ahora mismo no están en ninguna de las mejores sugerencias para ninguna ocasión, y por qué.",
 "In the wash: it returns to suggestions when you mark it clean.": "En el lavado: vuelve a las sugerencias cuando la marques como limpia.",
-"Marked as needing repair.": "Marcada como que necesita arreglo.",
+"Marked as needing repair.": "Marcada como pendiente de reparación.",
 "No occasions set, so it is never suggested. Open it and pick where you would wear it.": "No tiene ocasiones, así que nunca se sugiere. Ábrela y elige dónde la usarías.",
 "No color set, so it cannot be matched. Open it and pick its color.": "No tiene color, así que no se puede combinar. Ábrela y elige su color.",
 "Set for {a}, but nothing to pair it with there yet.": "Asignada a {a}, pero aún no hay con qué combinarla ahí.",
@@ -1299,5 +1298,12 @@ I18N.load("es",{
 "Open the piece and tap Make cut-out to try again.": "Abre la prenda y toca Crear recorte para volver a intentarlo.",
 "Open each one marked Review to confirm the details.": "Abre cada una marcada como Revisar para confirmar los detalles.",
 "+ Wear a belt": "+ Usar un cinturón",
-"Added {a}. Tap it to choose another belt.": "Añadido: {a}. Tócalo para elegir otro cinturón."
+"Added {a}. Tap it to choose another belt.": "Añadido: {a}. Tócalo para elegir otro cinturón.",
+"Give them a rest": "Dales un descanso",
+"Shoes need a day to air out between wears.": "Los zapatos necesitan un día para airearse entre usos.",
+"Worn on {0} of the last {1} days.": "Usados {0} de los últimos {1} días.",
+"Another pair lets your shoes rest between wears.": "Otro par deja descansar tus zapatos entre usos.",
+"Home and chores": "Casa y tareas",
+"Now for home and chores.": "Ahora para casa y tareas.",
+"Work: 5 tops (one per weekday), 3 bottoms, 3 pairs of shoes. Going out: 3, 2, 2. Sport and home: 3, 2, 1. Chores: 2, 1, 1. Shoes need a day to air out between wears, so a pair worn on more than half of the last 30 days asks for one more pair. Colors are ranked by how many good combinations a new piece would create with what you own.": "Trabajo: 5 prendas superiores (una por día laboral), 3 inferiores, 3 pares de calzado. Salir: 3, 2, 2. Deporte y casa: 3, 2, 1. Quehaceres: 2, 1, 1. Los zapatos necesitan un día para airearse entre usos, así que un par usado más de la mitad de los últimos 30 días pide un par más. Los colores se ordenan según cuántas buenas combinaciones crearía una prenda nueva con lo que ya tienes."
 });

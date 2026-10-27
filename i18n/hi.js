@@ -474,7 +474,6 @@ I18N.load("hi",{
 "Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.": "काम और आउटिंग के लिए 4/5, स्पोर्ट्स और घर के लिए 3/5, घर के कामों के लिए 2/5 चाहिए। कोई कैज़ुअल कपड़ा 3/5 या 2/5 पर आ जाए तो अपने-आप घर और घर के कामों में चला जाता है। 1/5 दान सूची में जाता है।",
 "Work dress code": "काम का ड्रेस कोड",
 "Work dress code.": "काम का ड्रेस कोड।",
-"Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.": "काम: 5 टॉप (हर कामकाजी दिन के लिए एक), 3 बॉटम, 2 जोड़ी जूते। आउटिंग, स्पोर्ट्स और घर: 3, 2, 1। घर के काम: 2, 1, 1। रंगों को इस हिसाब से रैंक किया जाता है कि नया पीस आपके मौजूदा कपड़ों के साथ कितने अच्छे कॉम्बिनेशन बनाएगा।",
 "Works as a t-shirt under an open shirt": "खुली शर्ट के नीचे टी-शर्ट की तरह चलता है",
 "Worn": "घिसा हुआ",
 "Worn out": "बहुत घिसा",
@@ -1200,7 +1199,7 @@ I18N.load("hi",{
 "Not getting picked": "जो चुने नहीं जा रहे",
 "Pieces that are in none of the top suggestions for any occasion right now, and why.": "वे पीस जो अभी किसी भी मौके के टॉप सुझावों में नहीं हैं, और क्यों।",
 "In the wash: it returns to suggestions when you mark it clean.": "धुलाई में: साफ़ मार्क करने पर यह सुझावों में लौट आएगा।",
-"Marked as needing repair.": "मरम्मत चाहिए के रूप में मार्क है।",
+"Marked as needing repair.": "मरम्मत की ज़रूरत के रूप में चिह्नित।",
 "No occasions set, so it is never suggested. Open it and pick where you would wear it.": "कोई मौका सेट नहीं है, इसलिए यह कभी सुझाया नहीं जाता। इसे खोलें और चुनें कि आप इसे कहाँ पहनेंगे।",
 "No color set, so it cannot be matched. Open it and pick its color.": "कोई रंग सेट नहीं है, इसलिए इसका मेल नहीं बिठाया जा सकता। इसे खोलें और इसका रंग चुनें।",
 "Set for {a}, but nothing to pair it with there yet.": "{a} के लिए सेट है, लेकिन वहाँ अभी इसके साथ पहनने को कुछ नहीं है।",
@@ -1299,5 +1298,12 @@ I18N.load("hi",{
 "Open the piece and tap Make cut-out to try again.": "पीस खोलें और फिर से कोशिश करने के लिए कट-आउट बनाएँ पर टैप करें।",
 "Open each one marked Review to confirm the details.": "विवरण की पुष्टि के लिए जाँचें वाले हर पीस को खोलें।",
 "+ Wear a belt": "+ बेल्ट पहनें",
-"Added {a}. Tap it to choose another belt.": "{a} जोड़ा गया। दूसरी बेल्ट चुनने के लिए उस पर टैप करें।"
+"Added {a}. Tap it to choose another belt.": "{a} जोड़ा गया। दूसरी बेल्ट चुनने के लिए उस पर टैप करें।",
+"Give them a rest": "इन्हें आराम दें",
+"Shoes need a day to air out between wears.": "जूतों को दो बार पहनने के बीच हवा लगने के लिए एक दिन चाहिए।",
+"Worn on {0} of the last {1} days.": "पिछले {1} दिनों में {0} दिन पहने गए।",
+"Another pair lets your shoes rest between wears.": "एक और जोड़ी से आपके जूतों को पहनने के बीच आराम मिलता है।",
+"Home and chores": "घर और घरेलू काम",
+"Now for home and chores.": "अब घर और घरेलू कामों के लिए।",
+"Work: 5 tops (one per weekday), 3 bottoms, 3 pairs of shoes. Going out: 3, 2, 2. Sport and home: 3, 2, 1. Chores: 2, 1, 1. Shoes need a day to air out between wears, so a pair worn on more than half of the last 30 days asks for one more pair. Colors are ranked by how many good combinations a new piece would create with what you own.": "काम: 5 टॉप (हर कामकाजी दिन के लिए एक), 3 बॉटम, 3 जोड़ी जूते। आउटिंग: 3, 2, 2। स्पोर्ट्स और घर: 3, 2, 1। घर के काम: 2, 1, 1। जूतों को दो बार पहनने के बीच हवा लगने के लिए एक दिन चाहिए, इसलिए पिछले 30 में से आधे से ज़्यादा दिन पहनी गई जोड़ी एक और जोड़ी माँगती है। रंगों को इस हिसाब से रैंक किया जाता है कि नया पीस आपके मौजूदा कपड़ों के साथ कितने अच्छे कॉम्बिनेशन बनाएगा।"
 });

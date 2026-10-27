@@ -36,7 +36,8 @@ const PALETTES={
 function paletteOf(id,custom){
   if(id==='custom'){ const c=(custom||[]).filter(k=>COLORS[k]); return {label:'Custom',colors:c.length?c:null,desc:'Colors you pick, for example for a photo shoot or an event.'}; }
   return PALETTES[id]||PALETTES.any; }
-const TARGETS={work:{top:5,bottom:3,shoes:2},out:{top:3,bottom:2,shoes:1},sport:{top:3,bottom:2,shoes:1},home:{top:3,bottom:2,shoes:1},chores:{top:2,bottom:1,shoes:1},formal:{top:1,bottom:1,shoes:1}};
+// Shoes: 3 for work and 2 for going out, so each pair gets at least a day to air out between wears (owner, 2026-10-27).
+const TARGETS={work:{top:5,bottom:3,shoes:3},out:{top:3,bottom:2,shoes:2},sport:{top:3,bottom:2,shoes:1},home:{top:3,bottom:2,shoes:1},chores:{top:2,bottom:1,shoes:1},formal:{top:1,bottom:1,shoes:1}};
 const IDEAS={
   work:{top:'button-up shirt or knit polo',bottom:'chinos or trousers',shoes:'leather shoes or clean minimal sneakers'},
   out:{top:'casual shirt or fine knit',bottom:'dark jeans or chinos',shoes:'clean sneakers or boots'},
@@ -463,17 +464,28 @@ function combosWith(h,pool,occ){
   let n=0; for(const base of bases) for(const s of shoes){ const core=s?base.concat([s]):base; if(core.includes(h)&&goodCombo(core)) n++; }
   return n;
 }
-function gaps(items){
-  const out=[];
+// Shoes worn on more than half of the last 30 days (from the outfits logged): each pair needs a day to air out.
+const OVERUSE_DAYS=30, OVERUSE_MIN=16;
+function shoeLoad(items,log,now){
+  const days=new Map(); for(const e of log||[]){ if(daysSince(e.date,now)>=OVERUSE_DAYS) continue;
+    for(const id of e.items||[]){ if(!days.has(id)) days.set(id,new Set()); days.get(id).add(e.date); } }
+  return (items||[]).filter(it=>it.cat==='shoes'&&isActive(it)).map(it=>({item:it,days:(days.get(it.id)||new Set()).size}))
+    .filter(x=>x.days>=OVERUSE_MIN).sort((a,b)=>b.days-a.days);
+}
+function gaps(items,log,now){
+  const out=[]; const over=shoeLoad(items,log,now??Date.now());
   for(const o of OCCASIONS){
     const pool=eligible(items,o.id,true), by=group(pool), one=(by.onepiece||[]).length;
     const have={top:(by.top||[]).length+one,bottom:(by.bottom||[]).length+one,shoes:(by.shoes||[]).length};
     const needs=[];
     for(const slot of ['top','bottom','shoes']){
-      const t=TARGETS[o.id][slot]; if(have[slot]>=t) continue;
+      // A pair worn on more than half the days keeps the work and going-out shoe gap open while the count is at most
+      // the target: one more lets it rest. With more pairs than that, the fix is rotating them (Care says so), not buying.
+      const tired=slot==='shoes'&&(o.id==='work'||o.id==='out')?over.filter(x=>(by.shoes||[]).some(i=>i.id===x.item.id)):[];
+      const t=Math.max(TARGETS[o.id][slot],tired.length&&have[slot]<=TARGETS[o.id][slot]?have[slot]+1:0); if(have[slot]>=t) continue;
       const owned=c=>pool.filter(i=>(i.cat===slot||(slot!=='shoes'&&i.cat==='onepiece'))&&primary(i)===c).length;
       const opts=SHOP_COLORS[slot].map(c=>({color:c,owned:owned(c),adds:combosWith({id:'__h',cat:slot,colors:[c],formality:o.formality,occ:[o.id],cond:5},pool,o.id)})).sort((a,b)=>b.adds-a.adds||a.owned-b.owned);
-      needs.push({slot,have:have[slot],target:t,idea:ideaFor(o.id,slot),colors:opts.slice(0,2)});
+      needs.push({slot,have:have[slot],target:t,idea:ideaFor(o.id,slot),colors:opts.slice(0,2),tired});
     }
     out.push({occ:o.id,have,needs});
   }
@@ -714,7 +726,7 @@ function themeScore(o,th){
   return {s,r};
 }
 
-return {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
+return {PALETTES,paletteOf,shoeLoad,OVERUSE_MIN,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
   daysSince,localDayGap,notPicked,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,wetRisk,accWeatherOk,tailored,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps,versatility,VERSA};
 })();

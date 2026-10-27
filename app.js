@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.53.4';
+const APP_VERSION='1.54.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1237,7 +1237,12 @@ function renderCare(){
       ?`<button class="btn sm" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`
       :`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)).concat([dropOffRow(groups.retire.length>0)]),donate.length)
     :'<div class="panel"><div class="panel-h"><h3>Donate or recycle</h3><span class="count">0</span></div><div class="li"><span class="done">Nothing to donate right now.</span></div></div>');
-  if(groups.downgraded.length) out.push(panel('Moved down a level','Still useful, but no longer counted for work or going out.',groups.downgraded.map(([it,f])=>careRow(it,f,`<button class="btn sm" data-check="${esc(it.id)}">Recheck</button>`))));
+  const tired=WardrobeLogic.shoeLoad(items,allLog(),now);
+  if(tired.length) out.push(panel('Give them a rest','Shoes need a day to air out between wears.',tired.map(x=>careRow(x.item,{kind:'rest',text:'Worn on '+x.days+' of the last 30 days.'},`<button class="btn sm ghost" data-edit="${esc(x.item.id)}">Open</button>`))));
+  // Below the work and going-out bar: decide (repair, keep for home and chores, donate, recycle) instead of letting it sit.
+  const down=groups.downgraded.filter(([it])=>!it.repair);
+  if(down.length) out.push(panel('Moved down a level','Still useful, but no longer counted for work or going out.',down.map(([it,f])=>careRow(it,f,
+    `<button class="btn sm" data-check="${esc(it.id)}">Recheck</button>${isEx(it)?'':`<button class="btn sm ghost" data-repairmark="${esc(it.id)}">Repair</button><button class="btn sm ghost" data-homechores="${esc(it.id)}">Home and chores</button><button class="btn sm ghost" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-recycle="${esc(it.id)}">Mark recycled</button>`}`))));
   if(groups.check.length) out.push(panel('Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>careRow(it,f,`<button class="btn sm primary" data-check="${esc(it.id)}">Check</button>`))));
   const donated=items.filter(it=>it.status==='donated'||it.status==='recycled').sort((a,b)=>String(b.donatedOn||b.recycledOn||'').localeCompare(String(a.donatedOn||a.recycledOn||'')));
   if(donated.length) out.push(`<div class="panel"><div class="panel-h"><h3>Donated or recycled</h3><span class="count">${donated.length}</span></div>${donated.slice(0,20).map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${it.status==='recycled'?'Recycled '+esc(it.recycledOn||''):'Donated '+esc(it.donatedOn||'')}</span></div><div class="acts"><button class="btn sm ghost" data-restore="${esc(it.id)}">Restore</button></div></div>`).join('')}</div>`);
@@ -1247,17 +1252,20 @@ let ideasState={busy:false,list:null,err:''};
 function renderShop(){
   const box=$('#shopBody'); const items=allItems().filter(isActive);
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():''; return; }
-  const g=gaps(items); const slotName={top:'Tops',bottom:'Bottoms',shoes:'Shoes'};
+  const g=gaps(items,allLog(),Date.now()); const slotName={top:'Tops',bottom:'Bottoms',shoes:'Shoes'};
   const blocks=g.map(x=>{
     const o=OCC[x.occ];
-    const body=x.needs.length?x.needs.map(n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
+    const body=x.needs.length?x.needs.map(n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" role="img" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
+      ${(n.tired||[]).length?`<div class="opt">Another pair lets your shoes rest between wears.</div>${n.tired.map(x=>`<div class="opt hint"><span data-notr>${esc(x.item.name)}</span>: <span>Worn on ${x.days} of the last 30 days.</span></div>`).join('')}`:''}
       <div class="opt">Add ${n.target-n.have}: ${esc(n.idea)}</div>
       <div class="opt">${n.colors.map(c=>`<a class="shopc" href="${shopUrl(shopQ(c.color,n.idea))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[c.color].hex}"></span>${c.color} <em>${c.adds?'+'+c.adds+' outfit'+(c.adds===1?'':'s'):'pairs widely'}</em></a>`).join(' &nbsp;or&nbsp; ')}</div>
       <div class="opt"><a class="shoplink" href="${shopUrl(shopQ(n.idea))}" target="_blank" rel="noopener">Shop ${esc(n.idea)} ›</a></div></div>`).join('')
       :`<div class="need"><span class="done">Covered: ${x.have.top} tops, ${x.have.bottom} bottoms, ${x.have.shoes} shoes ready.</span></div>`;
     return `<div class="panel"><div class="panel-h"><h3>${o.label}</h3><span class="count">${x.needs.length?x.needs.length+' gap'+(x.needs.length>1?'s':''):'ready'}</span></div>${body}</div>`;
   });
-  const retire=items.filter(it=>(it.cond??4)<=1);
+  // Replace: retired pieces, and pieces below the work or going-out bar when that occasion is short of their kind.
+  const short=(occ,cat)=>g.some(x=>x.occ===occ&&x.needs.some(n=>n.slot===cat));
+  const retire=items.filter(it=>(it.cond??4)<=1||((it.cond??4)<=3&&['top','bottom','shoes'].includes(it.cat)&&(it.occ||[]).some(o=>(o==='work'||o==='out')&&short(o,it.cat))));
   const repl=retire.length?`<div class="panel"><div class="panel-h"><h3>Replace</h3><span class="count">${retire.length}</span></div>${retire.map(it=>`<div class="li stripe-retire">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>Replace with a ${esc(primary(it)||'')} ${esc(CAT[it.cat].label.toLowerCase())} for ${esc((it.occ||[]).map(o=>OCC[o]?.label.toLowerCase()).filter(Boolean).join(', ')||'the same use')}.</span></div><div class="acts"><a class="btn sm" href="${shopUrl(shopQ(primary(it),CAT[it.cat].label.toLowerCase()))}" target="_blank" rel="noopener">Shop</a></div></div>`).join('')}</div>`:'';
   const list=ideasState.list;
   const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
@@ -1285,7 +1293,7 @@ async function askIdeas(){
   if(ideasState.busy) return; ideasState={busy:true,list:ideasState.list,err:''}; renderShop();
   const items=allItems().filter(isActive);
   const closet=items.map(it=>`- ${it.name} | ${it.cat} | colors: ${(it.colors||[]).join('/')} | formality ${it.formality??3} | condition ${it.cond??4} | for: ${effectiveOccasions(it).join(', ')||'none'}`).join('\n').slice(0,12000);
-  const vl=versatility(items,5).list; const gapText=gaps(items).map(x=>`${x.occ}: `+(x.needs.map(n=>`${n.slot} ${n.have}/${n.target}`).join(', ')||'covered')).join('\n')+(vl.length?'\nMost new color pairings from one purchase (variety, not just completeness): '+vl.map(r=>`${r.color} ${r.label.toLowerCase()} (+${r.newLooks} pairings)`).join('; '):'');
+  const vl=versatility(items,5).list; const gapText=gaps(items,allLog(),Date.now()).map(x=>`${x.occ}: `+(x.needs.map(n=>`${n.slot} ${n.have}/${n.target}`).join(', ')||'covered')).join('\n')+(vl.length?'\nMost new color pairings from one purchase (variety, not just completeness): '+vl.map(r=>`${r.color} ${r.label.toLowerCase()} (+${r.newLooks} pairings)`).join('; '):'');
   const st=styleSet(); const t=(st.pick.length?st.pick:learned().ids).map(k=>STYLES[k]?STYLES[k].label+' ('+styleDesc(k)+')':(()=>{ const l=looks().find(x=>x.id===k); return l?l.label+' ('+l.pieces.join(', ')+')':''; })()).filter(Boolean).join('; ');
   const pl=seasonPlan(Date.now(),wxOn()?wxSet().lat:NaN); const season=[pl?SEASONS[pl.id].label+' ('+SEASONS[pl.id].desc+')':'',...holidaysSoon(30).map(h=>h.label+' on '+h.date+' ('+h.tip+')')].filter(Boolean).join('; ');
   try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t,season,dept:S.settings.dept||''}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],err:Array.isArray(r)?'':'No ideas came back. Try again.'}; }
@@ -1578,7 +1586,7 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p><b>Styles.</b> A style is a consistent set of piece types, fabrics and patterns: Classic, Heritage, Minimal, Street, Sporty and Preppy (common menswear conventions, not rules). Each piece's styles come from Claude's photo reading or, until then, from its name. For work and going out, an outfit gets up to +1.5 when all its main pieces fit your style and -0.5 when none do; with no style picked, Wearcycle learns it from what you logged (5+ outfits in 120 days) at half weight. Mixing street or sporty pieces with classic or preppy ones costs 1 point and shows a note. Looks added from a photo keep only Claude's description of the clothes, never the photo.</p>
     <p><b>Where to donate.</b> The Donate list links to a Google Maps search for clothing drop-offs near your weather place, or near you. Worn-out pieces are worth taking too: Value Village pays charities for textiles even when damaged, and those become insulation, matting or underlay (CBC News, 2017).</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
-    <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
+    <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 3 pairs of shoes. Going out: 3, 2, 2. Sport and home: 3, 2, 1. Chores: 2, 1, 1. Shoes need a day to air out between wears, so a pair worn on more than half of the last 30 days asks for one more pair. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
 </div>`); }
 function changeSetting(k,v){
   const d=SETDEF[k]; v=Math.max(d.min,Math.min(d.max,v));
@@ -2244,6 +2252,8 @@ document.addEventListener('click',async e=>{
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.styleWork!==undefined){ const st=styleSet(), k=ds.styleWork; st.work=!k?[]:(st.work.includes(k)?st.work.filter(x=>x!==k):st.work.concat([k])); saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
+  if(ds.repairmark){ if(await patchItem(ds.repairmark,{repair:true,repairOn:todayISO()})) toast('Marked as needing repair.'); return; }
+  if(ds.homechores){ if(await patchItem(ds.homechores,{occ:['home','chores']})) toast('Now for home and chores.'); return; }
   if(ds.fixed){ if(await patchItem(ds.fixed,{repair:undefined,repairNote:undefined,repairOn:undefined,repairOk:undefined})) toast('Fixed. Back in every outfit it suits.'); return; }
   if(ds.clean){ if(await patchItem(ds.clean,{dirty:false,wearsSinceWash:0,dirtyOn:undefined})){ if(!allItems().some(i=>i.dirty)) S.cat='all'; renderAll(); toast('Back in rotation.'); } return; }
   if(ds.cat){ S.cat=ds.cat; renderCloset(); return; }

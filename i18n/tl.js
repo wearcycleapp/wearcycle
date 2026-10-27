@@ -474,7 +474,6 @@ I18N.load("tl",{
 "Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.": "Kailangan ng 4/5 para sa trabaho at lakad, 3/5 para sa sports at bahay, 2/5 para sa gawaing-bahay. Awtomatikong napupunta sa bahay at gawaing-bahay ang casual na damit na bumaba sa 3/5 o 2/5. Napupunta sa listahan ng ido-donate ang 1/5.",
 "Work dress code": "Dress code sa trabaho",
 "Work dress code.": "Dress code sa trabaho.",
-"Work: 5 tops (one per weekday), 3 bottoms, 2 shoes. Going out, sport and home: 3, 2, 1. Chores: 2, 1, 1. Colors are ranked by how many good combinations a new piece would create with what you own.": "Trabaho: 5 pang-itaas (isa bawat araw ng trabaho), 3 pang-ibaba, 2 sapatos. Lakad, sports at bahay: 3, 2, 1. Gawaing-bahay: 2, 1, 1. Nakaayos ang mga kulay ayon sa dami ng magandang kombinasyong mabubuo ng bagong piraso kasama ang mga pag-aari mo.",
 "Works as a t-shirt under an open shirt": "Puwedeng t-shirt sa ilalim ng nakabukas na shirt",
 "Worn": "Gamit na",
 "Worn out": "Luma na",
@@ -1299,5 +1298,12 @@ I18N.load("tl",{
 "Open the piece and tap Make cut-out to try again.": "Buksan ang piraso at i-tap ang Gumawa ng cut-out para subukang muli.",
 "Open each one marked Review to confirm the details.": "Buksan ang bawat isang may markang I-review para kumpirmahin ang mga detalye.",
 "+ Wear a belt": "+ Magsuot ng sinturon",
-"Added {a}. Tap it to choose another belt.": "Naidagdag ang {a}. I-tap ito para pumili ng ibang sinturon."
+"Added {a}. Tap it to choose another belt.": "Naidagdag ang {a}. I-tap ito para pumili ng ibang sinturon.",
+"Give them a rest": "Pagpahingahin sila",
+"Shoes need a day to air out between wears.": "Kailangan ng sapatos ng isang araw para mahanginan bago isuot ulit.",
+"Worn on {0} of the last {1} days.": "Naisuot nang {0} sa huling {1} araw.",
+"Another pair lets your shoes rest between wears.": "Sa isa pang pares, makakapagpahinga ang sapatos mo bago isuot ulit.",
+"Home and chores": "Bahay at gawaing-bahay",
+"Now for home and chores.": "Para na sa bahay at gawaing-bahay.",
+"Work: 5 tops (one per weekday), 3 bottoms, 3 pairs of shoes. Going out: 3, 2, 2. Sport and home: 3, 2, 1. Chores: 2, 1, 1. Shoes need a day to air out between wears, so a pair worn on more than half of the last 30 days asks for one more pair. Colors are ranked by how many good combinations a new piece would create with what you own.": "Trabaho: 5 pang-itaas (isa bawat araw ng trabaho), 3 pang-ibaba, 3 pares ng sapatos. Lakad: 3, 2, 2. Sports at bahay: 3, 2, 1. Gawaing-bahay: 2, 1, 1. Kailangan ng sapatos ng isang araw para mahanginan, kaya ang pares na naisuot nang higit sa kalahati ng huling 30 araw ay humihingi ng isa pang pares. Nakaayos ang mga kulay ayon sa dami ng magandang kombinasyong mabubuo ng bagong piraso kasama ang mga pag-aari mo."
 });
