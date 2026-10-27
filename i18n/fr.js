@@ -1328,5 +1328,19 @@ I18N.load("fr",{
 "Complete": "Complet",
 "Show the 1 you own": "Voir l’article que vous avez",
 "Show the {0} you own": "Voir les {0} que vous avez",
-"Ready: {a}": "Prêt : {a}"
+"Ready: {a}": "Prêt : {a}",
+"Share my list": "Partager ma liste",
+"Pick what to include. Sizes are saved for next time.": "Choisissez quoi inclure. Les tailles sont gardées pour la prochaine fois.",
+"Size": "Taille",
+"Note": "Note",
+"Share": "Partager",
+"Copy": "Copier",
+"Copied.": "Copié.",
+"Could not copy. Select the text and copy it yourself.": "Impossible de copier. Sélectionnez le texte et copiez-le vous-même.",
+"Pick at least one piece.": "Choisissez au moins une pièce.",
+"My wish list (made with Wearcycle)": "Ma liste de souhaits (faite avec Wearcycle)",
+"My wish list": "Ma liste de souhaits",
+"{a}, size {b}": "{a}, taille {b}",
+"Note: {a}": "Note : {a}",
+"Wish list item: {c} {l}": "{l} {c}"
 });

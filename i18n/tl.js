@@ -1328,5 +1328,19 @@ I18N.load("tl",{
 "Complete": "Kumpleto",
 "Show the 1 you own": "Ipakita ang 1 na mayroon ka",
 "Show the {0} you own": "Ipakita ang {0} na mayroon ka",
-"Ready: {a}": "Handa: {a}"
+"Ready: {a}": "Handa: {a}",
+"Share my list": "Ibahagi ang listahan ko",
+"Pick what to include. Sizes are saved for next time.": "Piliin ang isasama. Naitatabi ang mga sukat para sa susunod.",
+"Size": "Sukat",
+"Note": "Tala",
+"Share": "Ibahagi",
+"Copy": "Kopyahin",
+"Copied.": "Nakopya.",
+"Could not copy. Select the text and copy it yourself.": "Hindi nakopya. Piliin ang teksto at ikaw na ang kumopya.",
+"Pick at least one piece.": "Pumili ng kahit isang piraso.",
+"My wish list (made with Wearcycle)": "Ang wish list ko (gawa sa Wearcycle)",
+"My wish list": "Ang wish list ko",
+"{a}, size {b}": "{a}, sukat {b}",
+"Note: {a}": "Tala: {a}",
+"Wish list item: {c} {l}": "{l} na kulay {c}"
 });

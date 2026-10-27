@@ -606,6 +606,15 @@ button.lrow{cursor:pointer}
 .panel>:last-child.srow,.panel>:last-child.lrow,.panel>:last-child.buy,.panel>.sdet:last-child,.sdet>:last-child.lrow{border-bottom:0}
 @media (hover:hover) and (pointer:fine){ button.srow:hover,button.lrow:hover,a.lrow:hover{background:var(--surface)} }
 @media (prefers-reduced-motion:reduce){ .srow .chev{transition:none} }
+.wl{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}
+.wlrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.wlrow:last-child{border-bottom:0}
+.wlpick{flex:1 1 180px;min-width:0;display:flex;align-items:center;gap:10px;min-height:44px;cursor:pointer;font-size:14px}
+.wlpick input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+.bsw.sm{width:36px;height:44px;border-radius:8px}
+.bsw.sm svg.glyph{width:28px;height:28px}
+.wlsize{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex:none}
+.wlsize input{width:96px;min-height:40px}
 @media (min-width:700px) and (min-height:600px){
   .shopv{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px 20px;align-items:start}
   .shopv>.ssum,.shopv>.panel{grid-column:1/-1}

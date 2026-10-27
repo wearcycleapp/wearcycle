@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.55.0';
+const APP_VERSION='1.56.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1237,6 +1237,38 @@ function fold(id,label,status,pill,body,open){ const on=open??S.shopOpen.has(id)
   return `<button type="button" class="srow" data-fold="${id}" aria-expanded="${on}"><b>${label}</b><span class="st">${status}</span>${pill||''}<span class="chev" aria-hidden="true">›</span></button><div class="sdet" id="fold-${id}" ${on?'':'hidden'}>${body}</div>`; }
 function pillHtml(t,good){ return `<span class="spill${good?' good':''}">${t}</span>`; }
 function buyCard(c){ return `<div class="buy"><span class="bsw" aria-hidden="true">${glyph({cat:c.cat,colors:[c.color]})}</span><div class="bt"><span class="bwhy${c.bad?' bad':''}">${c.why}</span><b>${c.title}</b>${c.big?`<span class="big">${c.big}</span>`:''}${c.sub||''}${c.pairs&&c.pairs.length?`<span class="pairs"><span>Pairs with</span>${c.pairs.slice(0,3).map(it=>`<i title="${esc(it.name)}">${smallPic(it)}</i>`).join('')}</span>`:''}</div><a class="btn sm bgo" href="${shopUrl(c.q)}" target="_blank" rel="noopener">Shop</a></div>`; }
+// Share my list (v1.56.0, owner 2026-10-27): the person picks pieces, sizes (saved per kind in settings.sizes)
+// and a note, then shares plain text through the phone's share menu or copies it. Nothing is published or stored
+// outside the person's own settings.
+const SIZE_CATS={top:'Tops',bottom:'Bottoms',shoes:'Shoes',onepiece:'One-piece',outerwear:'Outerwear'};
+function openWishlist(){
+  const L=S.shopList||[]; if(!L.length) return; const sz=S.settings.sizes||{};
+  openSheet(sheetHead('Share my list')+`<p class="hint">Pick what to include. Sizes are saved for next time.</p>
+   <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm" aria-hidden="true">${glyph({cat:x.cat,colors:[x.color]})}</span><span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span></label>
+     ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off"></label>`:''}</div>`).join('')}</div>
+   <div class="field"><label for="wl-note">Note</label><input type="text" id="wl-note" maxlength="160" autocomplete="off"></div>
+   <p class="err" id="wl-err" role="alert"></p>
+   <div class="row sheet-actions"><button type="button" class="btn primary" data-act="wlshare">Share</button><button type="button" class="btn" data-act="wlcopy">Copy</button></div>`);
+}
+function wishlistText(){
+  const L=S.shopList||[]; const sizes=Object.assign({},S.settings.sizes||{}); const lines=[];
+  // One size per kind: the first filled field of that kind wins; all empty clears it.
+  for(const cat of Object.keys(SIZE_CATS)){ const f=[...document.querySelectorAll('#sheetRoot .wlsize input')].filter(i=>i.dataset.cat===cat); if(!f.length) continue;
+    const v=(f.find(i=>i.value.trim())||{value:''}).value.trim(); if(v) sizes[cat]=v; else delete sizes[cat]; }
+  // Word order differs by language (white top, haut blanc, 白のトップス), so non-English uses a dictionary entry.
+  const name=x=>{ const c=I18N.tr(x.color), l=I18N.tr(x.label); return I18N.lang==='en'?c+' '+l:I18N.t('Wish list item: {c} {l}',{c,l}); };
+  L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return; const what=name(x); const size=sizes[x.cat]||'';
+    lines.push('• '+(size?I18N.t('{a}, size {b}',{a:what,b:size}):what)); });
+  if(JSON.stringify(sizes)!==JSON.stringify(S.settings.sizes||{})){ S.settings.sizes=sizes; saveCache(); queueSettingsSave(); }
+  if(!lines.length){ $('#wl-err').textContent=I18N.tr('Pick at least one piece.'); return ''; }
+  const note=($('#wl-note')?.value||'').trim();
+  return [I18N.tr('My wish list (made with Wearcycle)')].concat(lines).concat(note?[I18N.t('Note: {a}',{a:note})]:[]).join('\n');
+}
+document.addEventListener('input',e=>{ const i=e.target; if(!i.matches||!i.matches('#sheetRoot .wlsize input')) return;
+  document.querySelectorAll('#sheetRoot .wlsize input').forEach(o=>{ if(o!==i&&o.dataset.cat===i.dataset.cat) o.value=i.value; }); });
+async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast('Copied.'); return true; }catch(e){}
+  try{ const ta=document.createElement('textarea'); ta.value=t; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); if(ok){ toast('Copied.'); return true; } }catch(e){}
+  toast('Could not copy. Select the text and copy it yourself.'); return false; }
 function renderShop(){
   const box=$('#shopBody'); const items=allItems().filter(isActive);
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():''; return; }
@@ -1250,25 +1282,27 @@ function renderShop(){
   // Buy next, in order: worn out and needed; work and going-out gaps; the top pairing pick; other occasions' gaps.
   const cands=[], seen=new Set(), add=c=>{ if(seen.has(c.key)) return; seen.add(c.key); cands.push(c); };
   for(const it of retire) add({key:'r'+it.id,cat:it.cat,color:primary(it)||'grey',bad:1,why:'Worn out',title:`<span class="cw">${esc(primary(it)||'')}</span> · <span>${esc(CAT[it.cat].label.toLowerCase())}</span>`,
-    sub:`<span class="bsub">${'Replaces '}<span data-notr>${esc(it.name)}</span></span>`,q:shopQ(primary(it),CAT[it.cat].label.toLowerCase()),need:1});
+    sub:`<span class="bsub">${'Replaces '}<span data-notr>${esc(it.name)}</span></span>`,q:shopQ(primary(it),CAT[it.cat].label.toLowerCase()),label:CAT[it.cat].label.toLowerCase(),need:1});
   const gapCard=(x,n)=>{ const c=n.colors[0]||{}; return {key:n.slot+'|'+(c.color||''),cat:n.slot,color:c.color||'grey',why:`<span>${OCC[x.occ].label}</span> · <span>${slotName[n.slot]}</span> · <span>${n.have} of ${n.target}</span>`,
     title:`<span class="cw">${esc(c.color||'')}</span> · <span>${esc(n.idea)}</span>`,big:c.adds?`+${c.adds} <small>${c.adds===1?'outfit':'outfits'}</small>`:'',
-    sub:(n.tired||[]).map(t=>`<span class="bsub"><span data-notr>${esc(t.item.name)}</span>: <span>Worn on ${t.days} of the last 30 days.</span></span>`).join(''),q:shopQ(c.color,n.idea),need:1}; };
+    label:n.idea,sub:(n.tired||[]).map(t=>`<span class="bsub"><span data-notr>${esc(t.item.name)}</span>: <span>Worn on ${t.days} of the last 30 days.</span></span>`).join(''),q:shopQ(c.color,n.idea),need:1}; };
   for(const x of g.filter(x=>x.occ==='work'||x.occ==='out')) for(const n of x.needs) add(gapCard(x,n));
-  const vCard=r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,why:'Most new pairings',title:`<span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span>`,
+  const vCard=r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),why:'Most new pairings',title:`<span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span>`,
     big:`+${r.adds} <small>${r.adds===1?'outfit':'outfits'}</small>`,sub:`<span class="bsub">${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span>`,pairs:r.pairs,q:shopQ(r.color,r.label.toLowerCase())});
   const needAny=retire.length||g.some(x=>x.needs.length);
   if(needAny&&v.list[0]) add(vCard(v.list[0]));
   for(const x of g.filter(x=>x.occ!=='work'&&x.occ!=='out')) for(const n of x.needs) add(gapCard(x,n));
   const shown=needAny?cands.slice(0,3):[];
   const moreIdeas=v.list.filter(r=>!shown.some(c=>c.key===r.slot+'|'+r.color));
+  S.shopList=shown.map(c=>({key:c.key,cat:c.cat,color:c.color,label:c.label,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),on:false})));
+  const shareBtn=S.shopList.length?`<button type="button" class="btn sm" data-act="wishlist">Share my list</button>`:'';
   const covered=g.filter(x=>!x.needs.length).map(x=>OCC[x.occ].label);
   const summary=needAny?`<p class="ssum"><b>${pl(shown.length,'1 buy would help most.','{0} buys would help most.')}</b>${covered.length?` <span>${'Covered: '+covered.join(', ')+'.'}</span>`:''}</p>`
     :`<p class="ssum"><b>Nothing to buy right now. Every occasion is covered.</b></p>`;
   const ideaRows=moreIdeas.map(r=>`<a class="lrow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b><span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span></b><span>+${r.adds} ${r.adds===1?'outfit':'outfits'} · ${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span></span>${SHOP_GO}</a>`).join('');
-  const buy=shown.length?`<section class="panel" aria-labelledby="h-buy"><div class="panel-h"><h3 id="h-buy">Buy next</h3><span class="count">${shown.length}</span></div>${shown.map(buyCard).join('')}
+  const buy=shown.length?`<section class="panel" aria-labelledby="h-buy"><div class="panel-h"><h3 id="h-buy">Buy next</h3><span class="count">${shown.length}</span><span class="spacer"></span>${shareBtn}</div>${shown.map(buyCard).join('')}
       ${moreIdeas.length?fold('ideas',pl(moreIdeas.length,'1 more idea','{0} more ideas'),'','',ideaRows):''}</section>`
-    :(moreIdeas.length?`<section class="panel">${fold('ideas','More outfits from one purchase',pl(moreIdeas.length,'1 idea','{0} ideas'),'',ideaRows)}</section>`:'');
+    :(moreIdeas.length?`<section class="panel">${fold('ideas','More outfits from one purchase',pl(moreIdeas.length,'1 idea','{0} ideas'),'',ideaRows)}<div class="panel-h" style="border:0">${shareBtn}</div></section>`:'');
   // By occasion: one row each; a covered one is one line, a gap opens the details in place.
   const needHtml=n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" role="img" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
       ${(n.tired||[]).length?`<div class="opt">Another pair lets your shoes rest between wears.</div>${n.tired.map(x=>`<div class="opt hint"><span data-notr>${esc(x.item.name)}</span>: <span>Worn on ${x.days} of the last 30 days.</span></div>`).join('')}`:''}
@@ -2235,6 +2269,11 @@ document.addEventListener('click',async e=>{
     case 'logOther': openLog(); return;
     case 'palettes': openPalettes(); return;
     case 'palcustom': openPaletteCustom(); return;
+    case 'wishlist': openWishlist(); return;
+    case 'wlcopy': { const t=wishlistText(); if(t) await copyText(t); return; }
+    case 'wlshare': { const t=wishlistText(); if(!t) return;
+      if(navigator.share){ try{ await navigator.share({title:I18N.tr('My wish list'),text:t}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
+      await copyText(t); return; }
     case 'palsave': { if(!PCOL||!PCOL.size){ const er=$('#pc-err'); if(er) er.textContent='Pick at least one color.'; return; }
       S.settings.paletteCustom=Object.keys(COLORS).filter(k=>PCOL.has(k)); S.settings.palette='custom'; PCOL=null;
       saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast('Ranking now favors your custom palette.'); return; }

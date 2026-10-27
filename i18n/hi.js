@@ -1328,5 +1328,19 @@ I18N.load("hi",{
 "Complete": "पूरा",
 "Show the 1 you own": "आपके पास का 1 दिखाएँ",
 "Show the {0} you own": "आपके पास के {0} दिखाएँ",
-"Ready: {a}": "तैयार: {a}"
+"Ready: {a}": "तैयार: {a}",
+"Share my list": "मेरी सूची शेयर करें",
+"Pick what to include. Sizes are saved for next time.": "चुनें कि क्या शामिल करना है। साइज़ अगली बार के लिए सेव रहते हैं।",
+"Size": "साइज़",
+"Note": "नोट",
+"Share": "शेयर करें",
+"Copy": "कॉपी करें",
+"Copied.": "कॉपी हो गया।",
+"Could not copy. Select the text and copy it yourself.": "कॉपी नहीं हो सका। टेक्स्ट चुनकर खुद कॉपी करें।",
+"Pick at least one piece.": "कम से कम एक पीस चुनें।",
+"My wish list (made with Wearcycle)": "मेरी विश लिस्ट (Wearcycle से बनी)",
+"My wish list": "मेरी विश लिस्ट",
+"{a}, size {b}": "{a}, साइज़ {b}",
+"Note: {a}": "नोट: {a}",
+"Wish list item: {c} {l}": "{c} {l}"
 });

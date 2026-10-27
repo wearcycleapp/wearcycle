@@ -1328,5 +1328,19 @@ I18N.load("ko",{
 "Complete": "완료",
 "Show the 1 you own": "가진 1개 보기",
 "Show the {0} you own": "가진 {0}개 보기",
-"Ready: {a}": "준비됨: {a}"
+"Ready: {a}": "준비됨: {a}",
+"Share my list": "내 목록 공유",
+"Pick what to include. Sizes are saved for next time.": "포함할 항목을 고르세요. 사이즈는 다음을 위해 저장돼요.",
+"Size": "사이즈",
+"Note": "메모",
+"Share": "공유",
+"Copy": "복사",
+"Copied.": "복사했어요.",
+"Could not copy. Select the text and copy it yourself.": "복사하지 못했어요. 텍스트를 선택해 직접 복사하세요.",
+"Pick at least one piece.": "아이템을 하나 이상 고르세요.",
+"My wish list (made with Wearcycle)": "내 위시리스트 (Wearcycle로 작성)",
+"My wish list": "내 위시리스트",
+"{a}, size {b}": "{a}, 사이즈 {b}",
+"Note: {a}": "메모: {a}",
+"Wish list item: {c} {l}": "{c} {l}"
 });

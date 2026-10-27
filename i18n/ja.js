@@ -1328,5 +1328,19 @@ I18N.load("ja",{
 "Complete": "完了",
 "Show the 1 you own": "持っている1点を表示",
 "Show the {0} you own": "持っている{0}点を表示",
-"Ready: {a}": "そろっているもの：{a}"
+"Ready: {a}": "そろっているもの：{a}",
+"Share my list": "リストを共有",
+"Pick what to include. Sizes are saved for next time.": "含めるものを選んでください。サイズは次回のために保存されます。",
+"Size": "サイズ",
+"Note": "メモ",
+"Share": "共有",
+"Copy": "コピー",
+"Copied.": "コピーしました。",
+"Could not copy. Select the text and copy it yourself.": "コピーできませんでした。テキストを選択して手動でコピーしてください。",
+"Pick at least one piece.": "アイテムを1つ以上選んでください。",
+"My wish list (made with Wearcycle)": "欲しいものリスト（Wearcycleで作成）",
+"My wish list": "欲しいものリスト",
+"{a}, size {b}": "{a}、サイズ {b}",
+"Note: {a}": "メモ：{a}",
+"Wish list item: {c} {l}": "{c}の{l}"
 });

@@ -1328,5 +1328,19 @@ I18N.load("es",{
 "Complete": "Completo",
 "Show the 1 you own": "Ver la 1 que tienes",
 "Show the {0} you own": "Ver las {0} que tienes",
-"Ready: {a}": "Listo: {a}"
+"Ready: {a}": "Listo: {a}",
+"Share my list": "Compartir mi lista",
+"Pick what to include. Sizes are saved for next time.": "Elige qué incluir. Las tallas se guardan para la próxima vez.",
+"Size": "Talla",
+"Note": "Nota",
+"Share": "Compartir",
+"Copy": "Copiar",
+"Copied.": "Copiado.",
+"Could not copy. Select the text and copy it yourself.": "No se pudo copiar. Selecciona el texto y cópialo tú.",
+"Pick at least one piece.": "Elige al menos una prenda.",
+"My wish list (made with Wearcycle)": "Mi lista de deseos (hecha con Wearcycle)",
+"My wish list": "Mi lista de deseos",
+"{a}, size {b}": "{a}, talla {b}",
+"Note: {a}": "Nota: {a}",
+"Wish list item: {c} {l}": "{l} {c}"
 });

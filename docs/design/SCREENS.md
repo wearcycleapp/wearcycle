@@ -195,6 +195,7 @@ Built in v1.55.0 (Phase 11 brought forward; proposal "Wearcycle Shop redesign" a
 - Coming up: the season row (date, "N of M ready", "N to add") opens the missing items, one "Ready: ..." line, the two preview outfits and the bring-out and storage lines; the holidays row opens each holiday with its tip, owned colors and See outfits.
 - Build toward a style: per style a row with "have of total" and "N to add" or Complete, then only the pieces to add; "Show the N you own" opens the owned essentials (each opens the piece).
 - Ideas from Claude and the department question unchanged.
+- Share my list (v1.56.0, owner 2026-10-27): a button in the Buy next heading (or under the folded ideas row) opens a sheet with every Buy next piece ticked and the other ideas unticked, a size field per piece (one size per kind, saved in settings.sizes and filled in next time; fields of the same kind stay in step), and a note. Share uses the phone's share menu (plain text); without one, or for Copy, the text goes to the clipboard. Nothing is published; the text is written in the app's language.
 - Rows that open are buttons with aria-expanded (44px or taller); the open state is kept for the session (S.shopOpen). One column below 700x600; from 700x600 two columns: left the summary and Buy next and By occasion, right Coming up, Build toward a style and Ideas from Claude. The 960px columns rule no longer applies to Shop.
 - Measured with the fixture closet: phone 4,710px (5.6 screens) to about 2.3 screens folded; French at 360px 6.3 to 2.6; 820 4.0 to 1.1; 1366x768 3.3 to 1.6.
 
