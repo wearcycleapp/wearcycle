@@ -1371,5 +1371,6 @@ I18N.load("es",{
 "It leaves your closet and goes to your donation history.": "Sale de tu armario y pasa a tu historial de donaciones.",
 "For pieces too worn to donate.": "Para prendas demasiado gastadas para donar.",
 "{0} latest ideas": "{0} ideas recientes",
-"1 latest idea": "1 idea reciente"
+"1 latest idea": "1 idea reciente",
+"Include shop links": "Incluir enlaces de compra"
 });

@@ -1371,5 +1371,6 @@ I18N.load("tl",{
 "It leaves your closet and goes to your donation history.": "Aalis ito sa iyong aparador at mapupunta sa kasaysayan ng donasyon.",
 "For pieces too worn to donate.": "Para sa mga pirasong sobrang luma na para i-donate.",
 "{0} latest ideas": "{0} pinakabagong ideya",
-"1 latest idea": "1 pinakabagong ideya"
+"1 latest idea": "1 pinakabagong ideya",
+"Include shop links": "Isama ang mga link para mamili"
 });

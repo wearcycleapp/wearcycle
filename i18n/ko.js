@@ -1371,5 +1371,6 @@ I18N.load("ko",{
 "It leaves your closet and goes to your donation history.": "옷장에서 빠지고 기부 기록으로 옮겨집니다.",
 "For pieces too worn to donate.": "기부하기 어려울 만큼 낡은 옷에 쓰세요.",
 "{0} latest ideas": "최근 아이디어 {0}개",
-"1 latest idea": "최근 아이디어 1개"
+"1 latest idea": "최근 아이디어 1개",
+"Include shop links": "쇼핑 링크 포함"
 });

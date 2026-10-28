@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.0';
+const APP_VERSION='1.58.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1214,7 +1214,7 @@ function careRow(it,f,acts){
 // Near the weather place when one is set, otherwise "near me" so Maps uses the phone's own location.
 // Google search on the Shopping tab (udm=28), in the app's language; opens only when tapped.
 function shopQ(...parts){ const d={men:'men\'s',women:'women\'s'}[S.settings.dept]; return [d].concat(parts).filter(Boolean).map(p=>I18N.lang==='en'?p:I18N.tr(String(p))).join(' '); }
-function shopUrl(q){ return 'https://www.google.com/search?udm=28&q='+encodeURIComponent(q); }
+function shopUrl(q){ return 'https://www.google.com/search?udm=28&q='+encodeURIComponent(q).replace(/'/g,'%27'); } // %27: some chat apps end a link at an apostrophe
 const SHOP_GO='<span class="go">Shop ›</span>';
 const DEPTS=[['men',"Men's"],['women',"Women's"],['any','Any']];
 function deptChips(){ return `<div class="chips" style="flex-wrap:wrap;margin-top:8px">${DEPTS.map(([k,l])=>`<button type="button" class="chip" data-dept="${k}" aria-pressed="${S.settings.dept===k}">${l}</button>`).join('')}</div>`; }
@@ -1303,6 +1303,7 @@ function openWishlist(){
    <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.idea?`<span><span data-notr>${esc(ideaText(x.idea&&(S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}))}</span></span>`:x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span>`}</label>
      ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off" aria-required="true" aria-describedby="wl-err"></label>`:''}</div>`).join('')}</div>
    ${cats.length?measHtml(cats):''}
+   <label class="wllinks"><input type="checkbox" id="wl-links" ${LS.get('wearcycle.wlLinks')===false?'':'checked'}><span>Include shop links</span></label>
    <div class="field"><label for="wl-note">Note</label><input type="text" id="wl-note" maxlength="160" autocomplete="off"></div>
    <p class="err" id="wl-err" role="alert"></p>
    <div class="row sheet-actions"><button type="button" class="btn primary" data-act="wlshare">Share</button><button type="button" class="btn" data-act="wlcopy">Copy</button></div>`);
@@ -1326,12 +1327,14 @@ function wishlistText(){
   if(noSize.length){ noSize.forEach(k=>$('#wl-size-'+k).setAttribute('aria-invalid','true')); $('#wl-err').textContent=I18N.tr('Add a size for each ticked piece.'); $('#wl-size-'+noSize[0]).focus(); return ''; }
   if(bad){ const d=$('#sheetRoot .wlmeas'); if(d) d.open=true; $('#wl-err').textContent=I18N.tr('Measurements must be numbers.'); bad.focus(); return ''; }
   const low=t=>t.charAt(0).toLocaleLowerCase(I18N.locale)+t.slice(1);
+  const links=!!$('#wl-links')?.checked; LS.set('wearcycle.wlLinks',links);
   const num=n=>n.toLocaleString(I18N.locale,{maximumFractionDigits:1}), ja=I18N.lang==='ja';
   const mtext=cat=>(MEAS[cat]||[]).filter(f=>meas[cat]?.[f]!=null).map(f=>low(I18N.tr(MEAS_L[f]))+' '+num(meas[cat][f])+' '+WL.unit).join(ja?'、':', ');
   // Word order differs by language (white top, haut blanc, 白のトップス), so non-English uses a dictionary entry.
   const name=x=>{ const c=I18N.tr(x.color), l=I18N.tr(x.label); return I18N.lang==='en'?c+' '+l:I18N.t('Wish list item: {c} {l}',{c,l}); };
   L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return; const what=x.idea?ideaText((S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}):name(x); const size=sizes[x.cat]||'';
-    const mt=mtext(x.cat); lines.push('• '+(size?I18N.t('{a}, size {b}',{a:what,b:size}):what)+(mt?(ja?'（'+mt+'）':' ('+mt+')'):'')); });
+    const mt=mtext(x.cat); lines.push('• '+(size?I18N.t('{a}, size {b}',{a:what,b:size}):what)+(mt?(ja?'（'+mt+'）':' ('+mt+')'):''));
+    if(links&&x.q) lines.push('  '+shopUrl(x.q)); });
   if(!lines.length){ $('#wl-err').textContent=I18N.tr('Pick at least one piece.'); return ''; }
   const note=($('#wl-note')?.value||'').trim();
   return [I18N.tr('My wish list (made with Wearcycle)')].concat(lines).concat(note?[I18N.t('Note: {a}',{a:note})]:[]).join('\n');
@@ -1375,7 +1378,8 @@ function renderShop(){
   for(const x of g.filter(x=>x.occ!=='work'&&x.occ!=='out')) for(const n of x.needs) add(gapCard(x,n));
   const shown=needAny?cands.slice(0,3):[];
   const moreIdeas=v.list.filter(r=>!shown.some(c=>c.key===r.slot+'|'+r.color));
-  S.shopList=shown.map(c=>({key:c.key,piece:c.piece,cat:c.cat,color:c.color,label:c.label,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),on:false}))).concat((S.settings.savedIdeas||[]).map(x=>({key:'i'+x.id,idea:x.id,cat:'idea',color:x.color||'',label:x.item,on:false})));
+  // q: the same search as the item's Shop button, shared as a link under each line (v1.58.1).
+  S.shopList=shown.map(c=>({key:c.key,piece:c.piece,cat:c.cat,color:c.color,label:c.label,q:c.q,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),q:shopQ(r.color,r.label.toLowerCase()),on:false}))).concat((S.settings.savedIdeas||[]).map(x=>({key:'i'+x.id,idea:x.id,cat:'idea',color:x.color||'',label:x.item,q:ideaQ(x),on:false})));
   const shareBtn=S.shopList.length?`<button type="button" class="btn sm" data-act="wishlist">Share my list</button>`:'';
   const covered=g.filter(x=>!x.needs.length).map(x=>OCC[x.occ].label);
   const summary=needAny?`<p class="ssum"><b>${pl(shown.length,'1 buy would help most.','{0} buys would help most.')}</b>${covered.length?` <span>${'Covered: '+covered.join(', ')+'.'}</span>`:''}</p>`

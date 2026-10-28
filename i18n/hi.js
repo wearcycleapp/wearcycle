@@ -1371,5 +1371,6 @@ I18N.load("hi",{
 "It leaves your closet and goes to your donation history.": "यह आपकी अलमारी से हटकर दान के इतिहास में चला जाता है।",
 "For pieces too worn to donate.": "उन कपड़ों के लिए जो दान करने लायक नहीं रहे।",
 "{0} latest ideas": "{0} नए सुझाव",
-"1 latest idea": "1 नया सुझाव"
+"1 latest idea": "1 नया सुझाव",
+"Include shop links": "खरीदारी के लिंक शामिल करें"
 });

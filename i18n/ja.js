@@ -1371,5 +1371,6 @@ I18N.load("ja",{
 "It leaves your closet and goes to your donation history.": "クローゼットから外れ、寄付の履歴に移ります。",
 "For pieces too worn to donate.": "寄付できないほど傷んだアイテム向けです。",
 "{0} latest ideas": "最新のアイデア {0}件",
-"1 latest idea": "最新のアイデア 1件"
+"1 latest idea": "最新のアイデア 1件",
+"Include shop links": "購入リンクを含める"
 });
