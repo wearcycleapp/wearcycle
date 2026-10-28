@@ -1343,5 +1343,7 @@ I18N.load("ja",{
 "{a}, size {b}": "{a}、サイズ {b}",
 "Note: {a}": "メモ：{a}",
 "Wish list item: {c} {l}": "{c}の{l}",
-"Keep": "このまま"
+"Keep": "このまま",
+"Below the work level": "仕事用の基準より下",
+"Below the going-out level": "お出かけ用の基準より下"
 });

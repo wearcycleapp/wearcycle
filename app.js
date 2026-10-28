@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.57.0';
+const APP_VERSION='1.57.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1252,7 +1252,9 @@ S.shopOpen=new Set();
 function fold(id,label,status,pill,body,open){ const on=open??S.shopOpen.has(id);
   return `<button type="button" class="srow" data-fold="${id}" aria-expanded="${on}"><b>${label}</b><span class="st">${status}</span>${pill||''}<span class="chev" aria-hidden="true">›</span></button><div class="sdet" id="fold-${id}" ${on?'':'hidden'}>${body}</div>`; }
 function pillHtml(t,good){ return `<span class="spill${good?' good':''}">${t}</span>`; }
-function buyCard(c){ return `<div class="buy"><span class="bsw" aria-hidden="true">${glyph({cat:c.cat,colors:[c.color]})}</span><div class="bt"><span class="bwhy${c.bad?' bad':''}">${c.why}</span><b>${c.title}</b>${c.big?`<span class="big">${c.big}</span>`:''}${c.sub||''}${c.pairs&&c.pairs.length?`<span class="pairs"><span>Pairs with</span>${c.pairs.slice(0,3).map(it=>`<i title="${esc(it.name)}">${smallPic(it)}</i>`).join('')}</span>`:''}</div><a class="btn sm bgo" href="${shopUrl(c.q)}" target="_blank" rel="noopener">Shop</a></div>`; }
+// A card that replaces one of the person's pieces shows that piece (cut-out, else its photo); new pieces keep the glyph (v1.57.1).
+function buyPic(x){ const it=x.piece&&byId(x.piece); return it?smallPic(it):glyph({cat:x.cat,colors:[x.color]}); }
+function buyCard(c){ return `<div class="buy"><span class="bsw${c.piece?' own':''}" aria-hidden="true">${buyPic(c)}</span><div class="bt"><span class="bwhy${c.bad?' bad':''}">${c.why}</span><b>${c.title}</b>${c.big?`<span class="big">${c.big}</span>`:''}${c.sub||''}${c.pairs&&c.pairs.length?`<span class="pairs"><span>Pairs with</span>${c.pairs.slice(0,3).map(it=>`<i title="${esc(it.name)}">${smallPic(it)}</i>`).join('')}</span>`:''}</div><a class="btn sm bgo" href="${shopUrl(c.q)}" target="_blank" rel="noopener">Shop</a></div>`; }
 // Share my list (v1.56.0, owner 2026-10-27): the person picks pieces, sizes (saved per kind in settings.sizes)
 // and a note, then shares plain text through the phone's share menu or copies it. Nothing is published or stored
 // outside the person's own settings.
@@ -1260,11 +1262,12 @@ const SIZE_CATS={top:'Tops',bottom:'Bottoms',shoes:'Shoes',onepiece:'One-piece',
 function openWishlist(){
   const L=S.shopList||[]; if(!L.length) return; const sz=S.settings.sizes||{};
   openSheet(sheetHead('Share my list')+`<p class="hint">Pick what to include. Sizes are saved for next time.</p>
-   <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm" aria-hidden="true">${glyph({cat:x.cat,colors:[x.color]})}</span><span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span></label>
+   <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span>`}</label>
      ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off"></label>`:''}</div>`).join('')}</div>
    <div class="field"><label for="wl-note">Note</label><input type="text" id="wl-note" maxlength="160" autocomplete="off"></div>
    <p class="err" id="wl-err" role="alert"></p>
    <div class="row sheet-actions"><button type="button" class="btn primary" data-act="wlshare">Share</button><button type="button" class="btn" data-act="wlcopy">Copy</button></div>`);
+  setTimeout(hydrateCuts,0);
 }
 function wishlistText(){
   const L=S.shopList||[]; const sizes=Object.assign({},S.settings.sizes||{}); const lines=[];
@@ -1297,8 +1300,14 @@ function renderShop(){
   const v=versatility(items,5);
   // Buy next, in order: worn out and needed; work and going-out gaps; the top pairing pick; other occasions' gaps.
   const cands=[], seen=new Set(), add=c=>{ if(seen.has(c.key)) return; seen.add(c.key); cands.push(c); };
-  for(const it of retire) add({key:'r'+it.id,cat:it.cat,color:primary(it)||'grey',bad:1,why:'Worn out',title:`<span class="cw">${esc(primary(it)||'')}</span> · <span>${esc(CAT[it.cat].label.toLowerCase())}</span>`,
-    sub:`<span class="bsub">${'Replaces '}<span data-notr>${esc(it.name)}</span></span>`,q:shopQ(primary(it),CAT[it.cat].label.toLowerCase()),label:CAT[it.cat].label.toLowerCase(),need:1});
+  // Replace cards name the real piece; the search uses its color, material and the type Claude recorded (kind).
+  for(const it of retire){ const cond=it.cond??4, col=primary(it)||'', kind=String(it.kind||'').trim().toLowerCase()||CAT[it.cat].label.toLowerCase();
+    const mat=String(it.material||'').trim().toLowerCase(), useMat=mat&&mat!==col&&!kind.includes(mat)&&(I18N.lang==='en'||I18N.tr(mat)!==mat)?mat:'';
+    const low=(it.occ||[]).find(o=>(o==='work'||o==='out')&&short(o,it.cat));
+    const why=cond<=1?'Worn out':`<span>Condition ${cond} of 5</span> · <span>${low==='out'?'Below the going-out level':'Below the work level'}</span>`;
+    add({key:'r'+it.id,piece:it.id,cat:it.cat,color:col||'grey',bad:cond<=1?1:0,why,
+      title:it.name?`<span data-notr>${esc(it.name)}</span>`:`<span class="cw">${esc(col)}</span> · <span>${esc(kind)}</span>`,
+      q:shopQ(col,useMat,kind),label:I18N.lang==='en'?(useMat?useMat+' ':'')+kind:CAT[it.cat].label.toLowerCase(),need:1}); }
   const gapCard=(x,n)=>{ const c=n.colors[0]||{}; return {key:n.slot+'|'+(c.color||''),cat:n.slot,color:c.color||'grey',why:`<span>${OCC[x.occ].label}</span> · <span>${slotName[n.slot]}</span> · <span>${n.have} of ${n.target}</span>`,
     title:`<span class="cw">${esc(c.color||'')}</span> · <span>${esc(n.idea)}</span>`,big:c.adds?`+${c.adds} <small>${c.adds===1?'outfit':'outfits'}</small>`:'',
     label:n.idea,sub:(n.tired||[]).map(t=>`<span class="bsub"><span data-notr>${esc(t.item.name)}</span>: <span>Worn on ${t.days} of the last 30 days.</span></span>`).join(''),q:shopQ(c.color,n.idea),need:1}; };
@@ -1310,7 +1319,7 @@ function renderShop(){
   for(const x of g.filter(x=>x.occ!=='work'&&x.occ!=='out')) for(const n of x.needs) add(gapCard(x,n));
   const shown=needAny?cands.slice(0,3):[];
   const moreIdeas=v.list.filter(r=>!shown.some(c=>c.key===r.slot+'|'+r.color));
-  S.shopList=shown.map(c=>({key:c.key,cat:c.cat,color:c.color,label:c.label,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),on:false})));
+  S.shopList=shown.map(c=>({key:c.key,piece:c.piece,cat:c.cat,color:c.color,label:c.label,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),on:false})));
   const shareBtn=S.shopList.length?`<button type="button" class="btn sm" data-act="wishlist">Share my list</button>`:'';
   const covered=g.filter(x=>!x.needs.length).map(x=>OCC[x.occ].label);
   const summary=needAny?`<p class="ssum"><b>${pl(shown.length,'1 buy would help most.','{0} buys would help most.')}</b>${covered.length?` <span>${'Covered: '+covered.join(', ')+'.'}</span>`:''}</p>`

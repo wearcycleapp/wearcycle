@@ -1343,5 +1343,7 @@ I18N.load("fr",{
 "{a}, size {b}": "{a}, taille {b}",
 "Note: {a}": "Note : {a}",
 "Wish list item: {c} {l}": "{l} {c}",
-"Keep": "Garder"
+"Keep": "Garder",
+"Below the work level": "Sous le niveau pour le travail",
+"Below the going-out level": "Sous le niveau pour les sorties"
 });

@@ -1343,5 +1343,7 @@ I18N.load("hi",{
 "{a}, size {b}": "{a}, साइज़ {b}",
 "Note: {a}": "नोट: {a}",
 "Wish list item: {c} {l}": "{c} {l}",
-"Keep": "रखें"
+"Keep": "रखें",
+"Below the work level": "काम के स्तर से नीचे",
+"Below the going-out level": "बाहर जाने के स्तर से नीचे"
 });

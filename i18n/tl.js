@@ -1343,5 +1343,7 @@ I18N.load("tl",{
 "{a}, size {b}": "{a}, sukat {b}",
 "Note: {a}": "Tala: {a}",
 "Wish list item: {c} {l}": "{l} na kulay {c}",
-"Keep": "Panatilihin"
+"Keep": "Panatilihin",
+"Below the work level": "Mababa sa antas para sa trabaho",
+"Below the going-out level": "Mababa sa antas para sa paglabas"
 });

@@ -1343,5 +1343,7 @@ I18N.load("ko",{
 "{a}, size {b}": "{a}, 사이즈 {b}",
 "Note: {a}": "메모: {a}",
 "Wish list item: {c} {l}": "{c} {l}",
-"Keep": "유지"
+"Keep": "유지",
+"Below the work level": "출근용 기준 미달",
+"Below the going-out level": "외출용 기준 미달"
 });
