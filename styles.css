@@ -640,7 +640,25 @@ button.lrow{cursor:pointer}
 .bsw.own img.fitted{object-fit:contain}
 .bsw.own img.cut{object-fit:contain;padding:8%;box-sizing:border-box}
 .wlsize{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);flex:none}
-.wlsize input{width:96px;min-height:40px}
+.wlsize input{width:96px;min-height:40px;background:var(--raised);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;font-size:15px}
+.wlsize input[aria-invalid="true"],.wlmgrp input[aria-invalid="true"]{border-color:var(--bad);box-shadow:0 0 0 1px var(--bad)}
+/* Measurements (v1.57.2) */
+.wlmeas{margin-top:14px;border:1px solid var(--line);border-radius:10px;background:var(--raised);padding:0 14px}
+.wlmeas>summary{display:flex;align-items:center;justify-content:space-between;min-height:48px;cursor:pointer;list-style:none}
+.wlmeas>summary::-webkit-details-marker{display:none}
+.wlmeas>summary svg{width:18px;height:18px;flex:none}
+.wlmeas[open]>summary svg{transform:rotate(180deg)}
+.wlmeas .hint{margin:0 0 10px}
+.wlunit{display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;color:var(--muted)}
+.wlunit .chip{min-height:40px;min-width:52px;justify-content:center}
+.wlmgrp{border:0;margin:0 0 12px;padding:0;min-width:0}
+.wlmgrp legend{font-size:13px;font-weight:700;padding:0;margin-bottom:6px}
+.wlmf{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px 12px}
+.wlmf .field{margin:0}
+.wlmf .field>span:first-child{font-size:13px;font-weight:600;color:var(--ink)}
+.wlmin{display:flex;align-items:center;gap:6px}
+.wlmin input{width:100%;min-width:0;min-height:44px}
+.wlmin .u{font-size:13px;color:var(--muted);flex:none}
 @media (min-width:700px) and (min-height:600px){
   .shopv{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px 20px;align-items:start}
   .shopv>.ssum,.shopv>.panel{grid-column:1/-1}

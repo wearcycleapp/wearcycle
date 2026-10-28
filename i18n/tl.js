@@ -1345,5 +1345,16 @@ I18N.load("tl",{
 "Wish list item: {c} {l}": "{l} na kulay {c}",
 "Keep": "Panatilihin",
 "Below the work level": "Mababa sa antas para sa trabaho",
-"Below the going-out level": "Mababa sa antas para sa paglabas"
+"Below the going-out level": "Mababa sa antas para sa paglabas",
+"Measurements (optional)": "Mga sukat (opsyonal)",
+"Measured on the body, not on a piece of clothing.": "Sinukat sa katawan, hindi sa damit.",
+"Units": "Mga yunit",
+"Chest": "Dibdib",
+"Sleeve length": "Haba ng manggas",
+"Waist": "Baywang",
+"Hip": "Balakang",
+"Inseam": "Inseam",
+"Foot length": "Haba ng paa",
+"Add a size for each ticked piece.": "Maglagay ng size para sa bawat napiling piraso.",
+"Measurements must be numbers.": "Dapat numero ang mga sukat."
 });

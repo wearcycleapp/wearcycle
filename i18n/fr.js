@@ -1345,5 +1345,16 @@ I18N.load("fr",{
 "Wish list item: {c} {l}": "{l} {c}",
 "Keep": "Garder",
 "Below the work level": "Sous le niveau pour le travail",
-"Below the going-out level": "Sous le niveau pour les sorties"
+"Below the going-out level": "Sous le niveau pour les sorties",
+"Measurements (optional)": "Mensurations (facultatif)",
+"Measured on the body, not on a piece of clothing.": "Prises sur le corps, pas sur un vêtement.",
+"Units": "Unités",
+"Chest": "Tour de poitrine",
+"Sleeve length": "Longueur de manche",
+"Waist": "Tour de taille",
+"Hip": "Tour de hanches",
+"Inseam": "Entrejambe",
+"Foot length": "Longueur du pied",
+"Add a size for each ticked piece.": "Ajoutez une taille pour chaque pièce cochée.",
+"Measurements must be numbers.": "Les mensurations doivent être des nombres."
 });

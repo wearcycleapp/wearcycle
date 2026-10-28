@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.57.1';
+const APP_VERSION='1.57.2';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1259,32 +1259,67 @@ function buyCard(c){ return `<div class="buy"><span class="bsw${c.piece?' own':'
 // and a note, then shares plain text through the phone's share menu or copies it. Nothing is published or stored
 // outside the person's own settings.
 const SIZE_CATS={top:'Tops',bottom:'Bottoms',shoes:'Shoes',onepiece:'One-piece',outerwear:'Outerwear'};
+// Body measurements per kind (v1.57.2, owner 2026-10-27: sizes vary by brand). Optional, saved once per kind in
+// settings.measures {unit:'cm'|'in', top:{chest,sleeve}, ...}. Fields follow common size charts (chest, hip and
+// arm length for tops; waist, hip and inseam for trousers; foot length for shoes).
+const MEAS={top:['chest','sleeve'],outerwear:['chest','sleeve'],bottom:['waist','hip','inseam'],onepiece:['chest','waist','hip'],shoes:['foot']};
+const MEAS_L={chest:'Chest',sleeve:'Sleeve length',waist:'Waist',hip:'Hip',inseam:'Inseam',foot:'Foot length'};
+const WL={unit:'cm'};
+function measNum(v){ const t=String(v||'').trim().replace(',','.'); if(!t) return ''; const n=Number(t); return isFinite(n)&&n>0&&n<400?n:NaN; }
+function measHtml(cats){ const m=S.settings.measures||{};
+  return `<details class="wlmeas"><summary><b>Measurements (optional)</b>${CHEV_D}</summary>
+   <p class="hint">Measured on the body, not on a piece of clothing.</p>
+   <div class="wlunit" role="group" aria-label="Units"><span>Units</span><button type="button" class="chip" data-wlunit="cm" aria-pressed="${WL.unit==='cm'}" data-notr>cm</button><button type="button" class="chip" data-wlunit="in" aria-pressed="${WL.unit==='in'}" data-notr>in</button></div>
+   ${cats.map(cat=>`<fieldset class="wlmgrp" data-mcat="${cat}"><legend>${SIZE_CATS[cat]}</legend><div class="wlmf">${MEAS[cat].map(f=>`<label class="field"><span>${MEAS_L[f]}</span><span class="wlmin"><input type="text" inputmode="decimal" id="wl-m-${cat}-${f}" data-mcat="${cat}" data-mf="${f}" value="${esc(String(m[cat]?.[f]??''))}" maxlength="6" autocomplete="off"><span class="u" data-notr>${WL.unit}</span></span></label>`).join('')}</div></fieldset>`).join('')}
+  </details>`; }
+function wlMeasVisible(){ const on=new Set(); (S.shopList||[]).forEach((x,k)=>{ if($('#wl-on-'+k)?.checked) on.add(x.cat); });
+  document.querySelectorAll('#sheetRoot .wlmgrp').forEach(g=>{ g.hidden=!on.has(g.dataset.mcat); });
+  const d=$('#sheetRoot .wlmeas'); if(d) d.hidden=![...document.querySelectorAll('#sheetRoot .wlmgrp')].some(g=>!g.hidden); }
 function openWishlist(){
-  const L=S.shopList||[]; if(!L.length) return; const sz=S.settings.sizes||{};
+  const L=S.shopList||[]; if(!L.length) return; const sz=S.settings.sizes||{}; WL.unit=(S.settings.measures||{}).unit==='in'?'in':'cm';
+  const cats=Object.keys(MEAS).filter(c=>L.some(x=>x.cat===c));
   openSheet(sheetHead('Share my list')+`<p class="hint">Pick what to include. Sizes are saved for next time.</p>
    <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span>`}</label>
-     ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off"></label>`:''}</div>`).join('')}</div>
+     ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off" aria-required="true" aria-describedby="wl-err"></label>`:''}</div>`).join('')}</div>
+   ${cats.length?measHtml(cats):''}
    <div class="field"><label for="wl-note">Note</label><input type="text" id="wl-note" maxlength="160" autocomplete="off"></div>
    <p class="err" id="wl-err" role="alert"></p>
    <div class="row sheet-actions"><button type="button" class="btn primary" data-act="wlshare">Share</button><button type="button" class="btn" data-act="wlcopy">Copy</button></div>`);
-  setTimeout(hydrateCuts,0);
+  wlMeasVisible(); setTimeout(hydrateCuts,0);
 }
 function wishlistText(){
   const L=S.shopList||[]; const sizes=Object.assign({},S.settings.sizes||{}); const lines=[];
   // One size per kind: the first filled field of that kind wins; all empty clears it.
   for(const cat of Object.keys(SIZE_CATS)){ const f=[...document.querySelectorAll('#sheetRoot .wlsize input')].filter(i=>i.dataset.cat===cat); if(!f.length) continue;
     const v=(f.find(i=>i.value.trim())||{value:''}).value.trim(); if(v) sizes[cat]=v; else delete sizes[cat]; }
+  // Size is required for every ticked piece that has a size field.
+  document.querySelectorAll('#sheetRoot .wlsize input').forEach(i=>i.removeAttribute('aria-invalid'));
+  const noSize=L.map((x,k)=>k).filter(k=>$('#wl-on-'+k)?.checked&&$('#wl-size-'+k)&&!$('#wl-size-'+k).value.trim());
+  // Measurements: kept per kind; only ticked kinds go into the text. Bad numbers stop the share.
+  const meas={unit:WL.unit}; let bad=null;
+  document.querySelectorAll('#sheetRoot .wlmgrp input').forEach(i=>{ i.removeAttribute('aria-invalid'); const n=measNum(i.value);
+    if(Number.isNaN(n)){ i.setAttribute('aria-invalid','true'); bad=bad||i; return; } if(n!=='') (meas[i.dataset.mcat]=meas[i.dataset.mcat]||{})[i.dataset.mf]=n; });
+  const oldM=S.settings.measures||{}; for(const c of Object.keys(MEAS)) if(!document.querySelector(`#sheetRoot .wlmgrp[data-mcat="${c}"]`)&&oldM[c]) meas[c]=oldM[c];
+  if(JSON.stringify(meas)!==JSON.stringify(oldM)&&!(Object.keys(meas).length===1&&!S.settings.measures)){ S.settings.measures=meas; saveCache(); queueSettingsSave(); }
+  if(JSON.stringify(sizes)!==JSON.stringify(S.settings.sizes||{})){ S.settings.sizes=sizes; saveCache(); queueSettingsSave(); }
+  if(noSize.length){ noSize.forEach(k=>$('#wl-size-'+k).setAttribute('aria-invalid','true')); $('#wl-err').textContent=I18N.tr('Add a size for each ticked piece.'); $('#wl-size-'+noSize[0]).focus(); return ''; }
+  if(bad){ const d=$('#sheetRoot .wlmeas'); if(d) d.open=true; $('#wl-err').textContent=I18N.tr('Measurements must be numbers.'); bad.focus(); return ''; }
+  const low=t=>t.charAt(0).toLocaleLowerCase(I18N.locale)+t.slice(1);
+  const num=n=>n.toLocaleString(I18N.locale,{maximumFractionDigits:1}), ja=I18N.lang==='ja';
+  const mtext=cat=>(MEAS[cat]||[]).filter(f=>meas[cat]?.[f]!=null).map(f=>low(I18N.tr(MEAS_L[f]))+' '+num(meas[cat][f])+' '+WL.unit).join(ja?'、':', ');
   // Word order differs by language (white top, haut blanc, 白のトップス), so non-English uses a dictionary entry.
   const name=x=>{ const c=I18N.tr(x.color), l=I18N.tr(x.label); return I18N.lang==='en'?c+' '+l:I18N.t('Wish list item: {c} {l}',{c,l}); };
   L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return; const what=name(x); const size=sizes[x.cat]||'';
-    lines.push('• '+(size?I18N.t('{a}, size {b}',{a:what,b:size}):what)); });
-  if(JSON.stringify(sizes)!==JSON.stringify(S.settings.sizes||{})){ S.settings.sizes=sizes; saveCache(); queueSettingsSave(); }
+    const mt=mtext(x.cat); lines.push('• '+(size?I18N.t('{a}, size {b}',{a:what,b:size}):what)+(mt?(ja?'（'+mt+'）':' ('+mt+')'):'')); });
   if(!lines.length){ $('#wl-err').textContent=I18N.tr('Pick at least one piece.'); return ''; }
   const note=($('#wl-note')?.value||'').trim();
   return [I18N.tr('My wish list (made with Wearcycle)')].concat(lines).concat(note?[I18N.t('Note: {a}',{a:note})]:[]).join('\n');
 }
-document.addEventListener('input',e=>{ const i=e.target; if(!i.matches||!i.matches('#sheetRoot .wlsize input')) return;
-  document.querySelectorAll('#sheetRoot .wlsize input').forEach(o=>{ if(o!==i&&o.dataset.cat===i.dataset.cat) o.value=i.value; }); });
+document.addEventListener('change',e=>{ if(e.target.matches&&e.target.matches('#sheetRoot .wlpick input')) wlMeasVisible(); });
+document.addEventListener('input',e=>{ const t=e.target; if(t.matches&&t.matches('#sheetRoot .wlmgrp input')){ delete t.dataset.cm; t.removeAttribute('aria-invalid'); }
+  if(t.matches&&t.matches('#sheetRoot .wl input, #sheetRoot .wlmgrp input')&&$('#wl-err')&&!document.querySelector('#sheetRoot [aria-invalid="true"]:not(#'+CSS.escape(t.id)+')')) $('#wl-err').textContent=''; });
+document.addEventListener('input',e=>{ const i=e.target; if(!i.matches||!i.matches('#sheetRoot .wlsize input')) return; i.removeAttribute('aria-invalid');
+  document.querySelectorAll('#sheetRoot .wlsize input').forEach(o=>{ if(o!==i&&o.dataset.cat===i.dataset.cat){ o.value=i.value; o.removeAttribute('aria-invalid'); } }); });
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast('Copied.'); return true; }catch(e){}
   try{ const ta=document.createElement('textarea'); ta.value=t; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); if(ok){ toast('Copied.'); return true; } }catch(e){}
   toast('Could not copy. Select the text and copy it yourself.'); return false; }
@@ -2284,6 +2319,12 @@ document.addEventListener('click',async e=>{
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
   if(t.id==='rulesBtn'||t.id==='railSettings'){ openSettings(); return; }
   if(t.id==='langBtn'||t.id==='railLang'){ openLangs(); return; }
+  if(ds.wlunit){ if(ds.wlunit!==WL.unit){ const f=ds.wlunit==='in'?1/2.54:2.54; WL.unit=ds.wlunit;
+      document.querySelectorAll('#sheetRoot .wlmgrp input').forEach(i=>{ const n=measNum(i.value); if(typeof n!=='number') return;
+        if(i.dataset.cm==null) i.dataset.cm=String(ds.wlunit==='in'?n:n*2.54); // cm before the switch
+        const cm=Number(i.dataset.cm); i.value=String(Math.round((WL.unit==='in'?cm/2.54:cm)*10)/10); });
+      document.querySelectorAll('#sheetRoot .wlmin .u').forEach(u=>u.textContent=WL.unit); document.querySelectorAll('#sheetRoot [data-wlunit]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.wlunit===WL.unit)); }
+    return; }
   if(ds.langUse){ LS.set('wearcycle.langAsked',true); if(ds.langUse===I18N.lang){ try{ localStorage.setItem('wearcycle.lang',ds.langUse); }catch(e){} closeSheet(); renderStatus(); return; } I18N.setLang(ds.langUse); return; }
   switch(ds.act){
     case 'camBatch': { closeSheet(); if(S.busy) return; const shots=await openCamera('batch'); addPhotos(shots); return; }

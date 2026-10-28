@@ -1345,5 +1345,16 @@ I18N.load("ja",{
 "Wish list item: {c} {l}": "{c}の{l}",
 "Keep": "このまま",
 "Below the work level": "仕事用の基準より下",
-"Below the going-out level": "お出かけ用の基準より下"
+"Below the going-out level": "お出かけ用の基準より下",
+"Measurements (optional)": "採寸（任意）",
+"Measured on the body, not on a piece of clothing.": "服ではなく体のサイズを測ります。",
+"Units": "単位",
+"Chest": "胸囲",
+"Sleeve length": "袖丈",
+"Waist": "ウエスト",
+"Hip": "ヒップ",
+"Inseam": "股下",
+"Foot length": "足長",
+"Add a size for each ticked piece.": "チェックした各アイテムにサイズを入力してください。",
+"Measurements must be numbers.": "採寸は数字で入力してください。"
 });

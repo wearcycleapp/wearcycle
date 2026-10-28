@@ -1345,5 +1345,16 @@ I18N.load("hi",{
 "Wish list item: {c} {l}": "{c} {l}",
 "Keep": "रखें",
 "Below the work level": "काम के स्तर से नीचे",
-"Below the going-out level": "बाहर जाने के स्तर से नीचे"
+"Below the going-out level": "बाहर जाने के स्तर से नीचे",
+"Measurements (optional)": "माप (वैकल्पिक)",
+"Measured on the body, not on a piece of clothing.": "शरीर का माप, किसी कपड़े का नहीं।",
+"Units": "इकाइयाँ",
+"Chest": "छाती",
+"Sleeve length": "आस्तीन की लंबाई",
+"Waist": "कमर",
+"Hip": "कूल्हे",
+"Inseam": "इनसीम",
+"Foot length": "पैर की लंबाई",
+"Add a size for each ticked piece.": "चुने गए हर कपड़े के लिए साइज़ डालें।",
+"Measurements must be numbers.": "माप संख्या में होने चाहिए।"
 });

@@ -1345,5 +1345,16 @@ I18N.load("ko",{
 "Wish list item: {c} {l}": "{c} {l}",
 "Keep": "유지",
 "Below the work level": "출근용 기준 미달",
-"Below the going-out level": "외출용 기준 미달"
+"Below the going-out level": "외출용 기준 미달",
+"Measurements (optional)": "치수 (선택)",
+"Measured on the body, not on a piece of clothing.": "옷이 아니라 몸을 잰 치수입니다.",
+"Units": "단위",
+"Chest": "가슴둘레",
+"Sleeve length": "소매 길이",
+"Waist": "허리",
+"Hip": "엉덩이",
+"Inseam": "인심",
+"Foot length": "발 길이",
+"Add a size for each ticked piece.": "선택한 각 품목에 사이즈를 입력하세요.",
+"Measurements must be numbers.": "치수는 숫자로 입력하세요."
 });

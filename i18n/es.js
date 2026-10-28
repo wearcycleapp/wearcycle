@@ -1345,5 +1345,16 @@ I18N.load("es",{
 "Wish list item: {c} {l}": "{l} {c}",
 "Keep": "Mantener",
 "Below the work level": "Por debajo del nivel para el trabajo",
-"Below the going-out level": "Por debajo del nivel para salir"
+"Below the going-out level": "Por debajo del nivel para salir",
+"Measurements (optional)": "Medidas (opcional)",
+"Measured on the body, not on a piece of clothing.": "Medidas del cuerpo, no de una prenda.",
+"Units": "Unidades",
+"Chest": "Pecho",
+"Sleeve length": "Largo de manga",
+"Waist": "Cintura",
+"Hip": "Cadera",
+"Inseam": "Entrepierna",
+"Foot length": "Largo del pie",
+"Add a size for each ticked piece.": "Agrega una talla para cada prenda marcada.",
+"Measurements must be numbers.": "Las medidas deben ser números."
 });
