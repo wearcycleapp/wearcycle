@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.57.3';
+const APP_VERSION='1.58.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -780,10 +780,10 @@ function notPickedReason(it,occs){
 }
 function notPickedPanel(items){
   const act=items.filter(isActive); const key=fitKeyNow()+'|'+allLog().length; if(NP.key!==key){ NP={key,list:notPicked(allItems(),ctxFor,{n:8})}; }
-  const extra=act.filter(i=>(i.cond??4)>1&&(i.dirty||!effectiveOccasions(i).length)&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&!NP.list.some(x=>x.item.id===i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
-  const list=NP.list.filter(x=>(x.item.cond??4)>1).concat(extra).slice(0,12); if(!list.length) return '';
+  const extra=act.filter(i=>(i.cond??4)>1&&!i.dirty&&!effectiveOccasions(i).length&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&!NP.list.some(x=>x.item.id===i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
+  const list=NP.list.filter(x=>(x.item.cond??4)>1&&!x.item.dirty).concat(extra).slice(0,12); if(!list.length) return ''; // in the wash: back on its own once clean (v1.58.0)
   return `<div class="panel"><div class="panel-h"><h3>Not getting picked</h3><span class="count">${list.length}</span></div><div class="panel-h"><p>Pieces that are in none of the top suggestions for any occasion right now, and why.</p></div>
-    ${list.map(({item:it,occs})=>`<div class="li care">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${esc(notPickedReason(it,occs))}</span></div><div class="acts">${occs.length&&!it.dirty?`<button class="btn sm" data-pinsee="${esc(it.id)}">See outfits</button>`:''}<button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button></div></div>`).join('')}</div>`;
+    ${moreRows('notpicked',list.map(({item:it,occs})=>`<div class="li care">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${esc(notPickedReason(it,occs))}</span></div><div class="acts">${occs.length&&!it.dirty?`<button class="btn sm" data-pinsee="${esc(it.id)}">See outfits</button>`:''}<button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button></div></div>`))}</div>`;
 }
 function pinCard(){ const it=S.pin&&byId(S.pin); if(!it) return '';
   return `<div class="pincard"><span class="pv">${visual(it)}</span><div class="txt"><b>Outfits with <span data-notr>${esc(it.name)}</span></b><span>${esc(pinWhy(it))}</span></div><button class="iconbtn" data-unpin aria-label="Show all outfits">✕</button></div>`; }
@@ -1193,6 +1193,19 @@ function renderCloset(){ setTimeout(hydrateCuts,0);
 // Small picture in lists (Care, Shop, history). With a photo, tapping it opens the full-size zoom viewer.
 function thumbBox(it){ const pic=thumbSrc(it)||it.photo||it.cut;
   return `<div class="thumb${pic?' zoomable':''}"${pic?` data-view="${esc(it.id)}" role="button" aria-label="See full size"`:''}>${thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it)}${pic?`<span class="zoomhint sm" aria-hidden="true">${ZOOM_ICON}</span>`:''}</div>`; }
+// Long Care lists (v1.58.0, owner 2026-10-27): the first 3 pieces, then "Show all N" opens the rest in place;
+// the open state lasts for the session, like the Shop folds.
+S.careOpen=new Set();
+function moreRows(id,rows,k=3){ if(rows.length<=k) return rows.join(''); id=String(id).toLowerCase().replace(/[^a-z0-9]+/g,'-'); const on=S.careOpen.has(id);
+  return rows.slice(0,k).join('')+`<div id="more-${id}" ${on?'':'hidden'}>${rows.slice(k).join('')}</div><button type="button" class="morebtn" data-more="${id}" aria-expanded="${on}" aria-controls="more-${id}">${on?'Show fewer':`Show all ${rows.length}`}</button>`; }
+// Decide (v1.58.0): the four choices for a piece moved down a level, each explained, in one sheet.
+function openDecide(id){ const it=byId(id); if(!it) return; const f=careFlags(it,Date.now(),S.settings).find(x=>x.kind==='downgraded');
+  const opt=(attr,label,why,cls)=>`<div class="decopt"><button type="button" class="btn ${cls||''}" ${attr}="${esc(it.id)}">${label}</button><span>${why}</span></div>`;
+  openSheet(sheetHead('Decide')+`<div class="li care decide-it">${thumbBox(it)}<div class="txt"><b data-notr>${esc(it.name)}</b>${f?`<span>${esc(f.text)}</span>`:''}</div></div>
+   <div class="decide">${opt('data-repairmark','Repair','Until fixed, it is suggested only for sport, home and chores.')}
+   ${opt('data-homechores','Home and chores','Removes work and going out from this piece.')}
+   ${opt('data-donate','Mark donated','It leaves your closet and goes to your donation history.')}
+   ${opt('data-recycle','Mark recycled','For pieces too worn to donate.')}</div>`); $('#sheetRoot .decide button')?.focus(); }
 function careRow(it,f,acts){
   const cls=f.kind==='retire'?'stripe-retire':(f.kind==='downgraded'?'stripe-down':'');
   return `<div class="li care ${cls}">${thumbBox(it)}<div class="txt"><b>${esc(it.name)} ${isEx(it)?'<span class="ex">Example</span>':''}</b><span>${esc(f.text)}</span></div><div class="acts">${acts}</div></div>`;
@@ -1225,23 +1238,24 @@ function renderCare(){
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():''; return; }
   const groups={retire:[],unused:[],downgraded:[],check:[]};
   for(const it of items) for(const f of careFlags(it,now,S.settings)) groups[f.kind].push([it,f]);
-  const panel=(title,desc,rows,n)=>`<div class="panel"><div class="panel-h"><h3>${title}</h3><span class="count">${n??rows.length}</span></div>${desc?`<div class="panel-h"><p>${desc}</p></div>`:''}${rows.join('')}</div>`;
+  const panel=(title,desc,rows,n,id,tail)=>`<div class="panel"><div class="panel-h"><h3>${title}</h3><span class="count">${n??rows.length}</span></div>${desc?`<div class="panel-h"><p>${desc}</p></div>`:''}${moreRows(id||title,rows)}${tail||''}</div>`;
+  // Order (v1.58.0): what needs doing first; Not getting picked (information) and the history last.
   const out=[]; const rp=repairPanel(items); if(rp) out.push(rp);
-  const np=notPickedPanel(items); if(np) out.push(np);
   const donate=groups.retire.concat(groups.unused.filter(([it])=>!groups.retire.some(([r])=>r.id===it.id)));
   out.push(donate.length?panel('Donate or recycle','Retired items and anything not worn for '+Math.round(S.settings.unusedDays/MONTH)+'+ months.',donate.map(([it,f])=>careRow(it,f,(it.cond??4)<=1
       ?`<button class="btn sm" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`
-      :`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)).concat([dropOffRow(groups.retire.length>0)]),donate.length)
+      :`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)),donate.length,'donate',dropOffRow(groups.retire.length>0))
     :'<div class="panel"><div class="panel-h"><h3>Donate or recycle</h3><span class="count">0</span></div><div class="li"><span class="done">Nothing to donate right now.</span></div></div>');
-  const tired=WardrobeLogic.shoeLoad(items,allLog(),now);
-  if(tired.length) out.push(panel('Give them a rest','Shoes need a day to air out between wears.',tired.map(x=>careRow(x.item,{kind:'rest',text:'Worn on '+x.days+' of the last 30 days.'},`<button class="btn sm ghost" data-edit="${esc(x.item.id)}">Open</button>`))));
+  if(groups.check.length) out.push(panel('Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>careRow(it,f,`<button class="btn sm primary" data-check="${esc(it.id)}">Check</button>`))));
   // Below the work and going-out bar: decide (repair, keep for home and chores, donate, recycle) instead of letting it sit.
   const down=groups.downgraded.filter(([it])=>!it.repair);
   if(down.length) out.push(panel('Moved down a level','Still useful, but no longer counted for work or going out.',down.map(([it,f])=>careRow(it,f,
-    `<button class="btn sm" data-check="${esc(it.id)}">Recheck</button>${isEx(it)?'':`<button class="btn sm ghost" data-repairmark="${esc(it.id)}">Repair</button><button class="btn sm ghost" data-homechores="${esc(it.id)}">Home and chores</button><button class="btn sm ghost" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-recycle="${esc(it.id)}">Mark recycled</button>`}`))));
-  if(groups.check.length) out.push(panel('Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>careRow(it,f,`<button class="btn sm primary" data-check="${esc(it.id)}">Check</button>`))));
+    `<button class="btn sm" data-check="${esc(it.id)}">Recheck</button>${isEx(it)?'':`<button class="btn sm ghost" data-decide="${esc(it.id)}">Decide</button>`}`))));
+  const tired=WardrobeLogic.shoeLoad(items,allLog(),now);
+  if(tired.length) out.push(panel('Give them a rest','Shoes need a day to air out between wears.',tired.map(x=>careRow(x.item,{kind:'rest',text:'Worn on '+x.days+' of the last 30 days.'},`<button class="btn sm ghost" data-edit="${esc(x.item.id)}">Open</button>`))));
+  const np=notPickedPanel(items); if(np) out.push(np);
   const donated=items.filter(it=>it.status==='donated'||it.status==='recycled').sort((a,b)=>String(b.donatedOn||b.recycledOn||'').localeCompare(String(a.donatedOn||a.recycledOn||'')));
-  if(donated.length) out.push(`<div class="panel"><div class="panel-h"><h3>Donated or recycled</h3><span class="count">${donated.length}</span></div>${donated.slice(0,20).map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${it.status==='recycled'?'Recycled '+esc(it.recycledOn||''):'Donated '+esc(it.donatedOn||'')}</span></div><div class="acts"><button class="btn sm ghost" data-restore="${esc(it.id)}">Restore</button></div></div>`).join('')}</div>`);
+  if(donated.length) out.push(`<div class="panel"><div class="panel-h"><h3>Donated or recycled</h3><span class="count">${donated.length}</span></div>${moreRows('history',donated.slice(0,20).map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${it.status==='recycled'?'Recycled '+esc(it.recycledOn||''):'Donated '+esc(it.donatedOn||'')}</span></div><div class="acts"><button class="btn sm ghost" data-restore="${esc(it.id)}">Restore</button></div></div>`))}</div>`);
   box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+out.join('')+'</div>';
 }
 let ideasState={busy:false,list:null,err:''};
@@ -1415,7 +1429,7 @@ function renderShop(){
   const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
      ${savedP}
-     ${list?`${when?`<div class="ideash"><h4>${saved.length?'Latest ideas':'Ideas'}</h4><span class="hint">Suggested ${when}</span></div>`:''}${list.map((x,k)=>{ const on=savedK.has(ideaKey(x)); return `<div class="idearow">${ideaLink(x)}<button type="button" class="btn sm ideasave" data-idea-save="${k}" aria-pressed="${on}">${on?'Saved':'Save'}</button></div>`; }).join('')}`:`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
+     ${list?fold('ideaslist',list.length===1?'1 latest idea':`${list.length} latest ideas`,when?`Suggested ${when}`:'','',list.map((x,k)=>{ const on=savedK.has(ideaKey(x)); return `<div class="idearow">${ideaLink(x)}<button type="button" class="btn sm ideasave" data-idea-save="${k}" aria-pressed="${on}">${on?'Saved':'Save'}</button></div>`; }).join('')):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
   const ask=S.settings.dept?'':`<div class="panel"><div class="li"><div class="txt"><b>Which department do you shop in?</b><span>${DEPT_HINT}</span>${deptChips()}</div></div></div>`;
   box.innerHTML=`<div class="shopv">${summary}${ask}<div class="scol">${buy}${occ}</div><div class="scol">${comingP}${styleP}${ai}</div></div>`;
 }
@@ -1434,7 +1448,7 @@ async function askIdeas(){
   const st=styleSet(); const t=(st.pick.length?st.pick:learned().ids).map(k=>STYLES[k]?STYLES[k].label+' ('+styleDesc(k)+')':(()=>{ const l=looks().find(x=>x.id===k); return l?l.label+' ('+l.pieces.join(', ')+')':''; })()).filter(Boolean).join('; ');
   const pl=seasonPlan(Date.now(),wxOn()?wxSet().lat:NaN); const season=[pl?SEASONS[pl.id].label+' ('+SEASONS[pl.id].desc+')':'',...holidaysSoon(30).map(h=>h.label+' on '+h.date+' ('+h.tip+')')].filter(Boolean).join('; ');
   try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t,season,dept:S.settings.dept||''}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],at:new Date().toISOString(),err:Array.isArray(r)?'':'No ideas came back. Try again.'};
-    if(Array.isArray(r)&&r.length){ S.settings.ideas={at:ideasState.at,dept:S.settings.dept||'',list:ideasState.list}; saveCache(); queueSettingsSave(); } }
+    if(Array.isArray(r)&&r.length){ S.shopOpen.add('ideaslist'); S.settings.ideas={at:ideasState.at,dept:S.settings.dept||'',list:ideasState.list}; saveCache(); queueSettingsSave(); } }
   catch(e){ ideasState={busy:false,list:ideasState.list,err:aiMsg(e)}; }
   renderShop();
 }
@@ -2412,6 +2426,11 @@ document.addEventListener('click',async e=>{
   if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
   if(ds.fold){ const id=ds.fold, on=t.getAttribute('aria-expanded')!=='true'; if(on) S.shopOpen.add(id); else S.shopOpen.delete(id);
     t.setAttribute('aria-expanded',String(on)); const el=document.getElementById('fold-'+id); if(el){ el.hidden=!on; if(on) setTimeout(hydrateCuts,0); } return; }
+  if(ds.more){ const id=ds.more, on=t.getAttribute('aria-expanded')!=='true'; if(on) S.careOpen.add(id); else S.careOpen.delete(id);
+    const el=document.getElementById('more-'+id); if(el) el.hidden=!on; t.setAttribute('aria-expanded',String(on));
+    const n=el?el.children.length+3:0; t.textContent=on?I18N.tr('Show fewer'):I18N.tr(`Show all ${n}`); if(on) setTimeout(hydrateCuts,0); return; }
+  if(ds.decide){ openDecide(ds.decide); return; }
+  if((ds.repairmark||ds.homechores||ds.donate||ds.recycle)&&t.closest('.decide')) closeSheet();
   if(ds.repairmark){ if(await patchItem(ds.repairmark,{repair:true,repairOn:todayISO()})) toast('Marked as needing repair.'); return; }
   if(ds.homechores){ if(await patchItem(ds.homechores,{occ:['home','chores']})) toast('Now for home and chores.'); return; }
   if(ds.fixed){ if(await patchItem(ds.fixed,{repair:undefined,repairNote:undefined,repairOn:undefined,repairOk:undefined})) toast('Fixed. Back in every outfit it suits.'); return; }

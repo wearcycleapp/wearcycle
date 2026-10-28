@@ -1362,5 +1362,14 @@ I18N.load("ko",{
 "Ideas": "아이디어",
 "Suggested {a}": "{a} 제안",
 "Remove from saved ideas": "저장한 아이디어에서 삭제",
-"pairs with": "어울리는 옷"
+"pairs with": "어울리는 옷",
+"Show all {0}": "모두 보기 ({0})",
+"Show fewer": "간단히 보기",
+"Decide": "결정하기",
+"Until fixed, it is suggested only for sport, home and chores.": "고칠 때까지 운동, 집, 집안일에만 추천됩니다.",
+"Removes work and going out from this piece.": "이 옷에서 출근과 외출을 뺍니다.",
+"It leaves your closet and goes to your donation history.": "옷장에서 빠지고 기부 기록으로 옮겨집니다.",
+"For pieces too worn to donate.": "기부하기 어려울 만큼 낡은 옷에 쓰세요.",
+"{0} latest ideas": "최근 아이디어 {0}개",
+"1 latest idea": "최근 아이디어 1개"
 });

@@ -177,6 +177,7 @@ Sections map to groups in renderCare and careFlags. Added on 2026-10-27 (owner, 
 | Rotate | Not getting picked; Give them a rest | See outfits with this, Open |
 | Let go | Donate or recycle; Donated or recycled (history); drop-off guidance | Mark donated, Mark recycled, Donation drop-offs, Textile recycling, Open |
 
+- v1.58.0 (owner 2026-10-27, "it is a bit long"): panels in order To repair, Donate or recycle, Condition check due, Moved down a level, Give them a rest, Not getting picked, Donated or recycled. Each list shows its first 3 pieces, then "Show all N" (aria-expanded, open for the session; S.careOpen). Moved down a level: Recheck and Decide; Decide opens a sheet with Repair, Home and chores, Mark donated, Mark recycled, each with one line of explanation (focus on the first). Not getting picked leaves out pieces only in the wash. Shop: the latest Claude ideas fold into "N latest ideas · Suggested <date>", opened after a fresh answer; saved ideas stay open.
 - Show only sections that have items; when nothing needs attention, say so in one calm line.
 - Garments lead each row; text explains why. A: a compact row, 56px picture, name, reason and small action buttons. B: a 160px picture, an 18px name and the section title in the display face.
 - "In the wash" stays in Closet.

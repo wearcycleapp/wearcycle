@@ -1362,5 +1362,14 @@ I18N.load("hi",{
 "Ideas": "सुझाव",
 "Suggested {a}": "{a} को सुझाया गया",
 "Remove from saved ideas": "सहेजे गए सुझावों से हटाएँ",
-"pairs with": "इनके साथ जँचता है"
+"pairs with": "इनके साथ जँचता है",
+"Show all {0}": "सभी {0} दिखाएँ",
+"Show fewer": "कम दिखाएँ",
+"Decide": "तय करें",
+"Until fixed, it is suggested only for sport, home and chores.": "ठीक होने तक इसे सिर्फ़ खेल, घर और घरेलू कामों के लिए सुझाया जाएगा।",
+"Removes work and going out from this piece.": "इस कपड़े से काम और बाहर जाना हटा देता है।",
+"It leaves your closet and goes to your donation history.": "यह आपकी अलमारी से हटकर दान के इतिहास में चला जाता है।",
+"For pieces too worn to donate.": "उन कपड़ों के लिए जो दान करने लायक नहीं रहे।",
+"{0} latest ideas": "{0} नए सुझाव",
+"1 latest idea": "1 नया सुझाव"
 });

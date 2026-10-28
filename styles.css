@@ -151,6 +151,7 @@ body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
   nav.tabs button:not([aria-current="page"]):hover{color:var(--ink);background:color-mix(in srgb,var(--ink) 6%,transparent)}
   header.top .iconbtn:hover,.langbtn:hover{border-color:var(--ink)}
   .langopt:hover{background:var(--surface)}
+  .morebtn:hover{background:var(--surface)}
   .fab:hover{background:color-mix(in srgb,var(--coral) 88%,var(--ink))}
 }
 /* Bar turned sideways: lower, icon beside label (as Android and iOS do in landscape) */
@@ -537,6 +538,17 @@ a.idea.shop .go{align-self:flex-end;margin-top:4px}
 .ideash h4{margin:0;font-size:13px;font-weight:700}
 .ideash h4 .n{color:var(--muted);font-weight:600;margin-left:4px}
 .ideash .hint{margin:0;font-size:12px}
+/* Long Care lists and Decide (v1.58.0) */
+.morebtn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;min-height:48px;padding:8px 14px;border:0;border-top:1px solid var(--line);background:none;color:var(--ink);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.morebtn::after{content:"›";color:var(--muted);transform:rotate(90deg);transition:transform .15s cubic-bezier(.23,1,.32,1)}
+.morebtn[aria-expanded="true"]::after{transform:rotate(-90deg)}
+@media (prefers-reduced-motion:reduce){ .morebtn::after{transition:none} }
+.decide-it{border:1px solid var(--line);border-radius:10px;background:var(--raised);margin-bottom:12px}
+.decide{display:flex;flex-direction:column;gap:10px}
+.decopt{display:grid;grid-template-columns:minmax(150px,auto) 1fr;align-items:center;gap:12px}
+.decopt .btn{justify-content:center;min-height:44px}
+.decopt span{font-size:13px;color:var(--muted)}
+@media (max-width:379.98px){ .decopt{grid-template-columns:1fr;gap:4px} }
 
 /* camera light (v1.33) */
 .cam .camtools{display:flex;gap:8px}

@@ -1362,5 +1362,14 @@ I18N.load("ja",{
 "Ideas": "アイデア",
 "Suggested {a}": "{a}に提案",
 "Remove from saved ideas": "保存したアイデアから削除",
-"pairs with": "合わせるアイテム"
+"pairs with": "合わせるアイテム",
+"Show all {0}": "すべて表示（{0}）",
+"Show fewer": "表示を減らす",
+"Decide": "決める",
+"Until fixed, it is suggested only for sport, home and chores.": "直すまでは、スポーツ・家・家事にだけ提案されます。",
+"Removes work and going out from this piece.": "このアイテムから仕事とお出かけを外します。",
+"It leaves your closet and goes to your donation history.": "クローゼットから外れ、寄付の履歴に移ります。",
+"For pieces too worn to donate.": "寄付できないほど傷んだアイテム向けです。",
+"{0} latest ideas": "最新のアイデア {0}件",
+"1 latest idea": "最新のアイデア 1件"
 });

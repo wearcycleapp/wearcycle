@@ -1362,5 +1362,14 @@ I18N.load("es",{
 "Ideas": "Ideas",
 "Suggested {a}": "Sugerido el {a}",
 "Remove from saved ideas": "Quitar de las ideas guardadas",
-"pairs with": "combina con"
+"pairs with": "combina con",
+"Show all {0}": "Ver las {0}",
+"Show fewer": "Ver menos",
+"Decide": "Decidir",
+"Until fixed, it is suggested only for sport, home and chores.": "Hasta que se arregle, solo se sugiere para deporte, casa y tareas.",
+"Removes work and going out from this piece.": "Quita trabajo y salir de esta prenda.",
+"It leaves your closet and goes to your donation history.": "Sale de tu armario y pasa a tu historial de donaciones.",
+"For pieces too worn to donate.": "Para prendas demasiado gastadas para donar.",
+"{0} latest ideas": "{0} ideas recientes",
+"1 latest idea": "1 idea reciente"
 });

@@ -1362,5 +1362,14 @@ I18N.load("tl",{
 "Ideas": "Mga ideya",
 "Suggested {a}": "Iminungkahi noong {a}",
 "Remove from saved ideas": "Alisin sa mga naka-save na ideya",
-"pairs with": "bagay sa"
+"pairs with": "bagay sa",
+"Show all {0}": "Ipakita lahat ({0})",
+"Show fewer": "Ipakita nang mas kaunti",
+"Decide": "Magpasya",
+"Until fixed, it is suggested only for sport, home and chores.": "Hangga't hindi naaayos, imumungkahi lang ito para sa sport, bahay at gawaing-bahay.",
+"Removes work and going out from this piece.": "Inaalis ang trabaho at paglabas sa pirasong ito.",
+"It leaves your closet and goes to your donation history.": "Aalis ito sa iyong aparador at mapupunta sa kasaysayan ng donasyon.",
+"For pieces too worn to donate.": "Para sa mga pirasong sobrang luma na para i-donate.",
+"{0} latest ideas": "{0} pinakabagong ideya",
+"1 latest idea": "1 pinakabagong ideya"
 });
