@@ -1356,5 +1356,11 @@ I18N.load("tl",{
 "Inseam": "Inseam",
 "Foot length": "Haba ng paa",
 "Add a size for each ticked piece.": "Maglagay ng size para sa bawat napiling piraso.",
-"Measurements must be numbers.": "Dapat numero ang mga sukat."
+"Measurements must be numbers.": "Dapat numero ang mga sukat.",
+"Saved ideas": "Mga naka-save na ideya",
+"Latest ideas": "Pinakabagong mga ideya",
+"Ideas": "Mga ideya",
+"Suggested {a}": "Iminungkahi noong {a}",
+"Remove from saved ideas": "Alisin sa mga naka-save na ideya",
+"pairs with": "bagay sa"
 });

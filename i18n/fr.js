@@ -1356,5 +1356,11 @@ I18N.load("fr",{
 "Inseam": "Entrejambe",
 "Foot length": "Longueur du pied",
 "Add a size for each ticked piece.": "Ajoutez une taille pour chaque pièce cochée.",
-"Measurements must be numbers.": "Les mensurations doivent être des nombres."
+"Measurements must be numbers.": "Les mensurations doivent être des nombres.",
+"Saved ideas": "Idées enregistrées",
+"Latest ideas": "Dernières idées",
+"Ideas": "Idées",
+"Suggested {a}": "Suggéré le {a}",
+"Remove from saved ideas": "Retirer des idées enregistrées",
+"pairs with": "va avec"
 });

@@ -1356,5 +1356,11 @@ I18N.load("hi",{
 "Inseam": "इनसीम",
 "Foot length": "पैर की लंबाई",
 "Add a size for each ticked piece.": "चुने गए हर कपड़े के लिए साइज़ डालें।",
-"Measurements must be numbers.": "माप संख्या में होने चाहिए।"
+"Measurements must be numbers.": "माप संख्या में होने चाहिए।",
+"Saved ideas": "सहेजे गए सुझाव",
+"Latest ideas": "नवीनतम सुझाव",
+"Ideas": "सुझाव",
+"Suggested {a}": "{a} को सुझाया गया",
+"Remove from saved ideas": "सहेजे गए सुझावों से हटाएँ",
+"pairs with": "इनके साथ जँचता है"
 });

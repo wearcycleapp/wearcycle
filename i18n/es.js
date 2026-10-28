@@ -1356,5 +1356,11 @@ I18N.load("es",{
 "Inseam": "Entrepierna",
 "Foot length": "Largo del pie",
 "Add a size for each ticked piece.": "Agrega una talla para cada prenda marcada.",
-"Measurements must be numbers.": "Las medidas deben ser números."
+"Measurements must be numbers.": "Las medidas deben ser números.",
+"Saved ideas": "Ideas guardadas",
+"Latest ideas": "Últimas ideas",
+"Ideas": "Ideas",
+"Suggested {a}": "Sugerido el {a}",
+"Remove from saved ideas": "Quitar de las ideas guardadas",
+"pairs with": "combina con"
 });

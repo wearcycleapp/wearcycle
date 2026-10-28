@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.57.2';
+const APP_VERSION='1.57.3';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1245,6 +1245,13 @@ function renderCare(){
   box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+out.join('')+'</div>';
 }
 let ideasState={busy:false,list:null,err:''};
+// Ideas from Claude are kept (v1.57.3, owner 2026-10-27): the last answer in settings.ideas {at, dept, list}, and the
+// ideas the person saves in settings.savedIdeas [{id, item, color, occasion, pairsWith, why, at}], so they come back
+// on every device without asking Claude again.
+const ideaKey=x=>(String(x.item||'')+'|'+String(x.color||'')).toLowerCase();
+const ideaQ=x=>[x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?(COLORS[x.color]?shopQ(x.color):x.color):'',x.item].filter(Boolean).join(' ');
+const ideaText=x=>String(x.item||'')+(x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?' ('+x.color+')':'');
+function ideaLink(x){ return `<a class="idea shop" href="${shopUrl(ideaQ(x))}" target="_blank" rel="noopener"><b data-notr>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${OCC[x.occasion]?`<span>${OCC[x.occasion].label}</span>`:`<span data-notr>${esc(x.occasion||'')}</span>`}${x.pairsWith&&x.pairsWith.length?` · <span>pairs with</span> <span data-notr>${esc(x.pairsWith.join(', '))}</span>`:''}</span><span data-notr>${esc(x.why||'')}</span>${SHOP_GO}</a>`; }
 // Shop (v1.55.0, owner 2026-10-27): one answer first (Buy next, at most three), everything else folded into rows
 // that open in place. Two columns from 700x600. Numbers come from gaps(), versatility(), the Replace rule and the
 // season and style lists; nothing here invents a need.
@@ -1279,7 +1286,7 @@ function openWishlist(){
   const L=S.shopList||[]; if(!L.length) return; const sz=S.settings.sizes||{}; WL.unit=(S.settings.measures||{}).unit==='in'?'in':'cm';
   const cats=Object.keys(MEAS).filter(c=>L.some(x=>x.cat===c));
   openSheet(sheetHead('Share my list')+`<p class="hint">Pick what to include. Sizes are saved for next time.</p>
-   <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span>`}</label>
+   <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.idea?`<span><span data-notr>${esc(ideaText(x.idea&&(S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}))}</span></span>`:x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span>`}</label>
      ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off" aria-required="true" aria-describedby="wl-err"></label>`:''}</div>`).join('')}</div>
    ${cats.length?measHtml(cats):''}
    <div class="field"><label for="wl-note">Note</label><input type="text" id="wl-note" maxlength="160" autocomplete="off"></div>
@@ -1309,7 +1316,7 @@ function wishlistText(){
   const mtext=cat=>(MEAS[cat]||[]).filter(f=>meas[cat]?.[f]!=null).map(f=>low(I18N.tr(MEAS_L[f]))+' '+num(meas[cat][f])+' '+WL.unit).join(ja?'、':', ');
   // Word order differs by language (white top, haut blanc, 白のトップス), so non-English uses a dictionary entry.
   const name=x=>{ const c=I18N.tr(x.color), l=I18N.tr(x.label); return I18N.lang==='en'?c+' '+l:I18N.t('Wish list item: {c} {l}',{c,l}); };
-  L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return; const what=name(x); const size=sizes[x.cat]||'';
+  L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return; const what=x.idea?ideaText((S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}):name(x); const size=sizes[x.cat]||'';
     const mt=mtext(x.cat); lines.push('• '+(size?I18N.t('{a}, size {b}',{a:what,b:size}):what)+(mt?(ja?'（'+mt+'）':' ('+mt+')'):'')); });
   if(!lines.length){ $('#wl-err').textContent=I18N.tr('Pick at least one piece.'); return ''; }
   const note=($('#wl-note')?.value||'').trim();
@@ -1354,7 +1361,7 @@ function renderShop(){
   for(const x of g.filter(x=>x.occ!=='work'&&x.occ!=='out')) for(const n of x.needs) add(gapCard(x,n));
   const shown=needAny?cands.slice(0,3):[];
   const moreIdeas=v.list.filter(r=>!shown.some(c=>c.key===r.slot+'|'+r.color));
-  S.shopList=shown.map(c=>({key:c.key,piece:c.piece,cat:c.cat,color:c.color,label:c.label,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),on:false})));
+  S.shopList=shown.map(c=>({key:c.key,piece:c.piece,cat:c.cat,color:c.color,label:c.label,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),on:false}))).concat((S.settings.savedIdeas||[]).map(x=>({key:'i'+x.id,idea:x.id,cat:'idea',color:x.color||'',label:x.item,on:false})));
   const shareBtn=S.shopList.length?`<button type="button" class="btn sm" data-act="wishlist">Share my list</button>`:'';
   const covered=g.filter(x=>!x.needs.length).map(x=>OCC[x.occ].label);
   const summary=needAny?`<p class="ssum"><b>${pl(shown.length,'1 buy would help most.','{0} buys would help most.')}</b>${covered.length?` <span>${'Covered: '+covered.join(', ')+'.'}</span>`:''}</p>`
@@ -1400,10 +1407,15 @@ function renderShop(){
         ${miss.map(e=>`<a class="lrow shop" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></span>${SHOP_GO}</a>`).join('')}`; }).join('');
   const styleP=keys.length?`<section class="panel" aria-labelledby="h-style"><div class="panel-h"><h3 id="h-style">Build toward a style</h3></div><p class="hint sp">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p>${styleBody}${ownedN?fold('owned',pl(ownedN,'Show the 1 you own','Show the {0} you own'),'','',ownedRows):''}</section>`
     :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
-  const list=ideasState.list;
+  const last=S.settings.ideas&&Array.isArray(S.settings.ideas.list)?S.settings.ideas:null;
+  const list=ideasState.list||(last?last.list:null), at=ideasState.list?ideasState.at:(last?last.at:null);
+  const saved=S.settings.savedIdeas||[], savedK=new Set(saved.map(ideaKey));
+  const when=at?new Date(at).toLocaleDateString(I18N.locale,{month:'short',day:'numeric'}):'';
+  const savedP=saved.length?`<div class="ideash"><h4>Saved ideas <span class="n">${saved.length}</span></h4></div>${saved.map(x=>`<div class="idearow">${ideaLink(x)}<button type="button" class="iconbtn ideadel" data-idea-del="${esc(x.id)}" aria-label="Remove from saved ideas">✕</button></div>`).join('')}`:'';
   const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
-     ${list?list.map(x=>`<a class="idea shop" href="${shopUrl([x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?(COLORS[x.color]?shopQ(x.color):x.color):'',x.item].filter(Boolean).join(' '))}" target="_blank" rel="noopener"><b>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${esc(OCC[x.occasion]?.label||x.occasion||'')}${x.pairsWith&&x.pairsWith.length?' · pairs with '+esc(x.pairsWith.join(', ')):''}</span><span>${esc(x.why||'')}</span>${SHOP_GO}</a>`).join(''):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
+     ${savedP}
+     ${list?`${when?`<div class="ideash"><h4>${saved.length?'Latest ideas':'Ideas'}</h4><span class="hint">Suggested ${when}</span></div>`:''}${list.map((x,k)=>{ const on=savedK.has(ideaKey(x)); return `<div class="idearow">${ideaLink(x)}<button type="button" class="btn sm ideasave" data-idea-save="${k}" aria-pressed="${on}">${on?'Saved':'Save'}</button></div>`; }).join('')}`:`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
   const ask=S.settings.dept?'':`<div class="panel"><div class="li"><div class="txt"><b>Which department do you shop in?</b><span>${DEPT_HINT}</span>${deptChips()}</div></div></div>`;
   box.innerHTML=`<div class="shopv">${summary}${ask}<div class="scol">${buy}${occ}</div><div class="scol">${comingP}${styleP}${ai}</div></div>`;
 }
@@ -1421,7 +1433,8 @@ async function askIdeas(){
   const vl=versatility(items,5).list; const gapText=gaps(items,allLog(),Date.now()).map(x=>`${x.occ}: `+(x.needs.map(n=>`${n.slot} ${n.have}/${n.target}`).join(', ')||'covered')).join('\n')+(vl.length?'\nMost new color pairings from one purchase (variety, not just completeness): '+vl.map(r=>`${r.color} ${r.label.toLowerCase()} (+${r.newLooks} pairings)`).join('; '):'');
   const st=styleSet(); const t=(st.pick.length?st.pick:learned().ids).map(k=>STYLES[k]?STYLES[k].label+' ('+styleDesc(k)+')':(()=>{ const l=looks().find(x=>x.id===k); return l?l.label+' ('+l.pieces.join(', ')+')':''; })()).filter(Boolean).join('; ');
   const pl=seasonPlan(Date.now(),wxOn()?wxSet().lat:NaN); const season=[pl?SEASONS[pl.id].label+' ('+SEASONS[pl.id].desc+')':'',...holidaysSoon(30).map(h=>h.label+' on '+h.date+' ('+h.tip+')')].filter(Boolean).join('; ');
-  try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t,season,dept:S.settings.dept||''}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],err:Array.isArray(r)?'':'No ideas came back. Try again.'}; }
+  try{ const r=await callClaude('ideas',{closet,gaps:gapText,style:t,season,dept:S.settings.dept||''}); ideasState={busy:false,list:Array.isArray(r)?r.slice(0,8):[],at:new Date().toISOString(),err:Array.isArray(r)?'':'No ideas came back. Try again.'};
+    if(Array.isArray(r)&&r.length){ S.settings.ideas={at:ideasState.at,dept:S.settings.dept||'',list:ideasState.list}; saveCache(); queueSettingsSave(); } }
   catch(e){ ideasState={busy:false,list:ideasState.list,err:aiMsg(e)}; }
   renderShop();
 }
@@ -2319,6 +2332,11 @@ document.addEventListener('click',async e=>{
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
   if(t.id==='rulesBtn'||t.id==='railSettings'){ openSettings(); return; }
   if(t.id==='langBtn'||t.id==='railLang'){ openLangs(); return; }
+  if(ds.ideaSave!=null){ const last=S.settings.ideas; const list=ideasState.list||(last&&last.list)||[]; const x=list[+ds.ideaSave]; if(!x) return;
+    const sv=S.settings.savedIdeas||[]; const i=sv.findIndex(y=>ideaKey(y)===ideaKey(x));
+    S.settings.savedIdeas=i>=0?sv.filter((_,j)=>j!==i):[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:x.item,color:x.color||'',occasion:x.occasion||'',pairsWith:(x.pairsWith||[]).slice(0,3),why:x.why||'',at:new Date().toISOString()}].concat(sv).slice(0,40);
+    saveCache(); queueSettingsSave(); renderShop(); const b=document.querySelector(`[data-idea-save="${ds.ideaSave}"]`); if(b) b.focus(); return; }
+  if(ds.ideaDel){ S.settings.savedIdeas=(S.settings.savedIdeas||[]).filter(y=>y.id!==ds.ideaDel); saveCache(); queueSettingsSave(); renderShop(); const n=document.querySelector('[data-idea-del],[data-act="ideas"]'); if(n) n.focus(); return; }
   if(ds.wlunit){ if(ds.wlunit!==WL.unit){ const f=ds.wlunit==='in'?1/2.54:2.54; WL.unit=ds.wlunit;
       document.querySelectorAll('#sheetRoot .wlmgrp input').forEach(i=>{ const n=measNum(i.value); if(typeof n!=='number') return;
         if(i.dataset.cm==null) i.dataset.cm=String(ds.wlunit==='in'?n:n*2.54); // cm before the switch

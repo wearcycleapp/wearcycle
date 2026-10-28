@@ -1356,5 +1356,11 @@ I18N.load("ja",{
 "Inseam": "股下",
 "Foot length": "足長",
 "Add a size for each ticked piece.": "チェックした各アイテムにサイズを入力してください。",
-"Measurements must be numbers.": "採寸は数字で入力してください。"
+"Measurements must be numbers.": "採寸は数字で入力してください。",
+"Saved ideas": "保存したアイデア",
+"Latest ideas": "最新のアイデア",
+"Ideas": "アイデア",
+"Suggested {a}": "{a}に提案",
+"Remove from saved ideas": "保存したアイデアから削除",
+"pairs with": "合わせるアイテム"
 });

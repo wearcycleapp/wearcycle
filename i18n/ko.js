@@ -1356,5 +1356,11 @@ I18N.load("ko",{
 "Inseam": "인심",
 "Foot length": "발 길이",
 "Add a size for each ticked piece.": "선택한 각 품목에 사이즈를 입력하세요.",
-"Measurements must be numbers.": "치수는 숫자로 입력하세요."
+"Measurements must be numbers.": "치수는 숫자로 입력하세요.",
+"Saved ideas": "저장한 아이디어",
+"Latest ideas": "최근 아이디어",
+"Ideas": "아이디어",
+"Suggested {a}": "{a} 제안",
+"Remove from saved ideas": "저장한 아이디어에서 삭제",
+"pairs with": "어울리는 옷"
 });

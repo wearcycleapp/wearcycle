@@ -526,6 +526,17 @@ a.shopc{color:inherit;text-decoration:none;border-bottom:1px dashed var(--line)}
 a.shoplink{font-size:13px;font-weight:600;color:inherit}
 a.idea.shop{display:flex;flex-direction:column;position:relative}
 a.idea.shop .go{align-self:flex-end;margin-top:4px}
+/* Kept and saved ideas (v1.57.3) */
+.idearow{display:flex;align-items:flex-start;gap:8px;border-bottom:1px solid var(--line);padding-right:14px}
+.idearow:last-child{border-bottom:0}
+.idearow>.idea{flex:1 1 auto;min-width:0;border-bottom:0}
+.idearow>.ideasave,.idearow>.ideadel{flex:none;margin-top:10px}
+.ideasave[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.ideadel{width:44px;height:44px}
+.ideash{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:12px 14px 4px;border-bottom:1px solid var(--line)}
+.ideash h4{margin:0;font-size:13px;font-weight:700}
+.ideash h4 .n{color:var(--muted);font-weight:600;margin-left:4px}
+.ideash .hint{margin:0;font-size:12px}
 
 /* camera light (v1.33) */
 .cam .camtools{display:flex;gap:8px}
