@@ -88,5 +88,6 @@ I18N.add("ko",{
 "Fixed": "수정",
 "You can add a belt back after leaving it out.": "벨트를 뺀 뒤에도 다시 추가할 수 있어요.",
 "A custom color palette, respected by every outfit option.": "사용자 지정 색상 팔레트, 모든 코디 옵션에 반영돼요.",
-"This page and the privacy notice open again from the installed app.": "설치한 앱에서 이 페이지와 개인정보 안내가 다시 열려요."
+"This page and the privacy notice open again from the installed app.": "설치한 앱에서 이 페이지와 개인정보 안내가 다시 열려요.",
+"Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "중복 가능성: 사진이 거의 같은 옷을 옷장에서 알려 줘요. 하나를 남기고 착용 기록을 옮기거나, 다른 옷으로 표시할 수 있어요."
 });

@@ -1455,5 +1455,19 @@ I18N.load("es",{
 "Changes to the app, newest first.": "Cambios en la app, del más reciente al más antiguo.",
 "Wearcycle was updated.": "Wearcycle se actualizó.",
 "See what's new": "Ver las novedades",
-"Dismiss": "Cerrar"
+"Dismiss": "Cerrar",
+"Possible duplicates": "Posibles duplicados",
+"Possible duplicates: {0}. Review them in Closet.": "Posibles duplicados: {0}. Revísalos en Clóset.",
+"No possible duplicates right now.": "No hay posibles duplicados por ahora.",
+"These pictures look nearly the same. Keep one if they are the same piece; its wear history moves to the one you keep. Different pieces are not shown again.": "Estas imágenes se ven casi iguales. Si son la misma prenda, conserva una; su historial de uso pasa a la que conserves. Las prendas distintas no se vuelven a mostrar.",
+"Added {0}": "Agregada el {0}",
+"Worn 1 time": "Usada 1 vez",
+"Same piece, keep this one": "Misma prenda, conservar esta",
+"Different pieces": "Prendas distintas",
+"Delete {a} and keep {b}?": "¿Borrar {a} y conservar {b}?",
+"Its 1 wear moves to the piece you keep.": "Su 1 uso pasa a la prenda que conservas.",
+"Its {0} wears move to the piece you keep.": "Sus {0} usos pasan a la prenda que conservas.",
+"Delete and keep": "Borrar y conservar",
+"Could not merge: {a}": "No se pudo combinar: {a}",
+"Kept {a}.": "Se conservó {a}."
 });

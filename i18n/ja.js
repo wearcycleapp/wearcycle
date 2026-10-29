@@ -1455,5 +1455,19 @@ I18N.load("ja",{
 "Changes to the app, newest first.": "アプリの変更内容（新しい順）。",
 "Wearcycle was updated.": "Wearcycleがアップデートされました。",
 "See what's new": "新機能を見る",
-"Dismiss": "閉じる"
+"Dismiss": "閉じる",
+"Possible duplicates": "重複の可能性",
+"Possible duplicates: {0}. Review them in Closet.": "重複の可能性：{0}件。クローゼットで確認してください。",
+"No possible duplicates right now.": "現在、重複の可能性はありません。",
+"These pictures look nearly the same. Keep one if they are the same piece; its wear history moves to the one you keep. Different pieces are not shown again.": "これらの写真はほぼ同じに見えます。同じアイテムなら1つを残してください。着用履歴は残す方に移ります。別のアイテムは再表示されません。",
+"Added {0}": "{0}に追加",
+"Worn 1 time": "着用1回",
+"Same piece, keep this one": "同じアイテム、こちらを残す",
+"Different pieces": "別のアイテム",
+"Delete {a} and keep {b}?": "{a}を削除して{b}を残しますか？",
+"Its 1 wear moves to the piece you keep.": "着用1回分が残すアイテムに移ります。",
+"Its {0} wears move to the piece you keep.": "着用{0}回分が残すアイテムに移ります。",
+"Delete and keep": "削除して残す",
+"Could not merge: {a}": "統合できませんでした：{a}",
+"Kept {a}.": "{a}を残しました。"
 });

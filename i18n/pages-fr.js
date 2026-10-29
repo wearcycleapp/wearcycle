@@ -88,5 +88,6 @@ I18N.add("fr",{
 "Fixed": "Corrigé",
 "You can add a belt back after leaving it out.": "Vous pouvez remettre une ceinture après l’avoir retirée.",
 "A custom color palette, respected by every outfit option.": "Une palette de couleurs personnalisée, respectée par toutes les options de tenue.",
-"This page and the privacy notice open again from the installed app.": "Cette page et l’avis de confidentialité s’ouvrent de nouveau depuis l’application installée."
+"This page and the privacy notice open again from the installed app.": "Cette page et l’avis de confidentialité s’ouvrent de nouveau depuis l’application installée.",
+"Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "Doublons possibles : Garde-robe signale les pièces dont les images se ressemblent presque, pour en garder une et déplacer son historique de port, ou les marquer comme pièces différentes."
 });

@@ -1455,5 +1455,19 @@ I18N.load("ko",{
 "Changes to the app, newest first.": "앱 변경 내용, 최신순.",
 "Wearcycle was updated.": "Wearcycle이 업데이트됐어요.",
 "See what's new": "새로운 기능 보기",
-"Dismiss": "닫기"
+"Dismiss": "닫기",
+"Possible duplicates": "중복 가능성",
+"Possible duplicates: {0}. Review them in Closet.": "중복 가능성: {0}개. 옷장에서 확인하세요.",
+"No possible duplicates right now.": "지금은 중복 가능성이 없어요.",
+"These pictures look nearly the same. Keep one if they are the same piece; its wear history moves to the one you keep. Different pieces are not shown again.": "이 사진들은 거의 똑같아 보여요. 같은 옷이면 하나만 남기세요. 착용 기록은 남기는 옷으로 옮겨져요. 다른 옷은 다시 표시하지 않아요.",
+"Added {0}": "{0} 추가",
+"Worn 1 time": "1번 착용",
+"Same piece, keep this one": "같은 옷, 이것을 남기기",
+"Different pieces": "다른 옷",
+"Delete {a} and keep {b}?": "{a}을(를) 삭제하고 {b}을(를) 남길까요?",
+"Its 1 wear moves to the piece you keep.": "착용 1회가 남기는 옷으로 옮겨져요.",
+"Its {0} wears move to the piece you keep.": "착용 {0}회가 남기는 옷으로 옮겨져요.",
+"Delete and keep": "삭제하고 남기기",
+"Could not merge: {a}": "합치지 못했어요: {a}",
+"Kept {a}.": "{a}을(를) 남겼어요."
 });

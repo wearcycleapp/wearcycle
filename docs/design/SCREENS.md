@@ -144,6 +144,7 @@ Code: renderOutfits, remLine and openReminders, fitKit (A), heroCard (A), option
 
 ## Closet (GALLERY)
 
+- Possible duplicates (v1.58.7, owner 2026-10-29): a "Possible duplicates N · Review" line above the grid when pictures nearly match (on-device fingerprint of each 256px picture; nearly identical, or similar with the same category and main color). Review sheet: pairs side by side (picture, name, category, date added, times worn), "Same piece, keep this one" asks to confirm, then moves the other's diary entries and wear count and deletes it; "Different pieces" is saved in settings.dupOk. After adding photos the result message counts possible duplicates.
 - Tile: image, name (Figtree), one line with the condition word and the wear count, at every width (owner, 2026-10-25).
 - Flags (Review, Example, In the wash, needs repair, needs attention) become one small mark on the image corner: the same short words at every width, no icons (owner, 2026-10-25). Occasions move to the piece preview.
 - Filters: categories with counts, for example "All 47, Tops 18, Bottoms 8, Outerwear 8, Shoes 8": chips that wrap in A, text tabs in B.

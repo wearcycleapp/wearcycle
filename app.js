@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.6';
+const APP_VERSION='1.58.7';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -686,8 +686,10 @@ async function addPhotos(blobs){
     if(await writeItem(it)){ done++; added.push(it); }
   }
   S.busy=false; job(''); renderAll();
-  if(claudeOn()) toast(['Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'].concat(aiStop?[aiStop]:aiFail?['Photos not read: '+aiFail+'.',aiWhy,'Open the piece and tap Fill in automatically to try again.']:[]),aiFail||aiStop?0:7000);
-  else toast('Added '+done+' item'+(done===1?'':'s')+'.',2500);
+  let dupMsg=[]; try{ const dp=await dupPairs(new Set(added.map(i=>i.id))); const nd=new Set(dp.flatMap(x=>[x.a.id,x.b.id]).filter(id=>added.some(a=>a.id===id))).size;
+    if(nd) dupMsg=['Possible duplicates: '+nd+'. Review them in Closet.']; }catch(e){}
+  if(claudeOn()) toast(['Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'].concat(dupMsg).concat(aiStop?[aiStop]:aiFail?['Photos not read: '+aiFail+'.',aiWhy,'Open the piece and tap Fill in automatically to try again.']:[]),aiFail||aiStop?0:7000);
+  else toast(['Added '+done+' item'+(done===1?'':'s')+'.'].concat(dupMsg),dupMsg.length?0:2500);
   goTab('closet');
   autoCuts(added.map(it=>byId(it.id)).filter(Boolean));
   if(!claudeOn()&&added.length) openQuick(added.map(it=>it.id));
@@ -1189,7 +1191,72 @@ function flVisual(it,big){ const src=thumbSrc(it); return `<img ${it.cut?`data-c
 // After each render, swap in the transparent cut-outs (loaded from the phone's cache, or downloaded once).
 function hydrateCuts(){ document.querySelectorAll('img[data-cut]').forEach(img=>{ const it=byId(img.dataset.cut); cutUrl(it).then(u=>{ if(u&&img.isConnected){ img.src=u; img.hidden=false; img.classList.add('cut'); CUT.missing.delete(it.id); }
     else if(!u&&it&&it.cut&&S.online&&!CUT.missing.has(it.id)){ CUT.missing.add(it.id); if(ED&&ED.id===it.id) drawEditor(); } }); }); }
-function renderCloset(){ setTimeout(hydrateCuts,0);
+/* ---------- possible duplicates (v1.58.7, owner 2026-10-29: three pieces were imported twice) ----------
+   Each piece's 256px picture gets a fingerprint on the phone: a difference hash across and down the middle of the
+   picture (128 bits, so light and small shifts barely change it) and a 3x3 grid of average colors. Nothing is sent
+   or stored. A pair is flagged when the pictures are nearly the same, or very similar with the same category and
+   main color (nearly the same: re-imports measured 1 to 7 of 128 bits apart; different pieces on their own floors 25+). "Different pieces" is remembered in settings.dupOk ("idA|idB"). */
+const DUPSIG=new Map();
+function dupSig(it){ const src=thumbSrc(it); if(!src) return Promise.resolve(null); const c=DUPSIG.get(it.id); if(c&&c.src===src) return c.p;
+  const p=new Promise(res=>{ const im=new Image(); im.onload=()=>{ try{
+      const sw=im.naturalWidth, sh=im.naturalHeight, sx=sw*0.1, sy=sh*0.1, cw=sw*0.8, ch=sh*0.8; // the middle: borders are mostly floor
+      const cv=document.createElement('canvas'); cv.width=9; cv.height=9; const x=cv.getContext('2d',{willReadFrequently:true});
+      x.drawImage(im,sx,sy,cw,ch,0,0,9,9); const d=x.getImageData(0,0,9,9).data, g=i=>0.299*d[i*4]+0.587*d[i*4+1]+0.114*d[i*4+2];
+      const bits=[]; for(let y=0;y<8;y++) for(let k=0;k<8;k++){ bits.push(g(y*9+k)>g(y*9+k+1)?1:0); bits.push(g(k*9+y)>g((k+1)*9+y)?1:0); }
+      const cg=document.createElement('canvas'); cg.width=3; cg.height=3; const y2=cg.getContext('2d',{willReadFrequently:true}); y2.drawImage(im,sx,sy,cw,ch,0,0,3,3);
+      res({bits,col:[...y2.getImageData(0,0,3,3).data].filter((_,i)=>i%4!==3)}); }catch(e){ res(null); } };
+    im.onerror=()=>res(null); im.src=src; });
+  DUPSIG.set(it.id,{src,p}); return p; }
+function dupScore(a,b){ let h=0; for(let i=0;i<a.bits.length;i++) h+=a.bits[i]!==b.bits[i]?1:0; let c=0; for(let i=0;i<a.col.length;i++) c+=Math.abs(a.col[i]-b.col[i]); return {h,c:c/a.col.length}; }
+const DUP_SAME={h:6,c:6}, DUP_LIKE={h:16,c:14}; // of 128 bits / mean color step; tuned on test photos (decisions log, v1.58.7)
+function dupKey(a,b){ return [a,b].sort().join('|'); }
+async function dupPairs(onlyIds){
+  const ok=new Set(S.settings.dupOk||[]); const items=allItems().filter(it=>isActive(it)&&!isEx(it)&&thumbSrc(it));
+  const sig=new Map(); await Promise.all(items.map(async it=>{ const s=await dupSig(it); if(s) sig.set(it.id,s); }));
+  const out=[];
+  for(let i=0;i<items.length;i++) for(let j=i+1;j<items.length;j++){ const a=items[i], b=items[j];
+    if(onlyIds&&!onlyIds.has(a.id)&&!onlyIds.has(b.id)) continue; if(ok.has(dupKey(a.id,b.id))) continue;
+    const sa=sig.get(a.id), sb2=sig.get(b.id); if(!sa||!sb2) continue; const r=dupScore(sa,sb2);
+    const same=r.h<=DUP_SAME.h&&r.c<=DUP_SAME.c, like=a.cat===b.cat&&primary(a)===primary(b)&&r.h<=DUP_LIKE.h&&r.c<=DUP_LIKE.c;
+    if(same||like) out.push({a,b,h:r.h,c:Math.round(r.c)}); }
+  return out.sort((x,y)=>x.h-y.h);
+}
+function dupSide(it,other){ const wears=it.worn||0;
+  return `<div class="dupside"><i>${it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="">`:`<img src="${esc(thumbSrc(it))}" alt="">`}</i>
+    <b data-notr>${esc(it.name)}</b><span><span>${CAT[it.cat]?.label||''}</span> · <span>Added ${esc(it.created||'')}</span></span><span>${wears===1?'Worn 1 time':`Worn ${wears} times`}</span>
+    <button type="button" class="btn sm" data-dup-keep="${esc(it.id)}|${esc(other.id)}">Same piece, keep this one</button></div>`; }
+async function openDups(){ const p=S.dups||await dupPairs(); S.dups=p; S.dupAsk=null;
+  if(!p.length){ openSheet(sheetHead('Possible duplicates')+'<p class="hint">No possible duplicates right now.</p>'); return; }
+  openSheet(sheetHead('Possible duplicates')+`<p class="hint">These pictures look nearly the same. Keep one if they are the same piece; its wear history moves to the one you keep. Different pieces are not shown again.</p>
+   <div class="duplist">${p.map(x=>`<div class="duppair" data-pair="${esc(dupKey(x.a.id,x.b.id))}"><div class="dupsides">${dupSide(x.a,x.b)}${dupSide(x.b,x.a)}</div>
+     <div class="dupask" hidden></div><button type="button" class="btn ghost" data-dup-ok="${esc(dupKey(x.a.id,x.b.id))}">Different pieces</button></div>`).join('')}</div>`);
+  setTimeout(hydrateCuts,0); }
+function dupAsk(keepId,dropId){ const keep=byId(keepId), drop=byId(dropId); if(!keep||!drop) return; const pair=document.querySelector(`[data-pair="${dupKey(keepId,dropId)}"]`); if(!pair) return;
+  const box=pair.querySelector('.dupask'); box.hidden=false;
+  box.innerHTML=`<p data-notr>${esc(I18N.t('Delete {a} and keep {b}?',{a:drop.name,b:keep.name}))}</p><p class="hint">${(drop.worn||0)===1?'Its 1 wear moves to the piece you keep.':`Its ${drop.worn||0} wears move to the piece you keep.`}</p>
+   <div class="row"><button type="button" class="btn danger sm" data-dup-merge="${esc(keepId)}|${esc(dropId)}">Delete and keep</button><button type="button" class="btn sm" data-dup-cancel>Cancel</button></div>`;
+  box.querySelector('[data-dup-merge]').focus(); }
+// Merge: diary entries that name the dropped piece name the kept one instead (all of them, not only the loaded 400),
+// its wear count is added, then the dropped piece and its photo files are deleted.
+async function dupMerge(keepId,dropId){ const keep=byId(keepId), drop=byId(dropId); if(!keep||!drop) return;
+  if(!canWrite()){ toast('You are offline. This needs a connection.'); return; }
+  try{
+    const {data,error}=await sb.from('wears').select('id,date,occ,items').contains('items',[dropId]); if(error) throw error;
+    for(const w of data||[]){ const items=[...new Set(w.items.map(x=>x===dropId?keepId:x))];
+      const r=await sb.from('wears').update({items}).eq('id',w.id); if(r.error) throw r.error; }
+    for(const e of S.log) if((e.items||[]).includes(dropId)) e.items=[...new Set(e.items.map(x=>x===dropId?keepId:x))];
+    const lw=[keep.lastWorn,drop.lastWorn].filter(Boolean).sort().pop();
+    if(!await patchItem(keepId,Object.assign({worn:(keep.worn||0)+(drop.worn||0)},lw?{lastWorn:lw}:{}))) throw new Error('save');
+    S.items.delete(dropId); const del=await sb.from('items').delete().eq('id',dropId); if(del.error){ S.items.set(dropId,drop); throw del.error; }
+    removePhoto(drop.photo); if(drop.cut) removePhoto(drop.cut); saveCache();
+  }catch(e){ toast('Could not merge: '+(e&&e.message||e),5000); return; }
+  S.dups=null; renderAll(); toast(I18N.t('Kept {a}.',{a:keep.name})); openDups(); }
+function dupNot(key){ const ok=S.settings.dupOk||(S.settings.dupOk=[]); if(!ok.includes(key)) ok.push(key); saveCache(); queueSettingsSave();
+  S.dups=(S.dups||[]).filter(x=>dupKey(x.a.id,x.b.id)!==key); const el=document.querySelector(`[data-pair="${key}"]`); if(el) el.remove();
+  if(!S.dups.length) openDups(); else document.querySelector('#sheetRoot .duppair button')?.focus(); refreshDupRow(); }
+function refreshDupRow(){ const el=$('#dupRow'); if(!el) return; dupPairs().then(p=>{ S.dups=p; const e=$('#dupRow'); if(!e) return;
+  e.innerHTML=p.length?`<button type="button" class="dupline" data-act="dups"><span><b>Possible duplicates</b> <span class="n">${p.length}</span></span><span class="go"><span>Review</span> <span aria-hidden="true">›</span></span></button>`:''; }); }
+function renderCloset(){ setTimeout(hydrateCuts,0); setTimeout(refreshDupRow,0);
   const items=allItems().filter(isActive);
   const counts={}; for(const it of items) counts[it.cat]=(counts[it.cat]||0)+1;
   const dirtyN=items.filter(i=>i.dirty).length;
@@ -1206,7 +1273,7 @@ function renderCloset(){ setTimeout(hydrateCuts,0);
     setTimeout(hydrateCuts,0); return; }
   const list=items.filter(it=>S.cat==='all'||it.cat===S.cat).sort((a,b)=>(b.review?1:0)-(a.review?1:0)||CATS.findIndex(c=>c.id===a.cat)-CATS.findIndex(c=>c.id===b.cat)||String(a.name).localeCompare(b.name));
   const now=Date.now(); const reviews=items.filter(i=>i.review).length;
-  box.innerHTML=(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what was filled in automatically. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
+  box.innerHTML='<div id="dupRow"></div>'+(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what was filled in automatically. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
    (S.examples.length?`<div class="row" style="margin-bottom:12px"><span class="hint">Items marked <span class="ex">Example</span> are not saved.</span><span class="spacer"></span><button class="btn sm ghost" data-act="clearEx">Remove examples</button></div>`:'')+
    '<div class="grid">'+list.map(it=>{ const fl=careFlags(it,now,S.settings); const bad=fl.some(f=>f.kind==='retire'); return `<button class="card" data-edit="${esc(it.id)}">
     <div class="vis ${it.cut?'studio':''}">${it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}" class="${it.box?'fitted':'cover'}">`:visual(it)}</div><div class="body"><div class="name">${esc(it.name)}</div>
@@ -2423,6 +2490,10 @@ document.addEventListener('click',async e=>{
     S.settings.savedIdeas=i>=0?sv.filter((_,j)=>j!==i):[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:x.item,color:x.color||'',occasion:x.occasion||'',pairsWith:(x.pairsWith||[]).slice(0,3),why:x.why||'',at:new Date().toISOString()}].concat(sv).slice(0,40);
     saveCache(); queueSettingsSave(); renderShop(); const b=document.querySelector(`[data-idea-save="${ds.ideaSave}"]`); if(b) b.focus(); return; }
   if(ds.ideaDel){ S.settings.savedIdeas=(S.settings.savedIdeas||[]).filter(y=>y.id!==ds.ideaDel); saveCache(); queueSettingsSave(); renderShop(); const n=document.querySelector('[data-idea-del],[data-act="ideas"]'); if(n) n.focus(); return; }
+  if(ds.dupKeep){ const [k,d]=ds.dupKeep.split('|'); dupAsk(k,d); return; }
+  if(ds.dupMerge){ const [k,d]=ds.dupMerge.split('|'); t.disabled=true; dupMerge(k,d); return; }
+  if(ds.dupCancel!==undefined){ const b=t.closest('.dupask'); if(b){ b.hidden=true; b.innerHTML=''; } return; }
+  if(ds.dupOk){ dupNot(ds.dupOk); return; }
   if(ds.inspoWish!=null){ inspoWish(+ds.inspoWish); return; }
   if(ds.wlunit){ if(ds.wlunit!==WL.unit){ const f=ds.wlunit==='in'?1/2.54:2.54; WL.unit=ds.wlunit;
       document.querySelectorAll('#sheetRoot .wlmgrp input').forEach(i=>{ const n=measNum(i.value); if(typeof n!=='number') return;
@@ -2459,6 +2530,7 @@ document.addEventListener('click',async e=>{
     case 'inspoMerge': inspoSave($('#inspo-into')?.value||null); return;
     case 'inspoDiscard': INSPO=null; closeSheet(); return;
     case 'inspoSee': inspoSee(); return;
+    case 'dups': openDups(); return;
     case 'wnDismiss': try{ localStorage.setItem('wearcycle.seenVersion',APP_VERSION); }catch(e){} renderStatus(); return;
     case 'scanStyles': scanStyles(); return;
     case 'adjust': openAdjust(); return;

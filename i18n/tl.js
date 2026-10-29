@@ -1455,5 +1455,19 @@ I18N.load("tl",{
 "Changes to the app, newest first.": "Mga pagbabago sa app, pinakabago muna.",
 "Wearcycle was updated.": "Na-update ang Wearcycle.",
 "See what's new": "Tingnan ang bago",
-"Dismiss": "Isara"
+"Dismiss": "Isara",
+"Possible duplicates": "Posibleng doble",
+"Possible duplicates: {0}. Review them in Closet.": "Posibleng doble: {0}. Suriin sa Closet.",
+"No possible duplicates right now.": "Walang posibleng doble ngayon.",
+"These pictures look nearly the same. Keep one if they are the same piece; its wear history moves to the one you keep. Different pieces are not shown again.": "Halos magkamukha ang mga larawang ito. Kung iisang piraso, panatilihin ang isa; mapupunta ang kasaysayan ng pagsusuot nito sa itatago mo. Hindi na ipapakita ulit ang magkaibang piraso.",
+"Added {0}": "Idinagdag noong {0}",
+"Worn 1 time": "Naisuot nang 1 beses",
+"Same piece, keep this one": "Iisang piraso, ito ang itago",
+"Different pieces": "Magkaibang piraso",
+"Delete {a} and keep {b}?": "Burahin ang {a} at itago ang {b}?",
+"Its 1 wear moves to the piece you keep.": "Mapupunta ang 1 pagsusuot nito sa pirasong itatago mo.",
+"Its {0} wears move to the piece you keep.": "Mapupunta ang {0} pagsusuot nito sa pirasong itatago mo.",
+"Delete and keep": "Burahin at itago",
+"Could not merge: {a}": "Hindi mapagsama: {a}",
+"Kept {a}.": "Itinago ang {a}."
 });

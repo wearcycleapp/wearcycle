@@ -88,5 +88,6 @@ I18N.add("tl",{
 "Fixed": "Naayos",
 "You can add a belt back after leaving it out.": "Puwede mong idagdag ulit ang sinturon pagkatapos itong alisin.",
 "A custom color palette, respected by every outfit option.": "Isang custom na color palette, sinusunod ng bawat opsyon ng outfit.",
-"This page and the privacy notice open again from the installed app.": "Bumubukas na ulit ang pahinang ito at ang abiso sa privacy mula sa naka-install na app."
+"This page and the privacy notice open again from the installed app.": "Bumubukas na ulit ang pahinang ito at ang abiso sa privacy mula sa naka-install na app.",
+"Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "Posibleng doble: itinuturo ng Closet ang mga pirasong halos magkamukha ang larawan, para makapagtago ka ng isa at mailipat ang kasaysayan ng pagsusuot nito, o markahan ang mga ito bilang magkaibang piraso."
 });

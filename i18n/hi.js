@@ -1455,5 +1455,19 @@ I18N.load("hi",{
 "Changes to the app, newest first.": "ऐप में बदलाव, सबसे नए पहले।",
 "Wearcycle was updated.": "Wearcycle अपडेट हुआ।",
 "See what's new": "देखें नया क्या है",
-"Dismiss": "बंद करें"
+"Dismiss": "बंद करें",
+"Possible duplicates": "संभावित डुप्लिकेट",
+"Possible duplicates: {0}. Review them in Closet.": "संभावित डुप्लिकेट: {0}। इन्हें अलमारी में जाँचें।",
+"No possible duplicates right now.": "अभी कोई संभावित डुप्लिकेट नहीं है।",
+"These pictures look nearly the same. Keep one if they are the same piece; its wear history moves to the one you keep. Different pieces are not shown again.": "ये तस्वीरें लगभग एक जैसी दिखती हैं। अगर ये एक ही कपड़ा है तो एक रखें; उसका पहनने का इतिहास रखे गए कपड़े में चला जाएगा। अलग कपड़े फिर नहीं दिखाए जाएँगे।",
+"Added {0}": "{0} को जोड़ा",
+"Worn 1 time": "1 बार पहना",
+"Same piece, keep this one": "एक ही कपड़ा, यह रखें",
+"Different pieces": "अलग कपड़े",
+"Delete {a} and keep {b}?": "{a} हटाएँ और {b} रखें?",
+"Its 1 wear moves to the piece you keep.": "इसका 1 बार पहनना रखे गए कपड़े में चला जाएगा।",
+"Its {0} wears move to the piece you keep.": "इसके {0} बार पहनना रखे गए कपड़े में चले जाएँगे।",
+"Delete and keep": "हटाएँ और रखें",
+"Could not merge: {a}": "जोड़ा नहीं जा सका: {a}",
+"Kept {a}.": "{a} रखा गया।"
 });

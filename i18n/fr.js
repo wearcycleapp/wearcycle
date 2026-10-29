@@ -1455,5 +1455,19 @@ I18N.load("fr",{
 "Changes to the app, newest first.": "Les changements de l’application, du plus récent au plus ancien.",
 "Wearcycle was updated.": "Wearcycle a été mis à jour.",
 "See what's new": "Voir les nouveautés",
-"Dismiss": "Fermer"
+"Dismiss": "Fermer",
+"Possible duplicates": "Doublons possibles",
+"Possible duplicates: {0}. Review them in Closet.": "Doublons possibles : {0}. Vérifiez-les dans Garde-robe.",
+"No possible duplicates right now.": "Aucun doublon possible pour le moment.",
+"These pictures look nearly the same. Keep one if they are the same piece; its wear history moves to the one you keep. Different pieces are not shown again.": "Ces images se ressemblent presque. Si c’est la même pièce, gardez-en une; son historique de port passe à celle que vous gardez. Les pièces différentes ne sont plus affichées.",
+"Added {0}": "Ajoutée le {0}",
+"Worn 1 time": "Portée 1 fois",
+"Same piece, keep this one": "Même pièce, garder celle-ci",
+"Different pieces": "Pièces différentes",
+"Delete {a} and keep {b}?": "Supprimer {a} et garder {b}?",
+"Its 1 wear moves to the piece you keep.": "Son port passe à la pièce que vous gardez.",
+"Its {0} wears move to the piece you keep.": "Ses {0} ports passent à la pièce que vous gardez.",
+"Delete and keep": "Supprimer et garder",
+"Could not merge: {a}": "Fusion impossible : {a}",
+"Kept {a}.": "{a} gardée."
 });

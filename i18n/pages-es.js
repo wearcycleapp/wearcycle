@@ -88,5 +88,6 @@ I18N.add("es",{
 "Fixed": "Corregido",
 "You can add a belt back after leaving it out.": "Puedes volver a agregar un cinturón después de quitarlo.",
 "A custom color palette, respected by every outfit option.": "Una paleta de colores personalizada, respetada por todas las opciones de conjunto.",
-"This page and the privacy notice open again from the installed app.": "Esta página y el aviso de privacidad vuelven a abrirse desde la app instalada."
+"This page and the privacy notice open again from the installed app.": "Esta página y el aviso de privacidad vuelven a abrirse desde la app instalada.",
+"Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "Posibles duplicados: Clóset señala las prendas cuyas imágenes se ven casi iguales, para que conserves una y muevas su historial de uso, o las marques como prendas distintas."
 });

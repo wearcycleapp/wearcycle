@@ -603,6 +603,25 @@ a.idea.shop .go{align-self:flex-end;margin-top:4px}
 .inspo-done{margin-top:18px;padding:12px 14px;border-radius:10px;background:var(--good-soft);display:flex;flex-direction:column;gap:10px}
 .inspo-done .row{display:flex;flex-wrap:wrap;gap:8px}
 .stab.inspotab{color:var(--ink);font-weight:600}
+/* Possible duplicates (v1.58.7) */
+.dupline{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:48px;margin:0 0 12px;padding:8px 14px;border:1px solid var(--line);border-radius:10px;background:var(--raised);color:var(--ink);font:inherit;font-size:14px;text-align:left;cursor:pointer}
+.dupline .n{color:var(--muted);font-weight:600;margin-left:4px}
+.dupline .go{font-weight:600;white-space:nowrap}
+.duplist{display:flex;flex-direction:column;gap:14px}
+.duppair{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--raised)}
+.dupsides{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dupside{display:flex;flex-direction:column;gap:4px;min-width:0;font-size:13px}
+.dupside>i{display:block;aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.dupside>i img{width:100%;height:100%;object-fit:cover;display:block}
+.dupside>i img.cut{object-fit:contain;padding:8%;box-sizing:border-box}
+.dupside>b{font-size:14px;overflow-wrap:anywhere}
+.dupside>span{color:var(--muted)}
+.dupside .btn{margin-top:4px;min-height:44px;white-space:normal;line-height:1.2;justify-content:center;text-align:center}
+.duppair>.btn{min-height:44px;justify-content:center}
+.dupask{padding:10px 12px;border-radius:10px;background:var(--bad-soft)}
+.dupask p{margin:0 0 6px}
+.dupask .row{display:flex;flex-wrap:wrap;gap:8px}
+@media (hover:hover) and (pointer:fine){ .dupline:hover{border-color:var(--ink)} }
 .decopt{display:grid;grid-template-columns:minmax(150px,auto) 1fr;align-items:center;gap:12px}
 .decopt .btn{justify-content:center;min-height:44px}
 .decopt span{font-size:13px;color:var(--muted)}
