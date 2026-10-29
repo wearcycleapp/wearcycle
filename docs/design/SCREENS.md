@@ -221,6 +221,7 @@ Built in v1.55.0 (Phase 11 brought forward; proposal "Wearcycle Shop redesign" a
 
 ## Full-screen and fixed layers
 
+- Camera, many photos (v1.58.2, owner 2026-10-28: his son could not tell how to finish): before the first batch on each device, and from Tips at the top, a "Before you start" screen (Good light, Plain background, The whole piece, One piece per photo; white "Start taking photos"); the camera starts only after it. Top line "Good light · plain background · whole piece". Done is a labelled button, "✓ Done (N)", white once there is a photo, with the last photo's thumbnail from 430px wide; a status line above the bar says "Photo N saved. Next piece, or tap Done to add them.". The bar is a 1fr auto 1fr grid so the shutter stays centered; long Done labels may take two lines, never cut.
 - Sign-in and welcome: the brand moment (logo, tagline, headline "Get dressed in seconds.").
 - Camera, zoom viewer, job bar, toasts: functional, high contrast, safe-area aware, above the tab bar or rail. The flashlight button stays hidden where the camera reports no torch.
 - The share image (canvas in shareOutfit, app.js) and privacy.html are redesigned separately in Phase 14.

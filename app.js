@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.1';
+const APP_VERSION='1.58.2';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -542,20 +542,34 @@ function openCamera(mode){
   guard();
   return new Promise(resolve=>{
     CAM.mode=mode; CAM.shots=[]; CAM.resolve=resolve; CAM.darkTold=false;
-    drawCamera(); startStream();
+    // Photo tips (v1.58.2, owner 2026-10-28): shown before the first batch on each device, and from Tips on the camera.
+    CAM.tips=mode==='batch'&&!LS.get('wearcycle.camTips');
+    drawCamera(); if(!CAM.tips) startStream();
   });
 }
+const CAM_CHECK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg>';
+function camTipsHtml(){
+  const tip=(ic,b,t)=>`<li><span class="ic" aria-hidden="true">${ic}</span><span><b>${b}</b><span>${t}</span></span></li>`;
+  return `<div class="camtips"><h2>Before you start</h2><ul>
+    ${tip('☀','Good light','Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.')}
+    ${tip('▭','Plain background','A bed, floor or wall in one color, different from the piece.')}
+    ${tip('⤢','The whole piece','Laid flat and spread out, filling most of the frame, so it is easy to recognize.')}
+    ${tip('1','One piece per photo','Take the next piece in a new photo, then tap Done.')}</ul>
+    <button class="btn primary camgo" data-cam="tipsok">Start taking photos</button></div>`; }
+function camDoneInner(){ const n=CAM.shots.length; return (n?`<img src="${CAM.lastUrl}" alt="">`:'')+CAM_CHECK+`<span>${n?I18N.tr(`Done (${n})`):I18N.tr('Done')}</span>`; }
 function drawCamera(msg){
-  const last=CAM.shots[CAM.shots.length-1];
+  const last=CAM.shots[CAM.shots.length-1], n=CAM.shots.length;
+  if(CAM.tips) msg=camTipsHtml();
   $('#camRoot').innerHTML=`<div class="cam" role="dialog" aria-label="Camera">
     ${msg?`<div class="msg">${msg}</div>`:`<video id="camVideo" playsinline muted autoplay></video><div class="guide" aria-hidden="true"></div><div class="flash" id="camFlash"></div>`}
-    <div class="top"><span>${CAM.mode==='batch'?'One piece per photo, plain background':'Fill the frame with the item'}</span>
-      <span class="camtools"><button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk||CAM.torchMaybe?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
+    <div class="top"${CAM.tips?' hidden':''}><span>${CAM.mode==='batch'?'Good light · plain background · whole piece':'Fill the frame with the item'}</span>
+      <span class="camtools">${CAM.mode==='batch'&&!CAM.tips?'<button class="side camtipbtn" data-cam="tips">Tips</button>':''}<button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk||CAM.torchMaybe?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
       <button class="side" data-cam="flip" style="width:44px;height:36px" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></span></div>
+    ${CAM.mode==='batch'&&!msg?`<div class="camhint" id="camHint" role="status" aria-live="polite">${n?`Photo ${n} saved. Next piece, or tap Done to add them.`:''}</div>`:''}
     <div class="bar">
       <button class="side" data-cam="cancel">Cancel</button>
       ${msg?'<span></span>':'<button class="shutter" data-cam="shoot" aria-label="Take photo"></button>'}
-      ${CAM.mode==='batch'?`<button class="side" data-cam="done" ${CAM.shots.length?'':'disabled'} aria-label="Done, ${CAM.shots.length} photos">${last?`<img src="${CAM.lastUrl}" alt="">`:''}<span class="n">${CAM.shots.length}</span>${last?'':'Done'}</button>`:'<span class="side" style="border:0"></span>'}
+      ${CAM.mode==='batch'&&CAM.tips?'<span class="side" style="border:0"></span>':CAM.mode==='batch'?`<button class="side camdone${n?' ready':''}" data-cam="done" ${n&&!CAM.tips?'':'disabled'}>${camDoneInner()}</button>`:'<span class="side" style="border:0"></span>'}
     </div></div>`;
   if(!msg && CAM.stream){ const v=$('#camVideo'); v.srcObject=CAM.stream; v.play().catch(()=>{}); }
 }
@@ -642,7 +656,8 @@ async function shoot(){
   if(CAM.mode==='single'){ closeCamera([blob]); return; }
   CAM.shots.push(blob); if(CAM.lastUrl) URL.revokeObjectURL(CAM.lastUrl); CAM.lastUrl=URL.createObjectURL(blob);
   const f=$('#camFlash'); if(f){ f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
-  const done=document.querySelector('[data-cam="done"]'); if(done){ done.disabled=false; done.innerHTML=`<img src="${CAM.lastUrl}" alt=""><span class="n">${CAM.shots.length}</span>`; done.setAttribute('aria-label','Done, '+CAM.shots.length+' photos'); }
+  const done=document.querySelector('[data-cam="done"]'); if(done){ done.disabled=false; done.classList.add('ready'); done.innerHTML=camDoneInner(); }
+  const h=$('#camHint'); if(h) h.textContent=I18N.tr(`Photo ${CAM.shots.length} saved. Next piece, or tap Done to add them.`);
 }
 document.addEventListener('visibilitychange',()=>{ if(document.hidden && CAM.resolve) closeCamera(CAM.shots);
   // Back in the app after a minute or more: reload the closet, so pieces deleted or changed on another phone or tab
@@ -2304,6 +2319,8 @@ document.addEventListener('click',async e=>{
   if(ds.cam){
     if(ds.cam==='shoot') shoot();
     else if(ds.cam==='done') closeCamera(CAM.shots);
+    else if(ds.cam==='tipsok'){ LS.set('wearcycle.camTips',true); CAM.tips=false; drawCamera(); if(!CAM.stream) startStream(); }
+    else if(ds.cam==='tips'){ CAM.tips=true; drawCamera(); }
     else if(ds.cam==='cancel') closeCamera(CAM.mode==='batch'?CAM.shots:[]);
     else if(ds.cam==='flip'){ CAM.facing=CAM.facing==='environment'?'user':'environment'; startStream(); }
     else if(ds.cam==='torch') setTorch(!CAM.torchOn);

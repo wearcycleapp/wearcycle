@@ -1372,5 +1372,19 @@ I18N.load("hi",{
 "For pieces too worn to donate.": "उन कपड़ों के लिए जो दान करने लायक नहीं रहे।",
 "{0} latest ideas": "{0} नए सुझाव",
 "1 latest idea": "1 नया सुझाव",
-"Include shop links": "खरीदारी के लिंक शामिल करें"
+"Include shop links": "खरीदारी के लिंक शामिल करें",
+"Before you start": "शुरू करने से पहले",
+"Good light": "अच्छी रोशनी",
+"Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.": "दिन में खिड़की के पास, या तेज़ लैंप के नीचे। अगर आपके फ़ोन में लाइट है, तो लाइट बटन मदद करता है।",
+"Plain background": "सादा बैकग्राउंड",
+"A bed, floor or wall in one color, different from the piece.": "एक ही रंग का बिस्तर, फ़र्श या दीवार, जो कपड़े के रंग से अलग हो।",
+"The whole piece": "पूरा कपड़ा",
+"Laid flat and spread out, filling most of the frame, so it is easy to recognize.": "सीधा फैलाकर रखें, फ़्रेम का ज़्यादातर हिस्सा भरे, ताकि आसानी से पहचाना जा सके।",
+"One piece per photo": "एक फ़ोटो में एक कपड़ा",
+"Take the next piece in a new photo, then tap Done.": "अगले कपड़े की नई फ़ोटो लें, फिर हो गया दबाएँ।",
+"Start taking photos": "फ़ोटो लेना शुरू करें",
+"Good light · plain background · whole piece": "अच्छी रोशनी · सादा बैकग्राउंड · पूरा कपड़ा",
+"Tips": "सुझाव",
+"Done ({0})": "हो गया ({0})",
+"Photo {0} saved. Next piece, or tap Done to add them.": "फ़ोटो {0} सहेजी गई। अगला कपड़ा, या जोड़ने के लिए हो गया दबाएँ।"
 });

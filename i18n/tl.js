@@ -1372,5 +1372,19 @@ I18N.load("tl",{
 "For pieces too worn to donate.": "Para sa mga pirasong sobrang luma na para i-donate.",
 "{0} latest ideas": "{0} pinakabagong ideya",
 "1 latest idea": "1 pinakabagong ideya",
-"Include shop links": "Isama ang mga link para mamili"
+"Include shop links": "Isama ang mga link para mamili",
+"Before you start": "Bago ka magsimula",
+"Good light": "Maliwanag na ilaw",
+"Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.": "Malapit sa bintana sa araw, o sa ilalim ng maliwanag na lampara. Kung may ilaw ang phone mo, makakatulong ang light button.",
+"Plain background": "Payak na background",
+"A bed, floor or wall in one color, different from the piece.": "Kama, sahig o pader na iisa ang kulay, iba sa kulay ng piraso.",
+"The whole piece": "Buong piraso",
+"Laid flat and spread out, filling most of the frame, so it is easy to recognize.": "Nakalatag at nakaunat, halos punô ang frame, para madaling makilala.",
+"One piece per photo": "Isang piraso bawat litrato",
+"Take the next piece in a new photo, then tap Done.": "Kunan ang susunod na piraso sa bagong litrato, saka i-tap ang Tapos na.",
+"Start taking photos": "Simulan ang pagkuha ng litrato",
+"Good light · plain background · whole piece": "Maliwanag na ilaw · payak na background · buong piraso",
+"Tips": "Mga tip",
+"Done ({0})": "Tapos na ({0})",
+"Photo {0} saved. Next piece, or tap Done to add them.": "Na-save ang litrato {0}. Susunod na piraso, o i-tap ang Tapos na para idagdag ang mga ito."
 });

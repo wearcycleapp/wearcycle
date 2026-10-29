@@ -1372,5 +1372,19 @@ I18N.load("ja",{
 "For pieces too worn to donate.": "寄付できないほど傷んだアイテム向けです。",
 "{0} latest ideas": "最新のアイデア {0}件",
 "1 latest idea": "最新のアイデア 1件",
-"Include shop links": "購入リンクを含める"
+"Include shop links": "購入リンクを含める",
+"Before you start": "始める前に",
+"Good light": "明るい場所で",
+"Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.": "昼間の窓辺か、明るいライトの下で。スマホにライトがあれば、ライトボタンが役立ちます。",
+"Plain background": "無地の背景",
+"A bed, floor or wall in one color, different from the piece.": "服と違う色の、無地のベッド・床・壁の上で。",
+"The whole piece": "アイテム全体",
+"Laid flat and spread out, filling most of the frame, so it is easy to recognize.": "平らに広げて、画面のほとんどを占めるように。何の服か分かりやすくなります。",
+"One piece per photo": "1枚に1アイテム",
+"Take the next piece in a new photo, then tap Done.": "次のアイテムは新しい写真で撮り、最後に完了をタップします。",
+"Start taking photos": "撮影を始める",
+"Good light · plain background · whole piece": "明るい場所 · 無地の背景 · アイテム全体",
+"Tips": "ヒント",
+"Done ({0})": "完了（{0}）",
+"Photo {0} saved. Next piece, or tap Done to add them.": "{0}枚目を保存しました。次のアイテムを撮るか、完了をタップして追加します。"
 });

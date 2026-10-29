@@ -1372,5 +1372,19 @@ I18N.load("es",{
 "For pieces too worn to donate.": "Para prendas demasiado gastadas para donar.",
 "{0} latest ideas": "{0} ideas recientes",
 "1 latest idea": "1 idea reciente",
-"Include shop links": "Incluir enlaces de compra"
+"Include shop links": "Incluir enlaces de compra",
+"Before you start": "Antes de empezar",
+"Good light": "Buena luz",
+"Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.": "Cerca de una ventana de día, o bajo una lámpara potente. Si tu teléfono tiene linterna, el botón de luz ayuda.",
+"Plain background": "Fondo liso",
+"A bed, floor or wall in one color, different from the piece.": "Una cama, el piso o una pared de un solo color, distinto al de la prenda.",
+"The whole piece": "La prenda entera",
+"Laid flat and spread out, filling most of the frame, so it is easy to recognize.": "Extendida y bien estirada, ocupando casi todo el encuadre, para que se reconozca fácilmente.",
+"One piece per photo": "Una prenda por foto",
+"Take the next piece in a new photo, then tap Done.": "Toma la siguiente prenda en una foto nueva y luego toca Listo.",
+"Start taking photos": "Empezar a tomar fotos",
+"Good light · plain background · whole piece": "Buena luz · fondo liso · prenda entera",
+"Tips": "Consejos",
+"Done ({0})": "Listo ({0})",
+"Photo {0} saved. Next piece, or tap Done to add them.": "Foto {0} guardada. Sigue con otra prenda o toca Listo para agregarlas."
 });

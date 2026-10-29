@@ -1372,5 +1372,19 @@ I18N.load("fr",{
 "For pieces too worn to donate.": "Pour les pièces trop usées pour être données.",
 "{0} latest ideas": "{0} idées récentes",
 "1 latest idea": "1 idée récente",
-"Include shop links": "Inclure les liens d’achat"
+"Include shop links": "Inclure les liens d’achat",
+"Before you start": "Avant de commencer",
+"Good light": "Bonne lumière",
+"Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.": "Près d’une fenêtre le jour, ou sous une lampe puissante. Si votre téléphone a une lampe, le bouton de lumière aide.",
+"Plain background": "Fond uni",
+"A bed, floor or wall in one color, different from the piece.": "Un lit, le plancher ou un mur d’une seule couleur, différente de celle de la pièce.",
+"The whole piece": "La pièce entière",
+"Laid flat and spread out, filling most of the frame, so it is easy to recognize.": "À plat et bien étalée, remplissant presque tout le cadre, pour qu’on la reconnaisse facilement.",
+"One piece per photo": "Une pièce par photo",
+"Take the next piece in a new photo, then tap Done.": "Prenez la pièce suivante dans une nouvelle photo, puis touchez Terminé.",
+"Start taking photos": "Commencer à prendre des photos",
+"Good light · plain background · whole piece": "Bonne lumière · fond uni · pièce entière",
+"Tips": "Conseils",
+"Done ({0})": "Terminé ({0})",
+"Photo {0} saved. Next piece, or tap Done to add them.": "Photo {0} enregistrée. Pièce suivante, ou touchez Terminé pour les ajouter."
 });

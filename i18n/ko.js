@@ -1372,5 +1372,19 @@ I18N.load("ko",{
 "For pieces too worn to donate.": "기부하기 어려울 만큼 낡은 옷에 쓰세요.",
 "{0} latest ideas": "최근 아이디어 {0}개",
 "1 latest idea": "최근 아이디어 1개",
-"Include shop links": "쇼핑 링크 포함"
+"Include shop links": "쇼핑 링크 포함",
+"Before you start": "시작하기 전에",
+"Good light": "밝은 조명",
+"Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.": "낮에 창가나 밝은 조명 아래에서. 휴대폰에 플래시가 있으면 조명 버튼이 도움이 됩니다.",
+"Plain background": "단색 배경",
+"A bed, floor or wall in one color, different from the piece.": "옷과 다른 한 가지 색의 침대, 바닥 또는 벽.",
+"The whole piece": "옷 전체",
+"Laid flat and spread out, filling most of the frame, so it is easy to recognize.": "평평하게 펼쳐 화면 대부분을 채워서 알아보기 쉽게.",
+"One piece per photo": "사진 한 장에 옷 하나",
+"Take the next piece in a new photo, then tap Done.": "다음 옷은 새 사진으로 찍고, 마지막에 완료를 누르세요.",
+"Start taking photos": "사진 찍기 시작",
+"Good light · plain background · whole piece": "밝은 조명 · 단색 배경 · 옷 전체",
+"Tips": "팁",
+"Done ({0})": "완료 ({0})",
+"Photo {0} saved. Next piece, or tap Done to add them.": "{0}번째 사진을 저장했습니다. 다음 옷을 찍거나 완료를 눌러 추가하세요."
 });
