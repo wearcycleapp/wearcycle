@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.2';
+const APP_VERSION='1.58.3';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -87,14 +87,14 @@ function renderStyleChips(){
     hint.hidden=!msg; hint.textContent=msg; }
   const all=[['','All my styles'],['rotate','Rotate']].concat(keys.map(k=>STYLES[k]?[k,STYLES[k].label]:[k,styleName(k),1]));
   if(dirB()){ if(sel) sel.innerHTML=''; box.hidden=false;
-    box.innerHTML=`<span class="rowlab">Style</span>`+all.map(([k,l,notr])=>`<button class="stab" data-stoday="${esc(k)}" aria-pressed="${cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`).join(''); }
+    box.innerHTML=`<span class="rowlab">Style</span>`+all.map(([k,l,notr])=>`<button class="stab" data-stoday="${esc(k)}" aria-pressed="${cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`).join('')+`<button class="stab inspotab" data-act="inspo">+ From a photo</button>`; }
   else { box.hidden=true; box.innerHTML=''; const c=all.find(x=>x[0]===cur)||all[0];
     if(sel) sel.innerHTML=`<button class="stylebtn" data-act="styleMenu" aria-haspopup="dialog"><span class="k">Style</span><span class="v"${c[2]?' data-notr':''}>${esc(c[1])}</span>${CHEV_D}</button>`; }
   S.styleOpts={all,cur,msg:hint&&!hint.hidden?hint.textContent:''};
 }
 // Direction A: the style menu opens a sheet with the same choices as B's style tabs.
 function openStyleMenu(){ const o=S.styleOpts; if(!o) return;
-  openSheet(sheetHead('Style today')+`<div class="chips" role="group" aria-label="Style" style="flex-wrap:wrap">${o.all.map(([k,l,notr])=>`<button class="chip" data-stoday="${esc(k)}" aria-pressed="${o.cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`).join('')}</div>${o.msg?`<p class="hint">${esc(o.msg)}</p>`:''}`); }
+  openSheet(sheetHead('Style today')+`<div class="chips" role="group" aria-label="Style" style="flex-wrap:wrap">${o.all.map(([k,l,notr])=>`<button class="chip" data-stoday="${esc(k)}" aria-pressed="${o.cur===k}" ${notr?'data-notr':''}>${esc(l)}</button>`).join('')}</div>${o.msg?`<p class="hint">${esc(o.msg)}</p>`:''}<button class="btn" data-act="inspo" style="margin-top:12px">Inspiration from a photo</button>`); }
 function styleKey(){ const t=styleTarget(S.occ); return t?(t.ids.join(',')+'/'+t.looks.map(l=>l.id).join(',')+'/'+t.weight):'-'; }
 function canWrite(){ return S.online && !!sb; }
 function cacheKey(){ return 'wardrobe.cache.'+UID; }
@@ -562,7 +562,7 @@ function drawCamera(msg){
   if(CAM.tips) msg=camTipsHtml();
   $('#camRoot').innerHTML=`<div class="cam" role="dialog" aria-label="Camera">
     ${msg?`<div class="msg">${msg}</div>`:`<video id="camVideo" playsinline muted autoplay></video><div class="guide" aria-hidden="true"></div><div class="flash" id="camFlash"></div>`}
-    <div class="top"${CAM.tips?' hidden':''}><span>${CAM.mode==='batch'?'Good light · plain background · whole piece':'Fill the frame with the item'}</span>
+    <div class="top"${CAM.tips?' hidden':''}><span>${CAM.mode==='batch'?'Good light · plain background · whole piece':CAM.mode==='look'?'Fit the whole outfit in the frame':'Fill the frame with the item'}</span>
       <span class="camtools">${CAM.mode==='batch'&&!CAM.tips?'<button class="side camtipbtn" data-cam="tips">Tips</button>':''}<button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk||CAM.torchMaybe?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
       <button class="side" data-cam="flip" style="width:44px;height:36px" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></span></div>
     ${CAM.mode==='batch'&&!msg?`<div class="camhint" id="camHint" role="status" aria-live="polite">${n?`Photo ${n} saved. Next piece, or tap Done to add them.`:''}</div>`:''}
@@ -653,7 +653,7 @@ async function shoot(){
   const blob=await new Promise(r=>cv.toBlob(r,'image/jpeg',0.86));
   CAM.busy=false; if(!blob) return;
   if(br.lifted&&!CAM.darkTold){ CAM.darkTold=true; toast(CAM.torchOk&&!CAM.torchOn?'That photo was dark, so it was brightened. Tap the light button at the top for truer colors.':'That photo was dark, so it was brightened. More light (a window or a lamp) gives truer colors.',6000); }
-  if(CAM.mode==='single'){ closeCamera([blob]); return; }
+  if(CAM.mode!=='batch'){ closeCamera([blob]); return; }
   CAM.shots.push(blob); if(CAM.lastUrl) URL.revokeObjectURL(CAM.lastUrl); CAM.lastUrl=URL.createObjectURL(blob);
   const f=$('#camFlash'); if(f){ f.classList.remove('on'); void f.offsetWidth; f.classList.add('on'); }
   const done=document.querySelector('[data-cam="done"]'); if(done){ done.disabled=false; done.classList.add('ready'); done.innerHTML=camDoneInner(); }
@@ -1438,8 +1438,8 @@ function renderShop(){
       ownedN+=have.length; ownedRows+=have.map(e=>`<button type="button" class="lrow ess have" data-edit="${esc(e.have.id)}"><span class="mark">✓</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b><span data-notr>${esc(e.have.name)}</span></span><span class="chev" aria-hidden="true">›</span></button>`).join('');
       return `<div class="srow plain"><b ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</b><span class="st">${have.length} of ${ess.length}</span>${miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1)}</div>
         ${miss.map(e=>`<a class="lrow shop" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></span>${SHOP_GO}</a>`).join('')}`; }).join('');
-  const styleP=keys.length?`<section class="panel" aria-labelledby="h-style"><div class="panel-h"><h3 id="h-style">Build toward a style</h3></div><p class="hint sp">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p>${styleBody}${ownedN?fold('owned',pl(ownedN,'Show the 1 you own','Show the {0} you own'),'','',ownedRows):''}</section>`
-    :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button></div></div></div>`;
+  const styleP=keys.length?`<section class="panel" aria-labelledby="h-style"><div class="panel-h"><h3 id="h-style">Build toward a style</h3></div><p class="hint sp">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p>${styleBody}${ownedN?fold('owned',pl(ownedN,'Show the 1 you own','Show the {0} you own'),'','',ownedRows):''}<div class="panel-h" style="border:0"><button class="btn sm" data-act="inspo">Inspiration from a photo</button></div></section>`
+    :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button><button class="btn sm" data-act="inspo">From a photo</button></div></div></div>`;
   const last=S.settings.ideas&&Array.isArray(S.settings.ideas.list)?S.settings.ideas:null;
   const list=ideasState.list||(last?last.list:null), at=ideasState.list?ideasState.at:(last?last.at:null);
   const saved=S.settings.savedIdeas||[], savedK=new Set(saved.map(ideaKey));
@@ -1661,22 +1661,62 @@ function openStyles(){
    <p class="hint">Pick any styles you like. Outfits for work and going out favor pieces in these styles, and the Shop tab shows what would build them. The fewer you pick, the more they shape the ranking. With none picked, Wearcycle learns from what you wear${l.ids.length?' (now: '+esc(l.ids.map(k=>STYLES[k].label).join(', '))+')':''}.</p>
    <div class="stylegrid">${STYLE_IDS.map(k=>card(k,STYLES[k].label,styleDesc(k))).join('')}
    ${looks().map(x=>card(x.id,x.label,(x.summary||'')+(x.pieces&&x.pieces.length?' · '+x.pieces.join(', '):''),`<span class="lookdel" role="button" data-look-del="${esc(x.id)}">Remove</span>`)).join('')}</div>
-   <button class="btn" data-act="addLook">+ Add a look you like</button>
+   <button class="btn" data-act="inspo">Inspiration from a photo</button>
    <p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. Claude describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
    <div class="field"><span class="lab">For work</span><div class="chips" style="flex-wrap:wrap">${[['','Same as above'],...STYLE_IDS.map(k=>[k,STYLES[k].label]),...looks().map(x=>[x.id,x.label])].map(([k,lb])=>`<button class="chip" data-style-work="${esc(k)}" aria-pressed="${k?st.work.includes(k):!st.work.length}" ${looks().some(x=>x.id===k)?'data-notr':''}>${esc(lb)}</button>`).join('')}</div>
    <p class="hint">Pick one or more, or keep it the same as above. Your work dress code still decides which pieces count for Work.</p></div>`);
 }
-async function addLook(){
+// Inspiration from a photo (v1.58.3, owner 2026-10-28): take or choose a photo of an outfit; Claude describes only the
+// clothes; the person sees what they own and what is missing, then saves it as a new style or merges it into one of
+// their photo styles. The photo is not kept.
+let INSPO=null;
+function openInspo(){
+  openSheet(sheetHead('Inspiration from a photo')+`<p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. Claude describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
+   <div class="inspobtns"><button class="btn primary" data-act="inspoCam">Take a photo</button><button class="btn" data-act="inspoPick">Choose a photo</button></div>`); }
+async function inspoFrom(src){
   if(!canWrite()){ toast('You are offline. Claude needs a connection.'); return; }
-  const [f]=await pickFiles(false); if(!f) return;
+  closeSheet(); const [f]=src==='cam'?await openCamera('look'):await pickFiles(false); if(!f) return;
   job('Reading the look…',40);
   try{ const r=await callClaude('look',{image:await blobToBase64(await shrink(f,1024))}); job('');
     if(!r||r.error||!Array.isArray(r.pieces)){ toast(r&&r.error?String(r.error):'Claude could not find clothes in that photo.',5000); return; }
-    const look={id:'look-'+uuid().slice(0,8),label:String(r.name||'My look').slice(0,40),base:(r.styles||[]).filter(x=>STYLES[x]).slice(0,3),pieces:r.pieces.map(String).slice(0,10),colors:(r.colors||[]).filter(c=>COLORS[c]).slice(0,5),summary:String(r.summary||'').slice(0,160)};
-    looks().push(look); const st=styleSet(); st.pick.push(look.id);
-    saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); toast('Saved '+look.label+'. Outfits now favor it.',5000);
+    INSPO={look:{label:String(r.name||'My look').slice(0,40),base:(r.styles||[]).filter(x=>STYLES[x]).slice(0,3),pieces:r.pieces.map(String).slice(0,10),colors:(r.colors||[]).filter(c=>COLORS[c]).slice(0,5),summary:String(r.summary||'').slice(0,160)},saved:null};
+    openInspoResult();
   }catch(e){ job(''); toast(aiMsg(e),6000); }
 }
+function openInspoResult(){
+  const L=INSPO.look, ess=essentials(L,allItems()), have=ess.filter(e=>e.have), miss=ess.filter(e=>!e.have);
+  const sv=new Set((S.settings.savedIdeas||[]).map(x=>String(x.item).toLowerCase()));
+  const pairs=have.slice(0,3).map(e=>e.have.name);
+  const done=INSPO.saved&&looks().find(l=>l.id===INSPO.saved);
+  openSheet(sheetHead('Inspiration from a photo')+`<div class="inspo">
+   <div class="inspo-h"><b data-notr>${esc(L.label)}</b>${L.summary?`<span data-notr>${esc(L.summary)}</span>`:''}
+    <div class="inspo-c">${L.colors.map(c=>`<span class="cdot"><i style="background:${COLORS[c].hex}"></i><span>${esc(c)}</span></span>`).join('')}</div>
+    ${L.base.length?`<span class="hint"><span>Close to</span> ${L.base.map(b=>`<span>${STYLES[b].label}</span>`).join(', ')}</span>`:''}</div>
+   <h4>In your closet <span class="n">${have.length}</span></h4>
+   ${have.length?`<div class="inspo-l">${have.map(e=>`<div class="inspo-r"><i>${smallPic(e.have)}</i><span><span data-notr>${esc(e.label)}</span> → <b data-notr>${esc(e.have.name)}</b></span></div>`).join('')}</div>`:'<p class="hint">Nothing in your closet matches yet.</p>'}
+   <h4>To complete it <span class="n">${miss.length}</span></h4>
+   ${miss.length?`<div class="inspo-l">${miss.map((e,k)=>{ const on=sv.has(String(e.label).toLowerCase()); return `<div class="inspo-r"><span class="t" data-notr>${esc(e.label)}</span><a class="btn sm ghost" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener">Shop</a><button type="button" class="btn sm" data-inspo-wish="${k}" aria-pressed="${on}">${on?'On your wish list':'Add to wish list'}</button></div>`; }).join('')}</div>`:'<p class="hint">You own every piece of this look.</p>'}
+   ${done?`<div class="inspo-done" role="status"><b data-notr>${esc(I18N.t('Saved {a}.',{a:done.label}))}</b><div class="row"><button class="btn primary" data-act="inspoSee">See outfits in this style</button><button class="btn" data-close>Close</button></div></div>`
+   :`<div class="inspo-acts"><button class="btn primary" data-act="inspoNew">Save as a new style</button>
+     ${looks().length?`<div class="inspo-merge"><label for="inspo-into">Update a style</label><div class="row"><select id="inspo-into">${looks().map(l=>`<option value="${esc(l.id)}" data-notr>${esc(l.label)}</option>`).join('')}</select><button class="btn" data-act="inspoMerge">Update</button></div></div>`:''}
+     <button class="btn ghost" data-act="inspoDiscard">Discard</button></div>`}</div>`);
+  INSPO.miss=miss.map(e=>e.label); INSPO.pairs=pairs; setTimeout(hydrateCuts,0);
+}
+function inspoWish(k){ const label=INSPO&&INSPO.miss[k]; if(!label) return; const sv=S.settings.savedIdeas||[]; const i=sv.findIndex(x=>String(x.item).toLowerCase()===String(label).toLowerCase());
+  S.settings.savedIdeas=i>=0?sv.filter((_,j)=>j!==i):[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:label,color:'',occasion:'',pairsWith:INSPO.pairs||[],why:'',at:new Date().toISOString()}].concat(sv).slice(0,40);
+  saveCache(); queueSettingsSave(); const b=document.querySelector(`[data-inspo-wish="${k}"]`); if(b){ const on=i<0; b.setAttribute('aria-pressed',String(on)); b.textContent=I18N.tr(on?'On your wish list':'Add to wish list'); } }
+// Merge: pieces and colors both styles share first, then the new and the old in turn (10 pieces, 5 colors at most).
+function mergeList(oldL,newL,cap){ const low=x=>String(x).toLowerCase(), o=oldL||[], n=newL||[], both=n.filter(x=>o.some(y=>low(y)===low(x)));
+  const a=n.filter(x=>!both.includes(x)), b=o.filter(x=>!both.some(y=>low(y)===low(x))), out=[...both]; for(let i=0;out.length<cap&&(i<a.length||i<b.length);i++){ if(i<a.length) out.push(a[i]); if(out.length<cap&&i<b.length) out.push(b[i]); } return out.slice(0,cap); }
+function inspoSave(intoId){ if(!INSPO) return; const L=INSPO.look; let look;
+  if(intoId){ look=looks().find(l=>l.id===intoId); if(!look) return;
+    look.pieces=mergeList(look.pieces,L.pieces,10); look.colors=mergeList(look.colors,L.colors,5); look.base=mergeList(look.base,L.base,3); }
+  else { look=Object.assign({id:'look-'+uuid().slice(0,8)},L); looks().push(look); }
+  const st=styleSet(); if(!st.pick.includes(look.id)) st.pick.push(look.id);
+  saveCache(); queueSettingsSave(); S.fitKey=''; INSPO.saved=look.id; renderAll(); openInspoResult(); $('#sheetRoot [data-act="inspoSee"]')?.focus(); }
+function inspoSee(){ const id=INSPO&&INSPO.saved; INSPO=null; closeSheet(); if(!id) return; const st=styleSet();
+  if(!STYLE_OCC.includes(S.occ)||(S.occ==='work'&&st.work.length&&!st.work.includes(id))){ S.occ='out'; S.theme=undefined; }
+  S.sel=0; S.seed=0; setStyleToday(id); goTab('outfits'); window.scrollTo(0,0); }
 async function scanStyles(){
   if(S.busy) return; if(!canWrite()){ toast('You are offline.'); return; }
   const list=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!Array.isArray(i.styles));
@@ -2324,6 +2364,7 @@ document.addEventListener('click',async e=>{
     else if(ds.cam==='cancel') closeCamera(CAM.mode==='batch'?CAM.shots:[]);
     else if(ds.cam==='flip'){ CAM.facing=CAM.facing==='environment'?'user':'environment'; startStream(); }
     else if(ds.cam==='torch') setTorch(!CAM.torchOn);
+    else if(ds.cam==='gallery'&&CAM.mode==='look'){ const r=CAM.resolve; CAM.resolve=null; stopStream(); $('#camRoot').innerHTML=''; r(await pickFiles(false)); }
     else if(ds.cam==='gallery'){ const mode=CAM.mode; closeCamera(CAM.shots); const files=await pickFiles(mode==='batch'); if(mode==='batch') addPhotos(files); else if(files[0]) (ED?editorSetPhoto:checkSetPhoto)(files[0]); }
     return;
   }
@@ -2372,6 +2413,7 @@ document.addEventListener('click',async e=>{
     S.settings.savedIdeas=i>=0?sv.filter((_,j)=>j!==i):[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:x.item,color:x.color||'',occasion:x.occasion||'',pairsWith:(x.pairsWith||[]).slice(0,3),why:x.why||'',at:new Date().toISOString()}].concat(sv).slice(0,40);
     saveCache(); queueSettingsSave(); renderShop(); const b=document.querySelector(`[data-idea-save="${ds.ideaSave}"]`); if(b) b.focus(); return; }
   if(ds.ideaDel){ S.settings.savedIdeas=(S.settings.savedIdeas||[]).filter(y=>y.id!==ds.ideaDel); saveCache(); queueSettingsSave(); renderShop(); const n=document.querySelector('[data-idea-del],[data-act="ideas"]'); if(n) n.focus(); return; }
+  if(ds.inspoWish!=null){ inspoWish(+ds.inspoWish); return; }
   if(ds.wlunit){ if(ds.wlunit!==WL.unit){ const f=ds.wlunit==='in'?1/2.54:2.54; WL.unit=ds.wlunit;
       document.querySelectorAll('#sheetRoot .wlmgrp input').forEach(i=>{ const n=measNum(i.value); if(typeof n!=='number') return;
         if(i.dataset.cm==null) i.dataset.cm=String(ds.wlunit==='in'?n:n*2.54); // cm before the switch
@@ -2400,7 +2442,13 @@ document.addEventListener('click',async e=>{
       S.settings.paletteCustom=Object.keys(COLORS).filter(k=>PCOL.has(k)); S.settings.palette='custom'; PCOL=null;
       saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast('Ranking now favors your custom palette.'); return; }
     case 'styles': openStyles(); return;
-    case 'addLook': addLook(); return;
+    case 'addLook': case 'inspo': openInspo(); return;
+    case 'inspoCam': inspoFrom('cam'); return;
+    case 'inspoPick': inspoFrom('pick'); return;
+    case 'inspoNew': inspoSave(null); return;
+    case 'inspoMerge': inspoSave($('#inspo-into')?.value||null); return;
+    case 'inspoDiscard': INSPO=null; closeSheet(); return;
+    case 'inspoSee': inspoSee(); return;
     case 'scanStyles': scanStyles(); return;
     case 'adjust': openAdjust(); return;
     case 'reminders': openReminders(); return;

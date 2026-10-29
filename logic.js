@@ -605,6 +605,11 @@ function styleScore(o,t){
     if(m>=0.75&&name) r.push({t:'Fits your '+name+' style'});
     else if(m<0.4&&name&&!t.learned) r.push({t:'Few '+name+' pieces'}); // informational: the score already reflects it
   }
+  // Photo styles carry colors (v1.58.3, owner 2026-10-28): when one is the style, outfits mostly in its colors
+  // rank a little higher, like a soft palette (no penalty otherwise).
+  const lk=t?(t.looks||[]).filter(l=>(l.colors||[]).length):[];
+  if(lk.length&&core.length){ const cols=new Set(lk.flatMap(l=>l.colors)); const inC=core.filter(i=>cols.has(primary(i))).length/core.length;
+    if(inC>=0.75){ s+=0.5; r.push({t:'In the colors of your '+lk[0].label+' style'}); } }
   return {s,r};
 }
 // The outfit's style: the style most of its main pieces share.
