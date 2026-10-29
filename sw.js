@@ -1,5 +1,5 @@
 /* Service worker: keeps the app shell available offline. Data and photos come from Supabase. */
-const VERSION = 'wearcycle-v1.58.5';
+const VERSION = 'wearcycle-v1.58.6';
 // Kept across app updates: the background-removal model (about 100 MB, downloaded once) and saved cut-outs.
 const KEEP = ['wearcycle-bgr-1', 'wearcycle-cutouts'];
 const SHELL = ['./', 'index.html', 'styles.css', 'logic.js', 'i18n.js', 'app.js', 'theme.js', 'swreg.js', 'config.js', 'vendor/supabase.js',
@@ -22,6 +22,16 @@ self.addEventListener('fetch', e => {
   if (sameOrigin && url.pathname.includes('/vendor/bgr-data/')) { // model files never change: cache first
     e.respondWith(caches.open('wearcycle-bgr-1').then(c => c.match(req).then(hit => hit || fetch(req).then(res => {
       if (res.ok) c.put(req, res.clone()); return res; }))));
+    return;
+  }
+  // Page loads (v1.58.6): fetch the request itself, so a host redirect (Cloudflare sends /x.html to /x) goes back to
+  // the browser as a redirect. Following it here and answering a navigation with the redirected response makes
+  // Chrome fail the page load (ERR_FAILED). Cache only plain 200 pages; offline, fall back to the cache, then the app.
+  if (req.mode === 'navigate') {
+    e.respondWith(fetch(req).then(res => {
+      if (res.ok && !res.redirected) { const copy = res.clone(); caches.open(VERSION).then(c => c.put(req, copy)); }
+      return res;
+    }).catch(() => caches.match(req).then(r => r || caches.match('index.html'))));
     return;
   }
   // Network first for the app files, so updates arrive on the next open; cache as fallback offline.

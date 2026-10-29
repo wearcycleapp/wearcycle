@@ -340,6 +340,21 @@ async function main() {
         await page.reload(); await page.waitForSelector('#g-email', { timeout: 30000 });
         if (!(await page.evaluate(() => !!navigator.serviceWorker.controller))) throw new Error('no controller after reload');
         return 'activated, controls the page after reload'; });
+      // v1.58.6: the standalone pages must open while the service worker controls the site (it once followed
+      // Cloudflare's /x.html -> /x redirect itself and Chrome failed the page load with ERR_FAILED).
+      await step('What\'s new and privacy open with the service worker in control', async () => {
+        const out = [];
+        for (const [path, want] of [['/whats-new.html?lang=fr', 'Nouveautés'], ['/privacy.html?lang=fr', 'confidentialité']]) {
+          const tab = await ctx.newPage();
+          try {
+            const res = await tab.goto(BASE + path, { waitUntil: 'load', timeout: 30000 });
+            if (!res || !res.ok()) throw new Error(path + ': HTTP ' + (res && res.status()));
+            const h1 = await tab.evaluate(() => (document.querySelector('h1') || {}).textContent || '');
+            if (!h1.includes(want)) throw new Error(path + ': heading "' + h1 + '"');
+            out.push(path.split('?')[0] + ' -> ' + new URL(tab.url()).pathname);
+          } finally { await tab.close(); }
+        }
+        return out.join(', ') + ', both in French'; });
       const p = logProblems(log); check('Signed out: no CSP violations, failed requests or console errors', p.length ? 'FAIL' : 'PASS', p.length ? p.slice(0, 3).join(' | ') : '');
       await ctx.close();
     }

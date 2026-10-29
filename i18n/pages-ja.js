@@ -87,5 +87,6 @@ I18N.add("ja",{
 "Clear reasons when a photo could not be read, and cut-outs are tried again.": "写真を読み取れなかったときに理由をはっきり表示し、切り抜きを再試行します。",
 "Fixed": "修正",
 "You can add a belt back after leaving it out.": "ベルトを外した後でも、もう一度追加できます。",
-"A custom color palette, respected by every outfit option.": "カスタムカラーパレット。すべてのコーデ候補に反映されます。"
+"A custom color palette, respected by every outfit option.": "カスタムカラーパレット。すべてのコーデ候補に反映されます。",
+"This page and the privacy notice open again from the installed app.": "インストールしたアプリから、このページとプライバシー通知が再び開けるようになりました。"
 });

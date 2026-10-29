@@ -87,5 +87,6 @@ I18N.add("fr",{
 "Clear reasons when a photo could not be read, and cut-outs are tried again.": "Des raisons claires quand une photo n’a pas pu être lue, et les détourages sont réessayés.",
 "Fixed": "Corrigé",
 "You can add a belt back after leaving it out.": "Vous pouvez remettre une ceinture après l’avoir retirée.",
-"A custom color palette, respected by every outfit option.": "Une palette de couleurs personnalisée, respectée par toutes les options de tenue."
+"A custom color palette, respected by every outfit option.": "Une palette de couleurs personnalisée, respectée par toutes les options de tenue.",
+"This page and the privacy notice open again from the installed app.": "Cette page et l’avis de confidentialité s’ouvrent de nouveau depuis l’application installée."
 });

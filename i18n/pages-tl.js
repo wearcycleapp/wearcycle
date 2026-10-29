@@ -87,5 +87,6 @@ I18N.add("tl",{
 "Clear reasons when a photo could not be read, and cut-outs are tried again.": "Malinaw na dahilan kapag hindi mabasa ang litrato, at sinusubukang muli ang mga cut-out.",
 "Fixed": "Naayos",
 "You can add a belt back after leaving it out.": "Puwede mong idagdag ulit ang sinturon pagkatapos itong alisin.",
-"A custom color palette, respected by every outfit option.": "Isang custom na color palette, sinusunod ng bawat opsyon ng outfit."
+"A custom color palette, respected by every outfit option.": "Isang custom na color palette, sinusunod ng bawat opsyon ng outfit.",
+"This page and the privacy notice open again from the installed app.": "Bumubukas na ulit ang pahinang ito at ang abiso sa privacy mula sa naka-install na app."
 });

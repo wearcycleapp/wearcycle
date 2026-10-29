@@ -87,5 +87,6 @@ I18N.add("hi",{
 "Clear reasons when a photo could not be read, and cut-outs are tried again.": "फ़ोटो न पढ़ी जा सके तो साफ़ कारण, और कट-आउट फिर से आज़माए जाते हैं।",
 "Fixed": "ठीक किया",
 "You can add a belt back after leaving it out.": "बेल्ट हटाने के बाद आप उसे फिर से जोड़ सकते हैं।",
-"A custom color palette, respected by every outfit option.": "अपनी पसंद की रंग पैलेट, जिसका हर आउटफ़िट विकल्प पालन करता है।"
+"A custom color palette, respected by every outfit option.": "अपनी पसंद की रंग पैलेट, जिसका हर आउटफ़िट विकल्प पालन करता है।",
+"This page and the privacy notice open again from the installed app.": "यह पेज और प्राइवेसी सूचना अब इंस्टॉल किए गए ऐप से फिर खुलते हैं।"
 });
