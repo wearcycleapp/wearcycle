@@ -9,6 +9,8 @@
   function stored(){ try{ return localStorage.getItem('wearcycle.lang'); }catch(e){ return null; } }
   function existingUser(){ try{ for(var i=0;i<localStorage.length;i++){ var k=localStorage.key(i); if(/^(wardrobe\.|wearcycle\.)/.test(k)) return true; } }catch(e){} return false; }
   function pick(){
+    // ?lang=xx on the standalone pages (What's new, privacy) shows that language without changing the app's choice
+    var q=(location.search.match(/[?&]lang=([a-z]{2})\b/)||[])[1]; if(q&&CODES.indexOf(q)>=0) return q;
     var s=stored(); if(s&&CODES.indexOf(s)>=0) return s;
     if(existingUser()) return 'en'; // people already using the app keep English until they choose
     var nav=(navigator.languages||[navigator.language||'en']);
@@ -79,6 +81,8 @@
   I.translate=function(root){ if(lang!=='en') node(root||document.body); };
   I.setLang=function(code){ try{ localStorage.setItem('wearcycle.lang',code); }catch(e){} location.reload(); };
   I.load=function(code,dict){ if(code!==lang) return; I.dict=dict||{}; build(); };
+  // Extra entries for one page (i18n/pages-<lang>.js), added on top of the app dictionary.
+  I.add=function(code,dict){ if(code!==lang) return; for(var k in dict) I.dict[k]=dict[k]; build(); };
   if(lang!=='en'){
     var obs=new MutationObserver(function(ms){ for(var i=0;i<ms.length;i++){ var m=ms[i];
       if(m.type==='characterData') node(m.target);

@@ -1450,5 +1450,10 @@ I18N.load("ja",{
 "An AI service (Claude by Anthropic) reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.": "AIサービス（AnthropicのClaude）は追加した写真を読み取り、状態を確認し、買うべきものを提案します。その写真、または服のテキストリストはアメリカのAnthropicに送信されます。Anthropicは30日以内に削除し、学習には使用しません。オフ：各アイテムのカテゴリ、色、シーンはご自身で設定します（色はWearcycleがスマホ上で推定します）。コーデの質はこれらの情報次第です。",
 "When an AI service (Claude by Anthropic) reads a photo, checks condition or suggests what to buy, the photo or a text list of your clothes goes to Anthropic in the United States. Anthropic deletes it within 30 days and does not train on it.": "AIサービス（AnthropicのClaude）が写真を読み取る、状態を確認する、または購入すべきものを提案するとき、その写真または服のテキストリストが米国のAnthropicに送信されます。Anthropicは30日以内にそれを削除し、学習には使用しません。",
 ": my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.": "に同意します：服、写真、コーデの記録はSupabaseに保存され、追加した写真はAIサービス（AnthropicのClaude、米国）が読み取ります。私は13歳以上です。",
-"{0} of {1} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.": "{0}/{1} · AI機能がオフのため、これらの情報はご自身で入力します。コーデはこれを使ってアイテムを選び、組み合わせます。"
+"{0} of {1} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.": "{0}/{1} · AI機能がオフのため、これらの情報はご自身で入力します。コーデはこれを使ってアイテムを選び、組み合わせます。",
+"What's new": "新機能",
+"Changes to the app, newest first.": "アプリの変更内容（新しい順）。",
+"Wearcycle was updated.": "Wearcycleがアップデートされました。",
+"See what's new": "新機能を見る",
+"Dismiss": "閉じる"
 });

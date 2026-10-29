@@ -93,6 +93,27 @@ async function headersCheck() {
   if (bad.length) throw new Error(bad.join('; '));
   return Object.keys(set).length + ' headers as in _headers, ' + unset.size + ' removed';
 }
+// The standalone pages (v1.58.5): Cloudflare Pages redirects /x.html to /x, so the _headers rules must cover the address
+// that is finally served. Checks each page in French: 200, ?lang kept through the redirect, the CSP as written in _headers
+// for that address, and the page's translation file reachable.
+async function pagesCheck() {
+  const out = [];
+  for (const page of ['whats-new.html', 'privacy.html']) {
+    const res = await fetch(BASE + '/' + page + '?lang=fr', { cache: 'no-store' });
+    const final = new URL(res.url);
+    if (!res.ok) throw new Error(page + ': HTTP ' + res.status);
+    if (final.searchParams.get('lang') !== 'fr') throw new Error(page + ': ?lang lost on the way to ' + final.pathname);
+    const want = headerRules(final.pathname).set['content-security-policy'];
+    const got = res.headers.get('content-security-policy');
+    if (!want) throw new Error(page + ': _headers has no Content-Security-Policy for ' + final.pathname);
+    if ((got || '').replace(/\s+/g, ' ') !== want.replace(/\s+/g, ' ')) throw new Error(page + ': CSP ' + (got ? 'differs' : 'missing') + ' at ' + final.pathname);
+    const html = await res.text(); if (!html.includes('page.js')) throw new Error(page + ': page.js not in the page');
+    out.push(page + ' -> ' + final.pathname);
+  }
+  const dict = await fetch(BASE + '/i18n/pages-fr.js', { cache: 'no-store' });
+  if (!dict.ok) throw new Error('i18n/pages-fr.js: HTTP ' + dict.status);
+  return out.join(', ') + ', CSP as in _headers, fr texts reachable';
+}
 // Hosts the page may contact: the ones the Content-Security-Policy allows (connect-src and img-src).
 function cspHosts() {
   const csp = headerRules('/').set['content-security-policy'] || '';
@@ -299,6 +320,7 @@ async function main() {
   await step('Cloudflare serves this commit', async () => { const d = await waitForDeploy(); deployed = true; return d; });
   if (!deployed) return finish();
   await step('Security headers on /', headersCheck);
+  await step('Standalone pages: language link, security headers, translated', pagesCheck);
   const { playwright: PW } = await loadDeps(['playwright']);
   const browsers = {};
   try {

@@ -25,8 +25,8 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
 - styles.css: all styling. app.js: all UI (string templates with
   innerHTML), sheets (openSheet), camera, Supabase, Claude calls,
   canvas share image. logic.js: pure rules, no DOM.
-- privacy.html has its own inline CSS. manifest.webmanifest and the
-  theme-color metas carry colors too.
+- privacy.html, whats-new.html: inline CSS; all app languages via i18n/pages-*.js;
+  CSP rules in _headers for /x.html and /x (Cloudflare redirects to /x).
 - _headers (Cloudflare) sets the security headers and, on the HTML pages,
   the Content-Security-Policy. No inline <script> in index.html (theme.js
   and swreg.js); a new outside service must be added to connect-src or
@@ -59,6 +59,7 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
    in the release note which checks could not run and why.
 4. APP_VERSION in app.js and VERSION in sw.js bumped to the same value
    (app changes only); sw.js non-empty and lists every shell file.
+   Add it to whats-new.html in plain words, translated in i18n/pages-*.js.
 5. Fast-forward main to preview; log it in Project doc claude/wardrobe-app-decisions.md.
 
 ## Checks (Claude's container)

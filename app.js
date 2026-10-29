@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.4';
+const APP_VERSION='1.58.5';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -725,7 +725,7 @@ function applyHolidayLook(){
   const lg=top.querySelector('.logo'); lg.insertAdjacentHTML('afterend',`<span class="holibadge" aria-hidden="true" style="color:${h.accent}"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span>`);
   top.insertAdjacentHTML('afterend',`<div id="holiBar" class="holibar" style="--hb:${h.accent}"><span class="hbicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span><span class="hbtxt"><b>${h.inDays===0?h.hello:h.label}</b>${h.inDays===0?'':`<span>${whenLabel(h.inDays)}</span>`}</span><button class="btn sm" data-theme-go="${h.id}">Themed outfits</button></div>`);
 }
-function renderAll(){ applyHolidayLook(); renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.textContent='Wearcycle v'+APP_VERSION; }
+function renderAll(){ applyHolidayLook(); renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.innerHTML=`<span data-notr>Wearcycle v${APP_VERSION}</span> · <a href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener" data-wn>What's new</a>`; }
 // Language (v1.57.0, owner 2026-10-27): a globe button in the header and the rail with the current language's own
 // name, a sheet listing the seven languages each in its own name, the first row of Settings, and a one-time
 // suggestion when the phone's language is one Wearcycle has but the app shows another (never switched silently).
@@ -740,13 +740,21 @@ function langSuggest(){ let chosen=null; try{ chosen=localStorage.getItem('wearc
   return `<div class="banner langask" lang="${p}"><div style="flex:1" data-notr><b>${GLOBE_ICON}${esc(LANG_ASK[p][0])}</b></div><button class="btn sm primary" data-lang-use="${p}" data-notr>${esc(LANG_ASK[p][1])}</button><button class="btn sm ghost" data-act="langKeep"><span>Keep</span> <span data-notr>${esc(langName(I18N.lang))}</span></button></div>`; }
 function openLangs(){ openSheet(sheetHead('Language')+`<p class="hint">Item names you typed stay as they are.</p>
    <div class="langlist" role="group" aria-label="Language">${I18N.langs.map(([c,n])=>`<button type="button" class="langopt" data-lang-use="${c}" aria-pressed="${c===I18N.lang}" lang="${c}" data-notr>${esc(n)}${c===I18N.lang?'<span class="mark" aria-hidden="true">✓</span>':''}</button>`).join('')}</div>`); }
+// Standalone pages (What's new, privacy) open in the app's language (v1.58.5).
+function pageUrl(f){ return f+'?lang='+encodeURIComponent(I18N.lang); }
+// After an update, people who already used the app see a one-time notice; new users do not (v1.58.5).
+function whatsNewBanner(){ let seen=null; try{ seen=localStorage.getItem('wearcycle.seenVersion'); }catch(e){}
+  if(seen===APP_VERSION) return '';
+  if(S.tab==='outfits') return ''; // never above the outfit: Wear this must stay in the first screen
+  if(!seen&&!allItems().length){ if(S.loaded) try{ localStorage.setItem('wearcycle.seenVersion',APP_VERSION); }catch(e){} return ''; }
+  return `<div class="banner wnbanner"><div style="flex:1"><b>Wearcycle was updated.</b> <a href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener" data-wn>See what's new</a></div><button class="btn sm ghost" data-act="wnDismiss" aria-label="Dismiss">✕</button></div>`; }
 function renderStatus(){
   document.querySelectorAll('#langBtn .ln,#railLang .ln').forEach(e=>{ e.textContent=langName(I18N.lang); });
   const st=$('#status'); let b='';
   if(!S.online){ st.textContent='Offline'; st.className='status warn'; b='<div class="banner"><div><b>You are offline.</b> Showing the last saved copy. Changes and automatic features need a connection.</div></div>'; }
   else if(S.fromCache){ st.textContent='Syncing'; st.className='status'; }
   else { st.textContent=''; st.className='status ok hidden'; }
-  b+=langSuggest();
+  b+=langSuggest(); b+=whatsNewBanner();
   if(S.online && S.installEvt && !LS.get('wardrobe.installDismissed')) b+='<div class="banner" style="background:var(--accent-soft)"><div style="flex:1"><b style="color:var(--accent)">Install Wearcycle</b> to open it from your home screen like any app.</div><button class="btn sm primary" data-act="install">Install</button><button class="btn sm ghost" data-act="installNo">Later</button></div>';
   $('#banner').innerHTML=b;
   $('#addBtn').hidden=S.tab!=='closet';
@@ -1355,6 +1363,7 @@ function wishlistText(){
   return [I18N.tr('My wish list (made with Wearcycle)')].concat(lines).concat(note?[I18N.t('Note: {a}',{a:note})]:[]).join('\n');
 }
 document.addEventListener('change',e=>{ if(e.target.matches&&e.target.matches('#sheetRoot .wlpick input')) wlMeasVisible(); });
+document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('a[data-wn]')){ try{ localStorage.setItem('wearcycle.seenVersion',APP_VERSION); }catch(err){} setTimeout(renderStatus,0); } });
 document.addEventListener('input',e=>{ const t=e.target; if(t.matches&&t.matches('#sheetRoot .wlmgrp input')){ delete t.dataset.cm; t.removeAttribute('aria-invalid'); }
   if(t.matches&&t.matches('#sheetRoot .wl input, #sheetRoot .wlmgrp input')&&$('#wl-err')&&!document.querySelector('#sheetRoot [aria-invalid="true"]:not(#'+CSS.escape(t.id)+')')) $('#wl-err').textContent=''; });
 document.addEventListener('input',e=>{ const i=e.target; if(!i.matches||!i.matches('#sheetRoot .wlsize input')) return; i.removeAttribute('aria-invalid');
@@ -1774,9 +1783,10 @@ function openSettings(){
    ${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}
    <p class="hint" id="set-status">Changes save automatically.</p>
    <h3>Help</h3>
-   <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev">›</span></button></div>
+   <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev">›</span></button>
+   <a class="li lirow" href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener" data-wn><div class="txt"><b>What's new</b><span>Changes to the app, newest first.</span></div><span class="chev">›</span></a></div>
    <h3>Privacy and your data</h3>
-   <div class="panel"><a class="li lirow" href="privacy.html" target="_blank" rel="noopener"><div class="txt"><b>Privacy notice</b><span>What is stored, where, who processes it, and your rights.</span></div><span class="chev">›</span></a>
+   <div class="panel"><a class="li lirow" href="${pageUrl('privacy.html')}" target="_blank" rel="noopener"><div class="txt"><b>Privacy notice</b><span>What is stored, where, who processes it, and your rights.</span></div><span class="chev">›</span></a>
    <label class="li"><div class="txt"><b>AI features</b><span>An AI service (Claude by Anthropic) reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.</span></div><input type="checkbox" id="claudeT" ${claudeOn()?'checked':''}></label>
    <button class="li lirow" data-act="export"><div class="txt"><b>Download my data</b><span>Your clothes, outfit log and settings as a file, plus your photos, in one .zip.</span></div><span class="chev">›</span></button>
    <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data and account</b><span>Removes your clothes, photos, outfit log and settings from the server, and closes your account.</span></div><span class="chev">›</span></button></div>
@@ -1854,7 +1864,7 @@ function privacyCheck(){
     <li>When an AI service (Claude by Anthropic) reads a photo, checks condition or suggests what to buy, the photo or a text list of your clothes goes to Anthropic in the United States. Anthropic deletes it within 30 days and does not train on it.</li>
     <li>Data processed in another country can be accessed by that country's courts and authorities under its laws.</li>
     <li>You can download or delete everything, or turn AI features off, at any time in Settings.</li></ul>
-   <p class="hint"><a href="privacy.html" target="_blank" rel="noopener">Read the full privacy notice</a></p>
+   <p class="hint"><a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">Read the full privacy notice</a></p>
    <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn ghost" data-act="privacyNoClaude">Agree, but turn AI features off</button></div>
    <p class="hint">Without AI features, you set each piece's category, colors and occasions yourself, about 20 seconds per piece. Outfits are only as good as those details.</p>`);
 }
@@ -2449,6 +2459,7 @@ document.addEventListener('click',async e=>{
     case 'inspoMerge': inspoSave($('#inspo-into')?.value||null); return;
     case 'inspoDiscard': INSPO=null; closeSheet(); return;
     case 'inspoSee': inspoSee(); return;
+    case 'wnDismiss': try{ localStorage.setItem('wearcycle.seenVersion',APP_VERSION); }catch(e){} renderStatus(); return;
     case 'scanStyles': scanStyles(); return;
     case 'adjust': openAdjust(); return;
     case 'reminders': openReminders(); return;
@@ -2624,8 +2635,8 @@ function showLogin(msg,mode){
     <div class="field"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email"></div>
     ${reset?'':pwField('g-pass',up?'Password (8+ characters)':'Password',up?'new-password':'current-password')}
     ${up?pwField('g-pass2','Confirm password','new-password'):''}
-    ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
-      :'<p class="hint">How your data is handled: <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</p>'}
+    ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
+      :`<p class="hint">How your data is handled: <a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">privacy notice</a>.</p>`}
     <p class="err" id="g-err">${esc(msg||'')}</p>
     ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back" style="margin:0">Back to sign in</button>'
       :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'':'<button class="linkbtn" id="g-forgot" style="margin:0">Forgot password?</button>'}`}

@@ -2,6 +2,8 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 
 <title>Wearcycle privacy</title><link rel="icon" href="icons/logo-icon.svg">
+<script src="i18n.js"></script>
+<script src="i18n/pages.js"></script>
 <style>
 :root{--bg:#f6f4f1;--ink:#1b2433;--muted:#5b6270;--line:#e2ded8}
 @media (prefers-color-scheme:dark){:root{--bg:#12161e;--ink:#eceef2;--muted:#9aa2b0;--line:#2e3646}}
@@ -9,8 +11,13 @@ body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,-ap
 main{max-width:680px;margin:0 auto;padding:32px 16px 64px}
 h1{font-size:28px;margin:0 0 4px}h2{font-size:18px;margin:28px 0 6px}p,li{color:var(--muted)}b{color:var(--ink)}
 a{color:inherit}table{border-collapse:collapse;width:100%;font-size:14px}td,th{border-top:1px solid var(--line);padding:8px 6px;text-align:left;vertical-align:top;color:var(--muted)}th{color:var(--ink)}
+nav.langs{display:flex;flex-wrap:wrap;gap:4px 14px;margin:0 0 20px;font-size:14px}
+nav.langs a{color:var(--muted);text-decoration:none;padding:6px 0}
+nav.langs a[aria-current]{color:var(--ink);font-weight:700;text-decoration:underline;text-underline-offset:3px}
 </style></head><body><main>
+<nav class="langs" id="langs" aria-label="Language"></nav>
 <h1>Privacy at Wearcycle</h1>
+<p class="trnote" id="trnote" hidden>This translation was made with AI and is for convenience. If it differs from the English version, the English version applies.</p>
 <p>Last updated October 11, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).</p>
 
 <h2>Who is responsible</h2>
@@ -30,7 +37,7 @@ a{color:inherit}table{border-collapse:collapse;width:100%;font-size:14px}td,th{b
 <h2>Who processes it, and where</h2>
 <ul>
 <li><b>Supabase, Inc.</b> (a US company) hosts your account, database, photos and the small server function that talks to Claude. Row-level security means only your signed-in account can read your rows and files. Supabase also keeps sign-in and server logs, which include your IP address.</li>
-<li><b>Anthropic (Claude), United States.</b> When Claude reads a photo you add, checks a piece's condition, learns a look from a photo, or suggests what to buy, that photo or a text list of your clothes is sent to Anthropic's API. Anthropic states that it deletes API inputs and outputs within 30 days (longer only if a request is flagged for breaking its usage policy) and does not train its models on them. You can turn Claude features off in Settings.</li>
+<li><b>Anthropic (Claude), United States.</b> When Claude reads a photo you add, checks a piece's condition, learns a look from a photo, or suggests what to buy, that photo or a text list of your clothes is sent to Anthropic's API. Anthropic states that it deletes API inputs and outputs within 30 days (longer only if a request is flagged for breaking its usage policy) and does not train its models on them. You can turn AI features off in Settings.</li>
 <li><b>Open-Meteo</b> (forecast) receives rounded coordinates, and <b>Zippopotam.us</b> receives a postal code you type. Only if you turn on weather.</li>
 <li><b>Google (Gmail)</b> delivers sign-in emails to your address.</li>
 <li><b>Cloudflare, Inc.</b> (a US company) serves the app's files at wearcycle.app and registers the domain; like any web host it receives your IP address and browser details when you open the app.</li>
@@ -62,4 +69,4 @@ a{color:inherit}table{border-collapse:collapse;width:100%;font-size:14px}td,th{b
 <h2>Changes</h2>
 <p>If this notice changes in a way that matters, the app shows a short summary and asks again before carrying on.</p>
 <p><a href="./">Back to Wearcycle</a></p>
-</main></body></html>
+</main><script src="page.js"></script></body></html>

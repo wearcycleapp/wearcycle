@@ -1450,5 +1450,10 @@ I18N.load("hi",{
 "An AI service (Claude by Anthropic) reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.": "एक AI टूल (Anthropic का Claude) आपकी जोड़ी गई फ़ोटो पढ़ता है, हालत जाँचता है और सुझाता है कि क्या ख़रीदें। ये फ़ोटो, या आपके कपड़ों की टेक्स्ट सूची, अमेरिका में Anthropic को जाती हैं, जो इन्हें 30 दिनों के अंदर मिटा देता है और इन पर ट्रेनिंग नहीं करता। बंद: हर पीस की कैटेगरी, रंग और मौके आप खुद तय करते हैं (Wearcycle आपके फ़ोन पर रंग का अनुमान लगाता है)। आउटफ़िट उतने ही अच्छे होते हैं जितनी ये जानकारी।",
 "When an AI service (Claude by Anthropic) reads a photo, checks condition or suggests what to buy, the photo or a text list of your clothes goes to Anthropic in the United States. Anthropic deletes it within 30 days and does not train on it.": "जब एक AI टूल (Anthropic का Claude) कोई फ़ोटो पढ़ता है, हालत जाँचता है या बताता है कि क्या ख़रीदें, तो वह फ़ोटो या आपके कपड़ों की टेक्स्ट सूची अमेरिका में Anthropic को जाती है। Anthropic उसे 30 दिनों के अंदर हटा देता है और उस पर ट्रेनिंग नहीं करता।",
 ": my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.": " से: मेरे कपड़े, फ़ोटो और आउटफ़िट लॉग Supabase पर सेव होते हैं, और मेरी जोड़ी गई फ़ोटो एक AI टूल (Anthropic का Claude, अमेरिका) पढ़ता है। मेरी उम्र 13 साल या उससे ज़्यादा है।",
-"{0} of {1} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.": "{0} / {1} · AI सुविधाएँ बंद हैं, इसलिए ये जानकारी आप देते हैं। आउटफ़िट इन्हीं से पीस चुनते और मिलाते हैं।"
+"{0} of {1} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.": "{0} / {1} · AI सुविधाएँ बंद हैं, इसलिए ये जानकारी आप देते हैं। आउटफ़िट इन्हीं से पीस चुनते और मिलाते हैं।",
+"What's new": "नया क्या है",
+"Changes to the app, newest first.": "ऐप में बदलाव, सबसे नए पहले।",
+"Wearcycle was updated.": "Wearcycle अपडेट हुआ।",
+"See what's new": "देखें नया क्या है",
+"Dismiss": "बंद करें"
 });

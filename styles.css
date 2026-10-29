@@ -116,6 +116,9 @@ header.top .status:not(.hidden)+.langbtn{margin-left:0}
 @media (max-width:379.98px){ header.top .langbtn .ln{display:none} }
 #railLang{display:none}
 .banner.langask b{display:inline-flex;align-items:center;gap:8px}
+.wnbanner a{color:inherit;font-weight:700;text-underline-offset:3px}
+.wnbanner [data-act="wnDismiss"]{min-width:44px;min-height:44px}
+.version a{color:inherit;text-underline-offset:3px}
 .banner.langask svg{width:18px;height:18px;flex:none}
 .langlist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}
 .langopt{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 14px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:500 16px var(--f-body);text-align:left;cursor:pointer}

@@ -23,3 +23,12 @@
 
 /privacy.html
   Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+
+/privacy
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+
+/whats-new
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests
+
+/whats-new.html
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co; font-src 'self'; connect-src 'self' data: blob: https://leprztleupnypeuhunrb.supabase.co wss://leprztleupnypeuhunrb.supabase.co https://api.open-meteo.com https://geocoding-api.open-meteo.com https://api.zippopotam.us; media-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests

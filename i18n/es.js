@@ -1407,7 +1407,7 @@ I18N.load("es",{
 "See outfits in this style": "Ver atuendos de este estilo",
 "Saved {a}.": "Guardado: {a}.",
 "In the colors of your {a} style": "En los colores de tu estilo {a}",
-"AI features are off. Turn them on in Settings, under Privacy and your data.": "Las funciones de IA están desactivadas. Actívalas en Ajustes, en Privacidad y tus datos.",
+"AI features are off. Turn them on in Settings, under Privacy and your data.": "Las funciones de IA están desactivadas. Actívalas en Configuración, en Privacidad y tus datos.",
 "You are offline. This needs a connection.": "Estás sin conexión. Esto necesita conexión.",
 "You have reached today’s limit for this feature. It resets tomorrow.": "Llegaste al límite de hoy para esta función. Se reinicia mañana.",
 "Could not get an answer ({a}). Try again.": "No se pudo obtener una respuesta ({a}). Inténtalo de nuevo.",
@@ -1435,10 +1435,10 @@ I18N.load("es",{
 "The app looks at {0} top or jacket once (one small request each). New photos are checked when they are read.": "La app revisa {0} parte de arriba o chaqueta una vez (una pequeña solicitud cada una). Las fotos nuevas se revisan al leerse.",
 "The app looks at {0} tops and jackets once (one small request each). New photos are checked when they are read.": "La app revisa {0} partes de arriba y chaquetas una vez (una pequeña solicitud cada una). Las fotos nuevas se revisan al leerse.",
 "AI features": "Funciones de IA",
-"You can download or delete everything, or turn AI features off, at any time in Settings.": "Puedes descargar o borrar todo, o desactivar las funciones de IA, en cualquier momento en Ajustes.",
+"You can download or delete everything, or turn AI features off, at any time in Settings.": "Puedes descargar o borrar todo, o desactivar las funciones de IA, en cualquier momento en Configuración.",
 "Agree, but turn AI features off": "Acepto, pero desactiva las funciones de IA",
 "Without AI features, you set each piece's category, colors and occasions yourself, about 20 seconds per piece. Outfits are only as good as those details.": "Sin las funciones de IA, tú eliges la categoría, los colores y las ocasiones de cada prenda, unos 20 segundos por prenda. Los conjuntos solo son tan buenos como esos datos.",
-"AI features are off. When you add clothes, you will set their category, colors and occasions. Turn them on any time in Settings.": "Las funciones de IA están desactivadas. Al agregar ropa, elegirás su categoría, colores y ocasiones. Actívalas cuando quieras en Ajustes.",
+"AI features are off. When you add clothes, you will set their category, colors and occasions. Turn them on any time in Settings.": "Las funciones de IA están desactivadas. Al agregar ropa, elegirás su categoría, colores y ocasiones. Actívalas cuando quieras en Configuración.",
 "AI features on.": "Funciones de IA activadas.",
 "AI features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.": "Funciones de IA desactivadas. No se envía nada más a Anthropic. Al agregar ropa, elegirás su categoría, colores y ocasiones.",
 "AI": "IA",
@@ -1450,5 +1450,10 @@ I18N.load("es",{
 "An AI service (Claude by Anthropic) reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.": "Un servicio de IA (Claude de Anthropic) lee las fotos que agregas, revisa el estado y sugiere qué comprar. Esas fotos, o una lista en texto de tu ropa, se envían a Anthropic en Estados Unidos, que las elimina en un plazo de 30 días y no entrena con ellas. Desactivado: tú eliges la categoría, los colores y las ocasiones de cada prenda (Wearcycle adivina el color en tu teléfono). Los conjuntos solo son tan buenos como esos datos.",
 "When an AI service (Claude by Anthropic) reads a photo, checks condition or suggests what to buy, the photo or a text list of your clothes goes to Anthropic in the United States. Anthropic deletes it within 30 days and does not train on it.": "Cuando un servicio de IA (Claude de Anthropic) lee una foto, revisa el estado o sugiere qué comprar, la foto o una lista en texto de tu ropa se envía a Anthropic en Estados Unidos. Anthropic la elimina en un plazo de 30 días y no entrena con ella.",
 ": my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.": ": mi ropa, mis fotos y mi registro de conjuntos se guardan en Supabase, y un servicio de IA (Claude de Anthropic, Estados Unidos) lee las fotos que agrego. Tengo 13 años o más.",
-"{0} of {1} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.": "{0} de {1} · Las funciones de IA están desactivadas, así que estos datos los pones tú. Los conjuntos los usan para elegir y combinar prendas."
+"{0} of {1} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.": "{0} de {1} · Las funciones de IA están desactivadas, así que estos datos los pones tú. Los conjuntos los usan para elegir y combinar prendas.",
+"What's new": "Novedades",
+"Changes to the app, newest first.": "Cambios en la app, del más reciente al más antiguo.",
+"Wearcycle was updated.": "Wearcycle se actualizó.",
+"See what's new": "Ver las novedades",
+"Dismiss": "Cerrar"
 });
