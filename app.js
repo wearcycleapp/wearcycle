@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.3';
+const APP_VERSION='1.58.4';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -210,8 +210,8 @@ function removePhoto(path){ if(path&&sb) sb.storage.from('photos').remove([path]
 const PRIVACY_V='2026-10-07'; // bump when the privacy notice changes in a way people should see again
 function claudeOn(){ return S.settings.claude!==false; }
 async function callClaude(task,payload){
-  if(!claudeOn()) throw {friendly:'Claude features are off. Turn them on in Settings, under Privacy and your data.'};
-  if(!canWrite()) throw {friendly:'You are offline. Claude needs a connection.'};
+  if(!claudeOn()) throw {friendly:'AI features are off. Turn them on in Settings, under Privacy and your data.'};
+  if(!canWrite()) throw {friendly:'You are offline. This needs a connection.'};
   const {data,error}=await sb.functions.invoke('claude',{body:Object.assign({task,lang:I18N.lang},payload)});
   if(error){
     let status=error.context&&error.context.status, detail='';
@@ -220,14 +220,14 @@ async function callClaude(task,payload){
     if(status===401) throw {friendly:'Your sign-in expired. Sign out and back in.'};
     if(detail==='unknown_task') throw {friendly:'Update the "claude" function in Supabase to the latest index.ts first.'};
     if(detail==='missing_api_key') throw {friendly:'The Anthropic API key is not set on the server (setup guide, step 5).'};
-    if(detail==='daily_limit') throw {friendly:'You have reached today\u2019s limit for this Claude feature. It resets tomorrow.'};
+    if(detail==='daily_limit') throw {friendly:'You have reached today\u2019s limit for this feature. It resets tomorrow.'};
     if(status===429||detail==='rate_limited') throw {friendly:'Too many requests right now. Try again in a minute.'};
-    throw {friendly:'Claude could not answer'+(detail?' ('+detail+')':'')+'. Try again.'};
+    throw {friendly:'Could not get an answer'+(detail?' ('+detail+')':'')+'. Try again.'};
   }
-  if(!data||data.error) throw {friendly:'Claude could not read that'+(data&&data.error?' ('+data.error+')':'')+'.'};
+  if(!data||data.error) throw {friendly:'Could not read that'+(data&&data.error?' ('+data.error+')':'')+'.'};
   return data.result;
 }
-const aiMsg=e=>(e&&e.friendly)||(netErr(e)?'The connection dropped. Try again when you are back online.':'Claude could not answer right now. Try again.');
+const aiMsg=e=>(e&&e.friendly)||(netErr(e)?'The connection dropped. Try again when you are back online.':'Could not get an answer right now. Try again.');
 function netErr(e){ const m=String(e&&(e.message||e)||''); return (typeof navigator!=='undefined'&&navigator.onLine===false)||/fetch|network|load failed|timed? ?out|abort/i.test(m); }
 // Claude gets a 1024 px copy: enough to read the piece, and it keeps requests small (photos are stored at up to 2048 px).
 async function aiTag(blob){ return callClaude('tag',{image:await blobToBase64(await shrink(blob,1024))}); }
@@ -676,17 +676,17 @@ async function addPhotos(blobs){
   S.busy=true; let done=0, aiFail=0, aiWhy='', aiStop=claudeOn()?'':'off'; const added=[];
   const list=blobs.slice(0,40);
   for(const b of list){
-    job('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Claude is reading it'),done/list.length*100);
+    job('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Reading the photo'),done/list.length*100);
     let p; try{ p=await prepare(b); }catch(e){ continue; }
     const now=todayISO();
     const it={id:uuid(),name:'New item '+(done+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
     const path=await uploadPhoto(p.full); if(path) it.photo=path;
     if(!claudeOn()){ try{ const g=await guessColors(p.full); if(g.length){ it.colors=[g[0]]; it.colorGuess=g; } }catch(e){} }
-    if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else { aiFail++; aiWhy=aiWhy||'Claude could not answer right now. Try again.'; } }catch(e){ aiFail++; aiWhy=aiWhy||aiMsg(e); if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
+    if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else { aiFail++; aiWhy=aiWhy||'Could not get an answer right now. Try again.'; } }catch(e){ aiFail++; aiWhy=aiWhy||aiMsg(e); if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
     if(await writeItem(it)){ done++; added.push(it); }
   }
   S.busy=false; job(''); renderAll();
-  if(claudeOn()) toast(['Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'].concat(aiStop?[aiStop]:aiFail?['Claude could not read '+aiFail+'.',aiWhy,'Open the piece and tap Fill in with Claude to try again.']:[]),aiFail||aiStop?0:7000);
+  if(claudeOn()) toast(['Added '+done+' item'+(done===1?'':'s')+'. Open each one marked Review to confirm the details.'].concat(aiStop?[aiStop]:aiFail?['Photos not read: '+aiFail+'.',aiWhy,'Open the piece and tap Fill in automatically to try again.']:[]),aiFail||aiStop?0:7000);
   else toast('Added '+done+' item'+(done===1?'':'s')+'.',2500);
   goTab('closet');
   autoCuts(added.map(it=>byId(it.id)).filter(Boolean));
@@ -743,7 +743,7 @@ function openLangs(){ openSheet(sheetHead('Language')+`<p class="hint">Item name
 function renderStatus(){
   document.querySelectorAll('#langBtn .ln,#railLang .ln').forEach(e=>{ e.textContent=langName(I18N.lang); });
   const st=$('#status'); let b='';
-  if(!S.online){ st.textContent='Offline'; st.className='status warn'; b='<div class="banner"><div><b>You are offline.</b> Showing the last saved copy. Changes and Claude need a connection.</div></div>'; }
+  if(!S.online){ st.textContent='Offline'; st.className='status warn'; b='<div class="banner"><div><b>You are offline.</b> Showing the last saved copy. Changes and automatic features need a connection.</div></div>'; }
   else if(S.fromCache){ st.textContent='Syncing'; st.className='status'; }
   else { st.textContent=''; st.className='status ok hidden'; }
   b+=langSuggest();
@@ -756,7 +756,7 @@ function renderStatus(){
 function emptyCloset(){
   return `<div class="empty"><h3>Your closet is empty</h3>
     <ol><li>Tap <b>Take photos</b> and photograph your clothes one piece at a time, on a bed or floor with good light.</li>
-    <li>Tap the counter when you are done. Claude fills in category, colors and condition for each one.</li>
+    <li>Tap Done when you are finished. The app fills in category, colors and condition for each one.</li>
     <li>Open items marked <b>Review</b> in Closet to confirm. Two tops, one bottom and one pair of shoes per occasion are enough to get outfits.</li></ol>
     <div class="row"><button class="btn primary" data-act="camBatch">Take photos</button><button class="btn" data-act="bulk">Choose from gallery</button>${S.examples.length?'':'<button class="btn ghost" data-act="examples">Example closet</button>'}</div>
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
@@ -1198,7 +1198,7 @@ function renderCloset(){ setTimeout(hydrateCuts,0);
     setTimeout(hydrateCuts,0); return; }
   const list=items.filter(it=>S.cat==='all'||it.cat===S.cat).sort((a,b)=>(b.review?1:0)-(a.review?1:0)||CATS.findIndex(c=>c.id===a.cat)-CATS.findIndex(c=>c.id===b.cat)||String(a.name).localeCompare(b.name));
   const now=Date.now(); const reviews=items.filter(i=>i.review).length;
-  box.innerHTML=(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what Claude filled in. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
+  box.innerHTML=(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what was filled in automatically. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
    (S.examples.length?`<div class="row" style="margin-bottom:12px"><span class="hint">Items marked <span class="ex">Example</span> are not saved.</span><span class="spacer"></span><button class="btn sm ghost" data-act="clearEx">Remove examples</button></div>`:'')+
    '<div class="grid">'+list.map(it=>{ const fl=careFlags(it,now,S.settings); const bad=fl.some(f=>f.kind==='retire'); return `<button class="card" data-edit="${esc(it.id)}">
     <div class="vis ${it.cut?'studio':''}">${it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}" class="${it.box?'fitted':'cover'}">`:visual(it)}</div><div class="body"><div class="name">${esc(it.name)}</div>
@@ -1445,10 +1445,10 @@ function renderShop(){
   const saved=S.settings.savedIdeas||[], savedK=new Set(saved.map(ideaKey));
   const when=at?new Date(at).toLocaleDateString(I18N.locale,{month:'short',day:'numeric'}):'';
   const savedP=saved.length?`<div class="ideash"><h4>Saved ideas <span class="n">${saved.length}</span></h4></div>${saved.map(x=>`<div class="idearow">${ideaLink(x)}<button type="button" class="iconbtn ideadel" data-idea-del="${esc(x.id)}" aria-label="Remove from saved ideas">✕</button></div>`).join('')}`:'';
-  const ai=`<div class="panel"><div class="panel-h"><h3>Ideas from Claude</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
+  const ai=`<div class="panel"><div class="panel-h"><h3>Shopping ideas</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
      ${savedP}
-     ${list?fold('ideaslist',list.length===1?'1 latest idea':`${list.length} latest ideas`,when?`Suggested ${when}`:'','',list.map((x,k)=>{ const on=savedK.has(ideaKey(x)); return `<div class="idearow">${ideaLink(x)}<button type="button" class="btn sm ideasave" data-idea-save="${k}" aria-pressed="${on}">${on?'Saved':'Save'}</button></div>`; }).join('')):`<div class="li"><span class="hint">Claude reads a summary of your closet and the gaps above, and suggests specific pieces. Billed to your Anthropic API account.</span></div>`}</div>`;
+     ${list?fold('ideaslist',list.length===1?'1 latest idea':`${list.length} latest ideas`,when?`Suggested ${when}`:'','',list.map((x,k)=>{ const on=savedK.has(ideaKey(x)); return `<div class="idearow">${ideaLink(x)}<button type="button" class="btn sm ideasave" data-idea-save="${k}" aria-pressed="${on}">${on?'Saved':'Save'}</button></div>`; }).join('')):`<div class="li"><span class="hint">AI reads a summary of your closet and the gaps above, and suggests specific pieces.</span></div>`}</div>`;
   const ask=S.settings.dept?'':`<div class="panel"><div class="li"><div class="txt"><b>Which department do you shop in?</b><span>${DEPT_HINT}</span>${deptChips()}</div></div></div>`;
   box.innerHTML=`<div class="shopv">${summary}${ask}<div class="scol">${buy}${occ}</div><div class="scol">${comingP}${styleP}${ai}</div></div>`;
 }
@@ -1500,7 +1500,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
    <div class="photo"><div class="pv ${pv||it.photo?'zoomable':''} ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}" ${pv||it.photo?`data-view="${esc(ED.id||'')}" role="button" aria-label="See full size"`:''}>${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
      <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
-     ${(ED.blob||(it.review&&it.photo&&!isEx(it)))&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in with Claude'}</button>`:''}
+     ${(ED.blob||(it.review&&it.photo&&!isEx(it)))&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in automatically'}</button>`:''}
      ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
 </div></div>
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
@@ -1581,9 +1581,9 @@ function drawCheck(){
    <p class="hint">${esc(it.name)} · currently ${COND[it.cond??4].toLowerCase()} (${it.cond??4}/5). Photograph the most worn area in good light: collar, cuffs, knees or soles.</p>
    <div class="photo"><div class="pv">${CK.preview?`<img src="${esc(CK.preview)}" alt="">`:(thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it))}</div>
     <div class="col"><button type="button" class="btn sm" data-cphoto="cam">Take photo</button><button type="button" class="btn sm ghost" data-cphoto="gal">Choose photo</button>
-    <button type="button" class="btn sm primary" data-ai="check" ${!CK.blob||CK.busy?'disabled':''}>${CK.busy?'Assessing…':'Assess with Claude'}</button>${CK.blob?'':'<span class="hint">Take or choose a photo first.</span>'}</div></div>
+    <button type="button" class="btn sm primary" data-ai="check" ${!CK.blob||CK.busy?'disabled':''}>${CK.busy?'Assessing…':'Check condition from the photo'}</button>${CK.blob?'':'<span class="hint">Take or choose a photo first.</span>'}</div></div>
    ${CK.err?`<p class="err">${esc(CK.err)}</p>`:''}
-   ${r?`<div class="ai"><span class="k">Claude's read · ${esc(r.confidence||'')} confidence</span><div><b>${esc(COND[r.condition]||'')} (${esc(r.condition)}/5)</b>, recommends ${esc(r.recommendation||'')}. ${esc(r.summary||'')}</div>${(r.issues||[]).length?`<ul>${r.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<span class="hint">A photo can miss odors, fit and fabric thinning. Adjust the rating if you know better.</span></div>`:''}
+   ${r?`<div class="ai"><span class="k">AI's read · ${esc(r.confidence||'')} confidence</span><div><b>${esc(COND[r.condition]||'')} (${esc(r.condition)}/5)</b>, recommends ${esc(r.recommendation||'')}. ${esc(r.summary||'')}</div>${(r.issues||[]).length?`<ul>${r.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<span class="hint">A photo can miss odors, fit and fabric thinning. Adjust the rating if you know better.</span></div>`:''}
    <div class="field"><span class="lab">Your rating · ${COND[CK.cond]}</span><div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-ckc="${n}" aria-pressed="${CK.cond===n}"><b>${n}</b><span>${COND[n]}</span></button>`).join('')}</div></div>
    ${CK.blob&&!isEx(it)?`<label class="row hint"><input type="checkbox" id="ck-use" ${CK.usePhoto?'checked':''}> Use this photo as the item photo</label>`:''}
    <div class="row sheet-actions"><button type="button" class="btn primary" data-cksave ${CK.busy?'disabled':''}>Save check</button><button type="button" class="btn ghost" data-close>Cancel</button></div>`);
@@ -1662,7 +1662,7 @@ function openStyles(){
    <div class="stylegrid">${STYLE_IDS.map(k=>card(k,STYLES[k].label,styleDesc(k))).join('')}
    ${looks().map(x=>card(x.id,x.label,(x.summary||'')+(x.pieces&&x.pieces.length?' · '+x.pieces.join(', '):''),`<span class="lookdel" role="button" data-look-del="${esc(x.id)}">Remove</span>`)).join('')}</div>
    <button class="btn" data-act="inspo">Inspiration from a photo</button>
-   <p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. Claude describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
+   <p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. AI describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
    <div class="field"><span class="lab">For work</span><div class="chips" style="flex-wrap:wrap">${[['','Same as above'],...STYLE_IDS.map(k=>[k,STYLES[k].label]),...looks().map(x=>[x.id,x.label])].map(([k,lb])=>`<button class="chip" data-style-work="${esc(k)}" aria-pressed="${k?st.work.includes(k):!st.work.length}" ${looks().some(x=>x.id===k)?'data-notr':''}>${esc(lb)}</button>`).join('')}</div>
    <p class="hint">Pick one or more, or keep it the same as above. Your work dress code still decides which pieces count for Work.</p></div>`);
 }
@@ -1671,14 +1671,14 @@ function openStyles(){
 // their photo styles. The photo is not kept.
 let INSPO=null;
 function openInspo(){
-  openSheet(sheetHead('Inspiration from a photo')+`<p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. Claude describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
+  openSheet(sheetHead('Inspiration from a photo')+`<p class="hint">Use a photo of an outfit you like: yours, a colleague's or one from Instagram or a store. AI describes only the clothes and saves that description as a style. The photo itself is not kept.</p>
    <div class="inspobtns"><button class="btn primary" data-act="inspoCam">Take a photo</button><button class="btn" data-act="inspoPick">Choose a photo</button></div>`); }
 async function inspoFrom(src){
-  if(!canWrite()){ toast('You are offline. Claude needs a connection.'); return; }
+  if(!canWrite()){ toast('You are offline. This needs a connection.'); return; }
   closeSheet(); const [f]=src==='cam'?await openCamera('look'):await pickFiles(false); if(!f) return;
   job('Reading the look…',40);
   try{ const r=await callClaude('look',{image:await blobToBase64(await shrink(f,1024))}); job('');
-    if(!r||r.error||!Array.isArray(r.pieces)){ toast(r&&r.error?String(r.error):'Claude could not find clothes in that photo.',5000); return; }
+    if(!r||r.error||!Array.isArray(r.pieces)){ toast(r&&r.error?String(r.error):'No clothes found in that photo.',5000); return; }
     INSPO={look:{label:String(r.name||'My look').slice(0,40),base:(r.styles||[]).filter(x=>STYLES[x]).slice(0,3),pieces:r.pieces.map(String).slice(0,10),colors:(r.colors||[]).filter(c=>COLORS[c]).slice(0,5),summary:String(r.summary||'').slice(0,160)},saved:null};
     openInspoResult();
   }catch(e){ job(''); toast(aiMsg(e),6000); }
@@ -1746,12 +1746,12 @@ function openSettings(){
    <h3>Style</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Shopping department</b><span>${DEPT_HINT} Any: searches cover both; style lists use menswear pieces.</span>${deptChips()}</div></div>
    <button class="li lirow" data-act="styles"><div class="txt"><b>Your style</b><span>${esc(styleSummary())}</span></div><span class="chev">›</span></button>
-   <div class="li"><div class="txt"><b>Recognize piece types</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!Array.isArray(i.styles)).length;return n?'Claude looks at '+n+' piece'+(n===1?'':'s')+' once to note the type, pattern, fabric and styles (one small request each). New photos get this when Claude reads them.':'Every piece with a photo has its type and styles.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanStyles">Check</button></div></div></div>
+   <div class="li"><div class="txt"><b>Recognize piece types</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!Array.isArray(i.styles)).length;return n?'The app looks at '+n+' piece'+(n===1?'':'s')+' once to note the type, pattern, fabric and styles (one small request each). New photos get this when they are read.':'Every piece with a photo has its type and styles.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanStyles">Check</button></div></div></div>
    <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(palNow().label)}</b><span>${esc(palDesc(palNow()))}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
    <h3>Weather</h3>
    <div class="panel"><div class="li"><div class="txt"><b>${wxOn()?esc(wxSet().label||'Your location'):'Off'}</b><span>${wxOn()?'Outfits follow today\u2019s forecast.':'Outfits ignore the weather.'}</span></div><div class="acts"><button class="btn sm" data-wx="edit">${wxOn()?'Change':'Set up'}</button></div></div></div>
    <h3>Photos</h3>
-   <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+' photo'+(n===1?'':'s')+' show the background. Claude finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when Claude reads them.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
+   <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+(n===1?' photo shows':' photos show')+' the background. The app finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when they are read.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
    <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div>
    <label class="li"><div class="txt"><b>Enhance how photos look</b><span>Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.</span></div><input type="checkbox" id="enhanceT" ${enhanceOn()?'checked':''}></label>
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
@@ -1765,7 +1765,7 @@ function openSettings(){
      <span class="hint">${esc(DRESS_CODES[(S.settings.work||{}).code||'casual'].desc)} Pieces are sorted into Work automatically from these rules.</span>
      ${[['tees','T-shirts allowed'],['hoodies','Hoodies allowed'],['shorts','Shorts allowed'],['graphics','Big logos, text or prints allowed']].map(([k,l])=>`<label class="row"><input type="checkbox" data-wflag="${k}" ${(Object.assign({},DRESS_CODES[(S.settings.work||{}).code||'casual'],S.settings.work||{}))[k]?'checked':''}> ${l}</label>`).join('')}
    </div>
-   <div class="li"><div class="txt"><b>Find logos and prints</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&['top','outerwear','onepiece'].includes(i.cat)&&typeof i.graphic!=='boolean').length;return n?'Claude looks at '+n+' top'+(n===1?'':'s')+' and jackets once (one small request each). New photos are checked when Claude reads them.':'All tops and jackets are checked.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanGraphics">Check</button></div></div></div>
+   <div class="li"><div class="txt"><b>Find logos and prints</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&['top','outerwear','onepiece'].includes(i.cat)&&typeof i.graphic!=='boolean').length;return n?'The app looks at '+n+(n===1?' top or jacket':' tops and jackets')+' once (one small request each). New photos are checked when they are read.':'All tops and jackets are checked.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanGraphics">Check</button></div></div></div>
    <h3>Laundry</h3>
    <div class="panel"><label class="li"><div class="txt"><b>Track what's in the wash</b><span>Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.</span></div><input type="checkbox" id="laundryT" ${laundryOn()?'checked':''}></label>
     <label class="li"><div class="txt"><b>Put them back automatically</b><span>Off: Wearcycle asks on the Outfits screen. On: pieces return to suggestions after the days below, even if you have not washed them yet.</span></div><input type="checkbox" id="washAutoT" ${S.settings.washAuto?'checked':''}></label></div>
@@ -1777,7 +1777,7 @@ function openSettings(){
    <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev">›</span></button></div>
    <h3>Privacy and your data</h3>
    <div class="panel"><a class="li lirow" href="privacy.html" target="_blank" rel="noopener"><div class="txt"><b>Privacy notice</b><span>What is stored, where, who processes it, and your rights.</span></div><span class="chev">›</span></a>
-   <label class="li"><div class="txt"><b>Claude features</b><span>Claude reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.</span></div><input type="checkbox" id="claudeT" ${claudeOn()?'checked':''}></label>
+   <label class="li"><div class="txt"><b>AI features</b><span>An AI service (Claude by Anthropic) reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.</span></div><input type="checkbox" id="claudeT" ${claudeOn()?'checked':''}></label>
    <button class="li lirow" data-act="export"><div class="txt"><b>Download my data</b><span>Your clothes, outfit log and settings as a file, plus your photos, in one .zip.</span></div><span class="chev">›</span></button>
    <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data and account</b><span>Removes your clothes, photos, outfit log and settings from the server, and closes your account.</span></div><span class="chev">›</span></button></div>
    <div class="row">${FIXED_SERVER?'':'<button class="linkbtn" data-act="server" style="margin:0">Server settings</button>'}<span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
@@ -1795,7 +1795,7 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p><b>Laundry.</b> Each wear counts toward a piece's wash point; when it is reached the piece goes to the wash and leaves suggestions until you mark it clean. Defaults follow laundry experts quoted by Reviewed and Scripps/KSHB: t-shirts, tank tops and socks after every wear; other shirts after 2; sweaters and knits after 5; jeans after 5; smart trousers after 4; shorts and joggers after 2. Anything worn for Sport goes straight to the wash. Jackets, shoes and accessories never go on their own. Change any piece in its More details. Wearcycle cannot tell when you do laundry, so after 7 days (a weekly wash; change it in Settings) the Outfits screen asks whether the wash is done. Returning pieces automatically is optional and off by default, because a wrong guess would suggest clothes that are still dirty.</p>
     <p><b>Neutrals.</b> Black, white, grey, navy, beige, khaki, brown, denim and olive pair with anything. This follows common menswear color guidance; it is a convention, not a law.</p>
     <p><b>Repairs.</b> Mark a piece \u201cNeeds repair\u201d in its More details and note what to fix. Until it is fixed it is suggested only for sport, home and chores, unless you say it is fine anywhere. The Care tab lists it with a link to tailors (or cobblers for shoes, belts and bags, watch repair for watches) near you. Repair pays off: wearing clothes nine months longer cuts their carbon, water and waste footprints by about 20 to 30% each (WRAP, 2015).</p>
-    <p><b>Styles.</b> A style is a consistent set of piece types, fabrics and patterns: Classic, Heritage, Minimal, Street, Sporty and Preppy (common menswear conventions, not rules). Each piece's styles come from Claude's photo reading or, until then, from its name. For work and going out, an outfit gets up to +1.5 when all its main pieces fit your style and -0.5 when none do; with no style picked, Wearcycle learns it from what you logged (5+ outfits in 120 days) at half weight. Mixing street or sporty pieces with classic or preppy ones costs 1 point and shows a note. Looks added from a photo keep only Claude's description of the clothes, never the photo.</p>
+    <p><b>Styles.</b> A style is a consistent set of piece types, fabrics and patterns: Classic, Heritage, Minimal, Street, Sporty and Preppy (common menswear conventions, not rules). Each piece's styles come from the AI's photo reading or, until then, from its name. For work and going out, an outfit gets up to +1.5 when all its main pieces fit your style and -0.5 when none do; with no style picked, Wearcycle learns it from what you logged (5+ outfits in 120 days) at half weight. Mixing street or sporty pieces with classic or preppy ones costs 1 point and shows a note. Looks added from a photo keep only the AI's description of the clothes, never the photo.</p>
     <p><b>Where to donate.</b> The Donate list links to a Google Maps search for clothing drop-offs near your weather place, or near you. Worn-out pieces are worth taking too: Value Village pays charities for textiles even when damaged, and those become insulation, matting or underlay (CBC News, 2017).</p>
     <p><b>Condition bars.</b> Work and going out need 4/5, sport and home 3/5, chores 2/5. A casual garment that drops to 3/5 or 2/5 moves to home and chores automatically. 1/5 goes to the donate list.</p>
     <p><b>Shopping targets.</b> Work: 5 tops (one per weekday), 3 bottoms, 3 pairs of shoes. Going out: 3, 2, 2. Sport and home: 3, 2, 1. Chores: 2, 1, 1. Shoes need a day to air out between wears, so a pair worn on more than half of the last 30 days asks for one more pair. Colors are ranked by how many good combinations a new piece would create with what you own.</p>
@@ -1851,15 +1851,15 @@ function privacyCheck(){
   if($('#sheetRoot').innerHTML) return; // ask on a later open rather than over another screen
   openSheet(sheetHead('Your data and privacy')+`<ul class="plist">
     <li>Your clothes, photos, outfit log and settings are kept in your private Wearcycle account, hosted by Supabase. Only you can read them.</li>
-    <li>When Claude reads a photo, checks condition or suggests what to buy, the photo or a text list of your clothes goes to Anthropic in the United States. Anthropic deletes it within 30 days and does not train on it.</li>
+    <li>When an AI service (Claude by Anthropic) reads a photo, checks condition or suggests what to buy, the photo or a text list of your clothes goes to Anthropic in the United States. Anthropic deletes it within 30 days and does not train on it.</li>
     <li>Data processed in another country can be accessed by that country's courts and authorities under its laws.</li>
-    <li>You can download or delete everything, or turn Claude off, at any time in Settings.</li></ul>
+    <li>You can download or delete everything, or turn AI features off, at any time in Settings.</li></ul>
    <p class="hint"><a href="privacy.html" target="_blank" rel="noopener">Read the full privacy notice</a></p>
-   <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn ghost" data-act="privacyNoClaude">Agree, but turn Claude off</button></div>
-   <p class="hint">Without Claude, you set each piece's category, colors and occasions yourself, about 20 seconds per piece. Outfits are only as good as those details.</p>`);
+   <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn ghost" data-act="privacyNoClaude">Agree, but turn AI features off</button></div>
+   <p class="hint">Without AI features, you set each piece's category, colors and occasions yourself, about 20 seconds per piece. Outfits are only as good as those details.</p>`);
 }
 function privacyAgree(claude){ S.settings.consent={v:PRIVACY_V,at:new Date().toISOString(),how:'notice'}; if(!claude) S.settings.claude=false;
-  saveCache(); queueSettingsSave(); closeSheet(); toast(claude?'Thanks. You can change this in Settings.':'Claude features are off. When you add clothes, you will set their category, colors and occasions. Turn Claude on any time in Settings.',6000); }
+  saveCache(); queueSettingsSave(); closeSheet(); toast(claude?'Thanks. You can change this in Settings.':'AI features are off. When you add clothes, you will set their category, colors and occasions. Turn them on any time in Settings.',6000); }
 
 // A plain .zip (stored, not compressed: photos are already JPEG/PNG) so no library is needed.
 const CRC_T=(()=>{ const t=new Uint32Array(256); for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=c&1?0xEDB88320^(c>>>1):c>>>1; t[n]=c>>>0; } return t; })();
@@ -1931,7 +1931,7 @@ function quickStep(){
   const id=QD.ids[QD.i]; const src=id&&byId(id); if(!src){ closeSheet(); toast('Done. Open any piece in Closet to add more details, like dress level and condition.',5000); return; }
   if(!(QD.it&&QD.it.id===id)){ QD.it=JSON.parse(JSON.stringify(src)); if(/^New item \d+$/.test(QD.it.name||'')) QD.it.cat=null; } const it=QD.it;
   const garment=!it.cat||GARMENT.includes(it.cat);
-  openSheet(sheetHead('What is this?')+`<p class="hint" style="margin-top:-4px">${QD.i+1} of ${QD.ids.length} · Claude is off, so these details come from you. Outfits use them to pick and match pieces.</p>
+  openSheet(sheetHead('What is this?')+`<p class="hint" style="margin-top:-4px">${QD.i+1} of ${QD.ids.length} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.</p>
    <div class="qd"><div class="pv">${visual(it)}</div><div class="field" style="flex:1;margin:0"><label for="qd-name">Name (optional)</label><input type="text" id="qd-name" value="${/^New item \d+$/.test(it.name)?'':esc(it.name)}" placeholder="e.g. Navy flannel shirt" maxlength="60">${I18N.lang==='en'?'<span class="hint">Words like flannel, hoodie or linen help Wearcycle guess style and warmth.</span>':''}</div></div>
    <div class="field"><span class="lab">Category</span><div class="chips" style="flex-wrap:wrap">${QD_CATS.map(c=>`<button type="button" class="chip" data-qdcat="${c}" aria-pressed="${it.cat===c}">${CAT[c].label}</button>`).join('')}</div></div>
    <div class="field"><span class="lab">Colors · main color first</span>${(it.colorGuess||[]).length?`<div class="chips" style="flex-wrap:wrap;margin:0 0 8px"><span class="hint" style="align-self:center">Looks like:</span>${it.colorGuess.map(k=>`<button type="button" class="chip" data-qdcol="${k}" aria-pressed="${(it.colors||[]).includes(k)}"><span class="sw" style="background:${COLORS[k].hex}"></span>${k}</button>`).join('')}</div>`:''}<div class="colors">${Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-qdcol="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('')}</div></div>
@@ -2530,14 +2530,14 @@ document.addEventListener('click',async e=>{
     if(ds.photo){ readEditorFields(); if(ds.photo==='cam'){ const [b]=await openCamera('single'); if(b) editorSetPhoto(b); } else { const [f]=await pickFiles(false); if(f) editorSetPhoto(f); } return; }
     if(ds.ai==='tag'){ readEditorFields(); ED.busy=true; ED.ai=null; drawEditor();
       try{ const blob=ED.blob||await photoBlob(ED.it.photo); const res=await aiTag(blob); if(!ED) return;
-        if(res&&res.error) ED.ai=`<span class="k">Claude</span><div>${esc(res.error)}</div>`;
-        else if(res){ applyAi(ED.it,res); if(validBox(res.box)){ try{ ED.thumb=await cropThumb(blob,res.box); ED.newBox=res.box.map(v=>Math.round(v*1000)/1000); ED.cropChanged=true; }catch(e){} } ED.ai=`<span class="k">Filled in by Claude · ${esc(res.confidence||'')} confidence</span><div>Check each field below before saving.</div>${(res.issues||[]).length?`<ul>${res.issues.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}`; }
-      }catch(err){ if(ED) ED.ai=`<span class="k">Claude</span><div>${esc(aiMsg(err))}</div>`; }
+        if(res&&res.error) ED.ai=`<span class="k">AI</span><div>${esc(res.error)}</div>`;
+        else if(res){ applyAi(ED.it,res); if(validBox(res.box)){ try{ ED.thumb=await cropThumb(blob,res.box); ED.newBox=res.box.map(v=>Math.round(v*1000)/1000); ED.cropChanged=true; }catch(e){} } ED.ai=`<span class="k">Filled in by AI · ${esc(res.confidence||'')} confidence</span><div>Check each field below before saving.</div>${(res.issues||[]).length?`<ul>${res.issues.slice(0,6).map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}`; }
+      }catch(err){ if(ED) ED.ai=`<span class="k">AI</span><div>${esc(aiMsg(err))}</div>`; }
       if(ED){ ED.busy=false; drawEditor(); } return; }
     if(ds.ai==='box'){ readEditorFields(); ED.busy=true; drawEditor();
       try{ const blob=ED.blob||await photoBlob(ED.it.photo); const r=await aiBox(blob); if(!ED) return;
         if(r&&validBox(r.box)){ ED.thumb=await cropThumb(blob,r.box); ED.newBox=r.box.map(v=>Math.round(v*1000)/1000); ED.cropChanged=true; toast('Cropped. Save to keep it.'); }
-        else toast('Claude could not find the item in this photo.'); }
+        else toast('Could not find the item in this photo.'); }
       catch(err){ toast(aiMsg(err),5000); }
       if(ED){ ED.busy=false; drawEditor(); } return; }
     if(ds.uncrop){ readEditorFields(); ED.busy=true; drawEditor();
@@ -2573,7 +2573,7 @@ document.addEventListener('change',e=>{ if(e.target&&(e.target.id==='langSel'||e
   if(e.target&&e.target.id==='autoCutT'){ S.settings.autoCut=e.target.checked; saveCache(); queueSettingsSave(); return; }
   if(e.target&&e.target.id==='holiLookT'){ S.settings.holidayLook=e.target.checked; saveCache(); queueSettingsSave(); renderAll(); return; }
   if(e.target&&e.target.id==='enhanceT'){ S.settings.enhance=e.target.checked; saveCache(); queueSettingsSave(); for(const u of CUT.urls.values()) URL.revokeObjectURL(u); CUT.urls.clear(); ENH.clear(); renderAll(); return; }
-  if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'Claude features on.':'Claude features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.',6000); } });
+  if(e.target&&e.target.id==='claudeT'){ S.settings.claude=e.target.checked; saveCache(); queueSettingsSave(); toast(e.target.checked?'AI features on.':'AI features off. Nothing more is sent to Anthropic. When you add clothes, you will set their category, colors and occasions.',6000); } });
 // Arrow keys step through the piece preview's options (keyboards on Windows and iPad).
 document.addEventListener('keydown',e=>{ if((e.key==='ArrowLeft'||e.key==='ArrowRight')&&!e.altKey&&!e.ctrlKey&&!e.metaKey&&!/^(INPUT|TEXTAREA|SELECT)$/.test((e.target||{}).tagName||'')){
   const b=document.querySelector('#sheetRoot [data-pstep="'+(e.key==='ArrowLeft'?'-1':'1')+'"]'); if(b){ e.preventDefault(); b.click(); return; }
@@ -2624,7 +2624,7 @@ function showLogin(msg,mode){
     <div class="field"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email"></div>
     ${reset?'':pwField('g-pass',up?'Password (8+ characters)':'Password',up?'new-password':'current-password')}
     ${up?pwField('g-pass2','Confirm password','new-password'):''}
-    ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and Claude (Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
+    ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
       :'<p class="hint">How your data is handled: <a href="privacy.html" target="_blank" rel="noopener">privacy notice</a>.</p>'}
     <p class="err" id="g-err">${esc(msg||'')}</p>
     ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back" style="margin:0">Back to sign in</button>'

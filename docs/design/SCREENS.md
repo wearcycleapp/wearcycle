@@ -231,6 +231,11 @@ Built in v1.55.0 (Phase 11 brought forward; proposal "Wearcycle Shop redesign" a
 
 - Each screen phase removes its own overridden declarations and unused rules (the lists above: 70 overridden declarations in total, 2 + 47 + 17 + 2 + 2, plus the unused Outfits rules). Removing them changes nothing on screen; prove it with `node tools/check.mjs --css-pixels --compare <before> --exact` on a before captured in the same session.
 
+## Naming the AI (v1.58.4, owner 2026-10-29)
+
+- Everyday screens describe what a feature does, with "AI" where it matters (Fill in automatically, Shopping ideas, Check condition from the photo, Reading the photo, Filled in by AI, AI features). They do not say Claude.
+- The provider is named only where the app explains where data goes: the AI features switch ("An AI service (Claude by Anthropic) …"), the consent sheet and sign-up checkbox, and privacy.html. Keep it there.
+
 ## Anti-patterns
 
 Do not generate: dashboard grids, generic stat cards, endless pill rows, endless rounded cards, cards inside cards, decorative gradients, purple or blue AI styling, glassmorphism, neon, meaningless badges, unneeded progress bars, icon-heavy headings, hover-only information, or large unused desktop space caused by a phone max-width.
