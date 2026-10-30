@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.7';
+const APP_VERSION='1.58.8';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1394,9 +1394,10 @@ function openWishlist(){
      ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off" aria-required="true" aria-describedby="wl-err"></label>`:''}</div>`).join('')}</div>
    ${cats.length?measHtml(cats):''}
    <label class="wllinks"><input type="checkbox" id="wl-links" ${LS.get('wearcycle.wlLinks')===false?'':'checked'}><span>Include shop links</span></label>
+   <label class="wllinks"><input type="checkbox" id="wl-pic" ${LS.get('wearcycle.wlPic')===false?'':'checked'}><span>Include a picture of the list</span></label>
    <div class="field"><label for="wl-note">Note</label><input type="text" id="wl-note" maxlength="160" autocomplete="off"></div>
    <p class="err" id="wl-err" role="alert"></p>
-   <div class="row sheet-actions"><button type="button" class="btn primary" data-act="wlshare">Share</button><button type="button" class="btn" data-act="wlcopy">Copy</button></div>`);
+   <div class="row sheet-actions"><button type="button" class="btn primary" data-act="wlshare">Share</button><button type="button" class="btn" data-act="wlcopy">Copy</button><button type="button" class="btn ghost" data-act="wlsave">Save picture</button></div>`);
   wlMeasVisible(); setTimeout(hydrateCuts,0);
 }
 function wishlistText(){
@@ -1416,18 +1417,32 @@ function wishlistText(){
   if(JSON.stringify(sizes)!==JSON.stringify(S.settings.sizes||{})){ S.settings.sizes=sizes; saveCache(); queueSettingsSave(); }
   if(noSize.length){ noSize.forEach(k=>$('#wl-size-'+k).setAttribute('aria-invalid','true')); $('#wl-err').textContent=I18N.tr('Add a size for each ticked piece.'); $('#wl-size-'+noSize[0]).focus(); return ''; }
   if(bad){ const d=$('#sheetRoot .wlmeas'); if(d) d.open=true; $('#wl-err').textContent=I18N.tr('Measurements must be numbers.'); bad.focus(); return ''; }
-  const low=t=>t.charAt(0).toLocaleLowerCase(I18N.locale)+t.slice(1);
-  const links=!!$('#wl-links')?.checked; LS.set('wearcycle.wlLinks',links);
-  const num=n=>n.toLocaleString(I18N.locale,{maximumFractionDigits:1}), ja=I18N.lang==='ja';
-  const mtext=cat=>(MEAS[cat]||[]).filter(f=>meas[cat]?.[f]!=null).map(f=>low(I18N.tr(MEAS_L[f]))+' '+num(meas[cat][f])+' '+WL.unit).join(ja?'、':', ');
-  // Word order differs by language (white top, haut blanc, 白のトップス), so non-English uses a dictionary entry.
-  const name=x=>{ const c=I18N.tr(x.color), l=I18N.tr(x.label); return I18N.lang==='en'?c+' '+l:I18N.t('Wish list item: {c} {l}',{c,l}); };
-  L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return; const what=x.idea?ideaText((S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}):name(x); const size=sizes[x.cat]||'';
-    const mt=mtext(x.cat); lines.push('• '+(size?I18N.t('{a}, size {b}',{a:what,b:size}):what)+(mt?(ja?'（'+mt+'）':' ('+mt+')'):''));
-    if(links&&x.q) lines.push('  '+shopUrl(x.q)); });
-  if(!lines.length){ $('#wl-err').textContent=I18N.tr('Pick at least one piece.'); return ''; }
+  const low=t=>t.charAt(0).toLocaleLowerCase(I18N.locale)+t.slice(1), cap=t=>t.charAt(0).toLocaleUpperCase(I18N.locale)+t.slice(1);
+  const links=!!$('#wl-links')?.checked; LS.set('wearcycle.wlLinks',links); LS.set('wearcycle.wlPic',!!$('#wl-pic')?.checked);
+  const num=n=>n.toLocaleString(I18N.locale,{maximumFractionDigits:1}), ja=I18N.lang==='ja', sep=ja?'：':I18N.lang==='fr'?'\u202f: ':': ';
+  // v1.58.8 format (owner 2026-10-29): sizes and measurements once at the top, numbered items, readable links.
+  // Gift-givers get one option: "brown leather shoes or clean minimal sneakers" keeps the first.
+  const OR={en:/\s+or\s.*$/i,fr:/\s+ou\s.*$/i,es:/\s+[ou]\s.*$/i,tl:/\s+o\s.*$/i,hi:/\s+या\s.*$/,ja:/または.*$/,ko:/\s*또는.*$/}[I18N.lang]||/\s+or\s.*$/i;
+  const one=t=>String(t||'').replace(OR,'').trim();
+  const items=[]; L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return;
+    let name, color='';
+    if(x.idea){ const it=(S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}; name=one(it.item); color=COLORS[it.color]?it.color:''; }
+    else { color=COLORS[x.color]?x.color:''; const l=one(I18N.tr(x.label)), c=I18N.tr(x.color||'');
+      name=I18N.lang==='en'?(String(l).toLowerCase().includes(String(x.color||'').toLowerCase())?l:c+' '+l):l+(c?' · '+low(c):''); }
+    items.push({name:cap(name.trim()),cat:x.cat,color,q:x.q?one(x.q):''}); });
+  if(!items.length){ $('#wl-err').textContent=I18N.tr('Pick at least one piece.'); return ''; }
+  const kinds=Object.keys(SIZE_CATS).filter(c=>items.some(x=>x.cat===c));
+  const sizeLine=kinds.filter(c=>sizes[c]).map(c=>low(I18N.tr(SIZE_CATS[c]))+' '+sizes[c]).join(' · ');
+  const seen=new Map(); kinds.forEach(c=>(MEAS[c]||[]).forEach(f=>{ const v=meas[c]?.[f]; if(v==null) return; const k=f; if(!seen.has(k)) seen.set(k,[]); if(!seen.get(k).some(e=>e.v===v)) seen.get(k).push({v,c}); }));
+  const measLine=[...seen.entries()].flatMap(([f,vs])=>vs.map(e=>low(I18N.tr(MEAS_L[f]))+(vs.length>1?' ('+low(I18N.tr(SIZE_CATS[e.c]))+')':'')+' '+num(e.v)+' '+WL.unit)).join(' · ');
   const note=($('#wl-note')?.value||'').trim();
-  return [I18N.tr('My wish list (made with Wearcycle)')].concat(lines).concat(note?[I18N.t('Note: {a}',{a:note})]:[]).join('\n');
+  const link=q=>'google.com/search?udm=28&q='+encodeURIComponent(q).replace(/%20/g,'+').replace(/'/g,'%27');
+  WL.data={title:I18N.tr('My wish list'),sizeLine,measLine,items,note,sizesLabel:I18N.tr('Sizes'),measLabel:I18N.tr('Measurements')};
+  const out=['🎁 '+WL.data.title,''];
+  if(sizeLine) out.push(WL.data.sizesLabel+sep+sizeLine); if(measLine) out.push(WL.data.measLabel+sep+measLine); if(sizeLine||measLine) out.push('');
+  items.forEach((x,n)=>{ out.push((n+1)+'. '+x.name); if(links&&x.q) out.push('   '+link(x.q)); });
+  out.push(''); if(note) out.push(I18N.t('Note: {a}',{a:note})); out.push(I18N.tr('Made with Wearcycle'));
+  return out.join('\n');
 }
 document.addEventListener('change',e=>{ if(e.target.matches&&e.target.matches('#sheetRoot .wlpick input')) wlMeasVisible(); });
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('a[data-wn]')){ try{ localStorage.setItem('wearcycle.seenVersion',APP_VERSION); }catch(err){} setTimeout(renderStatus,0); } });
@@ -1457,7 +1472,7 @@ function renderShop(){
     const why=cond<=1?'Worn out':`<span>Condition ${cond} of 5</span> · <span>${low==='out'?'Below the going-out level':'Below the work level'}</span>`;
     add({key:'r'+it.id,piece:it.id,cat:it.cat,color:col||'grey',bad:cond<=1?1:0,why,
       title:it.name?`<span data-notr>${esc(it.name)}</span>`:`<span class="cw">${esc(col)}</span> · <span>${esc(kind)}</span>`,
-      q:shopQ(col,useMat,kind),label:I18N.lang==='en'?(useMat?useMat+' ':'')+kind:CAT[it.cat].label.toLowerCase(),need:1}); }
+      q:shopQ(col,useMat,kind),label:I18N.lang==='en'?(useMat?useMat+' ':'')+kind:(I18N.dict&&I18N.dict[kind]!=null?kind:CAT[it.cat].label.toLowerCase()),need:1}); }
   const gapCard=(x,n)=>{ const c=n.colors[0]||{}; return {key:n.slot+'|'+(c.color||''),cat:n.slot,color:c.color||'grey',why:`<span>${OCC[x.occ].label}</span> · <span>${slotName[n.slot]}</span> · <span>${n.have} of ${n.target}</span>`,
     title:`<span class="cw">${esc(c.color||'')}</span> · <span>${esc(n.idea)}</span>`,big:c.adds?`+${c.adds} <small>${c.adds===1?'outfit':'outfits'}</small>`:'',
     label:n.idea,sub:(n.tired||[]).map(t=>`<span class="bsub"><span data-notr>${esc(t.item.name)}</span>: <span>Worn on ${t.days} of the last 30 days.</span></span>`).join(''),q:shopQ(c.color,n.idea),need:1}; };
@@ -2146,6 +2161,38 @@ async function shareOutfit(){
   toast('Image saved to your downloads.');
 }
 
+// Wish list picture (v1.58.8): the same list as the text, drawn on the cream canvas with color swatches, sizes and
+// measurements; shared together with the text where the phone allows files, otherwise saved.
+function wrapText(g,t,maxW){ const words=String(t).split(/(\s+)/), lines=[]; let cur='';
+  const cjk=/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(t); const parts=cjk?[...String(t)]:words;
+  for(const w of parts){ const tryL=cur+w; if(g.measureText(tryL).width>maxW&&cur.trim()){ lines.push(cur.trim()); cur=w.trimStart(); } else cur=tryL; }
+  if(cur.trim()) lines.push(cur.trim()); return lines; }
+async function wishCard(){ const D=WL.data; if(!D) return null; try{ await document.fonts.ready; }catch(e){}
+  const W=1080, pad=72, cv=document.createElement('canvas'), g=cv.getContext('2d'); cv.width=W; cv.height=10;
+  const body='600 44px Figtree, system-ui, sans-serif', small='500 34px Figtree, system-ui, sans-serif', head='800 96px "Big Shoulders Display", Impact, sans-serif';
+  // measure
+  g.font=body; const rows=D.items.map(x=>wrapText(g,x.name,W-pad*2-150));
+  g.font=small; const info=[D.sizeLine?[D.sizesLabel,wrapText(g,D.sizeLine,W-pad*2)]:null,D.measLine?[D.measLabel,wrapText(g,D.measLine,W-pad*2)]:null].filter(Boolean);
+  const noteL=D.note?wrapText(g,D.note,W-pad*2):[];
+  let H=260+info.reduce((a,[,l])=>a+44+l.length*46+18,0)+(info.length?30:0)+rows.reduce((a,l)=>a+Math.max(1,l.length)*56+50,0)+(noteL.length?noteL.length*46+40:0)+190;
+  cv.height=H;
+  const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#f7f4ef'); bg.addColorStop(1,'#ebe4d9'); g.fillStyle=bg; g.fillRect(0,0,W,H);
+  let y=170; g.fillStyle='#1b2433'; g.font=head; g.textBaseline='alphabetic'; g.fillText(D.title.toUpperCase(),pad,y);
+  g.fillStyle='#ff7a59'; g.fillRect(pad,y+28,120,8); y+=110;
+  for(const [lab,lines] of info){ g.font='700 30px Figtree, system-ui, sans-serif'; g.fillStyle='#5b6270'; g.fillText(lab.toUpperCase(),pad,y); y+=48;
+    g.font=small; g.fillStyle='#1b2433'; for(const l of lines){ g.fillText(l,pad,y); y+=46; } y+=18; }
+  if(info.length){ g.fillStyle='rgba(27,36,51,.14)'; g.fillRect(pad,y-10,W-pad*2,2); y+=40; }
+  D.items.forEach((x,i)=>{ const lines=rows[i], top=y-40;
+    g.beginPath(); g.arc(pad+30,top+28,30,0,7); g.fillStyle='#1b2433'; g.fill(); g.fillStyle='#f7f4ef'; g.font='700 30px Figtree, system-ui, sans-serif'; g.textAlign='center'; g.fillText(String(i+1),pad+30,top+39); g.textAlign='left';
+    g.fillStyle='#1b2433'; g.font=body; lines.forEach((l,k)=>g.fillText(l,pad+88,y+k*56));
+    if(x.color&&COLORS[x.color]){ g.beginPath(); g.arc(W-pad-30,top+28,30,0,7); g.fillStyle=COLORS[x.color].hex; g.fill(); g.lineWidth=3; g.strokeStyle='rgba(27,36,51,.25)'; g.stroke(); }
+    y+=Math.max(1,lines.length)*56+50; });
+  if(noteL.length){ g.font='italic 500 36px Figtree, system-ui, sans-serif'; g.fillStyle='#5b6270'; for(const l of noteL){ g.fillText(l,pad,y); y+=46; } y+=40; }
+  const logo=await loadImg('icons/logo-icon.svg'); if(logo) g.drawImage(logo,pad,H-130,64,64);
+  g.fillStyle='#1b2433'; g.font='800 46px "Big Shoulders Display", Impact, sans-serif'; g.fillText('WEARCYCLE',pad+84,H-82);
+  return await new Promise(r=>cv.toBlob(r,'image/png')); }
+async function saveBlob(blob,name){ const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name; document.body.appendChild(a); a.click(); a.remove(); }
+
 /* ---------- style palette ---------- */
 function openPalettes(){
   const cur=S.settings.palette||'any';
@@ -2517,8 +2564,11 @@ document.addEventListener('click',async e=>{
     case 'wishlist': openWishlist(); return;
     case 'wlcopy': { const t=wishlistText(); if(t) await copyText(t); return; }
     case 'wlshare': { const t=wishlistText(); if(!t) return;
+      if($('#wl-pic')?.checked){ const b=await wishCard(); if(b){ const file=new File([b],'wish-list.png',{type:'image/png'});
+        try{ if(navigator.canShare&&navigator.canShare({files:[file],text:t})){ await navigator.share({files:[file],text:t,title:I18N.tr('My wish list')}); return; } }catch(e){ if(e&&e.name==='AbortError') return; } } }
       if(navigator.share){ try{ await navigator.share({title:I18N.tr('My wish list'),text:t}); return; }catch(e){ if(e&&e.name==='AbortError') return; } }
       await copyText(t); return; }
+    case 'wlsave': { const t=wishlistText(); if(!t) return; const b=await wishCard(); if(!b){ toast('Could not make the image.'); return; } await saveBlob(b,'wish-list.png'); toast('Image saved to your downloads.'); return; }
     case 'palsave': { if(!PCOL||!PCOL.size){ const er=$('#pc-err'); if(er) er.textContent='Pick at least one color.'; return; }
       S.settings.paletteCustom=Object.keys(COLORS).filter(k=>PCOL.has(k)); S.settings.palette='custom'; PCOL=null;
       saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast('Ranking now favors your custom palette.'); return; }

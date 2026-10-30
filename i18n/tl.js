@@ -1469,5 +1469,10 @@ I18N.load("tl",{
 "Its {0} wears move to the piece you keep.": "Mapupunta ang {0} pagsusuot nito sa pirasong itatago mo.",
 "Delete and keep": "Burahin at itago",
 "Could not merge: {a}": "Hindi mapagsama: {a}",
-"Kept {a}.": "Itinago ang {a}."
+"Kept {a}.": "Itinago ang {a}.",
+"Sizes": "Mga size",
+"Measurements": "Mga sukat",
+"Made with Wearcycle": "Ginawa gamit ang Wearcycle",
+"Include a picture of the list": "Isama ang larawan ng listahan",
+"Save picture": "I-save ang larawan"
 });

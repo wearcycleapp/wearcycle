@@ -89,5 +89,6 @@ I18N.add("hi",{
 "You can add a belt back after leaving it out.": "बेल्ट हटाने के बाद आप उसे फिर से जोड़ सकते हैं।",
 "A custom color palette, respected by every outfit option.": "अपनी पसंद की रंग पैलेट, जिसका हर आउटफ़िट विकल्प पालन करता है।",
 "This page and the privacy notice open again from the installed app.": "यह पेज और प्राइवेसी सूचना अब इंस्टॉल किए गए ऐप से फिर खुलते हैं।",
-"Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "संभावित डुप्लिकेट: अलमारी उन कपड़ों को दिखाती है जिनकी तस्वीरें लगभग एक जैसी हैं, ताकि आप एक रखें और उसका पहनने का इतिहास ले जाएँ, या उन्हें अलग कपड़े चिह्नित करें।"
+"Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "संभावित डुप्लिकेट: अलमारी उन कपड़ों को दिखाती है जिनकी तस्वीरें लगभग एक जैसी हैं, ताकि आप एक रखें और उसका पहनने का इतिहास ले जाएँ, या उन्हें अलग कपड़े चिह्नित करें।",
+"Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "आपकी शेयर की गई इच्छा सूची पढ़ने में आसान है: साइज़ ऊपर एक बार, क्रमांक वाले आइटम, छोटे लिंक, और सूची की वैकल्पिक तस्वीर।"
 });

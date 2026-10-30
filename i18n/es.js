@@ -1469,5 +1469,10 @@ I18N.load("es",{
 "Its {0} wears move to the piece you keep.": "Sus {0} usos pasan a la prenda que conservas.",
 "Delete and keep": "Borrar y conservar",
 "Could not merge: {a}": "No se pudo combinar: {a}",
-"Kept {a}.": "Se conservó {a}."
+"Kept {a}.": "Se conservó {a}.",
+"Sizes": "Tallas",
+"Measurements": "Medidas",
+"Made with Wearcycle": "Hecha con Wearcycle",
+"Include a picture of the list": "Incluir una imagen de la lista",
+"Save picture": "Guardar imagen"
 });

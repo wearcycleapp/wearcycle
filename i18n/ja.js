@@ -1469,5 +1469,10 @@ I18N.load("ja",{
 "Its {0} wears move to the piece you keep.": "着用{0}回分が残すアイテムに移ります。",
 "Delete and keep": "削除して残す",
 "Could not merge: {a}": "統合できませんでした：{a}",
-"Kept {a}.": "{a}を残しました。"
+"Kept {a}.": "{a}を残しました。",
+"Sizes": "サイズ",
+"Measurements": "採寸",
+"Made with Wearcycle": "Wearcycleで作成",
+"Include a picture of the list": "リストの画像を添付",
+"Save picture": "画像を保存"
 });

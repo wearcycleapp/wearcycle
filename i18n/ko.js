@@ -1469,5 +1469,10 @@ I18N.load("ko",{
 "Its {0} wears move to the piece you keep.": "착용 {0}회가 남기는 옷으로 옮겨져요.",
 "Delete and keep": "삭제하고 남기기",
 "Could not merge: {a}": "합치지 못했어요: {a}",
-"Kept {a}.": "{a}을(를) 남겼어요."
+"Kept {a}.": "{a}을(를) 남겼어요.",
+"Sizes": "사이즈",
+"Measurements": "치수",
+"Made with Wearcycle": "Wearcycle로 만듦",
+"Include a picture of the list": "목록 이미지 포함",
+"Save picture": "이미지 저장"
 });

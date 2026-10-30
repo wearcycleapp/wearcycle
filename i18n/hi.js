@@ -1469,5 +1469,10 @@ I18N.load("hi",{
 "Its {0} wears move to the piece you keep.": "इसके {0} बार पहनना रखे गए कपड़े में चले जाएँगे।",
 "Delete and keep": "हटाएँ और रखें",
 "Could not merge: {a}": "जोड़ा नहीं जा सका: {a}",
-"Kept {a}.": "{a} रखा गया।"
+"Kept {a}.": "{a} रखा गया।",
+"Sizes": "साइज़",
+"Measurements": "माप",
+"Made with Wearcycle": "Wearcycle से बनाई गई",
+"Include a picture of the list": "सूची की तस्वीर शामिल करें",
+"Save picture": "तस्वीर सहेजें"
 });

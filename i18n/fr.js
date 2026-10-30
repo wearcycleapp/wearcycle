@@ -1469,5 +1469,10 @@ I18N.load("fr",{
 "Its {0} wears move to the piece you keep.": "Ses {0} ports passent à la pièce que vous gardez.",
 "Delete and keep": "Supprimer et garder",
 "Could not merge: {a}": "Fusion impossible : {a}",
-"Kept {a}.": "{a} gardée."
+"Kept {a}.": "{a} gardée.",
+"Sizes": "Tailles",
+"Measurements": "Mensurations",
+"Made with Wearcycle": "Faite avec Wearcycle",
+"Include a picture of the list": "Inclure une image de la liste",
+"Save picture": "Enregistrer l’image"
 });
