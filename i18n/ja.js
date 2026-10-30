@@ -1474,5 +1474,6 @@ I18N.load("ja",{
 "Measurements": "採寸",
 "Made with Wearcycle": "Wearcycleで作成",
 "Include a picture of the list": "リストの画像を添付",
-"Save picture": "画像を保存"
+"Save picture": "画像を保存",
+"Select all": "すべて選択"
 });

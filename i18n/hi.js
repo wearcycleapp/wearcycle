@@ -1474,5 +1474,6 @@ I18N.load("hi",{
 "Measurements": "माप",
 "Made with Wearcycle": "Wearcycle से बनाई गई",
 "Include a picture of the list": "सूची की तस्वीर शामिल करें",
-"Save picture": "तस्वीर सहेजें"
+"Save picture": "तस्वीर सहेजें",
+"Select all": "सभी चुनें"
 });

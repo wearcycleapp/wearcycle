@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.8';
+const APP_VERSION='1.58.9';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1390,6 +1390,7 @@ function openWishlist(){
   const L=S.shopList||[]; if(!L.length) return; const sz=S.settings.sizes||{}; WL.unit=(S.settings.measures||{}).unit==='in'?'in':'cm';
   const cats=Object.keys(MEAS).filter(c=>L.some(x=>x.cat===c));
   openSheet(sheetHead('Share my list')+`<p class="hint">Pick what to include. Sizes are saved for next time.</p>
+   <label class="wlall"><input type="checkbox" id="wl-all"><span>Select all</span></label>
    <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.idea?`<span><span data-notr>${esc(ideaText(x.idea&&(S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}))}</span></span>`:x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span>`}</label>
      ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off" aria-required="true" aria-describedby="wl-err"></label>`:''}</div>`).join('')}</div>
    ${cats.length?measHtml(cats):''}
@@ -1398,7 +1399,7 @@ function openWishlist(){
    <div class="field"><label for="wl-note">Note</label><input type="text" id="wl-note" maxlength="160" autocomplete="off"></div>
    <p class="err" id="wl-err" role="alert"></p>
    <div class="row sheet-actions"><button type="button" class="btn primary" data-act="wlshare">Share</button><button type="button" class="btn" data-act="wlcopy">Copy</button><button type="button" class="btn ghost" data-act="wlsave">Save picture</button></div>`);
-  wlMeasVisible(); setTimeout(hydrateCuts,0);
+  wlMeasVisible(); wlAllSync(); setTimeout(hydrateCuts,0);
 }
 function wishlistText(){
   const L=S.shopList||[]; const sizes=Object.assign({},S.settings.sizes||{}); const lines=[];
@@ -1444,7 +1445,12 @@ function wishlistText(){
   out.push(''); if(note) out.push(I18N.t('Note: {a}',{a:note})); out.push(I18N.tr('Made with Wearcycle'));
   return out.join('\n');
 }
-document.addEventListener('change',e=>{ if(e.target.matches&&e.target.matches('#sheetRoot .wlpick input')) wlMeasVisible(); });
+// Select all (v1.58.9): checked when every piece is ticked, mixed when some are; a click ticks or clears them all.
+function wlAllSync(){ const a=$('#wl-all'); if(!a) return; const b=[...document.querySelectorAll('#sheetRoot .wlpick input')], n=b.filter(x=>x.checked).length;
+  a.checked=n===b.length&&n>0; a.indeterminate=n>0&&n<b.length; }
+document.addEventListener('change',e=>{ const t=e.target; if(!t.matches) return;
+  if(t.matches('#wl-all')){ document.querySelectorAll('#sheetRoot .wlpick input').forEach(x=>{ x.checked=t.checked; }); t.indeterminate=false; wlMeasVisible(); const er=$('#wl-err'); if(er&&t.checked) er.textContent=''; return; }
+  if(t.matches('#sheetRoot .wlpick input')){ wlMeasVisible(); wlAllSync(); } });
 document.addEventListener('click',e=>{ if(e.target.closest&&e.target.closest('a[data-wn]')){ try{ localStorage.setItem('wearcycle.seenVersion',APP_VERSION); }catch(err){} setTimeout(renderStatus,0); } });
 document.addEventListener('input',e=>{ const t=e.target; if(t.matches&&t.matches('#sheetRoot .wlmgrp input')){ delete t.dataset.cm; t.removeAttribute('aria-invalid'); }
   if(t.matches&&t.matches('#sheetRoot .wl input, #sheetRoot .wlmgrp input')&&$('#wl-err')&&!document.querySelector('#sheetRoot [aria-invalid="true"]:not(#'+CSS.escape(t.id)+')')) $('#wl-err').textContent=''; });

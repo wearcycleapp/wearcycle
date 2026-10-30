@@ -90,5 +90,6 @@ I18N.add("fr",{
 "A custom color palette, respected by every outfit option.": "Une palette de couleurs personnalisée, respectée par toutes les options de tenue.",
 "This page and the privacy notice open again from the installed app.": "Cette page et l’avis de confidentialité s’ouvrent de nouveau depuis l’application installée.",
 "Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "Doublons possibles : Garde-robe signale les pièces dont les images se ressemblent presque, pour en garder une et déplacer son historique de port, ou les marquer comme pièces différentes.",
-"Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Votre liste de souhaits partagée est plus facile à lire : les tailles une seule fois en haut, des articles numérotés, des liens plus courts et une image facultative de la liste."
+"Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Votre liste de souhaits partagée est plus facile à lire : les tailles une seule fois en haut, des articles numérotés, des liens plus courts et une image facultative de la liste.",
+"Select all in Share my list.": "Tout sélectionner dans Partager ma liste."
 });

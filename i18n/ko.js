@@ -1474,5 +1474,6 @@ I18N.load("ko",{
 "Measurements": "치수",
 "Made with Wearcycle": "Wearcycle로 만듦",
 "Include a picture of the list": "목록 이미지 포함",
-"Save picture": "이미지 저장"
+"Save picture": "이미지 저장",
+"Select all": "모두 선택"
 });

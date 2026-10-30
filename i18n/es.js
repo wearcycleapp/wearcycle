@@ -1474,5 +1474,6 @@ I18N.load("es",{
 "Measurements": "Medidas",
 "Made with Wearcycle": "Hecha con Wearcycle",
 "Include a picture of the list": "Incluir una imagen de la lista",
-"Save picture": "Guardar imagen"
+"Save picture": "Guardar imagen",
+"Select all": "Seleccionar todo"
 });

@@ -90,5 +90,6 @@ I18N.add("ja",{
 "A custom color palette, respected by every outfit option.": "カスタムカラーパレット。すべてのコーデ候補に反映されます。",
 "This page and the privacy notice open again from the installed app.": "インストールしたアプリから、このページとプライバシー通知が再び開けるようになりました。",
 "Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "重複の可能性：写真がほぼ同じアイテムをクローゼットが知らせます。1つを残して着用履歴を移すか、別のアイテムとして記録できます。",
-"Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "共有する欲しいものリストが読みやすくなりました：サイズは上に1回だけ、番号付きのアイテム、短いリンク、リストの画像（任意）。"
+"Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "共有する欲しいものリストが読みやすくなりました：サイズは上に1回だけ、番号付きのアイテム、短いリンク、リストの画像（任意）。",
+"Select all in Share my list.": "「リストを共有」に「すべて選択」を追加。"
 });

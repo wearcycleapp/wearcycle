@@ -1474,5 +1474,6 @@ I18N.load("tl",{
 "Measurements": "Mga sukat",
 "Made with Wearcycle": "Ginawa gamit ang Wearcycle",
 "Include a picture of the list": "Isama ang larawan ng listahan",
-"Save picture": "I-save ang larawan"
+"Save picture": "I-save ang larawan",
+"Select all": "Piliin lahat"
 });

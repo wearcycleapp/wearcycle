@@ -90,5 +90,6 @@ I18N.add("tl",{
 "A custom color palette, respected by every outfit option.": "Isang custom na color palette, sinusunod ng bawat opsyon ng outfit.",
 "This page and the privacy notice open again from the installed app.": "Bumubukas na ulit ang pahinang ito at ang abiso sa privacy mula sa naka-install na app.",
 "Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "Posibleng doble: itinuturo ng Closet ang mga pirasong halos magkamukha ang larawan, para makapagtago ka ng isa at mailipat ang kasaysayan ng pagsusuot nito, o markahan ang mga ito bilang magkaibang piraso.",
-"Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Mas madaling basahin ang ibinahagi mong wish list: isang beses lang ang mga size sa itaas, may numero ang mga item, mas maiikling link, at opsyonal na larawan ng listahan."
+"Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Mas madaling basahin ang ibinahagi mong wish list: isang beses lang ang mga size sa itaas, may numero ang mga item, mas maiikling link, at opsyonal na larawan ng listahan.",
+"Select all in Share my list.": "Piliin lahat sa Ibahagi ang listahan ko."
 });
