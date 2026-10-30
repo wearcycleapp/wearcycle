@@ -1475,5 +1475,9 @@ I18N.load("tl",{
 "Made with Wearcycle": "Ginawa gamit ang Wearcycle",
 "Include a picture of the list": "Isama ang larawan ng listahan",
 "Save picture": "I-save ang larawan",
-"Select all": "Piliin lahat"
+"Select all": "Piliin lahat",
+"Replace 1 piece": "Palitan ang 1 piraso",
+"Replace {0} pieces": "Palitan ang {0} piraso",
+"1 more need": "1 pang kailangan",
+"{0} more needs": "{0} pang kailangan"
 });

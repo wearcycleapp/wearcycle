@@ -91,5 +91,7 @@ I18N.add("tl",{
 "This page and the privacy notice open again from the installed app.": "Bumubukas na ulit ang pahinang ito at ang abiso sa privacy mula sa naka-install na app.",
 "Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "Posibleng doble: itinuturo ng Closet ang mga pirasong halos magkamukha ang larawan, para makapagtago ka ng isa at mailipat ang kasaysayan ng pagsusuot nito, o markahan ang mga ito bilang magkaibang piraso.",
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Mas madaling basahin ang ibinahagi mong wish list: isang beses lang ang mga size sa itaas, may numero ang mga item, mas maiikling link, at opsyonal na larawan ng listahan.",
-"Select all in Share my list.": "Piliin lahat sa Ibahagi ang listahan ko."
+"Select all in Share my list.": "Piliin lahat sa Ibahagi ang listahan ko.",
+"Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "Hindi na itinatago ng Bilhin muna ang hindi kasya sa unang tatlong card nito: nakalista ang iba sa ilalim at iniaalok sa Ibahagi ang listahan ko.",
+"Several pieces to replace for the same reason now share one card in Buy next.": "Ang ilang pirasong papalitan dahil sa iisang dahilan ay nasa iisang card na sa Bilhin muna."
 });

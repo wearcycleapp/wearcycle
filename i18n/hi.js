@@ -1475,5 +1475,9 @@ I18N.load("hi",{
 "Made with Wearcycle": "Wearcycle से बनाई गई",
 "Include a picture of the list": "सूची की तस्वीर शामिल करें",
 "Save picture": "तस्वीर सहेजें",
-"Select all": "सभी चुनें"
+"Select all": "सभी चुनें",
+"Replace 1 piece": "1 कपड़ा बदलें",
+"Replace {0} pieces": "{0} कपड़े बदलें",
+"1 more need": "1 और ज़रूरत",
+"{0} more needs": "{0} और ज़रूरतें"
 });

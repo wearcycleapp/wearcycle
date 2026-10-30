@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.58.9';
+const APP_VERSION='1.59.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1472,9 +1472,21 @@ function renderShop(){
   // Buy next, in order: worn out and needed; work and going-out gaps; the top pairing pick; other occasions' gaps.
   const cands=[], seen=new Set(), add=c=>{ if(seen.has(c.key)) return; seen.add(c.key); cands.push(c); };
   // Replace cards name the real piece; the search uses its color, material and the type Claude recorded (kind).
-  for(const it of retire){ const cond=it.cond??4, col=primary(it)||'', kind=String(it.kind||'').trim().toLowerCase()||CAT[it.cat].label.toLowerCase();
+  // Several pieces of one kind with the same reason make one card (v1.59.0), so they do not fill every Buy next slot.
+  const lowOf=it=>(it.occ||[]).find(o=>(o==='work'||o==='out')&&short(o,it.cat));
+  const rKey=it=>it.cat+'|'+((it.cond??4)<=1?'worn':lowOf(it));
+  const rGroups=new Map(); for(const it of retire){ const k=rKey(it); if(!rGroups.has(k)) rGroups.set(k,[]); rGroups.get(k).push(it); }
+  const kindOf=it=>String(it.kind||'').trim().toLowerCase()||CAT[it.cat].label.toLowerCase();
+  for(const [gk,list] of rGroups){
+    if(list.length>1){ const it=list[0], worn=(it.cond??4)<=1, low=lowOf(it), kinds=[...new Set(list.map(kindOf))], kind=kinds.length===1?kinds[0]:CAT[it.cat].label.toLowerCase();
+      const names=list.slice(0,3).map(x=>esc(x.name||kindOf(x))).join(', ')+(list.length>3?' +'+(list.length-3):'');
+      add({key:'g'+gk,piece:it.id,group:list,cat:it.cat,color:primary(it)||'grey',bad:worn?1:0,
+        why:worn?'Worn out':`<span>${low==='out'?'Below the going-out level':'Below the work level'}</span>`,
+        title:`<span>${pl(list.length,'Replace 1 piece','Replace {0} pieces')}</span>`,sub:`<span class="bsub"><span data-notr>${names}</span></span>`,
+        q:shopQ(kind),label:kind,need:1}); continue; }
+    const it=list[0], cond=it.cond??4, col=primary(it)||'', kind=kindOf(it);
     const mat=String(it.material||'').trim().toLowerCase(), useMat=mat&&mat!==col&&!kind.includes(mat)&&(I18N.lang==='en'||I18N.tr(mat)!==mat)?mat:'';
-    const low=(it.occ||[]).find(o=>(o==='work'||o==='out')&&short(o,it.cat));
+    const low=lowOf(it);
     const why=cond<=1?'Worn out':`<span>Condition ${cond} of 5</span> · <span>${low==='out'?'Below the going-out level':'Below the work level'}</span>`;
     add({key:'r'+it.id,piece:it.id,cat:it.cat,color:col||'grey',bad:cond<=1?1:0,why,
       title:it.name?`<span data-notr>${esc(it.name)}</span>`:`<span class="cw">${esc(col)}</span> · <span>${esc(kind)}</span>`,
@@ -1482,22 +1494,31 @@ function renderShop(){
   const gapCard=(x,n)=>{ const c=n.colors[0]||{}; return {key:n.slot+'|'+(c.color||''),cat:n.slot,color:c.color||'grey',why:`<span>${OCC[x.occ].label}</span> · <span>${slotName[n.slot]}</span> · <span>${n.have} of ${n.target}</span>`,
     title:`<span class="cw">${esc(c.color||'')}</span> · <span>${esc(n.idea)}</span>`,big:c.adds?`+${c.adds} <small>${c.adds===1?'outfit':'outfits'}</small>`:'',
     label:n.idea,sub:(n.tired||[]).map(t=>`<span class="bsub"><span data-notr>${esc(t.item.name)}</span>: <span>Worn on ${t.days} of the last 30 days.</span></span>`).join(''),q:shopQ(c.color,n.idea),need:1}; };
-  for(const x of g.filter(x=>x.occ==='work'||x.occ==='out')) for(const n of x.needs) add(gapCard(x,n));
+  // A gap caused by pieces already on a Replace card is not repeated as its own card (By occasion still shows it).
+  // Only when replacing those pieces fills the whole gap.
+  const replaced=(occ,n)=>retire.filter(it=>it.cat===n.slot&&(it.cond??4)>1&&lowOf(it)===occ).length>=n.target-n.have;
+  for(const x of g.filter(x=>x.occ==='work'||x.occ==='out')) for(const n of x.needs) if(!replaced(x.occ,n)) add(gapCard(x,n));
   const vCard=r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),why:'Most new pairings',title:`<span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span>`,
     big:`+${r.adds} <small>${r.adds===1?'outfit':'outfits'}</small>`,sub:`<span class="bsub">${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span>`,pairs:r.pairs,q:shopQ(r.color,r.label.toLowerCase())});
   const needAny=retire.length||g.some(x=>x.needs.length);
   if(needAny&&v.list[0]) add(vCard(v.list[0]));
   for(const x of g.filter(x=>x.occ!=='work'&&x.occ!=='out')) for(const n of x.needs) add(gapCard(x,n));
-  const shown=needAny?cands.slice(0,3):[];
-  const moreIdeas=v.list.filter(r=>!shown.some(c=>c.key===r.slot+'|'+r.color));
+  const shown=needAny?cands.slice(0,3):[], hidden=needAny?cands.slice(3).filter(c=>c.need):[];
+  const moreIdeas=v.list.filter(r=>![...shown,...hidden].some(c=>c.key===r.slot+'|'+r.color));
   // q: the same search as the item's Shop button, shared as a link under each line (v1.58.1).
-  S.shopList=shown.map(c=>({key:c.key,piece:c.piece,cat:c.cat,color:c.color,label:c.label,q:c.q,on:true})).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),q:shopQ(r.color,r.label.toLowerCase()),on:false}))).concat((S.settings.savedIdeas||[]).map(x=>({key:'i'+x.id,idea:x.id,cat:'idea',color:x.color||'',label:x.item,q:ideaQ(x),on:false})));
+  // A grouped card shares each of its pieces; needs past the first three are offered unticked (v1.59.0).
+  const toList=(c,on)=>c.group?c.group.map(it=>{ const col=primary(it)||'', kind=kindOf(it); return {key:'r'+it.id,piece:it.id,cat:it.cat,color:col||'grey',label:I18N.lang==='en'?kind:(I18N.dict&&I18N.dict[kind]!=null?kind:CAT[it.cat].label.toLowerCase()),q:shopQ(col,kind),on}; })
+    :[{key:c.key,piece:c.piece,cat:c.cat,color:c.color,label:c.label,q:c.q,on}];
+  S.shopList=shown.flatMap(c=>toList(c,true)).concat(hidden.flatMap(c=>toList(c,false))).concat(moreIdeas.map(r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),q:shopQ(r.color,r.label.toLowerCase()),on:false}))).concat((S.settings.savedIdeas||[]).map(x=>({key:'i'+x.id,idea:x.id,cat:'idea',color:x.color||'',label:x.item,q:ideaQ(x),on:false})));
   const shareBtn=S.shopList.length?`<button type="button" class="btn sm" data-act="wishlist">Share my list</button>`:'';
   const covered=g.filter(x=>!x.needs.length).map(x=>OCC[x.occ].label);
   const summary=needAny?`<p class="ssum"><b>${pl(shown.length,'1 buy would help most.','{0} buys would help most.')}</b>${covered.length?` <span>${'Covered: '+covered.join(', ')+'.'}</span>`:''}</p>`
     :`<p class="ssum"><b>Nothing to buy right now. Every occasion is covered.</b></p>`;
   const ideaRows=moreIdeas.map(r=>`<a class="lrow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b><span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span></b><span>+${r.adds} ${r.adds===1?'outfit':'outfits'} · ${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span></span>${SHOP_GO}</a>`).join('');
+  // Needs past the first three: one row each with the same reason line and Shop link as a card.
+  const needRow=c=>`<a class="lrow shop" href="${shopUrl(c.q)}" target="_blank" rel="noopener"><span class="bsw sm${c.piece?' own':''}" aria-hidden="true">${buyPic(c)}</span><span class="t"><b>${c.title}</b><span class="nwhy">${c.why}</span>${c.group?c.sub:''}</span>${SHOP_GO}</a>`;
   const buy=shown.length?`<section class="panel" aria-labelledby="h-buy"><div class="panel-h"><h3 id="h-buy">Buy next</h3><span class="count">${shown.length}</span><span class="spacer"></span>${shareBtn}</div>${shown.map(buyCard).join('')}
+      ${hidden.length?fold('moreneeds',pl(hidden.length,'1 more need','{0} more needs'),'','',hidden.map(needRow).join('')):''}
       ${moreIdeas.length?fold('ideas',pl(moreIdeas.length,'1 more idea','{0} more ideas'),'','',ideaRows):''}</section>`
     :(moreIdeas.length?`<section class="panel">${fold('ideas','More outfits from one purchase',pl(moreIdeas.length,'1 idea','{0} ideas'),'',ideaRows)}<div class="panel-h" style="border:0">${shareBtn}</div></section>`:'');
   // By occasion: one row each; a covered one is one line, a gap opens the details in place.

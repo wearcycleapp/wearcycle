@@ -1042,3 +1042,6 @@ details.whybox .why{margin:2px 0 10px}
 @media (hover:hover) and (pointer:fine){
   .chips,.occsel,.styletabs{flex-wrap:wrap;overflow-x:visible}
 }
+/* More needs (v1.59.0): the title keeps the ink color; reasons and names stay muted */
+.lrow .t b span{font-size:inherit;color:inherit}
+.lrow .t .nwhy span,.lrow .t .bsub span{font-size:inherit;color:inherit}

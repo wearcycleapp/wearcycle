@@ -1475,5 +1475,9 @@ I18N.load("ko",{
 "Made with Wearcycle": "Wearcycle로 만듦",
 "Include a picture of the list": "목록 이미지 포함",
 "Save picture": "이미지 저장",
-"Select all": "모두 선택"
+"Select all": "모두 선택",
+"Replace 1 piece": "1벌 교체",
+"Replace {0} pieces": "{0}벌 교체",
+"1 more need": "필요한 것 1개 더",
+"{0} more needs": "필요한 것 {0}개 더"
 });

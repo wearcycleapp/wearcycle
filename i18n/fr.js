@@ -1475,5 +1475,9 @@ I18N.load("fr",{
 "Made with Wearcycle": "Faite avec Wearcycle",
 "Include a picture of the list": "Inclure une image de la liste",
 "Save picture": "Enregistrer l’image",
-"Select all": "Tout sélectionner"
+"Select all": "Tout sélectionner",
+"Replace 1 piece": "Remplacer 1 pièce",
+"Replace {0} pieces": "Remplacer {0} pièces",
+"1 more need": "1 besoin de plus",
+"{0} more needs": "{0} besoins de plus"
 });

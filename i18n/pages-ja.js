@@ -91,5 +91,7 @@ I18N.add("ja",{
 "This page and the privacy notice open again from the installed app.": "インストールしたアプリから、このページとプライバシー通知が再び開けるようになりました。",
 "Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "重複の可能性：写真がほぼ同じアイテムをクローゼットが知らせます。1つを残して着用履歴を移すか、別のアイテムとして記録できます。",
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "共有する欲しいものリストが読みやすくなりました：サイズは上に1回だけ、番号付きのアイテム、短いリンク、リストの画像（任意）。",
-"Select all in Share my list.": "「リストを共有」に「すべて選択」を追加。"
+"Select all in Share my list.": "「リストを共有」に「すべて選択」を追加。",
+"Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "「次に買うもの」は最初の3枚のカードに入らない項目を隠さなくなりました。残りはその下に表示され、「リストを共有」でも選べます。",
+"Several pieces to replace for the same reason now share one card in Buy next.": "同じ理由で買い替える複数のアイテムは、「次に買うもの」で1枚のカードにまとまります。"
 });

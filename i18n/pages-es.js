@@ -91,5 +91,7 @@ I18N.add("es",{
 "This page and the privacy notice open again from the installed app.": "Esta página y el aviso de privacidad vuelven a abrirse desde la app instalada.",
 "Possible duplicates: Closet points out pieces whose pictures look nearly the same, so you can keep one and move its wear history, or mark them as different pieces.": "Posibles duplicados: Clóset señala las prendas cuyas imágenes se ven casi iguales, para que conserves una y muevas su historial de uso, o las marques como prendas distintas.",
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Tu lista de deseos compartida es más fácil de leer: las tallas una sola vez arriba, artículos numerados, enlaces más cortos y una imagen opcional de la lista.",
-"Select all in Share my list.": "Seleccionar todo en Compartir mi lista."
+"Select all in Share my list.": "Seleccionar todo en Compartir mi lista.",
+"Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "Comprar ahora ya no oculta lo que no cabe en sus tres primeras tarjetas: el resto aparece debajo y se ofrece en Compartir mi lista.",
+"Several pieces to replace for the same reason now share one card in Buy next.": "Varias prendas que reemplazar por el mismo motivo ahora comparten una tarjeta en Comprar ahora."
 });

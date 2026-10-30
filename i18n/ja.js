@@ -1475,5 +1475,9 @@ I18N.load("ja",{
 "Made with Wearcycle": "Wearcycleで作成",
 "Include a picture of the list": "リストの画像を添付",
 "Save picture": "画像を保存",
-"Select all": "すべて選択"
+"Select all": "すべて選択",
+"Replace 1 piece": "1点を買い替え",
+"Replace {0} pieces": "{0}点を買い替え",
+"1 more need": "ほかに必要なもの1件",
+"{0} more needs": "ほかに必要なもの{0}件"
 });
