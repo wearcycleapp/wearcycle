@@ -1479,5 +1479,13 @@ I18N.load("es",{
 "Replace 1 piece": "Reemplazar 1 prenda",
 "Replace {0} pieces": "Reemplazar {0} prendas",
 "1 more need": "1 necesidad más",
-"{0} more needs": "{0} necesidades más"
+"{0} more needs": "{0} necesidades más",
+"Shop online": "Comprar en línea",
+"I have one": "Ya tengo una",
+"Pick the piece from your closet that fills this spot.": "Elige la prenda de tu clóset que ocupa este lugar.",
+"Show all pieces": "Mostrar todas las prendas",
+"Chosen by you": "Elegida por ti",
+"Undo": "Deshacer",
+"Undone.": "Deshecho.",
+"No matching pieces.": "No hay prendas que coincidan."
 });

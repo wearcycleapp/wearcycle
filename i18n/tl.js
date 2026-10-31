@@ -1479,5 +1479,13 @@ I18N.load("tl",{
 "Replace 1 piece": "Palitan ang 1 piraso",
 "Replace {0} pieces": "Palitan ang {0} piraso",
 "1 more need": "1 pang kailangan",
-"{0} more needs": "{0} pang kailangan"
+"{0} more needs": "{0} pang kailangan",
+"Shop online": "Mamili online",
+"I have one": "Mayroon na ako",
+"Pick the piece from your closet that fills this spot.": "Piliin ang piraso sa closet mo na pupuno sa puwestong ito.",
+"Show all pieces": "Ipakita lahat ng piraso",
+"Chosen by you": "Pinili mo",
+"Undo": "I-undo",
+"Undone.": "Na-undo.",
+"No matching pieces.": "Walang tugmang piraso."
 });

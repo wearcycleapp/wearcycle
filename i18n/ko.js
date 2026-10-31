@@ -1479,5 +1479,13 @@ I18N.load("ko",{
 "Replace 1 piece": "1벌 교체",
 "Replace {0} pieces": "{0}벌 교체",
 "1 more need": "필요한 것 1개 더",
-"{0} more needs": "필요한 것 {0}개 더"
+"{0} more needs": "필요한 것 {0}개 더",
+"Shop online": "온라인에서 쇼핑",
+"I have one": "이미 있어요",
+"Pick the piece from your closet that fills this spot.": "이 자리를 채울 옷을 옷장에서 고르세요.",
+"Show all pieces": "모든 옷 보기",
+"Chosen by you": "직접 선택함",
+"Undo": "실행 취소",
+"Undone.": "취소했어요.",
+"No matching pieces.": "맞는 옷이 없어요."
 });

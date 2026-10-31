@@ -1045,3 +1045,11 @@ details.whybox .why{margin:2px 0 10px}
 /* More needs (v1.59.0): the title keeps the ink color; reasons and names stay muted */
 .lrow .t b span{font-size:inherit;color:inherit}
 .lrow .t .nwhy span,.lrow .t .bsub span{font-size:inherit;color:inherit}
+/* I have one (v1.60.0): a chosen piece keeps its edit row with an Undo button beside it */
+.essman{display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--line);padding-right:14px}
+.essman .lrow{border-bottom:0;flex:1;min-width:0}
+.essman .btn{flex:none}
+.esspick{margin:4px 0 12px;border-top:1px solid var(--line)}
+.essshop{margin:4px 0 18px}
+.essshop a.btn{text-decoration:none}
+.essshop + .sh4{margin-top:0}

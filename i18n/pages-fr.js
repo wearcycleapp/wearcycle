@@ -93,5 +93,7 @@ I18N.add("fr",{
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Votre liste de souhaits partagée est plus facile à lire : les tailles une seule fois en haut, des articles numérotés, des liens plus courts et une image facultative de la liste.",
 "Select all in Share my list.": "Tout sélectionner dans Partager ma liste.",
 "Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "À acheter ne cache plus ce qui ne tient pas dans ses trois premières cartes : le reste est listé en dessous et proposé dans Partager ma liste.",
-"Several pieces to replace for the same reason now share one card in Buy next.": "Plusieurs pièces à remplacer pour la même raison partagent désormais une carte dans À acheter."
+"Several pieces to replace for the same reason now share one card in Buy next.": "Plusieurs pièces à remplacer pour la même raison partagent désormais une carte dans À acheter.",
+"Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "Les listes de style comptent une pièce d’une autre matière quand sa couleur correspond : des baskets en cuir noires comptent comme des baskets en tricot noires.",
+"I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "J’en ai un : touchez une pièce qui manque encore à un style pour choisir celle de votre garde-robe qui la remplace, ou pour l’acheter."
 });

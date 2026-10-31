@@ -93,5 +93,7 @@ I18N.add("hi",{
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "आपकी शेयर की गई इच्छा सूची पढ़ने में आसान है: साइज़ ऊपर एक बार, क्रमांक वाले आइटम, छोटे लिंक, और सूची की वैकल्पिक तस्वीर।",
 "Select all in Share my list.": "मेरी सूची शेयर करें में सभी चुनें।",
 "Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "पहले खरीदें अब पहले तीन कार्ड में न आने वाली चीज़ें नहीं छिपाता: बाकी उनके नीचे दिखती हैं और मेरी सूची शेयर करें में मिलती हैं।",
-"Several pieces to replace for the same reason now share one card in Buy next.": "एक ही कारण से बदलने वाले कई कपड़े अब पहले खरीदें में एक ही कार्ड में दिखते हैं।"
+"Several pieces to replace for the same reason now share one card in Buy next.": "एक ही कारण से बदलने वाले कई कपड़े अब पहले खरीदें में एक ही कार्ड में दिखते हैं।",
+"Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "स्टाइल सूचियां अब दूसरे मटीरियल का कपड़ा भी गिनती हैं जब उसका रंग मेल खाता है: काले चमड़े के स्नीकर्स काले निट स्नीकर्स गिने जाते हैं।",
+"I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "मेरे पास है: किसी स्टाइल में अभी चाहिए कपड़े पर टैप करें और अपनी अलमारी से वह कपड़ा चुनें जो उसे पूरा करता है, या उसे खरीदें।"
 });

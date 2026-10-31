@@ -93,5 +93,7 @@ I18N.add("ja",{
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "共有する欲しいものリストが読みやすくなりました：サイズは上に1回だけ、番号付きのアイテム、短いリンク、リストの画像（任意）。",
 "Select all in Share my list.": "「リストを共有」に「すべて選択」を追加。",
 "Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "「次に買うもの」は最初の3枚のカードに入らない項目を隠さなくなりました。残りはその下に表示され、「リストを共有」でも選べます。",
-"Several pieces to replace for the same reason now share one card in Buy next.": "同じ理由で買い替える複数のアイテムは、「次に買うもの」で1枚のカードにまとまります。"
+"Several pieces to replace for the same reason now share one card in Buy next.": "同じ理由で買い替える複数のアイテムは、「次に買うもの」で1枚のカードにまとまります。",
+"Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "スタイルのリストは、色が合えば素材が違うアイテムも数えるようになりました。黒のレザースニーカーは黒のニットスニーカーとして数えられます。",
+"I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "持っている：スタイルにまだ足りないアイテムをタップすると、それに当たるアイテムをクローゼットから選ぶか、探して買えます。"
 });

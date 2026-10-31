@@ -1479,5 +1479,13 @@ I18N.load("ja",{
 "Replace 1 piece": "1点を買い替え",
 "Replace {0} pieces": "{0}点を買い替え",
 "1 more need": "ほかに必要なもの1件",
-"{0} more needs": "ほかに必要なもの{0}件"
+"{0} more needs": "ほかに必要なもの{0}件",
+"Shop online": "オンラインで探す",
+"I have one": "持っている",
+"Pick the piece from your closet that fills this spot.": "この枠を埋めるアイテムをクローゼットから選んでください。",
+"Show all pieces": "すべてのアイテムを表示",
+"Chosen by you": "あなたが選択",
+"Undo": "元に戻す",
+"Undone.": "元に戻しました。",
+"No matching pieces.": "該当するアイテムはありません。"
 });

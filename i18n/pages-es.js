@@ -93,5 +93,7 @@ I18N.add("es",{
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Tu lista de deseos compartida es más fácil de leer: las tallas una sola vez arriba, artículos numerados, enlaces más cortos y una imagen opcional de la lista.",
 "Select all in Share my list.": "Seleccionar todo en Compartir mi lista.",
 "Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "Comprar ahora ya no oculta lo que no cabe en sus tres primeras tarjetas: el resto aparece debajo y se ofrece en Compartir mi lista.",
-"Several pieces to replace for the same reason now share one card in Buy next.": "Varias prendas que reemplazar por el mismo motivo ahora comparten una tarjeta en Comprar ahora."
+"Several pieces to replace for the same reason now share one card in Buy next.": "Varias prendas que reemplazar por el mismo motivo ahora comparten una tarjeta en Comprar ahora.",
+"Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "Las listas de estilo cuentan una prenda de otro material cuando su color coincide: unas zapatillas de cuero negras cuentan como zapatillas de punto negras.",
+"I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "Ya tengo una: toca una prenda que a un estilo aún le falta para elegir la de tu clóset que la cubre, o para comprarla."
 });

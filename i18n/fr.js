@@ -1479,5 +1479,13 @@ I18N.load("fr",{
 "Replace 1 piece": "Remplacer 1 pièce",
 "Replace {0} pieces": "Remplacer {0} pièces",
 "1 more need": "1 besoin de plus",
-"{0} more needs": "{0} besoins de plus"
+"{0} more needs": "{0} besoins de plus",
+"Shop online": "Acheter en ligne",
+"I have one": "J’en ai un",
+"Pick the piece from your closet that fills this spot.": "Choisissez la pièce de votre garde-robe qui remplit cette place.",
+"Show all pieces": "Afficher toutes les pièces",
+"Chosen by you": "Choisi par vous",
+"Undo": "Annuler",
+"Undone.": "Annulé.",
+"No matching pieces.": "Aucune pièce correspondante."
 });

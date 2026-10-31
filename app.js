@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.59.0';
+const APP_VERSION='1.60.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1459,6 +1459,22 @@ document.addEventListener('input',e=>{ const i=e.target; if(!i.matches||!i.match
 async function copyText(t){ try{ await navigator.clipboard.writeText(t); toast('Copied.'); return true; }catch(e){}
   try{ const ta=document.createElement('textarea'); ta.value=t; ta.setAttribute('readonly',''); ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); const ok=document.execCommand('copy'); ta.remove(); if(ok){ toast('Copied.'); return true; } }catch(e){}
   toast('Could not copy. Select the text and copy it yourself.'); return false; }
+// Style essentials with the pieces the person chose ("I have one", settings.haveFor[style][label] = item id, v1.60.0).
+function styleEss(k,items){ const ch=(S.settings.haveFor||{})[k]; return STYLES[k]?essentials(k,items,ch):essentials(looks().find(l=>l.id===k)||{},items,ch); }
+// A "to add" row opens a choice: shop for it, or pick the closet piece that already fills it.
+function openEss(k,label,all){ const items=allItems().filter(isActive), e=styleEss(k,items).find(x=>x.label===label); if(!e) return;
+  const head=String(label).trim().split(/\s+/).pop();
+  const fits=it=>e.cat?it.cat===e.cat:WardrobeLogic.pieceMatch(it,head);
+  const list=(all?items:items.filter(fits)).slice().sort((a,b)=>(fits(b)-fits(a))||String(a.name||'').localeCompare(String(b.name||'')));
+  const notr=STYLES[k]?'':' data-notr';
+  openSheet(sheetHead(`<span${notr}>${esc(label)}</span>`)+`<div class="row essshop"><a class="btn primary" href="${shopUrl(shopQ(label))}" target="_blank" rel="noopener">Shop online</a></div>
+    <h4 class="sh4">I have one</h4><p class="hint">Pick the piece from your closet that fills this spot.</p>
+    <div class="esspick">${list.map(it=>`<button type="button" class="lrow" data-ess-pick="${esc(it.id)}" data-ess="${esc(k)}" data-ess-l="${esc(label)}"><span class="bsw sm own" aria-hidden="true">${smallPic(it)}</span><span class="t"><b data-notr>${esc(it.name||'')}</b><span>${CAT[it.cat]?CAT[it.cat].label:''}</span></span></button>`).join('')||'<p class="hint">No matching pieces.</p>'}</div>
+    ${all?'':`<button type="button" class="btn sm" data-ess="${esc(k)}" data-ess-l="${esc(label)}" data-ess-all="1">Show all pieces</button>`}`);
+  setTimeout(hydrateCuts,0); }
+function essChoose(k,label,id){ const h=S.settings.haveFor||(S.settings.haveFor={}); const m=h[k]||(h[k]={});
+  if(id==null){ delete m[label]; if(!Object.keys(m).length) delete h[k]; } else m[label]=id;
+  saveCache(); queueSettingsSave(); closeSheet(); renderShop(); }
 function renderShop(){
   const box=$('#shopBody'); const items=allItems().filter(isActive);
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():''; return; }
@@ -1552,10 +1568,11 @@ function renderShop(){
   // Build toward a style: what to add per style; the owned essentials behind one row.
   const st=styleSet(); const lr=learned(); const keys=[...new Set(st.pick.length?st.pick.concat(st.work):lr.ids.concat(st.work))];
   let ownedRows='', ownedN=0;
-  const styleBody=keys.map(k=>{ const ess=STYLES[k]?essentials(k,items):essentials(looks().find(l=>l.id===k)||{},items); const have=ess.filter(e=>e.have), miss=ess.filter(e=>!e.have);
-      ownedN+=have.length; ownedRows+=have.map(e=>`<button type="button" class="lrow ess have" data-edit="${esc(e.have.id)}"><span class="mark">✓</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b><span data-notr>${esc(e.have.name)}</span></span><span class="chev" aria-hidden="true">›</span></button>`).join('');
+  const styleBody=keys.map(k=>{ const ess=styleEss(k,items); const have=ess.filter(e=>e.have), miss=ess.filter(e=>!e.have);
+      ownedN+=have.length; ownedRows+=have.map(e=>{ const row=`<button type="button" class="lrow ess have" data-edit="${esc(e.have.id)}"><span class="mark">✓</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b><span><span data-notr>${esc(e.have.name)}</span>${e.manual?` · <span>Chosen by you</span>`:''}</span></span><span class="chev" aria-hidden="true">›</span></button>`;
+        return e.manual?`<div class="essman">${row}<button type="button" class="btn sm" data-ess-undo="${esc(k)}" data-ess-l="${esc(e.label)}">Undo</button></div>`:row; }).join('');
       return `<div class="srow plain"><b ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</b><span class="st">${have.length} of ${ess.length}</span>${miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1)}</div>
-        ${miss.map(e=>`<a class="lrow shop" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></span>${SHOP_GO}</a>`).join('')}`; }).join('');
+        ${miss.map(e=>`<button type="button" class="lrow shop" data-ess="${esc(k)}" data-ess-l="${esc(e.label)}" aria-haspopup="dialog"><span class="mark">+</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></span><span class="chev" aria-hidden="true">›</span></button>`).join('')}`; }).join('');
   const styleP=keys.length?`<section class="panel" aria-labelledby="h-style"><div class="panel-h"><h3 id="h-style">Build toward a style</h3></div><p class="hint sp">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p>${styleBody}${ownedN?fold('owned',pl(ownedN,'Show the 1 you own','Show the {0} you own'),'','',ownedRows):''}<div class="panel-h" style="border:0"><button class="btn sm" data-act="inspo">Inspiration from a photo</button></div></section>`
     :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button><button class="btn sm" data-act="inspo">From a photo</button></div></div></div>`;
   const last=S.settings.ideas&&Array.isArray(S.settings.ideas.list)?S.settings.ideas:null;
@@ -2495,7 +2512,7 @@ function goTab(tab){
 
 document.addEventListener('click',async e=>{
   const del=e.target.closest('[data-look-del]');
-  if(del){ const id=del.dataset.lookDel, st=styleSet(); S.settings.looks=looks().filter(l=>l.id!==id); st.pick=st.pick.filter(k=>k!==id); st.work=st.work.filter(k=>k!==id);
+  if(del){ const id=del.dataset.lookDel, st=styleSet(); S.settings.looks=looks().filter(l=>l.id!==id); if(S.settings.haveFor) delete S.settings.haveFor[id]; st.pick=st.pick.filter(k=>k!==id); st.work=st.work.filter(k=>k!==id);
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); toast('Look removed.'); return; }
   // full-size viewer
   const vb=e.target.closest('[data-vclose],[data-vmode],[data-vzoom]');
@@ -2567,6 +2584,9 @@ document.addEventListener('click',async e=>{
   if(ds.dupKeep){ const [k,d]=ds.dupKeep.split('|'); dupAsk(k,d); return; }
   if(ds.dupMerge){ const [k,d]=ds.dupMerge.split('|'); t.disabled=true; dupMerge(k,d); return; }
   if(ds.dupCancel!==undefined){ const b=t.closest('.dupask'); if(b){ b.hidden=true; b.innerHTML=''; } return; }
+  if(ds.essUndo!=null){ essChoose(ds.essUndo,ds.essL,null); toast('Undone.'); return; }
+  if(ds.essPick){ essChoose(ds.ess,ds.essL,ds.essPick); toast('Saved.'); return; }
+  if(ds.ess!=null){ openEss(ds.ess,ds.essL,!!ds.essAll); return; }
   if(ds.dupOk){ dupNot(ds.dupOk); return; }
   if(ds.inspoWish!=null){ inspoWish(+ds.inspoWish); return; }
   if(ds.wlunit){ if(ds.wlunit!==WL.unit){ const f=ds.wlunit==='in'?1/2.54:2.54; WL.unit=ds.wlunit;

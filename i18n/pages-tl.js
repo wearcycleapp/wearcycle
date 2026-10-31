@@ -93,5 +93,7 @@ I18N.add("tl",{
 "Your shared wish list is easier to read: sizes once at the top, numbered items, shorter links, and an optional picture of the list.": "Mas madaling basahin ang ibinahagi mong wish list: isang beses lang ang mga size sa itaas, may numero ang mga item, mas maiikling link, at opsyonal na larawan ng listahan.",
 "Select all in Share my list.": "Piliin lahat sa Ibahagi ang listahan ko.",
 "Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "Hindi na itinatago ng Bilhin muna ang hindi kasya sa unang tatlong card nito: nakalista ang iba sa ilalim at iniaalok sa Ibahagi ang listahan ko.",
-"Several pieces to replace for the same reason now share one card in Buy next.": "Ang ilang pirasong papalitan dahil sa iisang dahilan ay nasa iisang card na sa Bilhin muna."
+"Several pieces to replace for the same reason now share one card in Buy next.": "Ang ilang pirasong papalitan dahil sa iisang dahilan ay nasa iisang card na sa Bilhin muna.",
+"Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "Binibilang na ng mga listahan ng istilo ang pirasong iba ang materyales kapag tugma ang kulay: ang itim na leather sneakers ay binibilang bilang itim na knit sneakers.",
+"I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "Mayroon na ako: i-tap ang pirasong kailangan pa ng isang istilo para piliin ang nasa closet mo na pupuno rito, o para bilhin ito."
 });

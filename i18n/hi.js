@@ -1479,5 +1479,13 @@ I18N.load("hi",{
 "Replace 1 piece": "1 कपड़ा बदलें",
 "Replace {0} pieces": "{0} कपड़े बदलें",
 "1 more need": "1 और ज़रूरत",
-"{0} more needs": "{0} और ज़रूरतें"
+"{0} more needs": "{0} और ज़रूरतें",
+"Shop online": "ऑनलाइन खरीदें",
+"I have one": "मेरे पास है",
+"Pick the piece from your closet that fills this spot.": "अपनी अलमारी से वह कपड़ा चुनें जो यह जगह भरता है।",
+"Show all pieces": "सभी कपड़े दिखाएं",
+"Chosen by you": "आपने चुना",
+"Undo": "पूर्ववत करें",
+"Undone.": "पूर्ववत किया।",
+"No matching pieces.": "कोई मेल खाता कपड़ा नहीं।"
 });

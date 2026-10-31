@@ -575,12 +575,16 @@ const SYN={};
 [['check','checked','plaid','buffalo','tartan','gingham'],['tee','t-shirt','tshirt'],['t-shirt','tee','tshirt'],['derby','derbie','derbies'],['sneaker','trainer'],['trainer','sneaker'],
  ['jogger','sweatpant','track'],['trouser','pant','slack'],['pant','trouser','slack'],['jumper','sweater','knit'],['sweater','jumper','knit'],['coat','overcoat','parka']].forEach(g=>{ SYN[g[0]]=g; });
 const sing=w=>w.length>3&&/s$/.test(w)&&!/ss$/.test(w)?w.slice(0,-1):w;
-function pieceMatch(it,piece){
+// loose (essentials only, owner 2026-10-31): the material may differ when the piece's main color is a color the
+// description names, so black leather sneakers count as "black knit sneakers"; grey canvas ones are not "olive suede sneakers".
+const MATERIAL_WORDS=new Set(['knit','suede','leather','canvas','cotton','linen','wool','corduroy','velvet','mesh','nylon','cashmere','merino','silk','satin','twill','jersey','fleece','tweed','nubuck','patent','felt']);
+function pieceMatch(it,piece,loose){
   const words=String(piece).toLowerCase().replace(/[^a-z\s-]/g,' ').split(/\s+/).filter(Boolean).map(sing); if(!words.length) return false;
   const text=' '+itemText(it).toLowerCase().replace(/[^a-z\s-]/g,' ').split(/\s+/).map(sing).join(' ')+' ';
   const has=w=>(SYN[w]||[w]).some(x=>text.includes(' '+x+' '));
   const head=words[words.length-1]; if(!has(head)) return false;
-  const defining=words.slice(0,-1).filter(w=>!SOFT_WORDS.has(w));
+  if(loose){ const cols=words.filter(w=>COLORS[w]); if(!cols.length||!cols.includes(primary(it))||!words.slice(0,-1).some(w=>MATERIAL_WORDS.has(w))) return false; }
+  const defining=words.slice(0,-1).filter(w=>!SOFT_WORDS.has(w)&&!(loose&&MATERIAL_WORDS.has(w)));
   return !defining.length||defining.some(has);
 }
 // A style target: {ids:[style ids], looks:[custom looks], weight}. Custom looks come from a photo: base styles plus piece words.
@@ -643,16 +647,23 @@ const ESSENTIALS_W={
   street:[['Hoodie','top',/hood/],['Graphic tee','top',/^(?!.*(hood|sweat|crew ?neck|jumper|sweater|cardigan)).*(graphic|print)/],['Cargo pants or joggers','bottom',/jogger|cargo|sweatpant/],['Relaxed jeans','bottom',/jeans|denim/],['Bomber or puffer jacket','outerwear',/bomber|puffer|varsity|coach/],['Chunky sneakers','shoes',/sneaker|trainer|high-?top/],['Cap or beanie','hat',/./],['Crossbody bag','bag',/./]],
   sporty:[['Technical top','top',/technical|performance|moisture|athletic|training|running|gym|dri|tank/],['Sports bra','top',/bra/],['Leggings','bottom',/legging|tights/],['Track or quarter-zip top','top',/track|quarter[- ]zip|half[- ]zip|zip-?up/],['Windbreaker or shell','outerwear',/windbreaker|shell|anorak|rain/],['Running shoes','shoes',/running|trainer|training|sneaker/],['Sport watch','watch',/./],['Cap','hat',/./]],
   preppy:[['Polo shirt','top',/polo/],['Oxford button-down','top',/oxford|button[- ]?down/],['Cable knit or cardigan','top',/cable|v-?neck|sweater|cardigan|quarter[- ]zip/],['Striped or Breton top','top',/stripe|breton/],['Chinos','bottom',/chino|khaki/],['Pleated or A-line skirt','bottom',/skirt/],['Navy blazer','outerwear',/blazer/],['Loafers or ballet flats','shoes',/loafer|flat|boat|deck/]]};
-function essentials(styleOrLook,items){
-  const own=items.filter(isActive);
-  if(typeof styleOrLook==='string'){ const used=new Set();
-    return ((DEPT==='women'?ESSENTIALS_W:ESSENTIALS)[styleOrLook]||[]).map(([label,cat,rx,cols])=>{ const it=own.find(i=>!used.has(i)&&i.cat===cat&&rx.test(itemText(i).toLowerCase())&&(!cols||cols.includes(primary(i))));
-      if(it) used.add(it); return {label,cat,have:it||null}; }); }
-  const look=styleOrLook, used=new Set();
-  return (look.pieces||[]).slice(0,10).map(p=>{
+// chosen: {label: item id} the person picked with "I have one" (settings.haveFor[style], v1.60.0); those count first.
+function essentials(styleOrLook,items,chosen){
+  const own=items.filter(isActive), C=chosen||{}, used=new Set();
+  const pick=label=>{ const it=C[label]!=null&&own.find(i=>String(i.id)===String(C[label])&&!used.has(i)); if(it) used.add(it); return it||null; };
+  if(typeof styleOrLook==='string'){ const list=(DEPT==='women'?ESSENTIALS_W:ESSENTIALS)[styleOrLook]||[];
+    const out=list.map(([label,cat])=>{ const m=pick(label); return {label,cat,have:m,manual:!!m}; });
+    list.forEach(([label,cat,rx,cols],k)=>{ if(out[k].have) return; const it=own.find(i=>!used.has(i)&&i.cat===cat&&rx.test(itemText(i).toLowerCase())&&(!cols||cols.includes(primary(i))));
+      if(it){ used.add(it); out[k].have=it; } });
+    return out; }
+  const ps=(styleOrLook.pieces||[]).slice(0,10);
+  const out=ps.map(p=>{ const m=pick(p); return {label:p,have:m,manual:!!m}; });
+  // Exact matches first for every piece, then a different material in the named color.
+  for(const loose of [false,true]) ps.forEach((p,k)=>{ if(out[k].have) return;
     const pw=String(p).toLowerCase().split(/\s+/);
-    const it=own.filter(i=>!used.has(i)&&pieceMatch(i,p)).sort((a,b)=>{ const sc=i=>pw.filter(w=>SOFT_WORDS.has(w)&&(itemText(i).toLowerCase().includes(w)||primary(i)===w)).length; return sc(b)-sc(a); })[0];
-    if(it) used.add(it); return {label:p,have:it||null}; });
+    const it=own.filter(i=>!used.has(i)&&pieceMatch(i,p,loose)).sort((a,b)=>{ const sc=i=>pw.filter(w=>SOFT_WORDS.has(w)&&(itemText(i).toLowerCase().includes(w)||primary(i)===w)).length; return sc(b)-sc(a); })[0];
+    if(it){ used.add(it); out[k].have=it; } });
+  return out;
 }
 
 /* ---------- seasons ----------
