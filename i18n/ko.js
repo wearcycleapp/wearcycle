@@ -1487,5 +1487,7 @@ I18N.load("ko",{
 "Chosen by you": "직접 선택함",
 "Undo": "실행 취소",
 "Undone.": "취소했어요.",
-"No matching pieces.": "맞는 옷이 없어요."
+"No matching pieces.": "맞는 옷이 없어요.",
+"✓ Bought:": "✓ 구매함:",
+"Not bought yet": "아직 안 샀어요"
 });

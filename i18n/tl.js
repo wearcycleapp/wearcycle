@@ -1487,5 +1487,7 @@ I18N.load("tl",{
 "Chosen by you": "Pinili mo",
 "Undo": "I-undo",
 "Undone.": "Na-undo.",
-"No matching pieces.": "Walang tugmang piraso."
+"No matching pieces.": "Walang tugmang piraso.",
+"✓ Bought:": "✓ Nabili:",
+"Not bought yet": "Hindi pa nabibili"
 });

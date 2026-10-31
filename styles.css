@@ -1053,3 +1053,7 @@ details.whybox .why{margin:2px 0 10px}
 .essshop{margin:4px 0 18px}
 .essshop a.btn{text-decoration:none}
 .essshop + .sh4{margin-top:0}
+/* Saved ideas open a choice (v1.61.0): the row is a button styled like the old link */
+button.idea.shop{display:flex;flex-direction:column;align-items:stretch;text-align:left;width:100%;background:none;border:0;color:inherit;font:inherit;cursor:pointer}
+button.idea.shop .go{align-self:flex-end;margin-top:4px}
+.idearow.own .idea b{color:var(--muted)}

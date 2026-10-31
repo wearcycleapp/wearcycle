@@ -1487,5 +1487,7 @@ I18N.load("ja",{
 "Chosen by you": "あなたが選択",
 "Undo": "元に戻す",
 "Undone.": "元に戻しました。",
-"No matching pieces.": "該当するアイテムはありません。"
+"No matching pieces.": "該当するアイテムはありません。",
+"✓ Bought:": "✓ 購入済み：",
+"Not bought yet": "まだ買っていない"
 });

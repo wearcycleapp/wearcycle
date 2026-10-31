@@ -1487,5 +1487,7 @@ I18N.load("fr",{
 "Chosen by you": "Choisi par vous",
 "Undo": "Annuler",
 "Undone.": "Annulé.",
-"No matching pieces.": "Aucune pièce correspondante."
+"No matching pieces.": "Aucune pièce correspondante.",
+"✓ Bought:": "✓ Acheté :",
+"Not bought yet": "Pas encore acheté"
 });

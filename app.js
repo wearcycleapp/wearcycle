@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.60.0';
+const APP_VERSION='1.61.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1356,6 +1356,31 @@ const ideaKey=x=>(String(x.item||'')+'|'+String(x.color||'')).toLowerCase();
 const ideaQ=x=>[x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?(COLORS[x.color]?shopQ(x.color):x.color):'',x.item].filter(Boolean).join(' ');
 const ideaText=x=>String(x.item||'')+(x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?' ('+x.color+')':'');
 function ideaLink(x){ return `<a class="idea shop" href="${shopUrl(ideaQ(x))}" target="_blank" rel="noopener"><b data-notr>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${OCC[x.occasion]?`<span>${OCC[x.occasion].label}</span>`:`<span data-notr>${esc(x.occasion||'')}</span>`}${x.pairsWith&&x.pairsWith.length?` · <span>pairs with</span> <span data-notr>${esc(x.pairsWith.join(', '))}</span>`:''}</span><span data-notr>${esc(x.why||'')}</span>${SHOP_GO}</a>`; }
+// Saved ideas against the closet (v1.61.0, owner 2026-10-31): a piece added on or after the day an idea was saved
+// and matching it (same rule as style essentials: exact first, then another material in the named color) marks it
+// bought. "I have one" picks the piece; "Not bought yet" stops the automatic match. settings.haveFor.ideas[id] = item id or ''.
+function ideasOwned(saved,items){ const ch=(S.settings.haveFor||{}).ideas||{}, used=new Set(), out=new Map(), act=items.filter(isActive);
+  for(const x of saved){ const c=ch[x.id]; if(c==null||c==='') continue; const it=act.find(i=>String(i.id)===String(c)); if(it){ used.add(it); out.set(x.id,{it,manual:true}); } }
+  for(const loose of [false,true]) for(const x of saved){ if(out.has(x.id)||ch[x.id]==='') continue; const day=String(x.at||'').slice(0,10);
+    const descs=String(x.item||'').split(/\s+or\s+|\s*·\s*/i).filter(Boolean).map(d=>(x.color&&COLORS[x.color]&&!d.toLowerCase().includes(x.color)?x.color+' ':'')+d);
+    const it=act.find(i=>!used.has(i)&&String(i.created||'').slice(0,10)>=day&&descs.some(d=>WardrobeLogic.pieceMatch(i,d,loose)));
+    if(it){ used.add(it); out.set(x.id,{it}); } }
+  return out; }
+function ideaRow(x,own){ const head=`<b data-notr>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b>`;
+  const sub=own?`<span><span>✓ Bought:</span> <span data-notr>${esc(own.it.name||'')}</span>${own.manual?` · <span>Chosen by you</span>`:''}</span>`
+    :`<span>${OCC[x.occasion]?`<span>${OCC[x.occasion].label}</span>`:`<span data-notr>${esc(x.occasion||'')}</span>`}${x.pairsWith&&x.pairsWith.length?` · <span>pairs with</span> <span data-notr>${esc(x.pairsWith.join(', '))}</span>`:''}</span><span data-notr>${esc(x.why||'')}</span>`;
+  return `<div class="idearow${own?' own':''}"><button type="button" class="idea shop" data-idea-open="${esc(x.id)}" aria-haspopup="dialog">${head}${sub}${own?'':'<span class="go">Shop ›</span>'}</button><button type="button" class="iconbtn ideadel" data-idea-del="${esc(x.id)}" aria-label="Remove from saved ideas">✕</button></div>`; }
+function openIdea(id,all){ const x=(S.settings.savedIdeas||[]).find(y=>y.id===id); if(!x) return; const items=allItems().filter(isActive);
+  const own=ideasOwned(S.settings.savedIdeas||[],allItems()).get(id); const head=String(x.item).split(/\s+or\s+/i)[0].trim().split(/\s+/).pop();
+  const fits=it=>WardrobeLogic.pieceMatch(it,head);
+  const list=(all?items:items.filter(fits)).slice().sort((a,b)=>(fits(b)-fits(a))||String(b.created||'').localeCompare(String(a.created||'')));
+  openSheet(sheetHead(`<span data-notr>${esc(x.item)}</span>`)+`<div class="row essshop"><a class="btn primary" href="${shopUrl(ideaQ(x))}" target="_blank" rel="noopener">Shop online</a>${own?`<button type="button" class="btn" data-idea-have="" data-idea="${esc(id)}">Not bought yet</button>`:''}</div>
+    ${own?`<p class="hint"><span>✓ Bought:</span> <span data-notr>${esc(own.it.name||'')}</span></p>`:''}
+    <h4 class="sh4">I have one</h4><p class="hint">Pick the piece from your closet that fills this spot.</p>
+    <div class="esspick">${list.map(it=>`<button type="button" class="lrow" data-idea-have="${esc(it.id)}" data-idea="${esc(id)}" aria-pressed="${!!own&&own.it===it}"><span class="bsw sm own" aria-hidden="true">${smallPic(it)}</span><span class="t"><b data-notr>${esc(it.name||'')}</b><span>${CAT[it.cat]?CAT[it.cat].label:''}</span></span>${own&&own.it===it?'<span class="mark">✓</span>':''}</button>`).join('')||'<p class="hint">No matching pieces.</p>'}</div>
+    ${all?'':`<button type="button" class="btn sm" data-idea-open="${esc(id)}" data-ess-all="1">Show all pieces</button>`}`);
+  setTimeout(hydrateCuts,0); }
+function ideaHave(id,itemId){ const h=S.settings.haveFor||(S.settings.haveFor={}); const m=h.ideas||(h.ideas={}); m[id]=itemId; saveCache(); queueSettingsSave(); closeSheet(); renderShop(); }
 // Shop (v1.55.0, owner 2026-10-27): one answer first (Buy next, at most three), everything else folded into rows
 // that open in place. Two columns from 700x600. Numbers come from gaps(), versatility(), the Replace rule and the
 // season and style lists; nothing here invents a need.
@@ -1579,7 +1604,8 @@ function renderShop(){
   const list=ideasState.list||(last?last.list:null), at=ideasState.list?ideasState.at:(last?last.at:null);
   const saved=S.settings.savedIdeas||[], savedK=new Set(saved.map(ideaKey));
   const when=at?new Date(at).toLocaleDateString(I18N.locale,{month:'short',day:'numeric'}):'';
-  const savedP=saved.length?`<div class="ideash"><h4>Saved ideas <span class="n">${saved.length}</span></h4></div>${saved.map(x=>`<div class="idearow">${ideaLink(x)}<button type="button" class="iconbtn ideadel" data-idea-del="${esc(x.id)}" aria-label="Remove from saved ideas">✕</button></div>`).join('')}`:'';
+  const ownI=ideasOwned(saved,allItems()), savedS=saved.filter(x=>!ownI.has(x.id)).concat(saved.filter(x=>ownI.has(x.id)));
+  const savedP=saved.length?`<div class="ideash"><h4>Saved ideas <span class="n">${saved.length}</span></h4></div>${savedS.map(x=>ideaRow(x,ownI.get(x.id))).join('')}`:'';
   const ai=`<div class="panel"><div class="panel-h"><h3>Shopping ideas</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
      ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
      ${savedP}
@@ -2580,7 +2606,9 @@ document.addEventListener('click',async e=>{
     const sv=S.settings.savedIdeas||[]; const i=sv.findIndex(y=>ideaKey(y)===ideaKey(x));
     S.settings.savedIdeas=i>=0?sv.filter((_,j)=>j!==i):[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:x.item,color:x.color||'',occasion:x.occasion||'',pairsWith:(x.pairsWith||[]).slice(0,3),why:x.why||'',at:new Date().toISOString()}].concat(sv).slice(0,40);
     saveCache(); queueSettingsSave(); renderShop(); const b=document.querySelector(`[data-idea-save="${ds.ideaSave}"]`); if(b) b.focus(); return; }
-  if(ds.ideaDel){ S.settings.savedIdeas=(S.settings.savedIdeas||[]).filter(y=>y.id!==ds.ideaDel); saveCache(); queueSettingsSave(); renderShop(); const n=document.querySelector('[data-idea-del],[data-act="ideas"]'); if(n) n.focus(); return; }
+  if(ds.ideaOpen){ openIdea(ds.ideaOpen,!!ds.essAll); return; }
+  if(ds.ideaHave!=null&&ds.idea){ ideaHave(ds.idea,ds.ideaHave); toast(ds.ideaHave?'Saved.':'Undone.'); return; }
+  if(ds.ideaDel){ const hf=(S.settings.haveFor||{}).ideas; if(hf) delete hf[ds.ideaDel]; S.settings.savedIdeas=(S.settings.savedIdeas||[]).filter(y=>y.id!==ds.ideaDel); saveCache(); queueSettingsSave(); renderShop(); const n=document.querySelector('[data-idea-del],[data-act="ideas"]'); if(n) n.focus(); return; }
   if(ds.dupKeep){ const [k,d]=ds.dupKeep.split('|'); dupAsk(k,d); return; }
   if(ds.dupMerge){ const [k,d]=ds.dupMerge.split('|'); t.disabled=true; dupMerge(k,d); return; }
   if(ds.dupCancel!==undefined){ const b=t.closest('.dupask'); if(b){ b.hidden=true; b.innerHTML=''; } return; }

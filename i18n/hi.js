@@ -1487,5 +1487,7 @@ I18N.load("hi",{
 "Chosen by you": "आपने चुना",
 "Undo": "पूर्ववत करें",
 "Undone.": "पूर्ववत किया।",
-"No matching pieces.": "कोई मेल खाता कपड़ा नहीं।"
+"No matching pieces.": "कोई मेल खाता कपड़ा नहीं।",
+"✓ Bought:": "✓ खरीदा:",
+"Not bought yet": "अभी नहीं खरीदा"
 });

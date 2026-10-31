@@ -95,5 +95,6 @@ I18N.add("ko",{
 "Buy next no longer hides what does not fit in its first three cards: the rest is listed under them and offered in Share my list.": "다음에 살 것은 처음 세 카드에 들어가지 않는 항목을 더 이상 숨기지 않습니다. 나머지는 그 아래에 표시되고 내 목록 공유에서도 고를 수 있습니다.",
 "Several pieces to replace for the same reason now share one card in Buy next.": "같은 이유로 교체할 여러 옷이 이제 다음에 살 것에서 카드 하나로 묶입니다.",
 "Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "스타일 목록이 색이 맞으면 소재가 다른 옷도 셉니다. 검은 가죽 스니커즈는 검은 니트 스니커즈로 셉니다.",
-"I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "이미 있어요: 스타일에 아직 필요한 옷을 탭해 그 자리를 채울 옷을 옷장에서 고르거나 쇼핑하세요."
+"I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "이미 있어요: 스타일에 아직 필요한 옷을 탭해 그 자리를 채울 옷을 옷장에서 고르거나 쇼핑하세요.",
+"Saved ideas you have since bought are marked Bought with the piece's name; tap a saved idea to shop for it or pick the piece you bought.": "저장한 아이디어 중 이미 산 것은 옷 이름과 함께 구매함으로 표시됩니다. 저장한 아이디어를 탭해 쇼핑하거나 산 옷을 고르세요."
 });

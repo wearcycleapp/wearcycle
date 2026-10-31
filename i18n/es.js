@@ -1487,5 +1487,7 @@ I18N.load("es",{
 "Chosen by you": "Elegida por ti",
 "Undo": "Deshacer",
 "Undone.": "Deshecho.",
-"No matching pieces.": "No hay prendas que coincidan."
+"No matching pieces.": "No hay prendas que coincidan.",
+"✓ Bought:": "✓ Comprada:",
+"Not bought yet": "Aún no la compro"
 });
