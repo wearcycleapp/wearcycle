@@ -96,5 +96,6 @@ I18N.add("hi",{
 "Several pieces to replace for the same reason now share one card in Buy next.": "एक ही कारण से बदलने वाले कई कपड़े अब पहले खरीदें में एक ही कार्ड में दिखते हैं।",
 "Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "स्टाइल सूचियां अब दूसरे मटीरियल का कपड़ा भी गिनती हैं जब उसका रंग मेल खाता है: काले चमड़े के स्नीकर्स काले निट स्नीकर्स गिने जाते हैं।",
 "I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "मेरे पास है: किसी स्टाइल में अभी चाहिए कपड़े पर टैप करें और अपनी अलमारी से वह कपड़ा चुनें जो उसे पूरा करता है, या उसे खरीदें।",
-"Saved ideas you have since bought are marked Bought with the piece's name; tap a saved idea to shop for it or pick the piece you bought.": "सहेजे गए जो आइडिया आपने बाद में खरीद लिए, वे कपड़े के नाम के साथ खरीदा के रूप में चिह्नित होते हैं; किसी सहेजे गए आइडिया पर टैप करके उसे खरीदें या खरीदा हुआ कपड़ा चुनें।"
+"Saved ideas you have since bought are marked Bought with the piece's name; tap a saved idea to shop for it or pick the piece you bought.": "सहेजे गए जो आइडिया आपने बाद में खरीद लिए, वे कपड़े के नाम के साथ खरीदा के रूप में चिह्नित होते हैं; किसी सहेजे गए आइडिया पर टैप करके उसे खरीदें या खरीदा हुआ कपड़ा चुनें।",
+"Swiping between outfits now works anywhere on the pictures, including the shoes and accessories row.": "आउटफ़िट के बीच स्वाइप अब तस्वीरों पर कहीं भी काम करता है, जूतों और एक्सेसरीज़ वाली पंक्ति पर भी।"
 });

@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.61.0';
+const APP_VERSION='1.61.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -986,7 +986,7 @@ function rankNote(){ return `<p class="hint">Ranked by color harmony, dress leve
 function heroCard(f,i){
   const o=hydrate(f.ids), rs=reasonsOf(f,o), first=rs.find(r=>r.neg)||rs[0], rest=rs.filter(r=>r!==first);
   return `<article class="fit hero kitv">${fitHead(f,i)}
-    <div class="herokit">${viewNow()==='board'?flatlay(o,i,true):kitHtml(o,i)}</div>
+    <div class="herokit" data-swipe="1">${viewNow()==='board'?flatlay(o,i,true):kitHtml(o,i)}</div>
     <div class="herometa">${ctaRow(f,i)}${tapBar(f,i)}${addRow(f,i,o)}
       ${first?`<ul class="why why1">${whyLi(first)}</ul>`:''}
       <details class="whybox"><summary>${rest.length?(rest.length===1?'1 more reason':rest.length+' more reasons'):'Why this outfit?'}${notesPill(rest.filter(r=>r.neg).length)}${CHEV_D}</summary>${rest.length?`<ul class="why">${rest.map(whyLi).join('')}</ul>`:''}${rankNote()}</details>

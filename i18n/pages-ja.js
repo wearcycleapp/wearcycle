@@ -96,5 +96,6 @@ I18N.add("ja",{
 "Several pieces to replace for the same reason now share one card in Buy next.": "同じ理由で買い替える複数のアイテムは、「次に買うもの」で1枚のカードにまとまります。",
 "Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "スタイルのリストは、色が合えば素材が違うアイテムも数えるようになりました。黒のレザースニーカーは黒のニットスニーカーとして数えられます。",
 "I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "持っている：スタイルにまだ足りないアイテムをタップすると、それに当たるアイテムをクローゼットから選ぶか、探して買えます。",
-"Saved ideas you have since bought are marked Bought with the piece's name; tap a saved idea to shop for it or pick the piece you bought.": "保存したアイデアのうち購入済みのものは、アイテム名とともに「購入済み」と表示されます。保存したアイデアをタップすると、探して買うか、買ったアイテムを選べます。"
+"Saved ideas you have since bought are marked Bought with the piece's name; tap a saved idea to shop for it or pick the piece you bought.": "保存したアイデアのうち購入済みのものは、アイテム名とともに「購入済み」と表示されます。保存したアイデアをタップすると、探して買うか、買ったアイテムを選べます。",
+"Swiping between outfits now works anywhere on the pictures, including the shoes and accessories row.": "コーデの切り替えスワイプが、靴とアクセサリーの列を含め、画像のどこでも使えるようになりました。"
 });

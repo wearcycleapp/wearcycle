@@ -845,7 +845,7 @@ body:has(#tab-outfits:not([hidden]) .remline) #holiBar{display:none}
 .bars i{width:5px;height:12px;border-radius:2px;background:var(--line)}
 .bars i.on{background:var(--good)}
 .herokit,.herometa{display:flex;flex-direction:column;gap:12px;min-width:0}
-.herokit{gap:8px}
+.herokit{gap:8px;touch-action:pan-y} /* the whole picture area swipes, accessories too (v1.61.1) */
 /* the flat-lay board when chosen in Adjust: as tall as the first screen allows, so Wear this stays in view */
 .kitv .flatlay{aspect-ratio:auto;height:calc(100vh - 470px);height:calc(100svh - 470px);min-height:min(280px,var(--fmax,280px));max-height:min(var(--fmax,100vh),calc((100vw - 32px) * 1.25))}
 .kit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;touch-action:pan-y}
