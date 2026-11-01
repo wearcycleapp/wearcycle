@@ -171,13 +171,18 @@ async function settle(page) {
     while (pending() && performance.now() < deadline) await new Promise(r => setTimeout(r, 150));
   });
 }
-// Pictures the app is replacing with a sharper copy (img[data-sharp], Phase 9) arrive after a download that settle()
-// does not wait for (networkidle was already reached at load). Waits until none on screen is still drawn larger than
-// its file, up to 20 s; returns the milliseconds waited, or -1 when some were still soft at the deadline.
+// Pictures the app replaces with a sharper copy (img[data-pick], Phase 9: when the picture comes near the screen and
+// is drawn larger than its file) arrive after a download that settle() does not wait for (networkidle was already
+// reached at load), and the app may not have asked yet when settle() returns. Waits until every such picture on screen
+// is drawn within 1.1x of its file, is a cut-out, or belongs to a piece with no larger file (no full photo, or an
+// example), up to 20 s; returns the milliseconds waited, or -1 when some were still soft at the deadline.
 async function sharpened(page, sheet) {
   const t0 = Date.now();
-  const ok = await page.waitForFunction(sheet => [...document.querySelectorAll((sheet ? '#sheetRoot .sheet' : 'section.tab:not([hidden])') + ' img[data-sharp]')].every(i => {
-    const r = i.getBoundingClientRect(); if (!r.width || r.bottom <= 0 || r.top >= innerHeight || !i.naturalWidth) return true;
+  const ok = await page.waitForFunction(sheet => [...document.querySelectorAll((sheet ? '#sheetRoot .sheet' : 'section.tab:not([hidden])') + ' img[data-pick]')].every(i => {
+    const r = i.getBoundingClientRect(); if (!r.width || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) return true;
+    if (!i.complete || !i.naturalWidth) return false;
+    const it = typeof byId === 'function' ? byId(i.dataset.pick) : null;
+    if (i.classList.contains('cut') || !it || !it.photo || (typeof isEx === 'function' && isEx(it))) return true;
     const cs = getComputedStyle(i), k = (cs.objectFit === 'cover' ? Math.max(r.width / i.naturalWidth, r.height / i.naturalHeight) : Math.min(r.width / i.naturalWidth, r.height / i.naturalHeight)) * devicePixelRatio;
     return k <= 1.1; }), sheet, { timeout: 20000, polling: 250 }).then(() => true, () => false);
   return ok ? Date.now() - t0 : -1;
