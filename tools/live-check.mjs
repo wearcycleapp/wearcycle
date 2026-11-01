@@ -140,7 +140,7 @@ const allowedHosts = cspHosts();
 async function guardedContext(browser, dev, { storageState, serviceWorkers = 'block' } = {}) {
   const ctx = await browser.newContext({ viewport: { width: dev.width, height: dev.height }, deviceScaleFactor: dev.dpr, isMobile: dev.touch, hasTouch: dev.touch,
     locale: 'en-CA', timezoneId: 'America/Toronto', serviceWorkers, storageState });
-  const log = { blocked: [], unexpected: new Set(), failed: [], console: [], csp: [], items: null, bodies: new Map(), copies: { held: 0, stored: 0, pieces: 0 }, aborted: new Set() };
+  const log = { blocked: [], unexpected: new Set(), failed: [], console: [], csp: [], items: null, bodies: new Map(), copies: { held: 0, stored: 0, pieces: 0, status: [] }, aborted: new Set(), photos: null };
   await ctx.route('**/*', async route => {
     const req = route.request(), u = new URL(req.url()), m = req.method();
     if (u.host !== SB_HOST) return route.continue();
@@ -148,8 +148,8 @@ async function guardedContext(browser, dev, { storageState, serviceWorkers = 'bl
     // The app's own copy of a photo (v1.62.1): held back on ordinary runs and counted, not a failure.
     const copy = m === 'POST' && /^\/storage\/v1\/object\/photos\/[^/]+\/[^/]+-1024\.jpg$/.test(p);
     if (copy && !STORE_COPIES) { log.copies.held++; log.aborted.add(req); return route.abort('blockedbyclient'); }
-    if (copy && STORE_COPIES && ownFolder(log, p)) { log.copies.stored++; return route.continue(); }
-    if (STORE_COPIES && m === 'PATCH' && p === '/rest/v1/items' && onlyAddsMed(log, u, req)) { log.copies.pieces++; return route.continue(); }
+    if (copy && STORE_COPIES && ownFolder(log, p)) { log.copies.stored++; const resp = await route.fetch(); log.copies.status.push('upload ' + resp.status()); return route.fulfill({ response: resp }); }
+    if (STORE_COPIES && m === 'PATCH' && p === '/rest/v1/items' && onlyAddsMed(log, u, req)) { log.copies.pieces++; const resp = await route.fetch(); let n = '?'; try { n = JSON.parse((await resp.body()).toString()).length; } catch {} log.copies.status.push('update ' + resp.status() + '/' + n); return route.fulfill({ response: resp }); }
     if (STORE_COPIES && m === 'GET' && p === '/rest/v1/items') { // remember each piece as read, to compare updates with
       const resp = await route.fetch(); try { const j = JSON.parse((await resp.body()).toString()), qid = (u.searchParams.get('id') || '').replace(/^eq\./, '');
         for (const row of Array.isArray(j) ? j : j ? [j] : []) { const id = row.id || qid; if (id && row.body) log.bodies.set(id, row.body); } } catch {}
@@ -165,7 +165,7 @@ async function guardedContext(browser, dev, { storageState, serviceWorkers = 'bl
   ctx.on('request', r => { const u = r.url(); if (/^https?:/.test(u) && !allowedHosts.has(new URL(u).host)) log.unexpected.add(new URL(u).host); });
   ctx.on('requestfailed', r => { const t = (r.failure() || {}).errorText || ''; if (log.aborted.has(r)) return; // aborted by this guard: listed above, or a held-back copy
     if (!/ABORTED|BLOCKED_BY_CLIENT|cancel/i.test(t)) log.failed.push(r.method() + ' ' + new URL(r.url()).host + shortPath(new URL(r.url()).pathname) + ' ' + t); });
-  ctx.on('response', async r => { try { const u = new URL(r.url()); if (u.host === SB_HOST && u.pathname === '/rest/v1/items' && r.request().method() === 'GET' && log.items === null) { const j = await r.json(); if (Array.isArray(j)) log.items = j.length; } } catch {} });
+  ctx.on('response', async r => { try { const u = new URL(r.url()); if (u.host === SB_HOST && u.pathname === '/rest/v1/items' && r.request().method() === 'GET' && log.items === null) { const j = await r.json(); if (Array.isArray(j)) { log.items = j.length; const ph = j.filter(r => r.body && r.body.photo); log.photos = { photos: ph.length, copies: ph.filter(r => r.body.med).length }; } } } catch {} });
   ctx.on('page', page => {
     page.on('console', m => { if (m.type() !== 'error') return; const t = m.text(); if (/Content.Security.Policy|Refused to (load|connect|execute|apply|frame)/i.test(t)) log.csp.push(t); else if (!/BLOCKED_BY_CLIENT/i.test(t)) log.console.push(t); });
     page.on('pageerror', e => log.console.push(String(e && e.message || e)));
@@ -320,8 +320,10 @@ async function deviceChecks(browser, engine, dev, state) {
       const w = ms => ms < 0 ? 'still soft after 20 s' : 'sharper copies in ' + (ms / 1000).toFixed(1) + ' s';
       return 'closet first screen (scrolled ' + y + 'px; ' + w(wc) + ') ' + pl(c) + '; editor (' + w(we) + ') ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
     await step(tag + 'photo copies (1024px, v1.62.1)', async () => { const c = log.copies;
-      if (STORE_COPIES) return c.stored + ' uploaded, ' + c.pieces + ' pieces updated (store-copies run)';
-      return c.held ? c.held + ' uploads held back (read-only run; a store_copies run stores them)' : 'no upload attempted'; });
+      const had = log.photos ? log.photos.copies + ' of ' + log.photos.photos + ' pieces with a photo had a stored copy at app open; ' : '';
+      const tally = a => Object.entries(a.reduce((m, x) => (m[x] = (m[x] || 0) + 1, m), {})).map(([k, v]) => k + ' x' + v).join(', ');
+      if (STORE_COPIES) return had + c.stored + ' uploaded, ' + c.pieces + ' pieces updated (store-copies run; ' + (tally(c.status) || 'no responses') + ')';
+      return had + (c.held ? c.held + ' uploads held back (read-only run; a store_copies run stores them)' : 'no upload attempted'); });
     await step(tag + 'photos and cut-outs load', async () => { if (imgs.broken) throw new Error(imgs.broken + ' of ' + imgs.shown + ' images broken'); return imgs.shown + ' images, none broken'; });
     await step(tag + 'sheets open and close', async () => {
       const done = [];
@@ -428,7 +430,10 @@ function finish() {
   const esc = s => String(s).replace(/%/g, '%25').replace(/\r/g, '%0D').replace(/\n/g, '%0A');
   if (process.env.GITHUB_ACTIONS) {
     results.filter(r => r.status === 'FAIL').slice(0, 10).forEach(r => console.log('::error title=Live check::' + esc(r.name + (r.detail ? ': ' + r.detail : ''))));
-    console.log('::notice title=Live check ' + line + '::' + esc(results.map(r => r.status + ' ' + r.name + (r.detail ? ': ' + r.detail : '')).join('\n')));
+    // GitHub keeps 4,096 characters of an annotation: whole lines in parts of at most 3,900 (at most 10 notices a step)
+    const parts = [[]]; for (const t of results.map(r => r.status + ' ' + r.name + (r.detail ? ': ' + r.detail : ''))) {
+      const cur = parts[parts.length - 1]; if (cur.length && esc(cur.concat(t).join('\n')).length > 3900) parts.push([t]); else cur.push(t); }
+    parts.slice(0, 9).forEach((p, k) => console.log('::notice title=Live check ' + line + (parts.length > 1 ? ' (' + (k + 1) + ' of ' + parts.length + ')' : '') + '::' + esc(p.join('\n'))));
   }
   if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, ['## Live check: ' + line, '', BASE + ', app ' + APP_VERSION, '',
     '| Status | Check | Detail |', '| --- | --- | --- |', ...results.map(r => '| ' + r.status + ' | ' + r.name + ' | ' + r.detail.replace(/\|/g, '/') + ' |'), ''].join('\n'));
