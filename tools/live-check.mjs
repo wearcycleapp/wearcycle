@@ -197,7 +197,8 @@ const PICTURES = sheet => {
     const h = r.height - px(cs.paddingTop) - px(cs.paddingBottom) - px(cs.borderTopWidth) - px(cs.borderBottomWidth);
     const sx = w / i.naturalWidth, sy = h / i.naturalHeight, fit = cs.objectFit;
     const k = (fit === 'contain' || fit === 'scale-down' ? Math.min(sx, sy) : Math.max(sx, sy)) * dpr;
-    out.shown++; if (k > 1.1) { out.upscaled++; (out.soft = out.soft || []).push((i.classList.contains('cut') ? 'cut-out ' : i.currentSrc.startsWith('data:') ? 'thumbnail ' : 'photo ') + Math.max(i.naturalWidth, i.naturalHeight) + 'px'); }
+    out.shown++; if (k > 1.1) { out.upscaled++; (out.soft = out.soft || []).push((i.classList.contains('cut') ? 'cut-out ' : i.currentSrc.startsWith('data:') ? 'thumbnail ' : 'photo ') + Math.max(i.naturalWidth, i.naturalHeight) + 'px'
+      + (i.dataset.pick && typeof byId === 'function' ? (it => it ? ' [' + (it.photo ? 'full photo' : 'no full photo') + (it.box ? ', box' : '') + (it.cut ? ', cut-out' : '') + ', ' + (i.dataset.sharp ? 'sharper copy asked' : 'not asked') + ']' : '')(byId(i.dataset.pick)) : '')); }
     out.worst = Math.max(out.worst, Math.round(k * 10) / 10);
   }
   const b = document.querySelector('.fit.hero [data-wear]');
@@ -274,10 +275,10 @@ async function deviceChecks(browser, engine, dev, state) {
     // whether a picture is drawn larger than its file). Counts and sizes only.
     await step(tag + 'closet and item editor: pictures', async () => {
       const pl = p => p.shown + ' pictures, ' + p.upscaled + ' drawn larger than their file' + (p.upscaled ? ' (up to ' + p.worst + 'x: ' + p.soft.join(', ') + ')' : ''); // kind and file size only, no names
-      await goTab(page, 'closet'); await settle(page); const c = await page.evaluate(PICTURES, false);
+      await goTab(page, 'closet'); await settle(page); const c = await page.evaluate(PICTURES, false), y = await page.evaluate(() => Math.round(scrollY));
       const b0 = net.bytes, f0 = net.files; await page.click('#closetGrid [data-edit]'); await page.waitForSelector('#sheetRoot .sheet'); await settle(page);
       const e = await page.evaluate(PICTURES, true); const eb = { bytes: net.bytes - b0, files: net.files - f0 }; await closeSheet(page);
-      return 'closet first screen ' + pl(c) + '; editor ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
+      return 'closet first screen (scrolled ' + y + 'px) ' + pl(c) + '; editor ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
     await step(tag + 'photos and cut-outs load', async () => { if (imgs.broken) throw new Error(imgs.broken + ' of ' + imgs.shown + ' images broken'); return imgs.shown + ' images, none broken'; });
     await step(tag + 'sheets open and close', async () => {
       const done = [];
