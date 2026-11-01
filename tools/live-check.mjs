@@ -10,8 +10,11 @@
 //     [--no-claude]            call the Edge Function with an unknown task instead: free, and still checks that it is
 //                              deployed, accepts the sign-in, answers CORS and has its Anthropic key
 //     [--engines chromium,webkit]
+//     [--store-copies]         let the app store the 1024px photo copies it makes (v1.62.1): only the upload of
+//                              "<photo>-1024.jpg" into the account's own folder and an items update that adds nothing
+//                              but "med" to a piece; started by hand (workflow_dispatch, store_copies), never on a push
 //
-// Read-only: the test account's data is never changed. Every write to Supabase (tables, storage, auth, functions) is
+// Read-only: the test account's data is never changed (except with --store-copies, above). Every write to Supabase (tables, storage, auth, functions) is
 // blocked and reported, except one Edge Function request: task "graphic" with a 224 x 224 JPEG (64 image tokens, at
 // most 120 output tokens; under $0.002 at Claude Sonnet 5.5 list prices of $2 and $10 per million tokens, October
 // 2026). It adds 1 to the account's daily "graphic" count (limit 80). The task "delete_account" is never sent.
@@ -31,6 +34,7 @@ if (!/^https?:\/\/[^/]+$/.test(BASE)) { console.error('Usage: node tools/live-ch
 const WAIT_MS = Number(opt('wait') || 600) * 1000;
 const ENGINES = (opt('engines') || 'chromium,webkit').split(',');
 const TASK = argv.includes('--no-claude') ? 'ping' : 'graphic'; // the only tasks this script ever sends
+const STORE_COPIES = argv.includes('--store-copies');
 const EMAIL = process.env.WEARCYCLE_TEST_EMAIL || '', PASS = process.env.WEARCYCLE_TEST_PASSWORD || '';
 
 const read = f => readFileSync(path.join(REPO, f));
@@ -136,11 +140,20 @@ const allowedHosts = cspHosts();
 async function guardedContext(browser, dev, { storageState, serviceWorkers = 'block' } = {}) {
   const ctx = await browser.newContext({ viewport: { width: dev.width, height: dev.height }, deviceScaleFactor: dev.dpr, isMobile: dev.touch, hasTouch: dev.touch,
     locale: 'en-CA', timezoneId: 'America/Toronto', serviceWorkers, storageState });
-  const log = { blocked: [], unexpected: new Set(), failed: [], console: [], csp: [], items: null };
-  await ctx.route('**/*', route => {
+  const log = { blocked: [], unexpected: new Set(), failed: [], console: [], csp: [], items: null, bodies: new Map(), copies: { held: 0, stored: 0, pieces: 0 } };
+  await ctx.route('**/*', async route => {
     const req = route.request(), u = new URL(req.url()), m = req.method();
     if (u.host !== SB_HOST) return route.continue();
     const p = u.pathname, task = p === '/functions/v1/claude' && m === 'POST' ? taskOf(req) : undefined;
+    // The app's own copy of a photo (v1.62.1): held back on ordinary runs and counted, not a failure.
+    const copy = m === 'POST' && /^\/storage\/v1\/object\/photos\/[^/]+\/[^/]+-1024\.jpg$/.test(p);
+    if (copy && !STORE_COPIES) { log.copies.held++; return route.abort('blockedbyclient'); }
+    if (copy && STORE_COPIES && ownFolder(log, p)) { log.copies.stored++; return route.continue(); }
+    if (STORE_COPIES && m === 'PATCH' && p === '/rest/v1/items' && onlyAddsMed(log, u, req)) { log.copies.pieces++; return route.continue(); }
+    if (STORE_COPIES && m === 'GET' && p === '/rest/v1/items') { // remember each piece as read, to compare updates with
+      const resp = await route.fetch(); try { const j = JSON.parse((await resp.body()).toString()), qid = (u.searchParams.get('id') || '').replace(/^eq\./, '');
+        for (const row of Array.isArray(j) ? j : j ? [j] : []) { const id = row.id || qid; if (id && row.body) log.bodies.set(id, row.body); } } catch {}
+      return route.fulfill({ response: resp }); }
     const ok = m === 'GET' || m === 'HEAD' || m === 'OPTIONS'
       || (m === 'POST' && p === '/auth/v1/token') // sign-in and token refresh
       || (m === 'POST' && p.startsWith('/storage/v1/object/sign/')) // signed photo URLs, nothing stored
@@ -157,6 +170,15 @@ async function guardedContext(browser, dev, { storageState, serviceWorkers = 'bl
     page.on('pageerror', e => log.console.push(String(e && e.message || e)));
   });
   return { ctx, log };
+}
+// --store-copies: the upload goes into the folder of the account's own photos, and an items update changes nothing but
+// "med" (pointing at that piece's "<photo>-1024.jpg") compared with the piece as the app read it from the server.
+const canon = v => Array.isArray(v) ? '[' + v.map(canon).join(',') + ']' : v && typeof v === 'object' ? '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + canon(v[k])).join(',') + '}' : JSON.stringify(v);
+function ownFolder(log, p) { const dir = decodeURIComponent(p).split('/')[5]; return [...log.bodies.values()].some(b => typeof b.photo === 'string' && b.photo.split('/')[0] === dir); }
+function onlyAddsMed(log, u, req) {
+  try { const id = (u.searchParams.get('id') || '').replace(/^eq\./, ''), was = log.bodies.get(id), next = (JSON.parse(req.postData() || '{}') || {}).body;
+    if (!was || !next || typeof next.med !== 'string' || next.med !== String(was.photo).replace(/\.[a-z0-9]+$/i, '') + '-1024.jpg') return false;
+    const a = { ...was }, b = { ...next }; delete a.med; delete b.med; return canon(a) === canon(b); } catch { return false; }
 }
 const logProblems = log => [...log.blocked.map(b => 'write blocked: ' + b), ...[...log.unexpected].map(h => 'host outside the CSP: ' + h),
   ...log.failed.map(f => 'request failed: ' + f), ...log.csp.map(c => 'CSP: ' + c), ...log.console.map(c => 'console: ' + c)];
@@ -296,6 +318,9 @@ async function deviceChecks(browser, engine, dev, state) {
       const we = await sharpened(page, true); const e = await page.evaluate(PICTURES, true); const eb = { bytes: net.bytes - b0, files: net.files - f0 }; await closeSheet(page);
       const w = ms => ms < 0 ? 'still soft after 20 s' : 'sharper copies in ' + (ms / 1000).toFixed(1) + ' s';
       return 'closet first screen (scrolled ' + y + 'px; ' + w(wc) + ') ' + pl(c) + '; editor (' + w(we) + ') ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
+    await step(tag + 'photo copies (1024px, v1.62.1)', async () => { const c = log.copies;
+      if (STORE_COPIES) return c.stored + ' uploaded, ' + c.pieces + ' pieces updated (store-copies run)';
+      return c.held ? c.held + ' uploads held back (read-only run; a store_copies run stores them)' : 'no upload attempted'; });
     await step(tag + 'photos and cut-outs load', async () => { if (imgs.broken) throw new Error(imgs.broken + ' of ' + imgs.shown + ' images broken'); return imgs.shown + ' images, none broken'; });
     await step(tag + 'sheets open and close', async () => {
       const done = [];

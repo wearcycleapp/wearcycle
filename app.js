@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.62.0';
+const APP_VERSION='1.62.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -169,22 +169,23 @@ async function decode(blob){
 }
 function drawScaled(src,max){ const w=src.width||src.videoWidth,h=src.height||src.videoHeight,k=Math.min(1,max/Math.max(w,h));
   const cv=document.createElement('canvas'); cv.width=Math.round(w*k); cv.height=Math.round(h*k); cv.getContext('2d').drawImage(src,0,0,cv.width,cv.height); return cv; }
-async function prepare(blob){ // -> {full: Blob (<=2048px, enough detail to zoom), thumb: dataURL (<=256px)}
+async function prepare(blob){ // -> {full: Blob (<=2048px, enough detail to zoom), med: Blob (1024px copy, null when the photo is no larger), thumb: dataURL (<=256px)}
   const src=await decode(blob);
   const full=await new Promise(r=>drawScaled(src,2048).toBlob(r,'image/jpeg',0.85));
+  const med=Math.max(src.width||0,src.height||0)>1024?await new Promise(r=>drawScaled(src,1024).toBlob(r,'image/jpeg',0.82)):null;
   const thumb=drawScaled(src,256).toDataURL('image/jpeg',0.72);
   if(src.close) src.close();
-  return {full,thumb};
+  return {full,med,thumb};
 }
 // Crops a photo to Claude's box around the garment, padded and squared so the whole piece fills a tile.
 function validBox(b){ return Array.isArray(b)&&b.length===4&&b.every(v=>typeof v==='number'&&v>=0&&v<=1)&&b[2]-b[0]>0.05&&b[3]-b[1]>0.05; }
-async function cropThumb(blob,box,max){
+async function cropThumb(blob,box,max,info){
   const src=await decode(blob); const W=src.width,H=src.height;
   let x0=box[0]*W,y0=box[1]*H,x1=box[2]*W,y1=box[3]*H; const pad=0.06*Math.max(x1-x0,y1-y0);
   x0-=pad; y0-=pad; x1+=pad; y1+=pad;
   const side=Math.min(Math.max(x1-x0,y1-y0),W,H), cx=(x0+x1)/2, cy=(y0+y1)/2;
   const sx=Math.max(0,Math.min(W-side,cx-side/2)), sy=Math.max(0,Math.min(H-side,cy-side/2));
-  const out=Math.min(max||320,Math.round(side)); const cv=document.createElement('canvas'); cv.width=cv.height=out;
+  const out=Math.min(max||320,Math.round(side)); if(info) info.px=out; const cv=document.createElement('canvas'); cv.width=cv.height=out;
   cv.getContext('2d').drawImage(src,sx,sy,side,side,0,0,out,out); if(src.close) src.close();
   return cv.toDataURL('image/jpeg',0.8);
 }
@@ -204,6 +205,14 @@ async function uploadPhoto(blob){
   return path;
 }
 function removePhoto(path){ if(path&&sb) sb.storage.from('photos').remove([path]).catch(()=>{}); }
+// The 1024px copy stored next to each photo (v1.62.1, owner 2026-11-01): items.body.med, "<photo name>-1024.jpg", or the
+// photo itself when it is no larger than 1024px. Devices read it instead of the full photo when a picture needs more
+// than the thumbnail (medUrl); the zoom viewer and cut-outs keep using the full photo. Removing a photo removes its copy.
+const medPath=photo=>String(photo).replace(/\.[a-z0-9]+$/i,'')+'-1024.jpg';
+async function uploadMed(photo,blob){ if(!photo) return null; if(!blob) return photo;
+  const path=medPath(photo); const {error}=await sb.storage.from('photos').upload(path,blob,{contentType:'image/jpeg',upsert:false});
+  return !error||error.status===409||error.statusCode==='409'||/exist|duplicate/i.test(error.message||'')?path:null; }
+function removePhotoFiles(photo){ if(photo&&sb) sb.storage.from('photos').remove([photo,medPath(photo)]).catch(()=>{}); }
 
 /* ---------- Claude (through the Supabase Edge Function) ---------- */
 const PRIVACY_V='2026-10-07'; // bump when the privacy notice changes in a way people should see again
@@ -679,7 +688,7 @@ async function addPhotos(blobs){
     let p; try{ p=await prepare(b); }catch(e){ continue; }
     const now=todayISO();
     const it={id:uuid(),name:'New item '+(done+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
-    const path=await uploadPhoto(p.full); if(path) it.photo=path;
+    const path=await uploadPhoto(p.full); if(path){ it.photo=path; const m=await uploadMed(path,p.med); if(m) it.med=m; }
     if(!claudeOn()){ try{ const g=await guessColors(p.full); if(g.length){ it.colors=[g[0]]; it.colorGuess=g; } }catch(e){} }
     if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else { aiFail++; aiWhy=aiWhy||'Could not get an answer right now. Try again.'; } }catch(e){ aiFail++; aiWhy=aiWhy||aiMsg(e); if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
     if(await writeItem(it)){ done++; added.push(it); }
@@ -1124,17 +1133,42 @@ function kitHtml(o,i){
 function kitPic(it,big){ const src=thumbSrc(it); if(!src) return glyph(it);
   return `<img src="${esc(src)}" alt="" class="${it.box?'fitted':'cover'}"${it.cut?` data-cut="${esc(it.id)}"`:big&&it.photo&&!isEx(it)?` data-photo="${esc(it.id)}"`:''}>`; }
 function smallPic(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="" loading="lazy" class="${it.box?'fitted':'cover'}"${it.cut?` data-cut="${esc(it.id)}"`:''}>`:glyph(it); }
-// A piece without a cut-out drawn larger than its thumbnail: its photo, downloaded once, reduced on the device to
-// 1024px (the cut-outs' size) and kept with the cut-outs, so later opens download nothing. Sign-out clears that cache.
-const MED=new Map();
-function medUrl(it,boxed){ const b=boxed&&validBox(it.box)?it.box:null, key=it.photo+(b?'#'+b.map(v=>v.toFixed(3)).join(','):''); if(MED.has(key)) return MED.get(key);
-  const p=(async()=>{ let blob=null; const k=cutKey((b?'m1024b/':'m1024/')+key);
-    try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(k); if(hit) blob=await hit.blob();
-      if(!blob&&sb&&S.online){ const src=await photoBlob(it.photo); blob=b?await cropBlob(src,b,1024):await shrink(src,1024); if(blob) await c.put(k,new Response(blob,{headers:{'Content-Type':blob.type||'image/jpeg'}})); } }catch(e){}
+// A piece without a cut-out drawn larger than its thumbnail: a 1024px copy of its photo, kept with the cut-outs on the
+// device, so later opens download nothing (sign-out clears that cache). Since v1.62.1 the copy comes from the one stored
+// with the piece (items.body.med) instead of the full photo; a device that has to read the full photo of a piece with no
+// stored copy stores one, once (storeMed). Tiles cropped to Claude's box crop the stored copy, or the full photo when
+// that crop would still be drawn larger than its file (need: device pixels along the tile's longer side).
+const MED=new Map(), MEDUP=new Set();
+function medUrl(it,boxed,need=0){ const b=boxed&&validBox(it.box)?it.box:null, key=it.photo+(b?'#'+b.map(v=>v.toFixed(3)).join(','):''), mk=key+(b&&need?'@'+Math.ceil(need/64):'');
+  if(MED.has(mk)) return MED.get(mk);
+  const p=(async()=>{ let blob=null, px=0; const k=cutKey((b?'m1024b/':'m1024/')+key);
+    try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(k);
+      if(hit){ const hp=+hit.headers.get('X-Px')||0; if(!(b&&need&&hp&&hp<1024&&hp*1.1<need)) blob=await hit.blob(); }
+      if(!blob&&sb&&S.online){ let stored=false;
+        if(it.med&&it.med!==it.photo){ try{ const m=await photoBlob(it.med); stored=true;
+          if(!b){ blob=m; px=1024; } else { const info={}; const cb=await cropBlob(m,b,1024,info); if(!need||info.px*1.1>=need||info.px>=1024){ blob=cb; px=info.px; } } }catch(e){} }
+        if(!blob){ const src=await photoBlob(it.photo); const info={}; blob=b?await cropBlob(src,b,1024,info):await shrink(src,1024); px=info.px||1024;
+          if(!stored&&it.med!==it.photo) storeMed(it,src,b?null:blob); }
+        if(blob) await c.put(k,new Response(blob,{headers:{'Content-Type':blob.type||'image/jpeg','X-Px':String(px)}})); } }catch(e){}
     return blob?URL.createObjectURL(blob):''; })();
-  MED.set(key,p); p.then(u=>{ if(!u) MED.delete(key); }); return p; }
+  MED.set(mk,p); p.then(u=>{ if(!u) MED.delete(mk); }); return p; }
+// Stores the 1024px copy of a photo that has none (photos added before v1.62.1, or whose copy failed to upload), once per
+// photo per session. Only med is added to the row as it is on the server, and only if the row has not changed since it
+// was read (updated_at), so an edit made meanwhile (here or on another device) is never overwritten; when the piece
+// has a new photo or is gone by then, the copy just uploaded is removed again.
+async function storeMed(it,src,copy){ if(!it||!it.photo||isEx(it)||!UID||!canWrite()||MEDUP.has(it.photo)) return; MEDUP.add(it.photo);
+  try{ const img=await decode(src); const big=Math.max(img.width||0,img.height||0)>1024; if(img.close) img.close();
+    const path=big?await uploadMed(it.photo,copy||await shrink(src,1024)):it.photo; if(!path) return;
+    let done=false;
+    for(let n=0;n<3&&!done;n++){ const r=await sb.from('items').select('body,updated_at').eq('id',it.id).maybeSingle(); if(r.error) return;
+      const body=r.data&&r.data.body; if(!body||body.photo!==it.photo){ if(big) removePhoto(path); return; }
+      if(body.med===path){ done=true; break; }
+      const w=await sb.from('items').update({body:Object.assign({},body,{med:path}),updated_at:new Date().toISOString()}).eq('id',it.id).eq('updated_at',r.data.updated_at).select('id');
+      if(w.error) return; done=Array.isArray(w.data)&&w.data.length>0; }
+    if(!done) return;
+    const cur=S.items.get(it.id); if(cur&&cur.photo===it.photo&&cur.med!==path){ cur.med=path; saveCache(); } }catch(e){} }
 // The 1024px copy of a photo cropped to Claude's box, framed like the thumbnail (cropThumb), for tiles cropped to the clothes.
-async function cropBlob(blob,box,size){ const u=await cropThumb(blob,box,size); return await (await fetch(u)).blob(); }
+async function cropBlob(blob,box,size,info){ const u=await cropThumb(blob,box,size,info); return await (await fetch(u)).blob(); }
 function hydratePhotos(){ document.querySelectorAll('#fits img[data-photo]').forEach(img=>{ if(img.closest('.lb.pager .look:not(.cur)')) return; // other pages: when they are turned to
   const go=()=>{ if(!img.isConnected||!img.dataset.photo) return; const r=img.getBoundingClientRect(); if(!r.width) return;
     if(Math.max(r.width,r.height)*(window.devicePixelRatio||1)<=(img.naturalWidth||0)*1.1) return;
@@ -1249,7 +1283,7 @@ async function dupMerge(keepId,dropId){ const keep=byId(keepId), drop=byId(dropI
     const lw=[keep.lastWorn,drop.lastWorn].filter(Boolean).sort().pop();
     if(!await patchItem(keepId,Object.assign({worn:(keep.worn||0)+(drop.worn||0)},lw?{lastWorn:lw}:{}))) throw new Error('save');
     S.items.delete(dropId); const del=await sb.from('items').delete().eq('id',dropId); if(del.error){ S.items.set(dropId,drop); throw del.error; }
-    removePhoto(drop.photo); if(drop.cut) removePhoto(drop.cut); saveCache();
+    removePhotoFiles(drop.photo); if(drop.cut) removePhoto(drop.cut); saveCache();
   }catch(e){ toast('Could not merge: '+(e&&e.message||e),5000); return; }
   S.dups=null; renderAll(); toast(I18N.t('Kept {a}.',{a:keep.name})); openDups(); }
 function dupNot(key){ const ok=S.settings.dupOk||(S.settings.dupOk=[]); if(!ok.includes(key)) ok.push(key); saveCache(); queueSettingsSave();
@@ -1310,7 +1344,8 @@ function picScale(img){ const r=img.getBoundingClientRect(); if(!r.width||!img.n
 function sharpen(img,it){ if(!it.photo||isEx(it)||!sb) return;
   const go=()=>{ if(!img.isConnected) return; const k=picScale(img); if(k<=1.1) return; img.dataset.sharp='1';
     const set=u=>{ if(u&&img.isConnected&&!img.classList.contains('cut')) img.src=u; };
-    if(k<=4.4||img.dataset.boxed) medUrl(it,!!img.dataset.boxed).then(set); else fullPhotoUrl(it.photo).then(set); };
+    const r=img.getBoundingClientRect(), need=Math.ceil(Math.max(r.width,r.height)*(window.devicePixelRatio||1));
+    if(k<=4.4||img.dataset.boxed) medUrl(it,!!img.dataset.boxed,need).then(set); else fullPhotoUrl(it.photo).then(set); };
   if(img.complete&&img.naturalWidth) go(); else img.addEventListener('load',go,{once:true}); }
 // Small picture in lists (Care, Shop, history). With a photo, tapping it opens the full-size zoom viewer.
 function thumbBox(it){ const pic=thumbSrc(it)||it.photo||it.cut;
@@ -1734,7 +1769,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
 }
 function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-graphic')) it.graphic=g('#f-graphic').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(d) it.dirtyOn=todayISO(); else { it.wearsSinceWash=0; delete it.dirtyOn; } } } if(g('#f-repair')){ const r=g('#f-repair').checked; if(r&&!it.repair){ it.repair=true; it.repairOn=todayISO(); } if(!r&&it.repair){ delete it.repair; delete it.repairNote; delete it.repairOn; delete it.repairOk; } } if(it.repair&&g('#f-repairNote')) it.repairNote=g('#f-repairNote').value.trim(); if(it.repair&&g('#f-repairOk')) it.repairOk=g('#f-repairOk').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-base')) it.base=g('#f-base').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
-  try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null;
+  try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.med=p.med; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null;
     if(!claudeOn()&&!(ED.it.colors||[]).length){ const g=await guessColors(p.full).catch(()=>[]); if(ED&&g.length){ ED.it.colors=[g[0]]; ED.ai='Main color guessed on your phone: '+g[0]+(g.length>1?' (or maybe '+g.slice(1).join(', ')+')':'')+'. Check it, then set the category and occasions.'; } } }
   catch(e){ toast('That image could not be opened.'); }
   if(ED) drawEditor();
@@ -1750,12 +1785,12 @@ async function saveEditor(){
   if(ED.blob&&it.cut){ removePhoto(it.cut); it.cut=null; }
   if(ED.blob||ED.cropChanged){ it.thumb=ED.thumb; if(ED.newBox) it.box=ED.newBox; else delete it.box; }
   if(ED.blob){
-    if(!isEx(it)){ const path=await uploadPhoto(ED.blob); if(path){ oldPhoto=it.photo; it.photo=path; } }
+    if(!isEx(it)){ const path=await uploadPhoto(ED.blob); if(path){ oldPhoto=it.photo; it.photo=path; const m=await uploadMed(path,ED.med); if(m) it.med=m; else delete it.med; } }
     else it._localUrl=ED.preview;
-  }
+  } else if(ED.id){ const cur=byId(ED.id); if(cur&&cur.med&&cur.photo===it.photo) it.med=cur.med; } // stored by another job while the editor was open
   delete it.review;
   const ok=await writeItem(it);
-  if(ok){ if(oldPhoto) removePhoto(oldPhoto); closeSheet(); toast('Saved'); if(ED_hadBlob) autoCuts([byId(it.id)].filter(Boolean)); }
+  if(ok){ if(oldPhoto) removePhotoFiles(oldPhoto); closeSheet(); toast('Saved'); if(ED_hadBlob) autoCuts([byId(it.id)].filter(Boolean)); }
   else if(ED){ ED.busy=false; drawEditor(); }
 }
 async function deleteItem(){
@@ -1766,7 +1801,7 @@ async function deleteItem(){
   const had=S.items.get(it.id); S.items.delete(it.id); renderAll();
   const {error}=await sb.from('items').delete().eq('id',it.id);
   if(error){ if(had) S.items.set(it.id,had); renderAll(); toast('Could not delete: '+error.message,4500); return; }
-  removePhoto(it.photo); if(it.cut) removePhoto(it.cut); saveCache(); toast('Deleted');
+  removePhotoFiles(it.photo); if(it.cut) removePhoto(it.cut); saveCache(); toast('Deleted');
 }
 
 let CK=null;
@@ -1785,7 +1820,7 @@ function drawCheck(){
    <div class="row sheet-actions"><button type="button" class="btn primary" data-cksave ${CK.busy?'disabled':''}>Save check</button><button type="button" class="btn ghost" data-close>Cancel</button></div>`);
 }
 async function checkSetPhoto(blob){
-  try{ const p=await prepare(blob); if(!CK) return; CK.blob=p.full; CK.thumb=p.thumb; if(CK.preview) URL.revokeObjectURL(CK.preview); CK.preview=URL.createObjectURL(p.full); CK.res=null; CK.err=''; }
+  try{ const p=await prepare(blob); if(!CK) return; CK.blob=p.full; CK.med=p.med; CK.thumb=p.thumb; if(CK.preview) URL.revokeObjectURL(CK.preview); CK.preview=URL.createObjectURL(p.full); CK.res=null; CK.err=''; }
   catch(e){ if(CK) CK.err='That image could not be opened.'; }
   if(CK) drawCheck();
 }
@@ -1793,9 +1828,9 @@ async function saveCheck(){
   const it=byId(CK.id); const patch={cond:CK.cond,lastCheck:todayISO(),wearsSinceCheck:0};
   if(CK.res) patch.ai={date:todayISO(),cond:CK.res.condition,rec:CK.res.recommendation||'',summary:String(CK.res.summary||'').slice(0,300),issues:(CK.res.issues||[]).slice(0,8).map(x=>String(x).slice(0,120))};
   const use=$('#ck-use')?.checked; let old=null;
-  if(use&&CK.blob&&canWrite()&&!isEx(it)){ const path=await uploadPhoto(CK.blob); if(path){ old=it.photo; patch.photo=path; patch.thumb=CK.thumb; patch.box=null; if(it.cut){ removePhoto(it.cut); patch.cut=null; } } }
+  if(use&&CK.blob&&canWrite()&&!isEx(it)){ const path=await uploadPhoto(CK.blob); if(path){ old=it.photo; patch.photo=path; patch.med=await uploadMed(path,CK.med)||undefined; patch.thumb=CK.thumb; patch.box=null; if(it.cut){ removePhoto(it.cut); patch.cut=null; } } }
   const cond=CK.cond; closeSheet();
-  if(await patchItem(it.id,patch)){ if(old) removePhoto(old); toast(cond<=1?'Saved. It is now on the donate list.':'Check saved'); }
+  if(await patchItem(it.id,patch)){ if(old) removePhotoFiles(old); toast(cond<=1?'Saved. It is now on the donate list.':'Check saved'); }
 }
 
 // Settings use steppers and presets instead of typed numbers; months instead of days.
@@ -2081,7 +2116,7 @@ async function exportData(){
     const items=await sb.from('items').select('id,body,updated_at'); if(items.error) throw items.error;
     const wears=[]; for(let from=0;;from+=1000){ const r=await sb.from('wears').select('date,occ,items,created_at').order('date',{ascending:true}).range(from,from+999); if(r.error) throw r.error; wears.push(...r.data); if(r.data.length<1000) break; }
     const se=await sb.from('settings').select('body').maybeSingle(); if(se.error) throw se.error;
-    const files=[], enc=new TextEncoder(), paths=[...new Set(items.data.flatMap(r=>[r.body.photo,r.body.cut]).filter(Boolean))]; let miss=0;
+    const files=[], enc=new TextEncoder(), paths=[...new Set(items.data.flatMap(r=>[r.body.photo,r.body.med,r.body.cut]).filter(Boolean))]; let miss=0;
     for(let k=0;k<paths.length;k++){ job('Adding photos '+(k+1)+' of '+paths.length,10+85*k/Math.max(1,paths.length));
       const {data}=await sb.storage.from('photos').download(paths[k]); if(!data){ miss++; continue; }
       files.push({name:'photos/'+paths[k].split('/').pop(),data:new Uint8Array(await data.arrayBuffer())}); }

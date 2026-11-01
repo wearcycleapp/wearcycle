@@ -154,7 +154,7 @@ function makeRouter(base, data) {
         const rest = decodeURIComponent(p.slice('/storage/v1/'.length));
         if (m === 'POST' && rest.startsWith('object/sign/')) return json(route, { signedURL: '/object/sign/' + rest.slice('object/sign/'.length) + '?token=fixture' });
         if (m === 'GET' || m === 'HEAD') {
-          const name = path.basename(rest), id = name.replace(/(-cut)?\.[a-z]+$/, ''), file = path.join(FIX, 'img', name);
+          const name = path.basename(rest), id = name.replace(/(-cut|-1024)?\.[a-z]+$/, ''), file = path.join(FIX, 'img', name);
           if (!data.missing.has(id) && existsSync(file)) return route.fulfill({ status: 200, contentType: name.endsWith('.webp') ? 'image/webp' : 'image/jpeg', body: readFileSync(file) });
           R.expected404.add(req.url());
           return json(route, { statusCode: '404', error: 'not_found', message: 'Object not found' }, 404);

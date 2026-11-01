@@ -100,4 +100,5 @@ I18N.add("ja",{
 "Swiping between outfits now works anywhere on the pictures, including the shoes and accessories row.": "コーデの切り替えスワイプが、靴とアクセサリーの列を含め、画像のどこでも使えるようになりました。",
 "Closet is now a wall of pictures: every category stays in view, each piece shows its condition and how often you have worn it, and marks such as In the wash sit on the picture.": "クローゼットが写真の壁になりました。すべてのカテゴリーが常に見え、各アイテムに状態と着用回数が表示され、「洗濯中」などの表示は写真の上に出ます。",
 "A piece's picture now comes first when you open it; on tablets and computers it sits beside the details. Closet pictures are sharper and load as you scroll.": "アイテムを開くと写真が最初に表示されます。タブレットやパソコンでは詳細の横に並びます。クローゼットの写真はより鮮明になり、スクロールに合わせて読み込まれます。",
+"Pictures download less data: each photo is now saved with a smaller copy, which your phones, tablets and computers download instead of the full photo. Photos added earlier get their copy the first time one of your devices shows them.": "画像のダウンロード量が減りました。各写真は小さいコピーと一緒に保存されるようになり、スマートフォン、タブレット、パソコンは元の写真の代わりにそのコピーをダウンロードします。以前に追加した写真は、いずれかの端末で初めて表示されたときにコピーが作られます。",
 });

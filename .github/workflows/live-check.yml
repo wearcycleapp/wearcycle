@@ -1,7 +1,8 @@
 # Live check: tools/live-check.mjs against the deployed site with the test account (real Supabase, real weather),
 # because Claude's container cannot reach Supabase, Cloudflare or Open-Meteo. Pushes to preview test
 # preview.wearcycle.pages.dev; pushes to main test https://wearcycle.app after the production deploy.
-# Read-only except one claude Edge Function request per run (see the top of tools/live-check.mjs).
+# Read-only except one claude Edge Function request per run (see the top of tools/live-check.mjs), and, only when
+# started by hand with store_copies, the app's own 1024px photo copies (v1.62.1).
 # One-time setup by the owner: Settings > Secrets and variables > Actions > New repository secret:
 # WEARCYCLE_TEST_EMAIL and WEARCYCLE_TEST_PASSWORD (the test account only).
 # The repository is public, so logs and summaries are public: the script prints counts and pass/fail only.
@@ -11,6 +12,11 @@ on:
   push:
     branches: [preview, main]
   workflow_dispatch:
+    inputs:
+      store_copies:
+        description: "Let the app store its 1024px photo copies on the test account (tools/live-check.mjs --store-copies)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -51,4 +57,5 @@ jobs:
           WEARCYCLE_TEST_EMAIL: ${{ secrets.WEARCYCLE_TEST_EMAIL }}
           WEARCYCLE_TEST_PASSWORD: ${{ secrets.WEARCYCLE_TEST_PASSWORD }}
           BASE_URL: ${{ github.ref_name == 'main' && 'https://wearcycle.app' || 'https://preview.wearcycle.pages.dev' }}
-        run: node tools/live-check.mjs --base-url "$BASE_URL"
+          STORE_COPIES: ${{ github.event_name == 'workflow_dispatch' && inputs.store_copies && '--store-copies' || '' }}
+        run: node tools/live-check.mjs --base-url "$BASE_URL" $STORE_COPIES
