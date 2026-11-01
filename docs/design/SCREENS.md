@@ -6,7 +6,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Phase status (2026-10-31)
 
-Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release. Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened (2026-11-01). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
 
 | Phase | Status | Release on main |
 | --- | --- | --- |
@@ -20,11 +20,15 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 7 Navigation shell | Released 2026-10-25, v1.52.0 | 23ddab6 |
 | 8 Outfits | Released 2026-10-26, v1.53.0 (follow-ups v1.53.1 to v1.53.4, v1.61.1) | 6a7869b |
 | 9 Closet and garment detail | Released 2026-10-31, v1.62.0 | 2fdc070 (v1.62.0) |
-| 10 Care | Partly: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet. Not built: the A and B rows (56px and 160px pictures), the Repair / Check / Rotate / Let go sections, the wide composition, and its known issue (`.panel-h .count`) | 6a7e2a5 (v1.58.0) |
+| 10 Care | Open since 2026-11-01 (critique and proposal sent; with it, finishing Shop). Partly built before: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet. Not built yet: the A and B rows (56px and 160px pictures), the Repair / Check / Rotate / Let go sections, the wide composition, and its known issue (`.panel-h .count`) | 6a7e2a5 (v1.58.0) |
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
 | 12 to 15 | Not started | |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
+
+Screen freeze while Phase 10 is open (owner, 2026-11-01): no feature work on Care until Phase 10 is released. Bug fixes and outfit-rule changes in logic.js continue (CLAUDE.md).
+
+Between Phases 9 and 10, released on its own (owner, 2026-11-01): v1.62.1 stores a 1024px copy with each photo (items.body.med); see Closet, Pictures.
 
 ## Screen personalities
 
