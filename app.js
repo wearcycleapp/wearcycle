@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.61.1';
+const APP_VERSION='1.62.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -158,10 +158,9 @@ async function enhanceImg(img){
   const it=byId(img.dataset.enh); if(!it||!it.thumb||img.dataset.enhDone) return; img.dataset.enhDone='1';
   const key=it.id+'|'+it.thumb.length+'|'+it.thumb.slice(-24);
   let u=ENH.get(key); if(!u){ try{ const b=await (await fetch(it.thumb)).blob(); u=URL.createObjectURL(await enhanceBlob(b,{mask:false})); ENH.set(key,u); }catch(e){ return; } }
-  if(img.isConnected&&!img.classList.contains('cut')) img.src=u;
+  if(img.isConnected&&!img.classList.contains('cut')&&!img.dataset.sharp) img.src=u;
 }
 new MutationObserver(()=>{ if(!enhanceOn()) return; document.querySelectorAll('img[data-enh]:not([data-enh-done])').forEach(enhanceImg); }).observe(document.documentElement,{childList:true,subtree:true});
-function condTag(it){ const c=it.cond??4; return `<span class="tag c${c}" title="Condition ${c} of 5">${COND[c]}</span>`; }
 
 /* ---------- images ---------- */
 async function decode(blob){
@@ -179,13 +178,13 @@ async function prepare(blob){ // -> {full: Blob (<=2048px, enough detail to zoom
 }
 // Crops a photo to Claude's box around the garment, padded and squared so the whole piece fills a tile.
 function validBox(b){ return Array.isArray(b)&&b.length===4&&b.every(v=>typeof v==='number'&&v>=0&&v<=1)&&b[2]-b[0]>0.05&&b[3]-b[1]>0.05; }
-async function cropThumb(blob,box){
+async function cropThumb(blob,box,max){
   const src=await decode(blob); const W=src.width,H=src.height;
   let x0=box[0]*W,y0=box[1]*H,x1=box[2]*W,y1=box[3]*H; const pad=0.06*Math.max(x1-x0,y1-y0);
   x0-=pad; y0-=pad; x1+=pad; y1+=pad;
   const side=Math.min(Math.max(x1-x0,y1-y0),W,H), cx=(x0+x1)/2, cy=(y0+y1)/2;
   const sx=Math.max(0,Math.min(W-side,cx-side/2)), sy=Math.max(0,Math.min(H-side,cy-side/2));
-  const out=Math.min(320,Math.round(side)); const cv=document.createElement('canvas'); cv.width=cv.height=out;
+  const out=Math.min(max||320,Math.round(side)); const cv=document.createElement('canvas'); cv.width=cv.height=out;
   cv.getContext('2d').drawImage(src,sx,sy,side,side,0,0,out,out); if(src.close) src.close();
   return cv.toDataURL('image/jpeg',0.8);
 }
@@ -1128,12 +1127,14 @@ function smallPic(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}
 // A piece without a cut-out drawn larger than its thumbnail: its photo, downloaded once, reduced on the device to
 // 1024px (the cut-outs' size) and kept with the cut-outs, so later opens download nothing. Sign-out clears that cache.
 const MED=new Map();
-function medUrl(it){ const key=it.photo; if(MED.has(key)) return MED.get(key);
-  const p=(async()=>{ let blob=null; const k=cutKey('m1024/'+key);
+function medUrl(it,boxed){ const b=boxed&&validBox(it.box)?it.box:null, key=it.photo+(b?'#'+b.map(v=>v.toFixed(3)).join(','):''); if(MED.has(key)) return MED.get(key);
+  const p=(async()=>{ let blob=null; const k=cutKey((b?'m1024b/':'m1024/')+key);
     try{ const c=await caches.open('wearcycle-cutouts'); const hit=await c.match(k); if(hit) blob=await hit.blob();
-      if(!blob&&sb&&S.online){ blob=await shrink(await photoBlob(key),1024); if(blob) await c.put(k,new Response(blob,{headers:{'Content-Type':blob.type||'image/jpeg'}})); } }catch(e){}
+      if(!blob&&sb&&S.online){ const src=await photoBlob(it.photo); blob=b?await cropBlob(src,b,1024):await shrink(src,1024); if(blob) await c.put(k,new Response(blob,{headers:{'Content-Type':blob.type||'image/jpeg'}})); } }catch(e){}
     return blob?URL.createObjectURL(blob):''; })();
   MED.set(key,p); p.then(u=>{ if(!u) MED.delete(key); }); return p; }
+// The 1024px copy of a photo cropped to Claude's box, framed like the thumbnail (cropThumb), for tiles cropped to the clothes.
+async function cropBlob(blob,box,size){ const u=await cropThumb(blob,box,size); return await (await fetch(u)).blob(); }
 function hydratePhotos(){ document.querySelectorAll('#fits img[data-photo]').forEach(img=>{ if(img.closest('.lb.pager .look:not(.cur)')) return; // other pages: when they are turned to
   const go=()=>{ if(!img.isConnected||!img.dataset.photo) return; const r=img.getBoundingClientRect(); if(!r.width) return;
     if(Math.max(r.width,r.height)*(window.devicePixelRatio||1)<=(img.naturalWidth||0)*1.1) return;
@@ -1256,13 +1257,16 @@ function dupNot(key){ const ok=S.settings.dupOk||(S.settings.dupOk=[]); if(!ok.i
   if(!S.dups.length) openDups(); else document.querySelector('#sheetRoot .duppair button')?.focus(); refreshDupRow(); }
 function refreshDupRow(){ const el=$('#dupRow'); if(!el) return; dupPairs().then(p=>{ S.dups=p; const e=$('#dupRow'); if(!e) return;
   e.innerHTML=p.length?`<button type="button" class="dupline" data-act="dups"><span><b>Possible duplicates</b> <span class="n">${p.length}</span></span><span class="go"><span>Review</span> <span aria-hidden="true">›</span></span></button>`:''; }); }
-function renderCloset(){ setTimeout(hydrateCuts,0); setTimeout(refreshDupRow,0);
+function renderCloset(){ setTimeout(refreshDupRow,0);
   const items=allItems().filter(isActive);
   const counts={}; for(const it of items) counts[it.cat]=(counts[it.cat]||0)+1;
   const dirtyN=items.filter(i=>i.dirty).length;
-  const cats=[{id:'all',label:'All'}].concat(dirtyN?[{id:'laundry',label:'In the wash'}]:[]).concat(CATS.filter(c=>counts[c.id]));
-  if(!cats.find(c=>c.id===S.cat)) S.cat='all';
-  $('#catChips').innerHTML=cats.map(c=>`<button class="chip" data-cat="${c.id}" aria-pressed="${S.cat===c.id}">${c.label}<span class="n">${c.id==='all'?items.length:c.id==='laundry'?dirtyN:counts[c.id]}</span></button>`).join('');
+  if(S.cat==='laundry'&&!dirtyN) S.cat='all';
+  const cats=[{id:'all',label:'All'}].concat(CATS.filter(c=>counts[c.id]));
+  if(S.cat!=='laundry'&&!cats.find(c=>c.id===S.cat)) S.cat='all';
+  // Categories: chips that wrap on phones, text tabs from 700x600. In the wash is a separate toggle at the end of the row.
+  $('#catChips').innerHTML=cats.map(c=>`<button type="button" class="chip" data-cat="${c.id}" aria-pressed="${S.cat===c.id}">${c.label}<span class="n">${c.id==='all'?items.length:counts[c.id]}</span></button>`).join('')
+    +(dirtyN?`<button type="button" class="chip washf" data-cat="laundry" aria-pressed="${S.cat==='laundry'}">In the wash<span class="n">${dirtyN}</span></button>`:'');
   $('#catChips').hidden=!items.length;
   const box=$('#closetGrid');
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():'<p class="hint">Loading…</p>'; return; }
@@ -1275,11 +1279,39 @@ function renderCloset(){ setTimeout(hydrateCuts,0); setTimeout(refreshDupRow,0);
   const now=Date.now(); const reviews=items.filter(i=>i.review).length;
   box.innerHTML='<div id="dupRow"></div>'+(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what was filled in automatically. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
    (S.examples.length?`<div class="row" style="margin-bottom:12px"><span class="hint">Items marked <span class="ex">Example</span> are not saved.</span><span class="spacer"></span><button class="btn sm ghost" data-act="clearEx">Remove examples</button></div>`:'')+
-   '<div class="grid">'+list.map(it=>{ const fl=careFlags(it,now,S.settings); const bad=fl.some(f=>f.kind==='retire'); return `<button class="card" data-edit="${esc(it.id)}">
-    <div class="vis ${it.cut?'studio':''}">${it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}" class="${it.box?'fitted':'cover'}">`:visual(it)}</div><div class="body"><div class="name">${esc(it.name)}</div>
-    <div class="meta">${condTag(it)}${fl.length?`<span class="dot ${bad?'bad':''}" title="Needs attention"></span>`:''}${isEx(it)?'<span class="ex">Example</span>':''}${it.review?'<span class="ex">Review</span>':''}${it.dirty?'<span class="ex wash">In the wash</span>':''}${it.repair?'<span class="ex wash">Repair</span>':''}</div>
-    <div class="meta">${(effectiveOccasions(it).map(o=>OCC[o].label).join(' · '))||'No occasion fits'}</div></div></button>`; }).join('')+'</div>';
+   '<div class="tiles">'+list.map(it=>tileHtml(it,now)).join('')+'</div>';
+  lazyPics(box);
 }
+// Closet tile (Phase 9): the picture, the name, then the condition word and the wears; flags as short words on the
+// picture (the same words at every width, owner 2026-10-25). Occasions moved to the piece's editor.
+function tileFlags(it,now){ const fl=careFlags(it,now,S.settings), m=[];
+  if(isEx(it)) m.push(['Example','']); if(it.review) m.push(['Review','']);
+  if(it.dirty) m.push(['In the wash','warn']); if(it.repair) m.push(['Needs repair','bad']);
+  if(fl.length) m.push(['Needs attention',fl.some(f=>f.kind==='retire')?'bad':'warn']);
+  return m.length?`<span class="marks">${m.map(([t,c])=>`<span class="mk ${c}">${t}</span>`).join('')}</span>`:''; }
+const wearsWord=n=>n?(n===1?'1 wear':n+' wears'):'Never worn';
+function tileHtml(it,now){ const src=thumbSrc(it), ready=it.cut&&!CUT.missing.has(it.id)?CUT.urls.get(it.cut):'';
+  const pic=ready?`<img data-cut="${esc(it.id)}" src="${esc(ready)}" alt="" class="cut">`:src?`<img data-pick="${esc(it.id)}"${it.box&&!it.cut?' data-boxed="1"':''} src="${esc(src)}" alt="" class="${it.box&&!it.cut?'fitted':'cover'}"${!it.cut&&enhanceOn()&&it.thumb?` data-enh="${esc(it.id)}"`:''}>`:glyph(it);
+  return `<button type="button" class="tile" data-edit="${esc(it.id)}"><span class="pic${it.cut||!src?' studio':''}">${pic}${tileFlags(it,now)}</span><span class="tname">${esc(it.name)}</span><span class="tmeta"><span>${COND[it.cond??4]}</span> · <span>${wearsWord(it.worn||0)}</span></span></button>`; }
+/* Pictures by drawn size (Phase 9): a piece's cut-out wherever it has one; otherwise the 256px thumbnail while it
+   stays sharp (drawn size x pixel density up to 1.1x the file), the 1024px copy of the photo (medUrl, downloaded once
+   and kept on the device) up to 4.4x the thumbnail, the full photo beyond that. Closet tiles load when they come near
+   the screen, so opening the app no longer downloads every cut-out in the closet. */
+const LAZY=typeof IntersectionObserver==='function'?new IntersectionObserver(es=>{ for(const e of es) if(e.isIntersecting){ LAZY.unobserve(e.target); upPic(e.target); } },{rootMargin:'50% 0px'}):null;
+function lazyPics(root){ root.querySelectorAll('img[data-pick]').forEach(img=>{ if(LAZY) LAZY.observe(img); else upPic(img); }); }
+function upPic(img){ const it=byId(img.dataset.pick); if(!it||!img.isConnected) return;
+  if(it.cut&&!CUT.missing.has(it.id)){ img.dataset.cut=it.id; cutUrl(it).then(u=>{ if(!img.isConnected) return;
+      if(u){ img.src=u; img.classList.add('cut'); CUT.missing.delete(it.id); img.closest('.pic,.gpic')?.classList.add('studio'); }
+      else { if(S.online) CUT.missing.add(it.id); img.removeAttribute('data-cut'); sharpen(img,it); } }); return; }
+  sharpen(img,it); }
+function picScale(img){ const r=img.getBoundingClientRect(); if(!r.width||!img.naturalWidth) return 0;
+  const cs=getComputedStyle(img), px=v=>parseFloat(v)||0, w=r.width-px(cs.paddingLeft)-px(cs.paddingRight), h=r.height-px(cs.paddingTop)-px(cs.paddingBottom);
+  const sx=w/img.naturalWidth, sy=h/img.naturalHeight; return (cs.objectFit==='cover'?Math.max(sx,sy):Math.min(sx,sy))*(window.devicePixelRatio||1); }
+function sharpen(img,it){ if(!it.photo||isEx(it)||!sb) return;
+  const go=()=>{ if(!img.isConnected) return; const k=picScale(img); if(k<=1.1) return; img.dataset.sharp='1';
+    const set=u=>{ if(u&&img.isConnected&&!img.classList.contains('cut')) img.src=u; };
+    if(k<=4.4||img.dataset.boxed) medUrl(it,!!img.dataset.boxed).then(set); else fullPhotoUrl(it.photo).then(set); };
+  if(img.complete&&img.naturalWidth) go(); else img.addEventListener('load',go,{once:true}); }
 // Small picture in lists (Care, Shop, history). With a photo, tapping it opens the full-size zoom viewer.
 function thumbBox(it){ const pic=thumbSrc(it)||it.photo||it.cut;
   return `<div class="thumb${pic?' zoomable':''}"${pic?` data-view="${esc(it.id)}" role="button" aria-label="See full size"`:''}>${thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it)}${pic?`<span class="zoomhint sm" aria-hidden="true">${ZOOM_ICON}</span>`:''}</div>`; }
@@ -1635,7 +1667,7 @@ async function askIdeas(){
 
 /* ---------- sheets ---------- */
 function closeSheet(){ $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; DI=null; }
-function openSheet(html){ guard(); $('#sheetRoot').innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet" role="dialog" aria-modal="true">${html}</div></div>`; document.body.style.overflow='hidden'; }
+function openSheet(html,cls){ guard(); $('#sheetRoot').innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet${cls?' '+cls:''}" role="dialog" aria-modal="true">${html}</div></div>`; document.body.style.overflow='hidden'; }
 const sheetHead=t=>`<div class="sheet-h"><h3>${t}</h3><span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">${CLOSE_ICON}</button></div>`;
 
 function openAddMenu(){
@@ -1649,21 +1681,22 @@ function openAddMenu(){
 let ED=null;
 function openEditor(id){
   const base=id?byId(id):null;
-  ED={more:!base,id:base?base.id:null,it:base?Object.assign({},base):{name:'',cat:'top',colors:[],formality:2,occ:[],cond:4,bought:'',notes:''},blob:null,preview:'',full:'',ai:null,busy:false,confirmDel:false};
+  ED={more:!base,id:base?base.id:null,it:base?Object.assign({},base):{name:'',cat:'top',colors:[],formality:2,occ:[],cond:4,bought:'',notes:''},blob:null,preview:'',ai:null,busy:false,confirmDel:false};
   drawEditor();
-  if(base&&base.photo&&canWrite()) fullPhotoUrl(base.photo).then(u=>{ if(ED&&ED.id===base.id&&u){ ED.full=u; drawEditor(); } });
 }
 function drawEditor(){ setTimeout(hydrateCuts,0);
-  const it=ED.it; const pv=ED.cropChanged?ED.thumb:(ED.preview||ED.full||thumbSrc(it)); const hasPic=!!(ED.blob||it.photo)&&!isEx(it); const cropped=ED.cropChanged?!!ED.newBox:!!it.box;
+  const it=ED.it; const pv=ED.cropChanged?ED.thumb:(ED.preview||thumbSrc(it)); const hasPic=!!(ED.blob||it.photo)&&!isEx(it); const cropped=ED.cropChanged?!!ED.newBox:!!it.box;
   const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
   const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b><span>${key==='cond'?labels[n]:labels[n].split(' ')[0]}</span></button>`).join('')}</div>`;
+  const showCut=it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id), saved=ED.id&&!ED.blob&&!ED.cropChanged&&!isEx(it);
   openSheet(sheetHead(ED.id?(it.review?'Review item':'Edit item'):'New item')+`
    ${isEx(it)?'<p class="hint"><span class="ex">Example</span> Changes to example items are not saved.</p>':''}
-   <div class="photo"><div class="pv ${pv||it.photo?'zoomable':''} ${it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id)?'studio':''}" ${pv||it.photo?`data-view="${esc(ED.id||'')}" role="button" aria-label="See full size"`:''}>${pv?`<img ${it.cut&&!ED.blob&&!ED.cropChanged?`data-cut="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}</div>
-     <div class="col"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
+   <div class="gbody"><div class="gmedia">
+   <div class="gpic ${pv||it.photo?'zoomable':''} ${showCut||!pv?'studio':''}" ${pv||it.photo?`data-view="${esc(ED.id||'')}" role="button" aria-label="See full size"`:''}>${pv?`<img ${showCut?`data-cut="${esc(it.id)}"`:''} ${saved&&!showCut?`data-pick="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}${pv?`<span class="zoomhint" aria-hidden="true">${ZOOM_ICON}</span>`:''}</div>
+     <div class="gacts"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
      ${(ED.blob||(it.review&&it.photo&&!isEx(it)))&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in automatically'}</button>`:''}
      ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
-</div></div>
+</div></div><div class="gside">
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
    ${ED.id&&!ED.blob&&it.cat!=='socks'?`<button type="button" class="btn sm" data-pinsee="${esc(it.id)}" style="align-self:flex-start;margin:0 0 10px">See outfits with this</button>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
@@ -1694,8 +1727,10 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
      ${ED.id&&ED.it.cut&&!ED.blob?`<button type="button" class="btn sm ghost" data-cutdel="1">Remove cut-out</button>`:''}</div></div>`:''}
    </details>
    ${ED.id&&!isEx(it)?`<p class="hint">Worn ${it.worn||0} time${it.worn===1?'':'s'}${it.lastWorn?', last on '+esc(it.lastWorn):''}.${it.price!=null?' '+(it.worn?money(it.price/it.worn)+' per wear so far.':'Not worn yet, so no cost per wear.'):''}${it.lastCheck?' Last condition check '+esc(it.lastCheck)+'.':''}</p>`:''}
+   </div></div>
    <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
-   ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`);
+   ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`,'gsheet');
+  setTimeout(()=>{ const im=document.querySelector('#sheetRoot .gpic img[data-pick]'); if(im) upPic(im); },0);
 }
 function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-graphic')) it.graphic=g('#f-graphic').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(d) it.dirtyOn=todayISO(); else { it.wearsSinceWash=0; delete it.dirtyOn; } } } if(g('#f-repair')){ const r=g('#f-repair').checked; if(r&&!it.repair){ it.repair=true; it.repairOn=todayISO(); } if(!r&&it.repair){ delete it.repair; delete it.repairNote; delete it.repairOn; delete it.repairOk; } } if(it.repair&&g('#f-repairNote')) it.repairNote=g('#f-repairNote').value.trim(); if(it.repair&&g('#f-repairOk')) it.repairOk=g('#f-repairOk').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-base')) it.base=g('#f-base').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
@@ -2409,20 +2444,21 @@ function editedFit(f,o){ const r=scoreOutfit(o,S.occ,ctx()); return {ids:idsOf(o
 function pieceAt(i,slot){ const f=S.fits[i]; if(!f) return null; const o=hydrate(f.ids); return slot.startsWith('acc')?o.acc[+slot.slice(3)]:o[slot]; }
 function openPiece(i,slot,again){
   const it=pieceAt(i,slot); if(!it) return;
-  const big=it.cut?`<img data-cut="${esc(it.id)}" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}">`:(thumbSrc(it)?`<img id="pv-full" src="${esc(thumbSrc(it))}" alt="${esc(it.name)}">`:glyph(it));
-  const worn=it.worn||0;
-  const html=sheetHead(esc(it.name))+`
-   ${it.cut||it.photo||thumbSrc(it)?`<div class="piecebig zoomable ${it.cut?'studio':''}" data-view="${esc(it.id)}" role="button" aria-label="See full size">${big}<span class="zoomhint" aria-hidden="true">${ZOOM_ICON}</span></div>`:`<div class="piecebig">${big}</div>`}
-   ${(()=>{ const opts=swapOpts(hydrate(S.fits[i].ids),slot); if(opts.length<2) return ''; const k=opts.findIndex(x=>x.id===it.id);
-     return `<div class="ppager"><button type="button" class="ppg" data-pstep="-1" data-pi="${i}" data-slot="${esc(slot)}" aria-label="Previous option">${CHEV_L}</button><span class="pcount" aria-live="polite">${k<0?'':(k+1)+' of '+opts.length}</span><button type="button" class="ppg" data-pstep="1" data-pi="${i}" data-slot="${esc(slot)}" aria-label="Next option">${CHEV_R}</button></div>`; })()}
-   <p class="hint" style="margin:0">${esc(CAT[it.cat].label)} · ${COND[it.cond??4]} · ${worn===1?'Worn 1 time':'Worn '+worn+' times'}${it.lastWorn?' · '+'Last worn '+esc(it.lastWorn):''}</p>
+  const src=thumbSrc(it), worn=it.worn||0;
+  const big=it.cut?`<img data-cut="${esc(it.id)}" src="${esc(src)}" alt="${esc(it.name)}">`:(src?`<img ${it.photo&&!isEx(it)?`data-pick="${esc(it.id)}"`:''} src="${esc(src)}" alt="${esc(it.name)}">`:glyph(it));
+  const pager=(()=>{ const opts=swapOpts(hydrate(S.fits[i].ids),slot); if(opts.length<2) return ''; const k=opts.findIndex(x=>x.id===it.id);
+     return `<div class="ppager"><button type="button" class="ppg" data-pstep="-1" data-pi="${i}" data-slot="${esc(slot)}" aria-label="Previous option">${CHEV_L}</button><span class="pcount" aria-live="polite">${k<0?'':(k+1)+' of '+opts.length}</span><button type="button" class="ppg" data-pstep="1" data-pi="${i}" data-slot="${esc(slot)}" aria-label="Next option">${CHEV_R}</button></div>`; })();
+  const html=sheetHead(esc(it.name))+`<div class="gbody"><div class="gmedia">
+   ${it.cut||it.photo||src?`<div class="gpic zoomable ${it.cut?'studio':''}" data-view="${esc(it.id)}" role="button" aria-label="See full size">${big}<span class="zoomhint" aria-hidden="true">${ZOOM_ICON}</span></div>`:`<div class="gpic studio">${big}</div>`}
+   ${pager}</div><div class="gside">
+   <p class="ginfo">${esc(CAT[it.cat].label)} · ${COND[it.cond??4]} · ${worn===1?'Worn 1 time':'Worn '+worn+' times'}${it.lastWorn?' · '+'Last worn '+esc(it.lastWorn):''}</p>
    ${it.notes?`<p class="hint" style="margin:0">${esc(it.notes)}</p>`:''}
-   ${isEx(it)?'':`<div class="row sheet-actions"><button class="btn" data-edit="${esc(it.id)}">Open item</button></div>`}
    ${S.fits[i]&&S.fits[i].worn?(loggedToday(it.id)?`<button class="linkbtn" data-punlog="${esc(it.id)}">I did not wear it today: remove it from today's log</button>`:'')
-     :(DROPPABLE(slot,hydrate(S.fits[i].ids))?`<button class="linkbtn" data-pdrop="${i}" data-slot="${esc(slot)}">Not wearing it: leave it out of this outfit</button>`:'')}`;
-  if(again&&$('#sheetRoot').innerHTML){ const sh=document.querySelector('#sheetRoot .sheet'); if(sh) sh.innerHTML=html; } else openSheet(html);
-  setTimeout(hydrateCuts,0);
-  if(!it.cut&&it.photo&&!isEx(it)&&sb) fullPhotoUrl(it.photo).then(u=>{ const im=$('#pv-full'); if(u&&im) im.src=u; });
+     :(DROPPABLE(slot,hydrate(S.fits[i].ids))?`<button class="linkbtn" data-pdrop="${i}" data-slot="${esc(slot)}">Not wearing it: leave it out of this outfit</button>`:'')}</div></div>
+   ${isEx(it)?'':`<div class="row sheet-actions"><button class="btn" data-edit="${esc(it.id)}">Open item</button></div>`}`;
+  const sh=again&&$('#sheetRoot').innerHTML?document.querySelector('#sheetRoot .sheet'):null;
+  if(sh) sh.innerHTML=html; else openSheet(html,'gsheet');
+  setTimeout(()=>{ hydrateCuts(); const im=document.querySelector('#sheetRoot .gpic img[data-pick]'); if(im) upPic(im); },0);
 }
 // Pieces that can be left out of an outfit: accessories (bag, scarf, hat, watch, belt, socks), the outer layer and
 // the t-shirt underneath. Top, bottom and shoes are the outfit itself; swap those instead.
@@ -2712,7 +2748,7 @@ document.addEventListener('click',async e=>{
   if(ds.homechores){ if(await patchItem(ds.homechores,{occ:['home','chores']})) toast('Now for home and chores.'); return; }
   if(ds.fixed){ if(await patchItem(ds.fixed,{repair:undefined,repairNote:undefined,repairOn:undefined,repairOk:undefined})) toast('Fixed. Back in every outfit it suits.'); return; }
   if(ds.clean){ if(await patchItem(ds.clean,{dirty:false,wearsSinceWash:0,dirtyOn:undefined})){ if(!allItems().some(i=>i.dirty)) S.cat='all'; renderAll(); toast('Back in rotation.'); } return; }
-  if(ds.cat){ S.cat=ds.cat; renderCloset(); return; }
+  if(ds.cat){ S.cat=ds.cat==='laundry'&&S.cat==='laundry'?'all':ds.cat; renderCloset(); return; }
   if(ds.edit){ closeSheet(); openEditor(ds.edit); return; }
   if(ds.wear){ wear(+ds.wear); return; }
   if(ds.swap!==undefined){ openPiece(+ds.swap,ds.slot); return; }

@@ -8,6 +8,7 @@ I18N.load("ja",{
 "+ Wear a t-shirt underneath": "+ 下にTシャツを着る",
 "+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.": "すべてニュートラルカラー、またはニュートラルにアクセントカラー1色で+2、類似色または補色のアクセント2色で+1、競合するアクセントは-2または-3。すべてのアイテムが同じきちんと度なら+1、1段階離れるごとに1点減点。2週間休ませたアイテムは最大+1.5、昨日着たものがあれば-1、同じトップスとボトムスを今週すでに組み合わせていれば-2。",
 ", today’s weather": "、今日の天気",
+"1 wear": "1回",
 "2 wears": "2回",
 "5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.": "5 新品同様 · 4 良好、目立つ傷みなし · 3 使用感あり（毛玉、色あせ）、家用なら可 · 2 着古し（シミ、小さな穴）、家事用のみ · 1 使用不可。",
 ": check what Claude filled in. Open any item to correct it, or confirm them all.": "：Claudeが入力した内容を確認してください。アイテムを開いて修正するか、まとめて確定してください。",

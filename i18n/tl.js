@@ -8,6 +8,7 @@ I18N.load("tl",{
 "+ Wear a t-shirt underneath": "+ Magsuot ng t-shirt sa loob",
 "+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.": "+2 kapag puro neutral ang palette o neutral at isang accent na kulay, +1 sa dalawang analogous o complementary na accent, -2 o -3 sa mga accent na nagbabanggaan. +1 kapag nasa iisang antas ng pormalidad ang lahat ng piraso, bawas isang puntos sa bawat dagdag na antas ng pagitan. Hanggang +1.5 sa mga pirasong dalawang linggo nang nakapahinga, -1 kung may isinuot kahapon, -2 kung pinagsabay na ngayong linggo ang parehong pang-itaas at pang-ibaba.",
 ", today’s weather": ", ang panahon ngayon",
+"1 wear": "1 suot",
 "2 wears": "2 suot",
 "5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.": "5 parang bago · 4 maayos, hindi halatang gamit · 3 halatang gamit na (pilling, kupas), puwede sa bahay · 2 luma na (mantsa, maliliit na butas), pang-gawaing-bahay lang · 1 hindi na magagamit.",
 ": check what Claude filled in. Open any item to correct it, or confirm them all.": ": tingnan ang pinunan ni Claude. Buksan ang alinmang item para itama, o kumpirmahin lahat.",

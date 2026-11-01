@@ -97,5 +97,7 @@ I18N.add("ja",{
 "Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "スタイルのリストは、色が合えば素材が違うアイテムも数えるようになりました。黒のレザースニーカーは黒のニットスニーカーとして数えられます。",
 "I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "持っている：スタイルにまだ足りないアイテムをタップすると、それに当たるアイテムをクローゼットから選ぶか、探して買えます。",
 "Saved ideas you have since bought are marked Bought with the piece's name; tap a saved idea to shop for it or pick the piece you bought.": "保存したアイデアのうち購入済みのものは、アイテム名とともに「購入済み」と表示されます。保存したアイデアをタップすると、探して買うか、買ったアイテムを選べます。",
-"Swiping between outfits now works anywhere on the pictures, including the shoes and accessories row.": "コーデの切り替えスワイプが、靴とアクセサリーの列を含め、画像のどこでも使えるようになりました。"
+"Swiping between outfits now works anywhere on the pictures, including the shoes and accessories row.": "コーデの切り替えスワイプが、靴とアクセサリーの列を含め、画像のどこでも使えるようになりました。",
+"Closet is now a wall of pictures: every category stays in view, each piece shows its condition and how often you have worn it, and marks such as In the wash sit on the picture.": "クローゼットが写真の壁になりました。すべてのカテゴリーが常に見え、各アイテムに状態と着用回数が表示され、「洗濯中」などの表示は写真の上に出ます。",
+"A piece's picture now comes first when you open it; on tablets and computers it sits beside the details. Closet pictures are sharper and load as you scroll.": "アイテムを開くと写真が最初に表示されます。タブレットやパソコンでは詳細の横に並びます。クローゼットの写真はより鮮明になり、スクロールに合わせて読み込まれます。",
 });

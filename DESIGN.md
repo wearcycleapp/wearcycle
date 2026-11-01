@@ -177,7 +177,7 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 - **Good** (#2b7a4c, soft #dcefe3; dark #6cc38e, #1b3225), **Warn** (#8e6010, soft #f5e8cc; dark #e2b45c, #382d17; #9c6a12 until Phase 5), **Bad** (#b4233c, soft #f7dde1; dark #f2668b, #3d1f29).
 
 ### Today versus rule
-- Done in Phase 5 (v1.51.3): the cream canvas in its four rules (.flatlay, .card .vis.studio, .photo .pv.studio, .piecebig.studio) uses --canvas-1, --canvas-2, --board-mid and --board-edge, with the same values in both dark blocks and no visible change. Two more beige values are hard-coded and not yet tokenized: the viewer's cut-out background #f3f0ea (styles.css:706) and the style art background #ece8e2 (615, equal to Board).
+- Done in Phase 5 (v1.51.3): the cream canvas in its four rules (.flatlay, .card .vis.studio, .photo .pv.studio, .piecebig.studio) uses --canvas-1, --canvas-2, --board-mid and --board-edge, with the same values in both dark blocks and no visible change. The viewer's cut-out background (#f3f0ea until v1.61.1) uses the canvas tokens since Phase 9 (v1.62.0). One beige value is still hard-coded: the style art background #ece8e2 (equal to Board), for Phase 12.
 - Done in Phase 5 (v1.51.3): --warn darkened from #9c6a12 to #8e6010 (same hue). Warn on Background 4.99:1 (was 4.27), on Surface 5.26:1, on Raised 5.48:1 and on Warn-soft 4.52:1 (was 3.86), so every place Warn is text (status, banner, condition tags, warning pills, In the wash marks) passes 4.5:1. The smallest change reaching 4.5:1 on Background alone, #976611, would have left Warn-soft at 4.09:1. Dark Warn is unchanged (#e2b45c, 9.42:1 on dark Background, 7.02:1 on dark Warn-soft).
 - Today coral also marks weather icons, calendar dots and the selected borders of style cards, palette options, piece picks and the holiday chip. Rule (decision 1): those selections keep coral only with a second cue (fill, check mark or inset ring).
 
@@ -204,7 +204,7 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 - **Title** (800, 24px): sheet titles and the greeting. Rule: Heading 20 to 24px on phones, 22 to 26px on desktop.
 - **Body** (400, 15px, line-height 1.45): descriptions and details; 15 to 16px on desktop. Prose up to about 62ch (.lede).
 - **Label** (600, 13px): field labels, buttons (14px), chips (14px), garment names (14px).
-- **Small** (13 to 14px) and **Micro** (12px minimum). Labels smaller than 12px are raised when their phase rewrites them: the header status, tab labels, the Care count and the version line are 12px since Phase 7; condition tags (11.5px) wait for Closet.
+- **Small** (13 to 14px) and **Micro** (12px minimum). Labels smaller than 12px are raised when their phase rewrites them: the header status, tab labels, the Care count and the version line are 12px since Phase 7; the Closet's chip counts, condition line and flag words since Phase 9 (12 to 14px).
 
 ### Named Rules
 **The Right Face Rule.** Display type is for page titles, outfit and look numbers, large numbers (+N) and short editorial labels. Never for paragraphs, controls or user-typed garment names: those are Figtree, because names may be typed in any script.
@@ -240,7 +240,7 @@ Active rail item: Accent text at weight 700 on Accent-soft, coral icon. Tab name
 
 Rule (plan 7.4, confirmed by the owner 2026-10-19): flat by default. In light mode shadows belong only to overlays and floating elements: sheets, the Add clothes button and toasts. Dark mode conveys depth with contrast and borders. No glows.
 
-Today the soft shadow also sits on closet cards, panels and stat tiles; each screen phase removes it from its own containers (Outfits has no card since Phase 8).
+Today the soft shadow also sits on panels and stat tiles; each screen phase removes it from its own containers (Outfits has no card since Phase 8, Closet tiles are flat since Phase 9).
 
 ### Shadow Vocabulary
 - **Soft** (`box-shadow: 0 1px 2px rgba(27,36,51,.08), 0 4px 14px rgba(27,36,51,.06)`; dark `0 1px 2px rgba(0,0,0,.4)`): the --shadow token; sheets and toasts.
@@ -255,7 +255,7 @@ Today the soft shadow also sits on closet cards, panels and stat tiles; each scr
 Gently rounded, with the pill shape reserved for meaning.
 
 - **Rule (plan 7.4):** controls 8px; garment canvas 12px; large compositions 12 to 16px; sheet top corners 20 to 24px. Pills (999px) only where the shape means something: a removable or toggle chip.
-- **Today:** buttons, icon buttons, inputs and tiles 8px; closet cards 10px; panels, the garment canvas (kit pictures, outfit boards) and the main action 12px; piece preview and cards added after v1.24 14px; sheets 16px (20 to 24px once Phase 12 rewrites the sheets); chips, weather pill and status pills 999px.
+- **Today:** buttons, icon buttons, inputs and tiles 8px; panels, the garment canvas (kit pictures, outfit boards, Closet tile pictures and the garment sheet picture since Phase 9) and the main action 12px; piece preview and cards added after v1.24 14px; sheets 16px (20 to 24px once Phase 12 rewrites the sheets); chips, weather pill and status pills 999px.
 - **Icons:** inline SVG, 24px viewBox, stroke 1.8 to 2, currentColor, as today. Use them where they help recognition, not on every heading. Life-cycle icons (wear, wash, repair, rotate, donate, recycle) may be added with a consistent stroke and size.
 
 ## Components
@@ -277,7 +277,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 ### Garment imagery (signature)
 - Three kinds of image must all look right: phone photos, cut-outs on the cream canvas, and SVG glyphs filled with the piece's main color. Design for an empty closet too (a new user has 0 items).
 - Do not cover garments with badges, shrink them to fit details, or surround them with chrome.
-- Use 256px thumbnails only where the image is shown small (rendered width times device pixel ratio up to 256); full photos or cut-outs for large tiles, the hero, the preview and the viewer. Outfits (Phase 8): cut-outs, or a 1024px copy of the photo made on the device and kept with the cut-outs, where a piece is drawn large; thumbnails where they stay sharp. Closet and garment detail: Phase 9.
+- Use 256px thumbnails only where the image is shown small (rendered width times device pixel ratio up to 256); full photos or cut-outs for large tiles, the hero, the preview and the viewer. Outfits (Phase 8): cut-outs, or a 1024px copy of the photo made on the device and kept with the cut-outs, where a piece is drawn large; thumbnails where they stay sharp. Closet and garment detail (Phase 9): the same rule by drawn size times pixel density, cut-out first, then the thumbnail, the 1024px copy or the full photo; Closet pictures load only near the screen (docs/design/SCREENS.md, Closet).
 
 ### Outfit board (signature)
 - The flat-lay board (.flatlay) lays the outfit's pieces on the cream canvas with garment shadows; tapping a piece opens its preview. Square on the iPad and Windows (direction B, sized so "Wear this" stays in the window), 4:5 or as tall as the first screen allows on phones when chosen in Adjust. The rank badge, match label, palette strip and "Wear this" sit around the board, never on the garments.

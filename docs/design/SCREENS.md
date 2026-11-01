@@ -19,7 +19,7 @@ Recorded at the start of Phase 9 (owner, 2026-10-31). Release commits checked as
 | 6 Visual direction | Released 2026-10-25 | 0cba70e |
 | 7 Navigation shell | Released 2026-10-25, v1.52.0 | 23ddab6 |
 | 8 Outfits | Released 2026-10-26, v1.53.0 (follow-ups v1.53.1 to v1.53.4, v1.61.1) | 6a7869b |
-| 9 Closet and garment detail | Open since 2026-10-31 | |
+| 9 Closet and garment detail | Built 2026-10-31, v1.62.0 (released once the live check passes; see the Project decisions log) | |
 | 10 Care | Partly: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet. Not built: the A and B rows (56px and 160px pictures), the Repair / Check / Rotate / Let go sections, the wide composition, and its known issue (`.panel-h .count`) | 6a7e2a5 (v1.58.0) |
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
 | 12 to 15 | Not started | |
@@ -166,27 +166,34 @@ Code: renderOutfits, remLine and openReminders, fitKit (A), heroCard (A), option
 
 ## Closet (GALLERY)
 
-- Possible duplicates (v1.58.7, owner 2026-10-29): a "Possible duplicates N · Review" line above the grid when pictures nearly match (on-device fingerprint of each 256px picture; nearly identical, or similar with the same category and main color). Review sheet: pairs side by side (picture, name, category, date added, times worn), "Same piece, keep this one" asks to confirm, then moves the other's diary entries and wear count and deletes it; "Different pieces" is saved in settings.dupOk. After adding photos the result message counts possible duplicates.
-- Tile: image, name (Figtree), one line with the condition word and the wear count, at every width (owner, 2026-10-25).
-- Flags (Review, Example, In the wash, needs repair, needs attention) become one small mark on the image corner: the same short words at every width, no icons (owner, 2026-10-25). Occasions move to the piece preview.
-- Filters: categories with counts, for example "All 47, Tops 18, Bottoms 8, Outerwear 8, Shoes 8": chips that wrap in A, text tabs in B.
-- "In the wash" stays a separate control with its count.
-- A: square tiles, 2 columns. B: 4:5 tiles, 3 columns, 5 from 1200px wide. Opening a tile keeps opening the editor. Stats stays reachable.
-- Image source by rendered size (Phase 9): the 256px thumbnail only where rendered width x DPR is 256 or less; otherwise the cut-out or the photo, lazy-loaded. Report bytes downloaded per screen before and after.
-- Code: renderCloset (app.js:926).
+Built in Phase 9 (v1.62.0). Proposal "Wearcycle Closet redesign" approved by the owner on 2026-10-31 with the four recommended options: build A and B as shown; phones turned sideways get as many 150px columns as fit; the garment sheet goes side by side from 700px wide; a piece without a cut-out downloads its photo once and keeps a 1024px copy. Critique: .impeccable/critique/2026-11-01T02-06-48Z__app-js.md (25/40).
 
-### Known issues to fix in this phase
-- Overridden declarations (17): `.tag` (8: the v1.0 mono, uppercase, bordered condition tag, replaced by the typography rules; condTag is shown only on Closet cards); `.ex` (6: the Example and In the wash marks); `.card .vis img` width and height; `.card .vis img.cover` object-fit.
+- A (below 700px wide or 600px tall): category chips with counts that wrap, so every category is visible (40px small chips, counts 12px at full color); "In the wash N" is a separate toggle at the end of the row (pressing it again goes back to All). Square tiles, 2 columns on upright phones (auto-fill of 150px columns: 4 at 844x390).
+- B (at least 700x600): category text tabs in the display face (20px, uppercase by CSS), the chosen one in ink with a 2px ink underline, counts in the body face; the row wraps at every input, so In the wash, right-aligned at its end, never leaves the screen. 4:5 tiles, 3 columns, 5 from 1200px wide.
+- Tile (both, every width; owner 2026-10-25): the picture, the name in Figtree (up to 2 lines), then "condition · N wears" ("1 wear", "Never worn"). Flags as short words on the picture's top left: Example, Review (accent), In the wash (warn), Needs repair (bad), Needs attention (warn; bad when the piece is to be let go). Occasions are no longer on the tile; they stay in the editor. Tiles are flat (no card, no shadow); cut-outs and glyphs sit on the cream canvas; tile pictures have an empty alt, so each tile says its name once.
+- Kept: Stats, Add clothes, Possible duplicates (v1.58.7), the Review line with Confirm all, the Example line with Remove examples, the In the wash list with Mark all clean and Clean, the empty closet; opening a tile opens the editor.
+- Pictures (Phase 9 rule, also used by the garment sheets): a piece's cut-out wherever it has one; otherwise the 256px thumbnail while drawn size x pixel density stays within 1.1x of the file, the 1024px copy of the photo (medUrl, made once on the device and kept with the cut-outs; cropped to Claude's box when the thumbnail was) up to 4.4x the thumbnail, the full photo beyond that. Closet pictures load only when they come within half a screen (IntersectionObserver), so opening the app no longer downloads every cut-out in the closet.
+- Measured with the fixture (Chromium, before 4210ff9, after the prototype): app open on phones 60 KB in 9 files to 51 KB in 8, then Closet +0 to +37 KB in 2 (the photos of the two visible photo-only tiles); at 1366 43 KB/8 to 35 KB/7, Closet +0. Closet pictures drawn larger than their file at 390: 3 of 3 (up to 2.0x) to 1 of 3 (1.3x, a fixture cut-out of 294px, the largest file it has); 1366: 0 of 8 to 0 of 6.
+- Code: renderCloset, tileHtml, tileFlags, wearsWord, lazyPics, upPic, sharpen, picScale, medUrl and cropBlob (app.js).
+
+### Known issues fixed in this phase (v1.62.0)
+- Overridden declarations (17): `.tag`, `.card`, `.grid`, `.dot` and the condition colors `.c1` to `.c5` went with the old tile (condTag removed); `.ex` is one rule with no overrides (same computed style, so the Care and editor marks do not change). `.pgr .dot` now sets the border radius it used to get from the Closet's `.dot`.
+- Chip counts: 11px at 75% opacity, 3.41:1 (light) and 4.19:1 (dark), now 12px at full color, 5.88:1 and 6.36:1. axe-core serious nodes on Closet 16 to 0.
+- Condition tags (11.5px) and the tile marks (11px) are now 12px words (Warn on Warn-soft 4.52:1, dark 7.02:1; Bad on Bad-soft 5.05:1, dark 4.94:1).
 
 
 ## Garment detail (PRODUCT EDITORIAL)
 
-- Piece preview (openPiece, app.js:1739), item editor (openEditor, app.js:1063) and zoom viewer (openViewer).
-- Phone: bottom sheet, image first. Wide: centred sheet with about 60% image and 40% details and actions.
-- Keep every editor field and action; In the wash, Review and Example states stay clear. Long-press stays rejected (v1.24).
+Built in Phase 9 (v1.62.0, approved 2026-10-31, as above).
 
-### Known issues to fix in this phase
-- Hard-coded `#f3f0ea` behind cut-outs in the zoom viewer (`.vstage img.cut`, styles.css:706), the same in both themes; use the canvas tokens (or a new token with a dark value in both dark blocks).
+- Piece preview (openPiece) and item editor (drawEditor) share one frame: openSheet(html,'gsheet'). Phones: a bottom sheet with the picture first at full width (square, up to 48% of the screen height); the editor's Take photo, Choose photo, Fill in automatically and cut-out buttons right under it, then the fields; the preview's previous and next buttons under the picture, then the details.
+- From 700px wide (where sheets centre; phones turned sideways too, owner 2026-10-31): a centred sheet up to 1040px wide, the picture on the left (about 60%, 4:5, sticky while the details scroll) and the details on the right (about 40%). Save, Cancel and Delete (editor) and Open item (preview) stay in the sheet's bottom bar.
+- Every editor field and action is kept; In the wash, Review and Example states stay clear. The editor no longer downloads the full photo on open: the picture is chosen by its drawn size (the rule under Closet). The zoom viewer keeps the full photo for zooming. Long-press stays rejected (v1.24).
+- Zoom viewer (openViewer): unchanged chrome (Phase 13 redesigns it); cut-outs sit on the cream canvas tokens.
+
+### Known issues fixed in this phase (v1.62.0)
+- The hard-coded `#f3f0ea` behind cut-outs in the zoom viewer is now the cream canvas gradient (--canvas-1 to --canvas-2, the same in both themes, as every garment canvas).
+- The editor showed the piece at 110 by 110px at every width and downloaded the full photo for it.
 
 
 ## Care (LIFECYCLE)

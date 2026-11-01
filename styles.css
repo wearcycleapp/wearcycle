@@ -67,7 +67,7 @@ h3{font-size:15px;font-weight:700;margin:0}
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;font-size:14px;font-weight:600;color:var(--muted);min-height:44px;display:inline-flex;align-items:center;padding:0 16px}
 .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
-.chip .n{font-family:var(--f-body);text-transform:none;letter-spacing:0;font-size:11px;opacity:.75;margin-left:4px}
+.chip .n{font-family:var(--f-body);text-transform:none;letter-spacing:0;font-size:12px;font-weight:600;margin-left:6px;font-variant-numeric:tabular-nums}
 
 /* ===== 5. Sheets and form fields ===== */
 .scrim{position:fixed;inset:0;background:rgba(10,14,20,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
@@ -219,27 +219,13 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .banner{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--warn-soft);color:var(--ink);font-size:13.5px;display:flex;gap:10px;align-items:flex-start}
 .banner b{color:var(--warn)}
 
-/* care-label tag used for condition */
-.tag{font-family:var(--f-mono);font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;padding:2px 6px;border-radius:3px;border:1px solid currentColor;white-space:nowrap;display:inline-block;line-height:1.4}
-.c5,.c4{color:var(--good)} .c3{color:var(--warn)} .c2,.c1{color:var(--bad)}
-.ex{font-family:var(--f-mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);background:var(--accent-soft);padding:1px 5px;border-radius:3px}
+/* small text mark (Example, Review, In the wash) in hints and lists; Closet tiles use .mk (Phase 9) */
+.ex{font-family:var(--f-body);font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--accent);background:var(--accent-soft);padding:1px 6px;border-radius:999px}
 
 /* outfit board */
 
 .empty{background:var(--raised);border:1px dashed var(--line);border-radius:12px;padding:22px 18px;display:flex;flex-direction:column;gap:12px}
 .empty ol{margin:0;padding-left:20px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
-
-/* closet grid */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
-.card{border:0;background:var(--raised);border-radius:10px;box-shadow:var(--shadow);overflow:hidden;padding:0;text-align:left;display:flex;flex-direction:column;min-width:0}
-.card .vis{height:150px;display:grid;place-items:center;background:var(--surface)}
-.card .vis img{width:100%;height:100%;object-fit:contain}
-.card .vis svg.glyph{width:52%;height:70%}
-.card .body{padding:8px 10px 10px;display:flex;flex-direction:column;gap:5px;min-width:0}
-.card .name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card .meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:12px;color:var(--muted)}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--warn);display:inline-block}
-.dot.bad{background:var(--bad)}
 
 /* lists */
 .panel{background:var(--raised);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
@@ -355,9 +341,7 @@ details.rules summary{cursor:pointer;font-weight:700;color:var(--ink);padding:8p
 details.rules p{margin:8px 0}
 
 /* v1.5 advisor: weather, ranked hero outfit, larger cropped photos */
-.card .vis img.cover,.mini img.cover{object-fit:cover}
-.card .vis img.fitted{object-fit:contain}
-.card .vis img.cover{object-fit:cover}
+.mini img.cover{object-fit:cover}
 .mini{width:52px;height:52px;flex:none;border-radius:8px;overflow:hidden;background:var(--surface);display:grid;place-items:center}
 .mini img{width:100%;height:100%;object-fit:contain}
 .mini svg.glyph{width:70%;height:70%}
@@ -416,17 +400,10 @@ details.rules p{margin:8px 0}
 
 
 /* typography: one body font for labels, sentence case, readable sizes */
-.panel-h .count,.ex,.tag,.version,.opt em{
+.panel-h .count,.version,.opt em{
   font-family:var(--f-body)!important;text-transform:none!important;letter-spacing:0!important}
-.tag{font-size:11.5px;font-weight:600;border:0;padding:0;display:inline-flex;align-items:center;gap:5px}
-.tag::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
-.ex{font-size:11px;font-weight:600;padding:1px 6px;border-radius:999px}
 .opt em{font-size:12.5px;font-weight:600}
 .panel-h .count{font-size:13px}
-
-/* v1.11 studio closet cards (the job bar moved to the shared layer) */
-.card .vis.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
-.card .vis.studio img.cut{object-fit:contain;padding:10px;filter:drop-shadow(0 4px 6px rgba(50,35,20,.2))}
 
 /* v1.13 ease of use: 44px touch targets (Apple HIG minimum); chips, buttons and toasts moved to the shared layer */
 .presets .chip{min-height:40px}
@@ -478,10 +455,6 @@ details.more .field{margin-top:14px}
 .gate a{color:inherit}
 a.lirow{text-decoration:none;color:inherit}
 
-/* v1.15.2: cut-outs stay inside the closet card photo area (tall jeans used to spill over the text) */
-.card .vis{position:relative;overflow:hidden}
-.card .vis img{position:absolute;inset:0;width:100%;height:100%}
-.card .vis.studio img{object-fit:contain;padding:10px;box-sizing:border-box}
 .ex.wash{background:var(--warn-soft);color:var(--warn)}
 .dresspanel label.row{font-size:14px}
 
@@ -496,16 +469,11 @@ a.lirow{text-decoration:none;color:inherit}
 .photo .pv img.cut{padding:6px;box-sizing:border-box;filter:drop-shadow(0 3px 5px rgba(50,35,20,.2))}
 .langsel{min-height:40px;padding:6px 10px;border-radius:10px;border:1px solid var(--line);background:var(--raised);color:var(--ink);max-width:150px}
 /* v1.24 piece preview */
-.piecebig{position:relative;width:100%;aspect-ratio:1/1;max-height:56vh;max-height:56svh;border-radius:14px;overflow:hidden;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center}
 .ppager{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-4px 0 0}
 .ppager .ppg{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--raised);color:var(--ink);display:grid;place-items:center;flex:none;padding:0}
 .ppager .ppg svg{width:22px;height:22px}
 .ppager .pcount{font-size:14px;font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
 @media (hover:hover) and (pointer:fine){ .ppager .ppg:hover{border-color:var(--ink)} }
-.piecebig.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
-.piecebig img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain} /* absolute: a percentage height inside a grid cell does not resolve, so the image overflowed and was cropped */
-.piecebig img.cut{padding:16px;box-sizing:border-box;filter:drop-shadow(0 6px 10px rgba(50,35,20,.22))}
-.piecebig svg.glyph{width:55%;height:60%}
 .sheet-actions .btn .swap{position:static;display:inline-grid;width:18px;height:18px;margin-right:6px;background:none;box-shadow:none}
 .sheet-actions .btn .swap svg{width:16px;height:16px}
 /* v1.25 styles */
@@ -664,7 +632,7 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .viewer .vseg button{color:#fff}
 .vstage{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;display:grid;place-items:center}
 .vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:center;user-select:none;-webkit-user-drag:none}
-.vstage img.cut{background:#f3f0ea}
+.vstage img.cut{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .vstage .hint{position:absolute;color:#aaa}
 .viewer .vbar{display:flex;align-items:center;gap:10px;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
 .viewer .vbar input{flex:1}
@@ -774,7 +742,6 @@ button.lrow{cursor:pointer}
 @media (min-width:960px){
   #careBody>div{display:block!important;columns:2 360px;column-gap:16px}
   #careBody>div>*{break-inside:avoid;margin-bottom:16px}
-  .grid{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
 }
 .viewer .vnote{margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:#c9ccd3}
 
@@ -998,7 +965,7 @@ details.whybox .why{margin:2px 0 10px}
   .lbone b{color:var(--ink);margin-right:4px}
   .pgr .pg{width:44px;height:44px;display:grid;place-items:center;padding:0;border:0;border-radius:999px;background:none;color:var(--ink);cursor:pointer}
   .pgr .pg svg{width:22px;height:22px}
-  .pgr .dot{width:24px;height:44px;display:grid;place-items:center;padding:0;border:0;background:none;cursor:pointer}
+  .pgr .dot{width:24px;height:44px;display:grid;place-items:center;padding:0;border:0;border-radius:50%;background:none;cursor:pointer} /* the radius came from the Closet's generic .dot until Phase 9 */
   .pgr .dot::before{content:"";width:8px;height:8px;border-radius:999px;background:var(--muted)}
   .pgr .dot[aria-current="true"]::before{width:22px;background:var(--coral)}
   .pgr .dot[aria-current="true"]{width:34px}
@@ -1057,3 +1024,75 @@ details.whybox .why{margin:2px 0 10px}
 button.idea.shop{display:flex;flex-direction:column;align-items:stretch;text-align:left;width:100%;background:none;border:0;color:inherit;font:inherit;cursor:pointer}
 button.idea.shop .go{align-self:flex-end;margin-top:4px}
 .idearow.own .idea b{color:var(--muted)}
+
+/* ===== Closet (GALLERY, Phase 9). A below 700px wide or 600px tall: category chips with counts that wrap, square
+   tiles in 2 columns on upright phones (as many 150px columns as fit when turned sideways). B from 700x600:
+   category text tabs, 4:5 tiles in 3 columns, 5 from 1200px. Every tile: picture, name, condition and wears; flags
+   as short words on the picture. The tiles are flat: no card, no shadow (DESIGN.md, Flat-By-Default). ===== */
+.clfilt{display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.clfilt .chip{min-height:40px;padding:0 12px}
+.clfilt .washf{margin-left:auto}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px 12px}
+.tile{display:flex;flex-direction:column;gap:4px;min-width:0;padding:0;border:0;background:none;color:var(--ink);text-align:left;font:inherit;cursor:pointer;border-radius:12px}
+.tile .pic{position:relative;display:grid;place-items:center;aspect-ratio:1/1;border-radius:12px;overflow:hidden;margin-bottom:4px}
+.tile .pic.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.tile .pic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tile .pic img.fitted{object-fit:contain}
+.tile .pic.studio img{object-fit:contain;padding:10%;box-sizing:border-box}
+.tile .pic img.cut{filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
+.tile .pic svg.glyph{width:56%;height:62%}
+.tile .tname{font-size:14px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;overflow-wrap:anywhere}
+.tile .tmeta{font-size:13px;color:var(--muted);line-height:1.35}
+.tile .marks{position:absolute;left:8px;top:8px;right:8px;display:flex;flex-direction:column;align-items:flex-start;gap:4px;pointer-events:none}
+.mk{font-size:12px;font-weight:600;line-height:1.4;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);max-width:100%}
+.mk.warn{background:var(--warn-soft);color:var(--warn)}
+.mk.bad{background:var(--bad-soft);color:var(--bad)}
+@media (hover:hover) and (pointer:fine){
+  .tile:hover .tname{text-decoration:underline;text-underline-offset:3px}
+}
+@media (prefers-reduced-motion:no-preference){
+  .tile .pic{transition:transform .12s cubic-bezier(.23,1,.32,1)}
+  .tile:active .pic{transform:scale(.98)}
+}
+@media (min-width:700px) and (min-height:600px){
+  /* categories as text tabs in the display face, the selected one in ink with a 2px ink underline (as the
+     occasions on Outfits); In the wash stays a separate control at the end of the row */
+  .clfilt{gap:0 24px;align-items:center;box-shadow:inset 0 -1px 0 var(--line)} /* wraps, so every category and In the wash stay in view */
+  .clfilt .chip{min-height:44px}
+  .clfilt .chip:not(.washf){padding:0;border:0;border-radius:0;background:none;color:var(--muted);font-family:var(--f-display);font-weight:800;font-size:20px;letter-spacing:.02em;text-transform:uppercase;line-height:1;box-shadow:inset 0 -2px 0 transparent}
+  .clfilt .chip:not(.washf)[aria-pressed="true"]{color:var(--ink);box-shadow:inset 0 -2px 0 var(--ink)}
+  .clfilt .chip:not(.washf) .n{font-family:var(--f-body);font-size:13px;color:var(--muted);text-transform:none;letter-spacing:0}
+  .clfilt .washf{margin:0 0 0 auto;min-height:40px}
+  .tiles{grid-template-columns:repeat(3,minmax(0,1fr));gap:28px 16px}
+  .tile .pic{aspect-ratio:4/5}
+  .tile .tname{font-size:15px}
+  .tile .tmeta{font-size:14px}
+}
+@media (min-width:1200px) and (min-height:600px){ .tiles{grid-template-columns:repeat(5,minmax(0,1fr))} }
+@media (hover:hover) and (pointer:fine) and (min-width:700px) and (min-height:600px){
+  .clfilt .chip:not(.washf):not([aria-pressed="true"]):hover{color:var(--ink)}
+}
+
+/* ===== Garment detail (PRODUCT EDITORIAL, Phase 9): the piece preview and the item editor. Phones: a bottom
+   sheet, picture first. From 700px wide (where sheets centre): a wider centred sheet, the picture on the left
+   (about 60%, it stays in place while the details scroll) and the details and actions on the right. ===== */
+.gbody{display:flex;flex-direction:column;gap:14px;min-width:0;padding-bottom:4px}
+.gmedia{display:flex;flex-direction:column;gap:10px;min-width:0}
+.gside{display:flex;flex-direction:column;gap:14px;min-width:0}
+.gside>*{flex-shrink:0}
+.gpic{position:relative;width:100%;aspect-ratio:1/1;max-height:48vh;max-height:48svh;border-radius:12px;overflow:hidden;background:var(--surface);display:grid;place-items:center}
+.gpic.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.gpic img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.gpic img.cut{padding:6%;box-sizing:border-box;filter:drop-shadow(0 2px 2px rgba(50,35,20,.18)) drop-shadow(0 8px 10px rgba(50,35,20,.14))}
+.gpic svg.glyph{width:55%;height:60%}
+.gacts{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.gacts .hint{flex:1 1 100%;margin:0}
+.ginfo{margin:0;color:var(--muted);font-size:14px}
+.gside .ppager{margin:0}
+@media (min-width:700px){
+  .sheet.gsheet{max-width:min(1040px,calc(100vw - 48px))}
+  .gbody{display:grid;grid-template-columns:minmax(0,3fr) minmax(300px,2fr);gap:24px;align-items:start} /* details keep 300px for the 5-step controls in narrow windows */
+  .gmedia{position:sticky;top:0;z-index:1}
+  .ginfo{font-size:15px;color:var(--ink)}
+  .gpic{aspect-ratio:4/5;max-height:calc(88vh - 200px);max-height:calc(88svh - 200px);min-height:150px}
+}

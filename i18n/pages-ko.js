@@ -97,5 +97,7 @@ I18N.add("ko",{
 "Style lists count a piece in another material when its color matches, so black leather sneakers count as black knit sneakers.": "스타일 목록이 색이 맞으면 소재가 다른 옷도 셉니다. 검은 가죽 스니커즈는 검은 니트 스니커즈로 셉니다.",
 "I have one: tap a piece a style still needs to pick the one from your closet that fills it, or shop for it.": "이미 있어요: 스타일에 아직 필요한 옷을 탭해 그 자리를 채울 옷을 옷장에서 고르거나 쇼핑하세요.",
 "Saved ideas you have since bought are marked Bought with the piece's name; tap a saved idea to shop for it or pick the piece you bought.": "저장한 아이디어 중 이미 산 것은 옷 이름과 함께 구매함으로 표시됩니다. 저장한 아이디어를 탭해 쇼핑하거나 산 옷을 고르세요.",
-"Swiping between outfits now works anywhere on the pictures, including the shoes and accessories row.": "이제 신발과 액세서리 줄을 포함해 사진 어디에서나 스와이프로 코디를 넘길 수 있습니다."
+"Swiping between outfits now works anywhere on the pictures, including the shoes and accessories row.": "이제 신발과 액세서리 줄을 포함해 사진 어디에서나 스와이프로 코디를 넘길 수 있습니다.",
+"Closet is now a wall of pictures: every category stays in view, each piece shows its condition and how often you have worn it, and marks such as In the wash sit on the picture.": "옷장이 사진 벽이 되었습니다. 모든 카테고리가 항상 보이고, 각 옷에 상태와 착용 횟수가 표시되며, 세탁 중 같은 표시는 사진 위에 나타납니다.",
+"A piece's picture now comes first when you open it; on tablets and computers it sits beside the details. Closet pictures are sharper and load as you scroll.": "옷을 열면 사진이 먼저 나옵니다. 태블릿과 컴퓨터에서는 세부 정보 옆에 놓입니다. 옷장 사진이 더 선명해졌고 스크롤할 때 불러옵니다.",
 });

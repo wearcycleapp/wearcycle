@@ -8,6 +8,7 @@ I18N.load("es",{
 "+ Wear a t-shirt underneath": "+ Usar una camiseta debajo",
 "+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.": "+2 por una paleta toda neutra o neutros con un color de acento, +1 por dos acentos análogos o complementarios, -2 o -3 por acentos que compiten. +1 cuando todas las prendas están dentro de un mismo nivel de formalidad, y un punto menos por cada nivel adicional de diferencia. Hasta +1.5 por prendas que han descansado dos semanas, -1 si algo se usó ayer, -2 si la misma prenda superior e inferior se usaron juntas esta semana.",
 ", today’s weather": ", el clima de hoy",
+"1 wear": "1 uso",
 "2 wears": "2 usos",
 "5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.": "5 como nuevo · 4 bueno, sin desgaste visible · 3 desgaste visible (bolitas, colores desteñidos), sirve para casa · 2 gastado (manchas, agujeros pequeños), solo para quehaceres · 1 inservible.",
 ": check what Claude filled in. Open any item to correct it, or confirm them all.": ": revisa lo que completó Claude. Abre cualquier prenda para corregirla o confírmalas todas.",

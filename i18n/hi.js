@@ -8,6 +8,7 @@ I18N.load("hi",{
 "+ Wear a t-shirt underneath": "+ नीचे टी-शर्ट पहनें",
 "+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.": "पूरी तरह न्यूट्रल पैलेट या न्यूट्रल के साथ एक एक्सेंट रंग पर +2, दो मिलते-जुलते या पूरक एक्सेंट पर +1, आपस में टकराते एक्सेंट पर -2 या -3। सभी पीस एक ही ड्रेस लेवल पर हों तो +1, और हर अतिरिक्त लेवल के अंतर पर एक पॉइंट कम। दो हफ़्ते आराम कर चुके पीस के लिए +1.5 तक, कल पहना कुछ हो तो -1, और इस हफ़्ते वही टॉप और बॉटम साथ पहने गए हों तो -2।",
 ", today’s weather": ", आज का मौसम",
+"1 wear": "1 बार",
 "2 wears": "2 बार",
 "5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.": "5 नए जैसा · 4 अच्छा, घिसाव नहीं दिखता · 3 घिसाव दिखता है (रोएँ, रंग फीका), घर के लिए ठीक · 2 बहुत घिसा (दाग़, छोटे छेद), सिर्फ़ घर के कामों के लिए · 1 इस्तेमाल लायक नहीं।",
 ": check what Claude filled in. Open any item to correct it, or confirm them all.": "का निशान है: देखें कि Claude ने क्या भरा है। सुधारने के लिए कोई भी आइटम खोलें, या सबकी पुष्टि करें।",

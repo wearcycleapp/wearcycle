@@ -8,6 +8,7 @@ I18N.load("ko",{
 "+ Wear a t-shirt underneath": "+ 안에 티셔츠 입기",
 "+2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday, -2 if the same top and bottom were worn together this week.": "모두 뉴트럴 색상이거나 뉴트럴에 포인트 색 하나를 더하면 +2, 유사색 또는 보색 포인트 두 개는 +1, 서로 부딪히는 포인트 색은 -2 또는 -3. 모든 아이템이 한 격식 단계 안에 있으면 +1, 단계가 하나씩 더 벌어질 때마다 1점 감점. 2주 동안 쉰 아이템은 최대 +1.5, 어제 입은 아이템이 있으면 -1, 이번 주에 같은 상의와 하의를 함께 입었다면 -2.",
 ", today’s weather": ", 오늘 날씨",
+"1 wear": "착용 1회",
 "2 wears": "2회",
 "5 like new · 4 good, no visible wear · 3 visible wear (pilling, fading), fine for home · 2 worn out (stains, small holes), chores only · 1 unusable.": "5 새것 같음 · 4 좋음, 사용감 없음 · 3 사용감 있음(보풀, 색 바램), 집에서 입기 좋음 · 2 많이 낡음(얼룩, 작은 구멍), 집안일용 · 1 사용 불가.",
 ": check what Claude filled in. Open any item to correct it, or confirm them all.": "표시됨: Claude가 입력한 내용을 확인하세요. 아이템을 열어 수정하거나 모두 한 번에 확정하세요.",
