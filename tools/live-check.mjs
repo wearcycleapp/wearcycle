@@ -185,11 +185,12 @@ async function openSheet(page, sel, label) { const el = await page.$(sel); if (!
 const brokenImages = page => page.evaluate(() => { const imgs = [...document.images].filter(i => i.getClientRects().length && i.getAttribute('src'));
   return { shown: imgs.length, broken: imgs.filter(i => i.complete && !i.naturalWidth).length }; });
 
-// Pictures in the first screen of the open tab: how many are drawn larger than their file (one file pixel over more
-// than 1.1 device pixels looks soft), and where "Wear this" sits. Same measure as tools/check.mjs.
-const PICTURES = () => {
+// Pictures in the first screen of the open tab, or of the open sheet when sheet is true: how many are drawn larger than
+// their file (one file pixel over more than 1.1 device pixels looks soft), and where "Wear this" sits. Same measure as
+// tools/check.mjs.
+const PICTURES = sheet => {
   const dpr = devicePixelRatio, out = { shown: 0, upscaled: 0, worst: 0 };
-  for (const i of document.querySelectorAll('section.tab:not([hidden]) img')) {
+  for (const i of document.querySelectorAll(sheet ? '#sheetRoot .sheet img' : 'section.tab:not([hidden]) img')) {
     const r = i.getBoundingClientRect(); if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth || !i.naturalWidth || !i.checkVisibility() || i.closest('[inert]')) continue; // off screen sideways or on another page
     const cs = getComputedStyle(i), px = v => parseFloat(v) || 0;
     const w = r.width - px(cs.paddingLeft) - px(cs.paddingRight) - px(cs.borderLeftWidth) - px(cs.borderRightWidth);
@@ -268,11 +269,19 @@ async function deviceChecks(browser, engine, dev, state) {
       const b = await brokenImages(page); imgs.shown += b.shown; imgs.broken += b.broken; if (t !== 'outfits') perTab[t] = { bytes: net.bytes - b0, files: net.files - f0 }; } return 'outfits, closet, care, shop'; });
     await step(tag + 'image bytes per screen (first open)', async () => ['outfits', 'closet', 'care', 'shop'].filter(t => perTab[t])
       .map(t => t + (t === 'outfits' ? ' ' : ' +') + kb(perTab[t].bytes) + ' in ' + perTab[t].files + ' files').join(', '));
+    // Phase 9: Closet and the item editor on real pictures (the fixture's files are small, so only real data shows
+    // whether a picture is drawn larger than its file). Counts and sizes only.
+    await step(tag + 'closet and item editor: pictures', async () => {
+      const pl = p => p.shown + ' pictures, ' + p.upscaled + ' drawn larger than their file' + (p.upscaled ? ' (up to ' + p.worst + 'x)' : '');
+      await goTab(page, 'closet'); await settle(page); const c = await page.evaluate(PICTURES, false);
+      const b0 = net.bytes, f0 = net.files; await page.click('#closetGrid [data-edit]'); await page.waitForSelector('#sheetRoot .sheet'); await settle(page);
+      const e = await page.evaluate(PICTURES, true); const eb = { bytes: net.bytes - b0, files: net.files - f0 }; await closeSheet(page);
+      return 'closet first screen ' + pl(c) + '; editor ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
     await step(tag + 'photos and cut-outs load', async () => { if (imgs.broken) throw new Error(imgs.broken + ' of ' + imgs.shown + ' images broken'); return imgs.shown + ' images, none broken'; });
     await step(tag + 'sheets open and close', async () => {
       const done = [];
       await goTab(page, 'outfits'); done.push(await openSheet(page, '.fit.hero [data-swap]', 'piece preview'));
-      await goTab(page, 'closet'); done.push(await openSheet(page, '#closetGrid .card', 'item editor'));
+      await goTab(page, 'closet'); done.push(await openSheet(page, '#closetGrid [data-edit]', 'item editor'));
       done.push(await openSheet(page, SETTINGS_BTN, 'settings'));
       return done.join(', '); });
     await step(tag + 'no horizontal overflow', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { await goTab(page, t);

@@ -321,11 +321,12 @@ async function axe(page, sheet) {
 }
 
 /* ---------- pictures and "Wear this" (same measure in tools/live-check.mjs) ---------- */
-// Pictures in the first screen of the open tab: how many are drawn larger than their file (one file pixel over more
-// than 1.1 device pixels looks soft; the 256px thumbnails at a large size do), and where "Wear this" sits.
-const PICTURES = () => {
+// Pictures in the first screen of the open tab, or of the open sheet when sheet is true (Phase 9): how many are drawn
+// larger than their file (one file pixel over more than 1.1 device pixels looks soft; the 256px thumbnails at a large
+// size do), and where "Wear this" sits.
+const PICTURES = sheet => {
   const dpr = devicePixelRatio, out = { shown: 0, upscaled: 0, worst: 0 };
-  for (const i of document.querySelectorAll('section.tab:not([hidden]) img')) {
+  for (const i of document.querySelectorAll(sheet ? '#sheetRoot .sheet img' : 'section.tab:not([hidden]) img')) {
     const r = i.getBoundingClientRect(); if (!r.width || !r.height || r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth || !i.naturalWidth || !i.checkVisibility() || i.closest('[inert]')) continue; // off screen sideways or on another page
     const cs = getComputedStyle(i), px = v => parseFloat(v) || 0;
     const w = r.width - px(cs.paddingLeft) - px(cs.paddingRight) - px(cs.borderLeftWidth) - px(cs.borderRightWidth);
@@ -387,7 +388,7 @@ async function busyMorning(browser, base, state, data) {
 async function openView(page, view) {
   if (['outfits', 'closet', 'care', 'shop'].includes(view)) { await goTab(page, view); return true; }
   if (view === 'preview') { await goTab(page, 'outfits'); const s = await page.$('.fit.hero [data-swap][data-slot="top"]') || await page.$('.fit.hero [data-swap]'); if (!s) return false; await s.click(); await page.waitForSelector('#sheetRoot .sheet'); return true; }
-  if (view === 'editor') { await goTab(page, 'closet'); const c = await page.$('#closetGrid .card'); if (!c) return false; await c.click(); await page.waitForSelector('#sheetRoot .sheet'); return true; }
+  if (view === 'editor') { await goTab(page, 'closet'); const c = await page.$('#closetGrid [data-edit]'); if (!c) return false; await c.click(); await page.waitForSelector('#sheetRoot .sheet'); return true; }
   if (view === 'settings') { await goTab(page, 'outfits'); await openSheetBy(page, SETTINGS_BTN); return true; }
   return false;
 }
@@ -410,7 +411,7 @@ async function captureSet(browser, base, state, { dev, theme, lang, data, tag, s
       await page.screenshot({ path: file, fullPage: A.fullPage, scale: A.cssPixels ? 'css' : 'device', animations: 'disabled', caret: 'hide' });
       const inSheet = ['preview', 'editor', 'settings'].includes(view);
       Object.assign(cap, await pageFacts(page, lang, texts, inSheet));
-      if (!inSheet) { cap.pictures = await page.evaluate(PICTURES); delete cap.pictures.wear; }
+      cap.pictures = await page.evaluate(PICTURES, inSheet); delete cap.pictures.wear;
       cap.img = { kb: Math.round((net.bytes - seen.bytes) / 1024), files: net.files - seen.files }; seen = { ...net }; // the first view includes the app opening
       if (runAxe && !A.noAxe) cap.axe = await axe(page, inSheet);
       if (snapshots) { // static copy for the detector: scripts removed, blob: images (cut-outs) inlined as data URLs,
@@ -492,7 +493,7 @@ async function flows(browser, base, state, data) {
     const SHEETS = [
       ['Settings', null, SETTINGS_BTN], ['Adjust', 'outfits', '.fit.hero [data-act="adjust"]'], ['Outfit diary', 'outfits', '[data-act="diary"]'],
       ['Weather', 'outfits', '[data-wx="edit"]'], ['What I wore', 'outfits', '[data-act="logOther"]'], ['Piece preview', 'outfits', '.fit.hero [data-swap]'],
-      ['Item editor', 'closet', '#closetGrid .card'], ['Closet stats', 'closet', '[data-act="stats"]'], ['Add clothes', 'closet', '#addBtn'],
+      ['Item editor', 'closet', '#closetGrid [data-edit]'], ['Closet stats', 'closet', '[data-act="stats"]'], ['Add clothes', 'closet', '#addBtn'],
       ['Your style', 'settings', '[data-act="styles"]'], ['How Wearcycle decides', 'settings', '[data-act="help"]'], ['Style palette', 'adjust', '[data-act="palettes"]'],
     ];
     const done = [];
@@ -718,8 +719,11 @@ async function main() {
     check('"Wear this" on a busy morning, other sizes', 'INFO', R.busy.filter(x => !x.required).map(x => x.size + ' ' + at(x)).join('; '));
   }
   const first = caps.filter(c => c.theme === 'light' && c.lang === 'en');
+  const picLine = c => c.device + ' ' + c.pictures.upscaled + ' of ' + c.pictures.shown + (c.pictures.upscaled ? ' (up to ' + c.pictures.worst + 'x)' : '');
   const pics = first.filter(c => c.view === 'outfits' && c.pictures);
-  if (pics.length) check('Outfits: pictures drawn larger than their file (first screen)', 'INFO', pics.map(c => c.device + ' ' + c.pictures.upscaled + ' of ' + c.pictures.shown + (c.pictures.upscaled ? ' (up to ' + c.pictures.worst + 'x)' : '')).join('; '));
+  if (pics.length) check('Outfits: pictures drawn larger than their file (first screen)', 'INFO', pics.map(picLine).join('; '));
+  for (const v of ['closet', 'preview', 'editor']) { const pv = first.filter(c => c.view === v && c.pictures); // Phase 9: Closet and the garment sheets
+    if (pv.length) check(v[0].toUpperCase() + v.slice(1) + ': pictures drawn larger than their file (first screen)', 'INFO', pv.map(picLine).join('; ')); }
   const devs = [...new Set(first.filter(c => c.img).map(c => c.device))];
   if (devs.length) check('Image bytes per screen (fixture images, first open)', 'INFO', devs.map(d => d + ' ' + ['outfits', 'closet', 'care', 'shop'].map(v => { const c = first.find(x => x.device === d && x.view === v && x.img); return c ? v + ' ' + c.img.kb + ' KB/' + c.img.files : ''; }).filter(Boolean).join(', ')).join('; '));
   let det = null;
