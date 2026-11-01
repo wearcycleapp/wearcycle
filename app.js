@@ -1344,7 +1344,8 @@ function picScale(img){ const r=img.getBoundingClientRect(); if(!r.width||!img.n
 function sharpen(img,it){ if(!it.photo||isEx(it)||!sb) return;
   const go=()=>{ if(!img.isConnected) return; const k=picScale(img); if(k<=1.1) return; img.dataset.sharp='1';
     const set=u=>{ if(u&&img.isConnected&&!img.classList.contains('cut')) img.src=u; };
-    const r=img.getBoundingClientRect(), need=Math.ceil(Math.max(r.width,r.height)*(window.devicePixelRatio||1));
+    // device pixels the square crop needs: contained (fitted) it fills the shorter side of the box, covering the longer
+    const r=img.getBoundingClientRect(), fit=getComputedStyle(img).objectFit, need=Math.ceil((fit==='cover'?Math.max(r.width,r.height):Math.min(r.width,r.height))*(window.devicePixelRatio||1));
     if(k<=4.4||img.dataset.boxed) medUrl(it,!!img.dataset.boxed,need).then(set); else fullPhotoUrl(it.photo).then(set); };
   if(img.complete&&img.naturalWidth) go(); else img.addEventListener('load',go,{once:true}); }
 // Small picture in lists (Care, Shop, history). With a photo, tapping it opens the full-size zoom viewer.
