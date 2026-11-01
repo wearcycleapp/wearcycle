@@ -6,7 +6,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Phase status (2026-10-31)
 
-Recorded at the start of Phase 9 (owner, 2026-10-31). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release. Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
 
 | Phase | Status | Release on main |
 | --- | --- | --- |
@@ -19,12 +19,12 @@ Recorded at the start of Phase 9 (owner, 2026-10-31). Release commits checked as
 | 6 Visual direction | Released 2026-10-25 | 0cba70e |
 | 7 Navigation shell | Released 2026-10-25, v1.52.0 | 23ddab6 |
 | 8 Outfits | Released 2026-10-26, v1.53.0 (follow-ups v1.53.1 to v1.53.4, v1.61.1) | 6a7869b |
-| 9 Closet and garment detail | Built 2026-10-31, v1.62.0 (released once the live check passes; see the Project decisions log) | |
+| 9 Closet and garment detail | Released 2026-10-31, v1.62.0 | 2fdc070 (v1.62.0) |
 | 10 Care | Partly: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet. Not built: the A and B rows (56px and 160px pictures), the Repair / Check / Rotate / Let go sections, the wide composition, and its known issue (`.panel-h .count`) | 6a7e2a5 (v1.58.0) |
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
 | 12 to 15 | Not started | |
 
-Screen freeze while Phase 9 is open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 is released. Other chats make bug fixes only while this phase is open.
+Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
 
 ## Screen personalities
 
@@ -172,8 +172,9 @@ Built in Phase 9 (v1.62.0). Proposal "Wearcycle Closet redesign" approved by the
 - B (at least 700x600): category text tabs in the display face (20px, uppercase by CSS), the chosen one in ink with a 2px ink underline, counts in the body face; the row wraps at every input, so In the wash, right-aligned at its end, never leaves the screen. 4:5 tiles, 3 columns, 5 from 1200px wide.
 - Tile (both, every width; owner 2026-10-25): the picture, the name in Figtree (up to 2 lines), then "condition · N wears" ("1 wear", "Never worn"). Flags as short words on the picture's top left: Example, Review (accent), In the wash (warn), Needs repair (bad), Needs attention (warn; bad when the piece is to be let go). Occasions are no longer on the tile; they stay in the editor. Tiles are flat (no card, no shadow); cut-outs and glyphs sit on the cream canvas; tile pictures have an empty alt, so each tile says its name once.
 - Kept: Stats, Add clothes, Possible duplicates (v1.58.7), the Review line with Confirm all, the Example line with Remove examples, the In the wash list with Mark all clean and Clean, the empty closet; opening a tile opens the editor.
-- Pictures (Phase 9 rule, also used by the garment sheets): a piece's cut-out wherever it has one; otherwise the 256px thumbnail while drawn size x pixel density stays within 1.1x of the file, the 1024px copy of the photo (medUrl, made once on the device and kept with the cut-outs; cropped to Claude's box when the thumbnail was) up to 4.4x the thumbnail, the full photo beyond that. Closet pictures load only when they come within half a screen (IntersectionObserver), so opening the app no longer downloads every cut-out in the closet.
+- Pictures (Phase 9 rule, also used by the garment sheets): a piece's cut-out wherever it has one; otherwise the thumbnail (256px; 320px when cropped to Claude's box, cropThumb) while drawn size x pixel density stays within 1.1x of the file, the 1024px copy of the photo (medUrl, made once on the device and kept with the cut-outs; cropped to Claude's box when the thumbnail was) up to 4.4x the thumbnail, the full photo beyond that. Closet pictures load only when they come within half a screen (IntersectionObserver), so opening the app no longer downloads every cut-out in the closet.
 - Measured with the fixture (Chromium, before 4210ff9, after the prototype): app open on phones 60 KB in 9 files to 51 KB in 8, then Closet +0 to +37 KB in 2 (the photos of the two visible photo-only tiles); at 1366 43 KB/8 to 35 KB/7, Closet +0. Closet pictures drawn larger than their file at 390: 3 of 3 (up to 2.0x) to 1 of 3 (1.3x, a fixture cut-out of 294px, the largest file it has); 1366: 0 of 8 to 0 of 6.
+- Measured on real data (live check, test account, 22 pieces, first open of each screen; before: run 41266029199 on the old Closet, after: run 41268402119, app files of 2fdc070). Closet first screen, pictures drawn larger than their file: phone 390 (Chromium, DPR 3) 3 of 4 (up to 1.4x) to 0 of 4; iPad 820 (WebKit, DPR 2) 0 of 16 to 0 of 9; 1366 0 of 10 to 0 of 10; the editor 0 of 1 at all three. Closet bytes: phone +0 to +1,958 KB in 5 files, iPad 820 +0 to +4,006 KB in 10 files, 1366 +0 to +0: each file is a full photo read once to make the 1024px copy, which stays on the device (in the probe a reload read the copies from the device: +1 KB). Opening the app on Outfits: phone 877 KB in 5 files before, 774 to 877 KB in 5 after; iPad 875 KB in 5 both; 1366 116 KB in 3 both.
 - Code: renderCloset, tileHtml, tileFlags, wearsWord, lazyPics, upPic, sharpen, picScale, medUrl and cropBlob (app.js).
 
 ### Known issues fixed in this phase (v1.62.0)
