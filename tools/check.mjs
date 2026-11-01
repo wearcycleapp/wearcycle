@@ -103,6 +103,9 @@ function scenario(name) {
   const sc = WORST.scenarios[name]; let d = sc.from ? scenario(sc.from) : { ...base };
   d = { ...d, items: (sc.items || d.items).map(i => ({ ...i, body: { ...i.body } })), wears: sc.wears || d.wears, missing: new Set(d.missing) };
   for (const [id, n] of Object.entries(sc.rename || {})) { const it = d.items.find(i => i.id === id); if (it) it.body.name = n; }
+  if (sc.keep) d.items = d.items.filter(i => sc.keep.includes(i.id)); // Phase 10: only these pieces
+  for (const [id, f] of Object.entries(sc.patch || {})) { const it = d.items.find(i => i.id === id); if (it) Object.assign(it.body, f); } // a few fields per piece
+  if (sc.addWears) d.wears = d.wears.concat(sc.addWears); // logged outfits on top of the base ones
   for (const id of sc.dropThumb || []) { const it = d.items.find(i => i.id === id); if (it) it.body.thumb = ''; }
   for (const id of sc.missingFiles || []) d.missing.add(id);
   if (sc.count) { const src = d.items; d.items = Array.from({ length: sc.count }, (_, k) => { const s = src[k % src.length];
@@ -664,7 +667,7 @@ async function main() {
         await captureSet(browser, server.base, state, { ...s, data, tag, runAxe: true, snapshots: s.dev.id === 'phone-390' && s.theme === 'light' });
       }
     } else {
-      const plan = [['long', ['en', 'fr']], ['empty', ['en']], ['many', ['en']]];
+      const plan = [['long', ['en', 'fr']], ['empty', ['en']], ['many', ['en']], ['care', ['en', 'fr']], ['calm', ['en']]];
       for (const [name, langs] of plan) {
         const d = scenario(name);
         for (const dev of devices.filter(d_ => ['phone-360', 'win-1366'].includes(d_.id))) for (const lang of langs) {

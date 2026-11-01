@@ -1,5 +1,5 @@
 {
- "_about": "break-ui data for tools/check.mjs --worst-case. Each scenario starts from closet.json (or another scenario) and changes only the data, never the app. Names are realistic user input in French, Tagalog and Hindi, with emoji, a one-letter name, extra spaces and an unbroken word.",
+ "_about": "break-ui data for tools/check.mjs --worst-case. Each scenario starts from closet.json (or another scenario) and changes only the data, never the app. Names are realistic user input in French, Tagalog and Hindi, with emoji, a one-letter name, extra spaces and an unbroken word. \"care\" fills every Care group (3 to repair, 3 to let go, 4 checks due, 4 moved down a level, shoes worn on 18 and 25 of the last 30 days, 2 donated or recycled) through \"patch\" (fields per piece) and \"addWears\" (logged outfits added to closet.json's); \"calm\" keeps 6 pieces in good order, so nothing needs care (Phase 10).",
  "scenarios": {
   "long": {
    "rename": {
@@ -19,6 +19,61 @@
    "missingFiles": ["fx-07", "fx-15", "fx-19"]
   },
   "empty": { "items": [], "wears": [] },
-  "many": { "from": "long", "count": 200 }
+  "many": { "from": "long", "count": 200 },
+  "care": {
+   "patch": {
+     "fx-21": {"repair": true, "repairNote": "Sole coming off at the toe", "repairOn": "2026-10-02"},
+     "fx-23": {"repair": true, "repairNote": "Battery", "repairOn": "2026-09-28"},
+     "fx-16": {"repairNote": "Zip sticks halfway", "repairOn": "2026-09-20"},
+     "fx-08": {"lastWorn": "2024-06-01"},
+     "fx-17": {"lastWorn": "2023-01-10"},
+     "fx-11": {"wearsSinceCheck": 31},
+     "fx-13": {"wearsSinceCheck": 40},
+     "fx-04": {"lastCheck": "2025-08-01"},
+     "fx-02": {"cond": 3},
+     "fx-07": {"cond": 3},
+     "fx-12": {"cond": 2},
+     "fx-25": {"cond": 3},
+     "fx-26": {"status": "donated", "donatedOn": "2026-09-20"},
+     "fx-14": {"status": "recycled", "recycledOn": "2026-08-30"}
+   },
+   "addWears": [
+    {"id": 9100, "date": "2026-09-15", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9101, "date": "2026-09-16", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9102, "date": "2026-09-17", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9103, "date": "2026-09-18", "occ": "work", "items": ["fx-19"]},
+    {"id": 9104, "date": "2026-09-19", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9105, "date": "2026-09-20", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9106, "date": "2026-09-21", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9107, "date": "2026-09-22", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9108, "date": "2026-09-23", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9109, "date": "2026-09-24", "occ": "work", "items": ["fx-19"]},
+    {"id": 9110, "date": "2026-09-25", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9111, "date": "2026-09-26", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9112, "date": "2026-09-27", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9113, "date": "2026-09-28", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9114, "date": "2026-09-29", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9115, "date": "2026-09-30", "occ": "work", "items": ["fx-19"]},
+    {"id": 9116, "date": "2026-10-01", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9117, "date": "2026-10-02", "occ": "work", "items": ["fx-18", "fx-19"]},
+    {"id": 9118, "date": "2026-10-04", "occ": "work", "items": ["fx-19"]},
+    {"id": 9119, "date": "2026-10-06", "occ": "work", "items": ["fx-19"]},
+    {"id": 9120, "date": "2026-10-08", "occ": "work", "items": ["fx-19"]},
+    {"id": 9121, "date": "2026-10-10", "occ": "work", "items": ["fx-19"]},
+    {"id": 9122, "date": "2026-10-12", "occ": "work", "items": ["fx-19"]}
+   ]
+  },
+  "calm": {
+   "keep": ["fx-01", "fx-03", "fx-10", "fx-12", "fx-18", "fx-21"],
+   "patch": {
+     "fx-01": {"cond": 5, "wearsSinceCheck": 0, "lastCheck": "2026-10-01", "lastWorn": "2026-10-10", "repair": false},
+     "fx-03": {"cond": 5, "wearsSinceCheck": 0, "lastCheck": "2026-10-01", "lastWorn": "2026-10-10", "repair": false},
+     "fx-10": {"cond": 5, "wearsSinceCheck": 0, "lastCheck": "2026-10-01", "lastWorn": "2026-10-10", "repair": false},
+     "fx-12": {"cond": 5, "wearsSinceCheck": 0, "lastCheck": "2026-10-01", "lastWorn": "2026-10-10", "repair": false},
+     "fx-18": {"cond": 5, "wearsSinceCheck": 0, "lastCheck": "2026-10-01", "lastWorn": "2026-10-10", "repair": false},
+     "fx-21": {"cond": 5, "wearsSinceCheck": 0, "lastCheck": "2026-10-01", "lastWorn": "2026-10-10", "repair": false}
+   },
+   "wears": []
+  }
  }
 }
