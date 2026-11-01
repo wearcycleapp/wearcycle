@@ -218,8 +218,8 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 A single column on phones with 16px gutters and a fixed bottom tab bar; from 700px wide and 600px tall a left rail (with Settings) and a wider workspace; from 1280px a wider labelled rail that carries the wordmark.
 
 - **Spacing:** 4px base: 4, 8, 12, 16, 24, 32, 48, 64, 96. Major sections 32 to 48px apart on phones, 48 to 80px on desktop. Today some gaps use 10px and 14px; screen phases move them onto the scale.
-- **Breakpoints (today, erratum 4, Phase 7):** max-width 380px and 460px (small phones); min-width 700px (sheets centre); the shell and direction B at min-width 700px and min-height 600px, and the wide rail at min-width 1280px and min-height 600px; landscape with max-height 599.98px (the lower bar); min-width 960px (the screens' wide rules until their phases) and landscape with max-height 600px and max-width 959px (the outfit board stays inside the screen).
-- **Wide layout (v1.41, 960px and up):** .app widens from 760px to 1180px; Care and Shop flow in two columns; closet tiles grow from 150px to 180px minimum. Since Phase 7 the rail follows the shell condition and since Phase 8 Outfits follows its directions (A below 700px wide or 600px tall, B from 700x600, every look side by side from 1100px; docs/design/SCREENS.md).
+- **Breakpoints (today, erratum 4, Phase 7):** max-width 380px and 460px (small phones); min-width 700px (sheets centre); the shell and direction B at min-width 700px and min-height 600px, and the wide rail at min-width 1280px and min-height 600px; landscape with max-height 599.98px (the lower bar); min-width 960px (the page widens; no screen rule switches at 960px since Phase 10); min-width 700px with max-height 599.98px (Outfits A turned sideways: the kit beside Wear this, Phase 8); min-width 1200px with min-height 600px (5 Closet columns, Phase 9).
+- **Wide layout (v1.41, 960px and up):** .app widens from 760px to 1180px; nothing else switches at 960px: Shop flows in two columns from 700x600 (v1.55.0), the Closet has 3 columns from 700x600 and 5 from 1200px (Phase 9), Care puts its sections side by side from 700x600 (Phase 10). Since Phase 7 the rail follows the shell condition and since Phase 8 Outfits follows its directions (A below 700px wide or 600px tall, B from 700x600, every look side by side from 1100px; docs/design/SCREENS.md).
 - **Review widths (not breakpoints):** 360 and 390 (Android), 820 and 1180 (iPad portrait and landscape), 1366 and 1920 (Windows).
 
 ### Width bands (rule; the shell as built in Phase 7, docs/design/SCREENS.md Navigation shell)
@@ -240,7 +240,7 @@ Active rail item: Accent text at weight 700 on Accent-soft, coral icon. Tab name
 
 Rule (plan 7.4, confirmed by the owner 2026-10-19): flat by default. In light mode shadows belong only to overlays and floating elements: sheets, the Add clothes button and toasts. Dark mode conveys depth with contrast and borders. No glows.
 
-Today the soft shadow also sits on panels and stat tiles; each screen phase removes it from its own containers (Outfits has no card since Phase 8, Closet tiles are flat since Phase 9).
+Today the soft shadow also sits on panels and stat tiles; each screen phase removes it from its own containers (Outfits has no card since Phase 8, Closet tiles are flat since Phase 9, Care's sections sit on the page and Shop's panels have a 1px Line border instead of the shadow since Phase 10).
 
 ### Shadow Vocabulary
 - **Soft** (`box-shadow: 0 1px 2px rgba(27,36,51,.08), 0 4px 14px rgba(27,36,51,.06)`; dark `0 1px 2px rgba(0,0,0,.4)`): the --shadow token; sheets and toasts.
@@ -336,4 +336,4 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - **Don't** leave large unused desktop space caused by a phone max-width.
 - **Don't** set user-typed garment names in the display face.
 - **Don't** shrink text to solve crowding, or truncate translated labels to hide overflow.
-- **Don't** add a colored side stripe thicker than 1px to a card or callout; the 3px coral borders on .advice and .askcard were removed in Phase 8.
+- **Don't** add a colored side stripe thicker than 1px to a card or callout; the 3px coral borders on .advice and .askcard were removed in Phase 8, the 3px Bad and Warn stripes on Care rows in Phase 10.

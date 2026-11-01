@@ -230,7 +230,7 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 /* lists */
 .panel{background:var(--raised);border-radius:12px;box-shadow:var(--shadow);overflow:hidden}
 .panel-h{padding:12px 14px;display:flex;align-items:baseline;gap:8px;border-bottom:1px solid var(--line)}
-.panel-h .count{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.panel-h .count{font-size:13px;color:var(--muted)}
 .panel-h p{margin:0;color:var(--muted);font-size:13px}
 .li{display:flex;gap:12px;padding:10px 14px;align-items:center;border-bottom:1px solid var(--line)}
 .li:last-child{border-bottom:0}
@@ -241,8 +241,6 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .li .txt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li .txt span{font-size:12.5px;color:var(--muted)}
 .li .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.stripe-retire{box-shadow:inset 3px 0 0 var(--bad)}
-.stripe-down{box-shadow:inset 3px 0 0 var(--warn)}
 
 .need{padding:12px 14px;border-bottom:1px solid var(--line);display:flex;flex-direction:column;gap:6px}
 .need:last-child{border-bottom:0}
@@ -251,7 +249,7 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .meter i.on{background:var(--good)}
 .swatch{width:14px;height:14px;border-radius:3px;border:1px solid var(--line);display:inline-block;vertical-align:-2px;margin-right:4px}
 .opt{font-size:13.5px}
-.opt em{font-style:normal;font-family:var(--f-mono);font-size:12px;color:var(--good)}
+.opt em{font-style:normal;font-size:12.5px;font-weight:600;color:var(--good)}
 .done{color:var(--good);font-weight:600;font-size:13.5px}
 
 /* sheet content: condition steps, colors, photo, Claude notes */
@@ -325,9 +323,6 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .version{margin:28px 0 0;text-align:center;font-size:12px;color:var(--muted)}
 
 /* v1.4 usability */
-.li.care{flex-wrap:wrap}
-.li.care .txt{flex:1 1 180px}
-.li.care .acts{flex:1 1 100%;justify-content:flex-start;padding-left:64px}
 .seg button span{font-size:11.5px;line-height:1.15;text-align:center}
 .setting{display:flex;flex-direction:column;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
 .setting .lab{font-size:14px;font-weight:600}
@@ -400,10 +395,7 @@ details.rules p{margin:8px 0}
 
 
 /* typography: one body font for labels, sentence case, readable sizes */
-.panel-h .count,.version,.opt em{
-  font-family:var(--f-body)!important;text-transform:none!important;letter-spacing:0!important}
-.opt em{font-size:12.5px;font-weight:600}
-.panel-h .count{font-size:13px}
+.version{font-family:var(--f-body)!important;text-transform:none!important;letter-spacing:0!important}
 
 /* v1.13 ease of use: 44px touch targets (Apple HIG minimum); chips, buttons and toasts moved to the shared layer */
 .presets .chip{min-height:40px}
@@ -538,7 +530,10 @@ a.idea.shop .go{align-self:flex-end;margin-top:4px}
 .morebtn::after{content:"›";color:var(--muted);transform:rotate(90deg);transition:transform .15s cubic-bezier(.23,1,.32,1)}
 .morebtn[aria-expanded="true"]::after{transform:rotate(-90deg)}
 @media (prefers-reduced-motion:reduce){ .morebtn::after{transition:none} }
-.decide-it{border:1px solid var(--line);border-radius:10px;background:var(--raised);margin-bottom:12px}
+.crow.decide-it{grid-template-columns:56px minmax(0,1fr);align-items:center;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--raised);margin-bottom:12px}
+.decide-it .cpic{width:56px;height:56px;border-radius:10px}
+.decide-it .cpic .zoomhint.sm{width:18px;height:18px;right:3px;bottom:3px}
+.decide-it .cpic .zoomhint.sm svg{width:11px;height:11px}
 .decide{display:flex;flex-direction:column;gap:10px}
 /* Inspiration from a photo (v1.58.3) */
 .inspobtns{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
@@ -736,13 +731,8 @@ button.lrow{cursor:pointer}
   .shopv>.ssum,.shopv>.panel{grid-column:1/-1}
 }
 
-/* ---------- wide screens: web and tablets in landscape (v1.41) ----------
-   960px and up: Care and Shop flow in two columns, and the closet grid gets larger tiles (the rail, page width,
-   toasts and job bar are in the shared layer; Outfits follows its own directions since Phase 8). */
-@media (min-width:960px){
-  #careBody>div{display:block!important;columns:2 360px;column-gap:16px}
-  #careBody>div>*{break-inside:avoid;margin-bottom:16px}
-}
+/* Wide screens (v1.41): at 960px only the page widens (the shared layer). Every screen switches at 700x600 in its own
+   block: Outfits (Phase 8), Closet (Phase 9), Care (Phase 10), Shop (v1.55.0). */
 .viewer .vnote{margin:0;padding:0 14px calc(10px + env(safe-area-inset-bottom,0px));font-size:13px;color:#c9ccd3}
 
 /* ===== Outfits (Phase 8). Direction A, "Kit" (the base rules here): below 700px wide or below 600px tall. Direction B,
@@ -1095,4 +1085,79 @@ button.idea.shop .go{align-self:flex-end;margin-top:4px}
   .gmedia{position:sticky;top:0;z-index:1}
   .ginfo{font-size:15px;color:var(--ink)}
   .gpic{aspect-ratio:4/5;max-height:calc(88vh - 200px);max-height:calc(88svh - 200px);min-height:150px}
+}
+
+/* ===== Care (LIFECYCLE, Phase 10). Sections Repair, Let go, Check, Rotate, only those with pieces; a calm line when
+   nothing needs attention. Flat: sections sit on the page, rows are divided by hairlines, no cards. The garment leads
+   each row on the cream canvas. A below 700px wide or 600px tall: compact rows, 56px picture, name, reason, small
+   actions (44px targets). B from 700x600: sections side by side (two at most), 160px picture, 18px name, section
+   titles in the display face; a section narrower than 420px puts the picture above the text. ===== */
+#careBody{display:flex;flex-direction:column;gap:16px}
+.ccalm{margin:0;padding:14px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-size:15px}
+.carev{display:flex;flex-direction:column;gap:32px}
+.csec{display:flex;flex-direction:column;gap:12px;min-width:0}
+.csh{margin:0;font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1;letter-spacing:.02em;text-transform:uppercase}
+.csh .n,.cgh .n{font-family:var(--f-body);font-size:13px;font-weight:600;color:var(--muted);letter-spacing:0;text-transform:none;font-variant-numeric:tabular-nums}
+.cgrp{display:flex;flex-direction:column;min-width:0}
+.cgrp+.cgrp{margin-top:20px}
+.cgh{margin:0;font-size:15px;font-weight:700;line-height:1.3}
+.cgd{margin:2px 0 0;font-size:13px;color:var(--muted);line-height:1.4}
+.crows{display:flex;flex-direction:column;margin-top:8px;border-top:1px solid var(--line)}
+.crow{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;padding:12px 0;border-bottom:1px solid var(--line);align-items:start}
+.cpic{position:relative;display:grid;place-items:center;width:56px;height:56px;border-radius:10px;overflow:hidden;background:var(--surface)}
+.cpic.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.cpic img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cpic img.fitted{object-fit:contain}
+.cpic.studio img{object-fit:contain;padding:8%;box-sizing:border-box}
+.cpic img.cut{filter:drop-shadow(0 1px 1px rgba(50,35,20,.18)) drop-shadow(0 4px 6px rgba(50,35,20,.12))}
+.cpic svg.glyph{width:62%;height:68%}
+.ctxt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cnl{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.cname{font-size:15px;font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.cwhy{font-size:13px;color:var(--muted);line-height:1.4}
+.cacts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.cacts .btn{min-height:44px;padding:6px 12px;font-size:13px}
+.crows .morebtn{border-top:0;border-bottom:1px solid var(--line)}
+.cacts a.btn{text-decoration:none;color:inherit;display:inline-flex;align-items:center}
+/* one action: beside the text on phones, so the row stays one picture tall */
+.crow.one .ctxt{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center}
+.crow.one .cnl,.crow.one .cwhy{grid-column:1}
+.crow.one .cacts{grid-column:2;grid-row:1/span 2;margin:0}
+.cgrp>.li.dropoff{padding:14px 0 4px;border:0}
+.cgrp>.li.dropoff .btn{min-height:44px}
+@media (min-width:700px) and (min-height:600px){
+  .carev{display:grid;grid-template-columns:repeat(auto-fit,minmax(max(320px,calc((100% - 40px)/2)),1fr));gap:48px 40px;align-items:start}
+  .csec{container-type:inline-size}
+  .csh{font-size:32px}
+  .cgh{font-size:16px}
+  .crow{grid-template-columns:160px minmax(0,1fr);gap:20px;padding:16px 0}
+  .cpic{width:160px;height:160px;border-radius:12px}
+  .cpic .zoomhint.sm{width:28px;height:28px;right:8px;bottom:8px}
+  .cpic .zoomhint.sm svg{width:16px;height:16px}
+  .cname{font-size:18px;line-height:1.25}
+  .cwhy{font-size:14px}
+  .ctxt{padding-top:4px}
+  .crow.one .ctxt{display:flex;align-items:stretch}
+  .crow.one .cacts{margin-top:8px}
+}
+@container (max-width:419px){
+  .crow{grid-template-columns:minmax(0,1fr);gap:12px}
+  .ctxt{padding-top:0}
+}
+@container (min-width:900px){
+  .crows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:40px}
+  .crows>[id^="more-"]:not([hidden]){display:contents}
+  .crows .morebtn{grid-column:1/-1}
+}
+
+/* Shop, finished in Phase 10: flat panels (DESIGN.md Flat-By-Default), a hairline instead of the shadow; small
+   buttons keep 44px targets (harden: 8 were 40px); the holiday swatch stack ends inside its box (it ran 4px past it) */
+.shopv .panel{box-shadow:none;border:1px solid var(--line)}
+.shopv .btn.sm{min-height:44px}
+.li.hol .sws .sw:last-child{margin-right:0}
+.shopv .panel{container-type:inline-size}
+@container (max-width:340px){ /* a narrow column (700x600): the status goes under the title instead of breaking word by word */
+  .srow{flex-wrap:wrap;row-gap:2px}
+  .srow>b{flex:1 1 auto;max-width:none}
+  .srow .st{order:9;flex:1 1 100%}
 }

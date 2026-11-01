@@ -1490,5 +1490,7 @@ I18N.load("tl",{
 "Undone.": "Na-undo.",
 "No matching pieces.": "Walang tugmang piraso.",
 "✓ Bought:": "✓ Nabili:",
-"Not bought yet": "Hindi pa nabibili"
+"Not bought yet": "Hindi pa nabibili",
+"Let go": "Bitawan",
+"Nothing needs attention right now.": "Wala pang kailangang asikasuhin ngayon."
 });

@@ -20,13 +20,13 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 7 Navigation shell | Released 2026-10-25, v1.52.0 | 23ddab6 |
 | 8 Outfits | Released 2026-10-26, v1.53.0 (follow-ups v1.53.1 to v1.53.4, v1.61.1) | 6a7869b |
 | 9 Closet and garment detail | Released 2026-10-31, v1.62.0 | 2fdc070 (v1.62.0) |
-| 10 Care | Open since 2026-11-01 (critique and proposal sent; with it, finishing Shop). Partly built before: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet. Not built yet: the A and B rows (56px and 160px pictures), the Repair / Check / Rotate / Let go sections, the wide composition, and its known issue (`.panel-h .count`) | 6a7e2a5 (v1.58.0) |
+| 10 Care | Released 2026-11-01, v1.63.0 (with it, Shop finished). Partly built before: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet | 6a7e2a5 (v1.58.0) |
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
 | 12 to 15 | Not started | |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
 
-Screen freeze while Phase 10 is open (owner, 2026-11-01): no feature work on Care until Phase 10 is released. Bug fixes and outfit-rule changes in logic.js continue (CLAUDE.md).
+Screen freeze while Phase 10 was open (owner, 2026-11-01): no feature work on Care until Phase 10 was released. Lifted with the release of v1.63.0 (2026-11-01).
 
 Between Phases 9 and 10, released on its own (owner, 2026-11-01): v1.62.1 stores a 1024px copy with each photo (items.body.med); see Closet, Pictures.
 
@@ -85,7 +85,7 @@ The shell follows the direction condition (Chosen direction), so a screen never 
 | Also at least 1280px wide | 208px rail; the header (logo, wordmark, status) sits at the top of the rail and leaves the page; labels beside icons; the Care count at the end of its row; Settings at the bottom |
 
 - Why phones turned sideways keep a bar: the owner's condition gives them direction A, and both platforms do the same (Android shows a navigation bar when the window's width or height is compact, and compact height, under 480dp, covers 99.78% of phones in landscape: developer.android.com, adaptive navigation and window size classes; Apple's tab bar shows icon and title side by side in landscape: HIG, Tab bars).
-- Where the condition does not apply: the wide rail also needs 1280px; sheets keep centring from 700px wide (Phase 12); the screen rules that switch at 960px (Care and Shop in two columns, larger Closet tiles) stay on width until their phases move them to the B condition; Outfits follows the B condition since Phase 8.
+- Where the condition does not apply: the wide rail also needs 1280px; sheets keep centring from 700px wide (Phase 12); no screen rule switches at 960px any more: Outfits (Phase 8), Closet (Phase 9), Care (Phase 10) and Shop (v1.55.0) follow the B condition; at 960px only the page widens to 1180px.
 - Header: scrolls with the page (not sticky, as since v1.38), 59px tall with or without the Settings button. The holiday badge is placed by CSS (`header.top .holibadge`) in every layout.
 - Current tab: Accent text at weight 700 on Accent-soft, coral icon, aria-current="page". The Care count is 12px Accent-ink on Bad (6.47:1 light, 5.23:1 dark).
 - Order in the page: header, navigation (tabs, then the rail's Settings), Add clothes, then the screen. A focused control scrolls above the bar or Add clothes (`scroll-padding-bottom`).
@@ -203,23 +203,29 @@ Built in Phase 9 (v1.62.0, approved 2026-10-31, as above).
 
 ## Care (LIFECYCLE)
 
-Sections map to groups in renderCare and careFlags. Added on 2026-10-27 (owner, v1.54.0): "Give them a rest" (shoeLoad in logic.js: shoes worn on 16 or more of the last 30 days) and four more actions on "Moved down a level".
+Built in Phase 10 (v1.63.0). Proposal "Wearcycle Care redesign" approved by the owner on 2026-11-01 with the four recommended options: build A and B as shown; sections in the order Repair, Let go, Check, Rotate; Shop's panels get a 1px hairline instead of the shadow; a piece under repair is listed only in Repair. Critique: .impeccable/critique/2026-11-01T14-14-59Z__app-js.md (26/40).
 
-| Section | Existing groups | Actions kept |
+| Section | Groups (titles kept) | Actions kept |
 | --- | --- | --- |
-| Repair | To repair | Fixed, Find a tailor / cobbler / watch repair, Open |
-| Check | Condition check due; Moved down a level | Check, Recheck; on Moved down also Repair, Home and chores, Mark donated, Mark recycled |
-| Rotate | Not getting picked; Give them a rest | See outfits with this, Open |
-| Let go | Donate or recycle; Donated or recycled (history); drop-off guidance | Mark donated, Mark recycled, Donation drop-offs, Textile recycling, Open |
+| Repair | To repair | Fixed, Find a tailor / Find a cobbler / Find watch repair |
+| Let go | Donate or recycle, with the drop-off guide; Donated or recycled (history) | Mark donated, Mark recycled, Open, Donation drop-offs, Textile recycling, Restore |
+| Check | Condition check due; Moved down a level | Check; Recheck and Decide (Repair, Home and chores, Mark donated, Mark recycled) |
+| Rotate | Give them a rest; Not getting picked | Open; See outfits, Open |
 
-- v1.58.0 (owner 2026-10-27, "it is a bit long"): panels in order To repair, Donate or recycle, Condition check due, Moved down a level, Give them a rest, Not getting picked, Donated or recycled. Each list shows its first 3 pieces, then "Show all N" (aria-expanded, open for the session; S.careOpen). Moved down a level: Recheck and Decide; Decide opens a sheet with Repair, Home and chores, Mark donated, Mark recycled, each with one line of explanation (focus on the first). Not getting picked leaves out pieces only in the wash. Shop: the latest Claude ideas fold into "N latest ideas · Suggested <date>", opened after a fresh answer; saved ideas stay open.
-- Show only sections that have items; when nothing needs attention, say so in one calm line.
-- Garments lead each row; text explains why. A: a compact row, 56px picture, name, reason and small action buttons. B: a 160px picture, an 18px name and the section title in the display face.
+- Order: what to do first, the v1.58.0 order grouped (owner 2026-11-01); the history sits at the end of Let go. A section shows only when it has pieces; when none has, one calm line: "Nothing needs attention right now." Every group keeps its title, its explanation, the first 3 pieces then "Show all N" (S.careOpen, v1.58.0) and every action. Not getting picked leaves out pieces in the wash (v1.58.0) and pieces under repair (Phase 10).
+- A (below 700px wide or 600px tall): compact rows, a 56px picture, the name (wraps, never cut; a person's own piece names are marked data-notr so they are never translated, example pieces still are), the reason, then the actions as 44px buttons with 13px type; a row with one action (Check, Open, Restore) puts it beside the text. Section titles in the display face, 24px, uppercase by CSS; group titles 15px in the body face.
+- B (at least 700x600): sections side by side, two at most (grid, auto-fit); the garment leads with a 160px picture and an 18px name; section titles 32px in the display face. A section narrower than 420px (iPad portrait) puts the picture above the text; a section alone on its row lays its pieces out in two columns (container queries).
+- Flat: sections sit on the page, rows are divided by hairlines; no cards, no shadows, no colored stripes (the state is in the reason text).
+- Pictures: the cut-out on the cream canvas wherever there is one; otherwise the thumbnail, or the stored 1024px copy where the picture needs more (the Phase 9 rule; Care pictures load near the screen). The picture opens the zoom viewer by mouse, touch or keyboard (role button, tabindex 0, Enter or Space); Escape closes the viewer and focus returns to the picture (Phase 10, for every opener).
+- The Decide sheet keeps its four explained choices; its piece row uses the same picture (56px at every width).
+- Measured with the busy Care set (tools/fixtures/worst-case.json "care", Chromium): page height at 390x844 4.5 to 3.8 screens, French 360 5.2 to 4.6, Japanese 5.0 to 4.4, 844x390 8.8 to 7.7; on wide screens longer because of the 160px pictures (820 2.9 to 3.8, 1180 2.5 to 3.8, 1366 2.6 to 4.0, 1920 1.9 to 2.9); buttons under 44px 34 of 36 to 0; zoom pictures reachable by keyboard 0 of 11 to all.
 - "In the wash" stays in Closet.
-- Wide: sections composed side by side instead of wide stacked panels.
+- Code: renderCare, carePic, cRow, cGroup, cSec, notPickedList, openDecide (app.js); the Care block in styles.css.
 
-### Known issues to fix in this phase
-- Overridden declarations (2): `.panel-h .count` font-family and font-size (styles.css:206). Panels are also used in Shop (coming season, holidays), the Closet "In the wash" panel and Closet stats; the first phase that rewrites `.panel` removes them.
+### Known issues fixed in this phase (v1.63.0)
+- Overridden declarations (2): `.panel-h .count` is set once (13px, Muted, the body face it inherits); same computed style.
+- The 3px Bad and Warn stripes on rows (`.stripe-retire`, `.stripe-down`), `.li.care` and the 960px two-column rule for Care are gone with the old layout.
+- The pictures that open the zoom viewer were a div with role button and no tabindex (not keyboard reachable), and the viewer did not close with Escape.
 
 
 ## Shop (STYLIST INTELLIGENCE)
@@ -246,10 +252,15 @@ Built in v1.55.0 (Phase 11 brought forward; proposal "Wearcycle Shop redesign" a
 - Rows that open are buttons with aria-expanded (44px or taller); the open state is kept for the session (S.shopOpen). One column below 700x600; from 700x600 two columns: left the summary and Buy next and By occasion, right Coming up, Build toward a style and Ideas from Claude. The 960px columns rule no longer applies to Shop.
 - Measured with the fixture closet: phone 4,710px (5.6 screens) to about 2.3 screens folded; French at 360px 6.3 to 2.6; 820 4.0 to 1.1; 1366x768 3.3 to 1.6.
 
-Definition of done, checked 2026-10-31 on preview 4210ff9 (v1.61.1): tools/check.mjs --css-pixels --baseline (22 pass, 0 fail, 0 to review) and its --worst-case run show, on all 16 Shop views and the worst-case Shop views, no horizontal overflow, no app text cut off or spilling, no English left in French or Japanese, no serious or critical axe-core node; detector warnings 0 (baseline 15); at 360x800 the summary line and the three Buy next cards sit at 186 to 670px, above the bar at 734px (measured with the same stubs, without the one-time "Wearcycle was updated" notice; with the notice the third card starts in the first screen and ends below the bar); light and dark screenshots reviewed; the live check passed on that commit (run 41252957943). Not recorded for v1.55.0: the number of refinement rounds. Still open for Shop (rules outside the definition of done): the known issue below; Shop's panels keep the soft shadow in light mode (DESIGN.md, Flat-By-Default Rule); harden and break-ui runs were not recorded in the v1.55.0 log.
+Definition of done, checked 2026-10-31 on preview 4210ff9 (v1.61.1): tools/check.mjs --css-pixels --baseline (22 pass, 0 fail, 0 to review) and its --worst-case run show, on all 16 Shop views and the worst-case Shop views, no horizontal overflow, no app text cut off or spilling, no English left in French or Japanese, no serious or critical axe-core node; detector warnings 0 (baseline 15); at 360x800 the summary line and the three Buy next cards sit at 186 to 670px, above the bar at 734px (measured with the same stubs, without the one-time "Wearcycle was updated" notice; with the notice the third card starts in the first screen and ends below the bar); light and dark screenshots reviewed; the live check passed on that commit (run 41252957943). Not recorded for v1.55.0: the number of refinement rounds.
 
-### Known issues to fix in this phase
-- Overridden declarations (2): `.opt em` font-family and font-size (styles.css:268, overridden at 419 and 424 at v1.61.1). Still present on 2026-10-31.
+Finished in Phase 10 (v1.63.0, owner 2026-11-01):
+- Flat: Shop's panels lose the soft shadow and get a 1px hairline (--line), as the owner chose; DESIGN.md's Flat-By-Default Rule now holds on Shop.
+- Harden (Chromium, 8 sizes from 360x800 to 1920x1080, en, es, fr, tl, hi, ja and ko at 360x800 and 1366x630, en, fr and ja at the other sizes, with every row opened): fixed 8 small buttons that were 40px tall (now 44px); the holiday color dots spilled 4px out of their row (the last dot's negative margin, now 0); in a narrow column (700x600, panel under 340px wide) a row's status was squeezed to 41px and broke word by word, so there the status goes on its own line under the title (container query). After the fixes: no horizontal overflow, no text spilling, no English left on Care, no button under 44px, no shadow, at every size and language.
+- break-ui with tools/fixtures/worst-case.json (long names, empty closet, 200 pieces, the busy and calm Care sets): no horizontal overflow and no Shop text cut off or spilling; the only text cut in the run is the French Settings line "Recadrer les photos sur les vêtements" at 360px, which was there before this phase.
+
+### Known issues fixed in this phase (v1.63.0)
+- Overridden declarations (2): `.opt em` is set in one rule (12.5px, weight 600, Good, upright); same computed style.
 
 
 ## Settings and other sheets (QUIET UTILITY)

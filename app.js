@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.62.1';
+const APP_VERSION='1.63.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -497,7 +497,7 @@ const ZOOM_ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" str
 const VW={open:false,s:1,x:0,y:0,pts:new Map(),pinch:null,lastTap:0,mode:'photo',it:null};
 async function openViewer(id){
   const it=byId(id)||(ED&&ED.it); if(!it||!(it.photo||it.cut||thumbSrc(it)||(ED&&ED.preview))) return;
-  VW.open=true; VW.it=it; VW.mode=it.photo||!it.cut||(ED&&ED.preview&&!id)?'photo':'cut'; guard();
+  VW.open=true; VW.it=it; VW.opener=document.activeElement; VW.mode=it.photo||!it.cut||(ED&&ED.preview&&!id)?'photo':'cut'; guard();
   $('#viewRoot').innerHTML=`<div class="viewer" role="dialog" aria-label="${esc(it.name||'')}"><div class="vtop"><b data-notr>${esc(it.name||'')}</b>${it.cut&&(it.photo||it.thumb)?`<div class="seg2 vseg"><button data-vmode="photo" aria-pressed="${VW.mode==='photo'}">Photo</button><button data-vmode="cut" aria-pressed="${VW.mode==='cut'}">Cut-out</button></div>`:''}<button class="iconbtn" data-vclose aria-label="Close">✕</button></div>
     <div class="vstage" id="vStage"><img id="vImg" alt="${esc(it.name||'')}" draggable="false"><span class="hint" id="vLoad">Loading…</span></div>
     <div class="vbar"><button class="iconbtn" data-vzoom="-1" aria-label="Zoom out">−</button><input type="range" id="vRange" min="100" max="600" step="10" value="100" aria-label="Zoom"><button class="iconbtn" data-vzoom="1" aria-label="Zoom in">+</button><button class="btn sm ghost" data-vzoom="0">Fit</button></div><p class="vnote" id="vNote" hidden>This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).</p></div>`;
@@ -545,7 +545,8 @@ function bindViewer(){
   st.addEventListener('wheel',e=>{ e.preventDefault(); const [px,py]=rel(e); zoomAt(VW.s*(e.deltaY<0?1.15:1/1.15),px,py); },{passive:false});
   const r=$('#vRange'); if(r) r.oninput=()=>zoomAt(r.value/100,0,0);
 }
-function closeViewer(){ VW.open=false; VW.pts.clear(); VW.pinch=null; $('#viewRoot').innerHTML=''; if(!$('#sheetRoot').innerHTML) document.body.style.overflow=''; }
+function closeViewer(){ VW.open=false; VW.pts.clear(); VW.pinch=null; $('#viewRoot').innerHTML=''; if(!$('#sheetRoot').innerHTML) document.body.style.overflow='';
+  const o=VW.opener; VW.opener=null; if(o&&o.isConnected&&o.focus) o.focus({preventScroll:true}); } // back to the picture that opened it (Phase 10: keyboard)
 function openCamera(mode){
   guard();
   return new Promise(resolve=>{
@@ -810,13 +811,6 @@ function notPickedReason(it,occs){
   if(!f) return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+', but nothing to pair it with there yet.';
   const neg=(f.reasons||[]).filter(x=>x.neg).map(x=>x.t)[0];
   return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+'; other pieces score higher'+(neg?'. Best outfit with it: '+neg.charAt(0).toLowerCase()+neg.slice(1):'')+'.';
-}
-function notPickedPanel(items){
-  const act=items.filter(isActive); const key=fitKeyNow()+'|'+allLog().length; if(NP.key!==key){ NP={key,list:notPicked(allItems(),ctxFor,{n:8})}; }
-  const extra=act.filter(i=>(i.cond??4)>1&&!i.dirty&&!effectiveOccasions(i).length&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&!NP.list.some(x=>x.item.id===i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
-  const list=NP.list.filter(x=>(x.item.cond??4)>1&&!x.item.dirty).concat(extra).slice(0,12); if(!list.length) return ''; // in the wash: back on its own once clean (v1.58.0)
-  return `<div class="panel"><div class="panel-h"><h3>Not getting picked</h3><span class="count">${list.length}</span></div><div class="panel-h"><p>Pieces that are in none of the top suggestions for any occasion right now, and why.</p></div>
-    ${moreRows('notpicked',list.map(({item:it,occs})=>`<div class="li care">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${esc(notPickedReason(it,occs))}</span></div><div class="acts">${occs.length&&!it.dirty?`<button class="btn sm" data-pinsee="${esc(it.id)}">See outfits</button>`:''}<button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button></div></div>`))}</div>`;
 }
 function pinCard(){ const it=S.pin&&byId(S.pin); if(!it) return '';
   return `<div class="pincard"><span class="pv">${visual(it)}</span><div class="txt"><b>Outfits with <span data-notr>${esc(it.name)}</span></b><span>${esc(pinWhy(it))}</span></div><button class="iconbtn" data-unpin aria-label="Show all outfits">✕</button></div>`; }
@@ -1335,7 +1329,7 @@ const LAZY=typeof IntersectionObserver==='function'?new IntersectionObserver(es=
 function lazyPics(root){ root.querySelectorAll('img[data-pick]').forEach(img=>{ if(LAZY) LAZY.observe(img); else upPic(img); }); }
 function upPic(img){ const it=byId(img.dataset.pick); if(!it||!img.isConnected) return;
   if(it.cut&&!CUT.missing.has(it.id)){ img.dataset.cut=it.id; cutUrl(it).then(u=>{ if(!img.isConnected) return;
-      if(u){ img.src=u; img.classList.add('cut'); CUT.missing.delete(it.id); img.closest('.pic,.gpic')?.classList.add('studio'); }
+      if(u){ img.src=u; img.classList.add('cut'); CUT.missing.delete(it.id); img.closest('.pic,.gpic,.cpic')?.classList.add('studio'); }
       else { if(S.online) CUT.missing.add(it.id); img.removeAttribute('data-cut'); sharpen(img,it); } }); return; }
   sharpen(img,it); }
 function picScale(img){ const r=img.getBoundingClientRect(); if(!r.width||!img.naturalWidth) return 0;
@@ -1359,15 +1353,11 @@ function moreRows(id,rows,k=3){ if(rows.length<=k) return rows.join(''); id=Stri
 // Decide (v1.58.0): the four choices for a piece moved down a level, each explained, in one sheet.
 function openDecide(id){ const it=byId(id); if(!it) return; const f=careFlags(it,Date.now(),S.settings).find(x=>x.kind==='downgraded');
   const opt=(attr,label,why,cls)=>`<div class="decopt"><button type="button" class="btn ${cls||''}" ${attr}="${esc(it.id)}">${label}</button><span>${why}</span></div>`;
-  openSheet(sheetHead('Decide')+`<div class="li care decide-it">${thumbBox(it)}<div class="txt"><b data-notr>${esc(it.name)}</b>${f?`<span>${esc(f.text)}</span>`:''}</div></div>
+  openSheet(sheetHead('Decide')+`<div class="crow decide-it">${carePic(it)}<div class="ctxt"><span class="cnl"><b class="cname"${isEx(it)?'':' data-notr'}>${esc(it.name)}</b></span>${f?`<span class="cwhy">${esc(f.text)}</span>`:''}</div></div>
    <div class="decide">${opt('data-repairmark','Repair','Until fixed, it is suggested only for sport, home and chores.')}
    ${opt('data-homechores','Home and chores','Removes work and going out from this piece.')}
    ${opt('data-donate','Mark donated','It leaves your closet and goes to your donation history.')}
-   ${opt('data-recycle','Mark recycled','For pieces too worn to donate.')}</div>`); $('#sheetRoot .decide button')?.focus(); }
-function careRow(it,f,acts){
-  const cls=f.kind==='retire'?'stripe-retire':(f.kind==='downgraded'?'stripe-down':'');
-  return `<div class="li care ${cls}">${thumbBox(it)}<div class="txt"><b>${esc(it.name)} ${isEx(it)?'<span class="ex">Example</span>':''}</b><span>${esc(f.text)}</span></div><div class="acts">${acts}</div></div>`;
-}
+   ${opt('data-recycle','Mark recycled','For pieces too worn to donate.')}</div>`); lazyPics($('#sheetRoot')); $('#sheetRoot .decide button')?.focus(); }
 // Drop-off finder. Opens a Google Maps search (Maps URLs need no API key and open the Maps app on Android).
 // Near the weather place when one is set, otherwise "near me" so Maps uses the phone's own location.
 // Google search on the Shopping tab (udm=28), in the app's language; opens only when tapped.
@@ -1386,35 +1376,56 @@ function dropOffRow(worn){
 }
 // Repair finder: same Maps search as donations, with the kind of shop that fixes this category.
 function repairShop(it){ return ['shoes','belt','bag'].includes(it.cat)?{q:'shoe repair',l:'Find a cobbler'}:it.cat==='watch'?{q:'watch repair',l:'Find watch repair'}:{q:'tailor alterations',l:'Find a tailor'}; }
-function repairPanel(items){
-  const rs=items.filter(i=>isActive(i)&&i.repair); if(!rs.length) return '';
-  return `<div class="panel"><div class="panel-h"><h3>To repair</h3><span class="count">${rs.length}</span></div><div class="panel-h"><p>Until fixed, these are suggested only for sport, home and chores, unless you said they are fine anywhere.</p></div>
-   ${rs.map(it=>{ const sh=repairShop(it); return `<div class="li care">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${esc(it.repairNote||'Needs repair')}${it.repairOn?' · since '+esc(it.repairOn):''}</span></div><div class="acts"><button class="btn sm" data-fixed="${esc(it.id)}">Fixed</button><a class="btn sm ghost" target="_blank" rel="noopener" href="${esc(mapsSearch(sh.q))}">${sh.l}</a></div></div>`; }).join('')}</div>`;
-}
+/* ===== Care (LIFECYCLE, Phase 10). Four sections in the order of what to do first: Repair, Let go, Check, Rotate,
+   each shown only when it has pieces, and one calm line when nothing needs attention. The groups inside keep their
+   titles and explanations (v1.58.0: the first 3 pieces, then Show all) and every action. The garment leads each row:
+   its cut-out on the cream canvas wherever it has one. A (phones): compact rows with a 56px picture. B (700x600):
+   sections side by side, a 160px picture and an 18px name; section titles in the display face. ===== */
+function carePic(it){ const src=thumbSrc(it), ready=it.cut&&!CUT.missing.has(it.id)?CUT.urls.get(it.cut):'', zoom=!!(src||it.photo||it.cut);
+  const img=ready?`<img data-cut="${esc(it.id)}" src="${esc(ready)}" alt="" class="cut">`:src?`<img data-pick="${esc(it.id)}"${it.box&&!it.cut?' data-boxed="1"':''} src="${esc(src)}" alt="" class="${it.box&&!it.cut?'fitted':'cover'}"${!it.cut&&enhanceOn()&&it.thumb?` data-enh="${esc(it.id)}"`:''}>`:glyph(it);
+  return `<span class="cpic${it.cut||!src?' studio':''}${zoom?' zoomable':''}"${zoom?` data-view="${esc(it.id)}" role="button" tabindex="0" aria-label="See full size"`:''}>${img}${zoom?`<span class="zoomhint sm" aria-hidden="true">${ZOOM_ICON}</span>`:''}</span>`; }
+function cRow(it,why,acts){ const one=(acts.match(/<(button|a) /g)||[]).length===1; return `<div class="crow${one?' one':''}">${carePic(it)}<div class="ctxt"><span class="cnl"><b class="cname"${isEx(it)?'':' data-notr'}>${esc(it.name)}</b>${isEx(it)?'<span class="ex">Example</span>':''}</span><span class="cwhy">${esc(why)}</span><div class="cacts">${acts}</div></div></div>`; }
+// A group inside a section: its title and count (left out when the section has only this group and says the same),
+// one line of explanation, the first 3 rows then Show all, and anything that follows the list (the drop-off guide).
+function cGroup(id,title,desc,rows,n,tail){ return `<div class="cgrp">${title?`<h4 class="cgh">${title} <span class="n">${n??rows.length}</span></h4>`:''}${desc?`<p class="cgd">${desc}</p>`:''}<div class="crows">${moreRows(id,rows)}</div>${tail||''}</div>`; }
+function cSec(id,title,n,groups){ return groups.length?`<section class="csec csec-${id}" aria-labelledby="cs-${id}"><h3 class="csh" id="cs-${id}">${title}${n!=null?` <span class="n">${n}</span>`:''}</h3>${groups.join('')}</section>`:''; }
+function notPickedList(items){
+  const act=items.filter(isActive); const key=fitKeyNow()+'|'+allLog().length; if(NP.key!==key){ NP={key,list:notPicked(allItems(),ctxFor,{n:8})}; }
+  const extra=act.filter(i=>(i.cond??4)>1&&!i.dirty&&!effectiveOccasions(i).length&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&!NP.list.some(x=>x.item.id===i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
+  // in the wash: back on its own once clean (v1.58.0); under repair: it is in Repair already (Phase 10)
+  return NP.list.filter(x=>(x.item.cond??4)>1&&!x.item.dirty&&!x.item.repair).concat(extra.filter(x=>!x.item.repair)).slice(0,12); }
 function renderCare(){
   const now=Date.now(), items=allItems(); const box=$('#careBody');
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():''; return; }
   const groups={retire:[],unused:[],downgraded:[],check:[]};
   for(const it of items) for(const f of careFlags(it,now,S.settings)) groups[f.kind].push([it,f]);
-  const panel=(title,desc,rows,n,id,tail)=>`<div class="panel"><div class="panel-h"><h3>${title}</h3><span class="count">${n??rows.length}</span></div>${desc?`<div class="panel-h"><p>${desc}</p></div>`:''}${moreRows(id||title,rows)}${tail||''}</div>`;
-  // Order (v1.58.0): what needs doing first; Not getting picked (information) and the history last.
-  const out=[]; const rp=repairPanel(items); if(rp) out.push(rp);
+  const b=(attr,id,label,cls)=>`<button type="button" class="btn sm${cls?' '+cls:''}" ${attr}="${esc(id)}">${label}</button>`;
+  const open=it=>b('data-edit',it.id,'Open','ghost');
+  // Repair
+  const rs=items.filter(i=>isActive(i)&&i.repair);
+  const repair=cSec('repair','Repair',rs.length,rs.length?[cGroup('repair','','Until fixed, these are suggested only for sport, home and chores, unless you said they are fine anywhere.',rs.map(it=>{ const sh=repairShop(it);
+    return cRow(it,(it.repairNote||'Needs repair')+(it.repairOn?' · since '+it.repairOn:''),b('data-fixed',it.id,'Fixed')+`<a class="btn sm ghost" target="_blank" rel="noopener" href="${esc(mapsSearch(sh.q))}">${sh.l}</a>`); }),rs.length)]:[]);
+  // Let go: to donate or recycle (with the drop-off guide), then the history
   const donate=groups.retire.concat(groups.unused.filter(([it])=>!groups.retire.some(([r])=>r.id===it.id)));
-  out.push(donate.length?panel('Donate or recycle','Retired items and anything not worn for '+Math.round(S.settings.unusedDays/MONTH)+'+ months.',donate.map(([it,f])=>careRow(it,f,(it.cond??4)<=1
-      ?`<button class="btn sm" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`
-      :`<button class="btn sm" data-donate="${esc(it.id)}">Mark donated</button><button class="btn sm ghost" data-recycle="${esc(it.id)}">Mark recycled</button><button class="btn sm ghost" data-edit="${esc(it.id)}">Open</button>`)),donate.length,'donate',dropOffRow(groups.retire.length>0))
-    :'<div class="panel"><div class="panel-h"><h3>Donate or recycle</h3><span class="count">0</span></div><div class="li"><span class="done">Nothing to donate right now.</span></div></div>');
-  if(groups.check.length) out.push(panel('Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>careRow(it,f,`<button class="btn sm primary" data-check="${esc(it.id)}">Check</button>`))));
-  // Below the work and going-out bar: decide (repair, keep for home and chores, donate, recycle) instead of letting it sit.
-  const down=groups.downgraded.filter(([it])=>!it.repair);
-  if(down.length) out.push(panel('Moved down a level','Still useful, but no longer counted for work or going out.',down.map(([it,f])=>careRow(it,f,
-    `<button class="btn sm" data-check="${esc(it.id)}">Recheck</button>${isEx(it)?'':`<button class="btn sm ghost" data-decide="${esc(it.id)}">Decide</button>`}`))));
-  const tired=WardrobeLogic.shoeLoad(items,allLog(),now);
-  if(tired.length) out.push(panel('Give them a rest','Shoes need a day to air out between wears.',tired.map(x=>careRow(x.item,{kind:'rest',text:'Worn on '+x.days+' of the last 30 days.'},`<button class="btn sm ghost" data-edit="${esc(x.item.id)}">Open</button>`))));
-  const np=notPickedPanel(items); if(np) out.push(np);
   const donated=items.filter(it=>it.status==='donated'||it.status==='recycled').sort((a,b)=>String(b.donatedOn||b.recycledOn||'').localeCompare(String(a.donatedOn||a.recycledOn||'')));
-  if(donated.length) out.push(`<div class="panel"><div class="panel-h"><h3>Donated or recycled</h3><span class="count">${donated.length}</span></div>${moreRows('history',donated.slice(0,20).map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${it.status==='recycled'?'Recycled '+esc(it.recycledOn||''):'Donated '+esc(it.donatedOn||'')}</span></div><div class="acts"><button class="btn sm ghost" data-restore="${esc(it.id)}">Restore</button></div></div>`))}</div>`);
-  box.innerHTML='<div style="display:flex;flex-direction:column;gap:16px">'+out.join('')+'</div>';
+  const letgo=cSec('letgo','Let go',null,[
+    donate.length?cGroup('donate','Donate or recycle','Retired items and anything not worn for '+Math.round(S.settings.unusedDays/MONTH)+'+ months.',donate.map(([it,f])=>cRow(it,f.text,(it.cond??4)<=1
+      ?b('data-recycle',it.id,'Mark recycled')+b('data-donate',it.id,'Mark donated','ghost')+open(it)
+      :b('data-donate',it.id,'Mark donated')+b('data-recycle',it.id,'Mark recycled','ghost')+open(it))),donate.length,dropOffRow(groups.retire.length>0)):'',
+    donated.length?cGroup('history','Donated or recycled','',donated.slice(0,20).map(it=>cRow(it,it.status==='recycled'?'Recycled '+(it.recycledOn||''):'Donated '+(it.donatedOn||''),b('data-restore',it.id,'Restore','ghost'))),donated.length):''].filter(Boolean));
+  // Check: condition check due; moved down a level (Recheck, Decide)
+  const down=groups.downgraded.filter(([it])=>!it.repair);
+  const check=cSec('check','Check',null,[
+    groups.check.length?cGroup('check','Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>cRow(it,f.text,b('data-check',it.id,'Check','primary')))):'',
+    down.length?cGroup('moved-down-a-level','Moved down a level','Still useful, but no longer counted for work or going out.',down.map(([it,f])=>cRow(it,f.text,b('data-check',it.id,'Recheck')+(isEx(it)?'':b('data-decide',it.id,'Decide','ghost'))))):''].filter(Boolean));
+  // Rotate: shoes that need a rest; pieces not getting picked
+  const tired=WardrobeLogic.shoeLoad(items,allLog(),now), np=notPickedList(items);
+  const rotate=cSec('rotate','Rotate',null,[
+    tired.length?cGroup('give-them-a-rest','Give them a rest','Shoes need a day to air out between wears.',tired.map(x=>cRow(x.item,'Worn on '+x.days+' of the last 30 days.',open(x.item)))):'',
+    np.length?cGroup('notpicked','Not getting picked','Pieces that are in none of the top suggestions for any occasion right now, and why.',np.map(({item:it,occs})=>cRow(it,notPickedReason(it,occs),(occs.length&&!it.dirty?b('data-pinsee',it.id,'See outfits'):'')+open(it)))):''].filter(Boolean));
+  const calm=rs.length||donate.length||groups.check.length||down.length||tired.length||np.length?'':'<p class="ccalm">Nothing needs attention right now.</p>';
+  box.innerHTML=calm+'<div class="carev">'+repair+letgo+check+rotate+'</div>';
+  lazyPics(box);
 }
 let ideasState={busy:false,list:null,err:''};
 // Ideas from Claude are kept (v1.57.3, owner 2026-10-27): the last answer in settings.ideas {at, dept, list}, and the
@@ -2861,7 +2872,9 @@ document.addEventListener('keydown',e=>{ if((e.key==='ArrowLeft'||e.key==='Arrow
     if(pagerGo(S.sel+(e.key==='ArrowLeft'?-1:1),true)){ if(!dot) document.querySelector('.look.cur [data-swap]')?.focus({preventScroll:true}); else document.querySelector('.dot[aria-current="true"]')?.focus({preventScroll:true}); return; }
     S.sel=(S.sel+(e.key==='ArrowLeft'?S.fits.length-1:1))%S.fits.length; if(S.sel) guard(); renderOutfits();
     document.querySelector(dot?'.dot[aria-current="true"]':'.look.cur [data-swap]')?.focus({preventScroll:true}); } } });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } });
+document.addEventListener('keydown',e=>{ const v=e.target&&e.target.closest&&e.target.closest('[data-view][role="button"][tabindex]');
+  if(v&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openViewer(v.dataset.view); } });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(VW.open) history.back(); else if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } }); // the zoom viewer closes as its ✕ does
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); S.installEvt=e; if(UID) renderStatus(); });

@@ -1490,5 +1490,7 @@ I18N.load("hi",{
 "Undone.": "पूर्ववत किया।",
 "No matching pieces.": "कोई मेल खाता कपड़ा नहीं।",
 "✓ Bought:": "✓ खरीदा:",
-"Not bought yet": "अभी नहीं खरीदा"
+"Not bought yet": "अभी नहीं खरीदा",
+"Let go": "विदा करें",
+"Nothing needs attention right now.": "अभी किसी चीज़ पर ध्यान देने की ज़रूरत नहीं है।"
 });

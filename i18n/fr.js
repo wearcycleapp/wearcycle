@@ -1490,5 +1490,7 @@ I18N.load("fr",{
 "Undone.": "Annulé.",
 "No matching pieces.": "Aucune pièce correspondante.",
 "✓ Bought:": "✓ Acheté :",
-"Not bought yet": "Pas encore acheté"
+"Not bought yet": "Pas encore acheté",
+"Let go": "Se départir",
+"Nothing needs attention right now.": "Rien ne demande votre attention pour l’instant."
 });

@@ -1490,5 +1490,7 @@ I18N.load("es",{
 "Undone.": "Deshecho.",
 "No matching pieces.": "No hay prendas que coincidan.",
 "✓ Bought:": "✓ Comprada:",
-"Not bought yet": "Aún no la compro"
+"Not bought yet": "Aún no la compro",
+"Let go": "Desprenderse",
+"Nothing needs attention right now.": "Nada necesita atención por ahora."
 });

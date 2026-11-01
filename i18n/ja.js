@@ -1490,5 +1490,7 @@ I18N.load("ja",{
 "Undone.": "元に戻しました。",
 "No matching pieces.": "該当するアイテムはありません。",
 "✓ Bought:": "✓ 購入済み：",
-"Not bought yet": "まだ買っていない"
+"Not bought yet": "まだ買っていない",
+"Let go": "手放す",
+"Nothing needs attention right now.": "今は手入れが必要なものはありません。"
 });

@@ -1490,5 +1490,7 @@ I18N.load("ko",{
 "Undone.": "취소했어요.",
 "No matching pieces.": "맞는 옷이 없어요.",
 "✓ Bought:": "✓ 구매함:",
-"Not bought yet": "아직 안 샀어요"
+"Not bought yet": "아직 안 샀어요",
+"Let go": "떠나보내기",
+"Nothing needs attention right now.": "지금은 손볼 것이 없습니다."
 });
