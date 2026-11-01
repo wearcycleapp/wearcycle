@@ -165,7 +165,7 @@ async function guardedContext(browser, dev, { storageState, serviceWorkers = 'bl
   ctx.on('request', r => { const u = r.url(); if (/^https?:/.test(u) && !allowedHosts.has(new URL(u).host)) log.unexpected.add(new URL(u).host); });
   ctx.on('requestfailed', r => { const t = (r.failure() || {}).errorText || ''; if (log.aborted.has(r)) return; // aborted by this guard: listed above, or a held-back copy
     if (!/ABORTED|BLOCKED_BY_CLIENT|cancel/i.test(t)) log.failed.push(r.method() + ' ' + new URL(r.url()).host + shortPath(new URL(r.url()).pathname) + ' ' + t); });
-  ctx.on('response', async r => { try { const u = new URL(r.url()); if (u.host === SB_HOST && u.pathname === '/rest/v1/items' && r.request().method() === 'GET' && log.items === null) { const j = await r.json(); if (Array.isArray(j)) { log.items = j.length; const ph = j.filter(r => r.body && r.body.photo); log.photos = { photos: ph.length, copies: ph.filter(r => r.body.med).length }; } } } catch {} });
+  ctx.on('response', async r => { try { const u = new URL(r.url()); if (u.host === SB_HOST && u.pathname === '/rest/v1/items' && r.request().method() === 'GET' && log.items === null) { const j = await r.json(); if (Array.isArray(j)) { log.items = j.length; const ph = j.filter(r => r.body && r.body.photo); log.photos = { photos: ph.length, copies: ph.filter(r => r.body.med).length, cutNoCopy: ph.filter(r => !r.body.med && r.body.cut).length }; } } } catch {} });
   ctx.on('page', page => {
     page.on('console', m => { if (m.type() !== 'error') return; const t = m.text(); if (/Content.Security.Policy|Refused to (load|connect|execute|apply|frame)/i.test(t)) log.csp.push(t); else if (!/BLOCKED_BY_CLIENT/i.test(t)) log.console.push(t); });
     page.on('pageerror', e => log.console.push(String(e && e.message || e)));
@@ -320,7 +320,8 @@ async function deviceChecks(browser, engine, dev, state) {
       const w = ms => ms < 0 ? 'still soft after 20 s' : 'sharper copies in ' + (ms / 1000).toFixed(1) + ' s';
       return 'closet first screen (scrolled ' + y + 'px; ' + w(wc) + ') ' + pl(c) + '; editor (' + w(we) + ') ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
     await step(tag + 'photo copies (1024px, v1.62.1)', async () => { const c = log.copies;
-      const had = log.photos ? log.photos.copies + ' of ' + log.photos.photos + ' pieces with a photo had a stored copy at app open; ' : '';
+      const had = log.photos ? log.photos.copies + ' of ' + log.photos.photos + ' pieces with a photo had a stored copy at app open'
+        + (log.photos.photos > log.photos.copies ? ' (of the ' + (log.photos.photos - log.photos.copies) + ' without, ' + log.photos.cutNoCopy + ' have a cut-out, which the app shows instead)' : '') + '; ' : '';
       const tally = a => Object.entries(a.reduce((m, x) => (m[x] = (m[x] || 0) + 1, m), {})).map(([k, v]) => k + ' x' + v).join(', ');
       if (STORE_COPIES) return had + c.stored + ' uploaded, ' + c.pieces + ' pieces updated (store-copies run; ' + (tally(c.status) || 'no responses') + ')';
       return had + (c.held ? c.held + ' uploads held back (read-only run; a store_copies run stores them)' : 'no upload attempted'); });
