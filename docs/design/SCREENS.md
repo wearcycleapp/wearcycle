@@ -4,6 +4,28 @@ Screen-level rules for the redesign, from Sections 7.9 to 7.16 of the redesign p
 
 Every screen must work for a stranger with an empty closet, in all seven languages, in light and dark (PRODUCT.md).
 
+## Phase status (2026-10-31)
+
+Recorded at the start of Phase 9 (owner, 2026-10-31). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+
+| Phase | Status | Release on main |
+| --- | --- | --- |
+| 0 Reconcile documents | Done 2026-10-12 (plan v2.2) | none (Project docs only) |
+| 1 Set up | Done 2026-10-13 | none (Project docs only) |
+| 2 Tooling | Released 2026-10-19 | c5c281b |
+| 3 Fresh-session check | Done 2026-10-19 | none (no file changed) |
+| 4 Baseline | Released 2026-10-19 | 57acf2e |
+| 5 Shared foundation | Released 2026-10-25, v1.51.3 | 1cc8cd5 |
+| 6 Visual direction | Released 2026-10-25 | 0cba70e |
+| 7 Navigation shell | Released 2026-10-25, v1.52.0 | 23ddab6 |
+| 8 Outfits | Released 2026-10-26, v1.53.0 (follow-ups v1.53.1 to v1.53.4, v1.61.1) | 6a7869b |
+| 9 Closet and garment detail | Open since 2026-10-31 | |
+| 10 Care | Partly: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet. Not built: the A and B rows (56px and 160px pictures), the Repair / Check / Rotate / Let go sections, the wide composition, and its known issue (`.panel-h .count`) | 6a7e2a5 (v1.58.0) |
+| 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
+| 12 to 15 | Not started | |
+
+Screen freeze while Phase 9 is open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 is released. Other chats make bug fixes only while this phase is open.
+
 ## Screen personalities
 
 | Screen | Personality | Design intent |
@@ -212,8 +234,10 @@ Built in v1.55.0 (Phase 11 brought forward; proposal "Wearcycle Shop redesign" a
 - Rows that open are buttons with aria-expanded (44px or taller); the open state is kept for the session (S.shopOpen). One column below 700x600; from 700x600 two columns: left the summary and Buy next and By occasion, right Coming up, Build toward a style and Ideas from Claude. The 960px columns rule no longer applies to Shop.
 - Measured with the fixture closet: phone 4,710px (5.6 screens) to about 2.3 screens folded; French at 360px 6.3 to 2.6; 820 4.0 to 1.1; 1366x768 3.3 to 1.6.
 
+Definition of done, checked 2026-10-31 on preview 4210ff9 (v1.61.1): tools/check.mjs --css-pixels --baseline (22 pass, 0 fail, 0 to review) and its --worst-case run show, on all 16 Shop views and the worst-case Shop views, no horizontal overflow, no app text cut off or spilling, no English left in French or Japanese, no serious or critical axe-core node; detector warnings 0 (baseline 15); at 360x800 the summary line and the three Buy next cards sit at 186 to 670px, above the bar at 734px (measured with the same stubs, without the one-time "Wearcycle was updated" notice; with the notice the third card starts in the first screen and ends below the bar); light and dark screenshots reviewed; the live check passed on that commit (run 41252957943). Not recorded for v1.55.0: the number of refinement rounds. Still open for Shop (rules outside the definition of done): the known issue below; Shop's panels keep the soft shadow in light mode (DESIGN.md, Flat-By-Default Rule); harden and break-ui runs were not recorded in the v1.55.0 log.
+
 ### Known issues to fix in this phase
-- Overridden declarations (2): `.opt em` font-family and font-size (styles.css:227).
+- Overridden declarations (2): `.opt em` font-family and font-size (styles.css:268, overridden at 419 and 424 at v1.61.1). Still present on 2026-10-31.
 
 
 ## Settings and other sheets (QUIET UTILITY)
