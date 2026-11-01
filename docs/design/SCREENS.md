@@ -6,7 +6,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Phase status (2026-10-31)
 
-Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened (2026-11-01). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
 
 | Phase | Status | Release on main |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 7 Navigation shell | Released 2026-10-25, v1.52.0 | 23ddab6 |
 | 8 Outfits | Released 2026-10-26, v1.53.0 (follow-ups v1.53.1 to v1.53.4, v1.61.1) | 6a7869b |
 | 9 Closet and garment detail | Released 2026-10-31, v1.62.0 | 2fdc070 (v1.62.0) |
-| 10 Care | Released 2026-11-01, v1.63.0 (with it, Shop finished). Partly built before: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet | 6a7e2a5 (v1.58.0) |
+| 10 Care | Released 2026-11-01, v1.63.0 (with it, Shop finished). Partly built before: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet | 6a7e2a5 (v1.58.0); c8e8e4a (v1.63.0) |
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
 | 12 to 15 | Not started | |
 
@@ -220,6 +220,8 @@ Built in Phase 10 (v1.63.0). Proposal "Wearcycle Care redesign" approved by the 
 - The Decide sheet keeps its four explained choices; its piece row uses the same picture (56px at every width).
 - Measured with the busy Care set (tools/fixtures/worst-case.json "care", Chromium): page height at 390x844 4.5 to 3.8 screens, French 360 5.2 to 4.6, Japanese 5.0 to 4.4, 844x390 8.8 to 7.7; on wide screens longer because of the 160px pictures (820 2.9 to 3.8, 1180 2.5 to 3.8, 1366 2.6 to 4.0, 1920 1.9 to 2.9); buttons under 44px 34 of 36 to 0; zoom pictures reachable by keyboard 0 of 11 to all.
 - "In the wash" stays in Closet.
+- With only the donated or recycled history and nothing to do, the calm line shows above Let go with the history (checked at 390x844 and 1366x768, no overflow or errors).
+- Real data (live check, test account, preview run 41320695294 on c8e8e4a): Care opens on Chromium 390 and 1366 and WebKit 820 with no horizontal overflow, broken picture, blocked write or console error; +0 KB when opened after Closet, as on v1.62.1.
 - Code: renderCare, carePic, cRow, cGroup, cSec, notPickedList, openDecide (app.js); the Care block in styles.css.
 
 ### Known issues fixed in this phase (v1.63.0)
