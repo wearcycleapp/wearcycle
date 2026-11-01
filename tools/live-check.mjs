@@ -171,6 +171,17 @@ async function settle(page) {
     while (pending() && performance.now() < deadline) await new Promise(r => setTimeout(r, 150));
   });
 }
+// Pictures the app is replacing with a sharper copy (img[data-sharp], Phase 9) arrive after a download that settle()
+// does not wait for (networkidle was already reached at load). Waits until none on screen is still drawn larger than
+// its file, up to 20 s; returns the milliseconds waited, or -1 when some were still soft at the deadline.
+async function sharpened(page, sheet) {
+  const t0 = Date.now();
+  const ok = await page.waitForFunction(sheet => [...document.querySelectorAll((sheet ? '#sheetRoot .sheet' : 'section.tab:not([hidden])') + ' img[data-sharp]')].every(i => {
+    const r = i.getBoundingClientRect(); if (!r.width || r.bottom <= 0 || r.top >= innerHeight || !i.naturalWidth) return true;
+    const cs = getComputedStyle(i), k = (cs.objectFit === 'cover' ? Math.max(r.width / i.naturalWidth, r.height / i.naturalHeight) : Math.min(r.width / i.naturalWidth, r.height / i.naturalHeight)) * devicePixelRatio;
+    return k <= 1.1; }), sheet, { timeout: 20000, polling: 250 }).then(() => true, () => false);
+  return ok ? Date.now() - t0 : -1;
+}
 async function waitApp(page) {
   await page.waitForSelector('#appRoot:not([hidden])', { timeout: 30000 });
   await page.waitForFunction(() => { const f = document.querySelector('#fits'); return f && !/Loading/.test(f.textContent) && (f.querySelector('.fit.hero') || f.querySelector('.empty')); }, null, { timeout: 30000 });
@@ -267,7 +278,7 @@ async function deviceChecks(browser, engine, dev, state) {
     await step(tag + 'weather (Open-Meteo)', async () => { const l = await page.getAttribute('[data-wx="edit"]', 'aria-label').catch(() => null);
       if (l && /^Weather: .*\d/.test(l)) return 'forecast shown';
       return { status: 'REVIEW', detail: l ? 'no forecast in the label' : 'no forecast (weather off or no location for this account)' }; });
-    await step(tag + 'every tab opens', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { const b0 = net.bytes, f0 = net.files; await goTab(page, t);
+    await step(tag + 'every tab opens', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { const b0 = net.bytes, f0 = net.files; await goTab(page, t); await sharpened(page);
       const b = await brokenImages(page); imgs.shown += b.shown; imgs.broken += b.broken; if (t !== 'outfits') perTab[t] = { bytes: net.bytes - b0, files: net.files - f0 }; } return 'outfits, closet, care, shop'; });
     await step(tag + 'image bytes per screen (first open)', async () => ['outfits', 'closet', 'care', 'shop'].filter(t => perTab[t])
       .map(t => t + (t === 'outfits' ? ' ' : ' +') + kb(perTab[t].bytes) + ' in ' + perTab[t].files + ' files').join(', '));
@@ -275,10 +286,11 @@ async function deviceChecks(browser, engine, dev, state) {
     // whether a picture is drawn larger than its file). Counts and sizes only.
     await step(tag + 'closet and item editor: pictures', async () => {
       const pl = p => p.shown + ' pictures, ' + p.upscaled + ' drawn larger than their file' + (p.upscaled ? ' (up to ' + p.worst + 'x: ' + p.soft.join(', ') + ')' : ''); // kind and file size only, no names
-      await goTab(page, 'closet'); await settle(page); const c = await page.evaluate(PICTURES, false), y = await page.evaluate(() => Math.round(scrollY));
+      await goTab(page, 'closet'); await settle(page); const wc = await sharpened(page); const c = await page.evaluate(PICTURES, false), y = await page.evaluate(() => Math.round(scrollY));
       const b0 = net.bytes, f0 = net.files; await page.click('#closetGrid [data-edit]'); await page.waitForSelector('#sheetRoot .sheet'); await settle(page);
-      const e = await page.evaluate(PICTURES, true); const eb = { bytes: net.bytes - b0, files: net.files - f0 }; await closeSheet(page);
-      return 'closet first screen (scrolled ' + y + 'px) ' + pl(c) + '; editor ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
+      const we = await sharpened(page, true); const e = await page.evaluate(PICTURES, true); const eb = { bytes: net.bytes - b0, files: net.files - f0 }; await closeSheet(page);
+      const w = ms => ms < 0 ? 'still soft after 20 s' : 'sharper copies in ' + (ms / 1000).toFixed(1) + ' s';
+      return 'closet first screen (scrolled ' + y + 'px; ' + w(wc) + ') ' + pl(c) + '; editor (' + w(we) + ') ' + pl(e) + ', +' + kb(eb.bytes) + ' in ' + eb.files + ' files'; });
     await step(tag + 'photos and cut-outs load', async () => { if (imgs.broken) throw new Error(imgs.broken + ' of ' + imgs.shown + ' images broken'); return imgs.shown + ' images, none broken'; });
     await step(tag + 'sheets open and close', async () => {
       const done = [];
