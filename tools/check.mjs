@@ -492,6 +492,7 @@ async function flows(browser, base, state, data) {
     assert(!(await page.$('.fit.hero [data-revert]')), '"Back to suggestion" did not restore the outfit');
     return '"' + name1 + '" swapped for "' + name2 + '", then restored';
   });
+  const SHEET_A11Y = [];
   await step('Each sheet opens and closes', async () => {
     const SHEETS = [
       ['Settings', null, SETTINGS_BTN], ['Adjust', 'outfits', '.fit.hero [data-act="adjust"]'], ['Outfit diary', 'outfits', '[data-act="diary"]'],
@@ -508,13 +509,27 @@ async function flows(browser, base, state, data) {
       else if (where_) await goTab(page, where_);
       const el = await page.$(sel); assert(el, label + ': control ' + sel + ' not found');
       await el.click(); await page.waitForSelector('#sheetRoot .sheet', { timeout: 5000 });
-      await closeSheet(page); done.push(label);
+      // Phase 12: every sheet is a named dialog that takes focus, keeps the page behind inert, has 16px fields (iOS Safari
+      // zooms into smaller ones) and a 44px close button; Escape gives focus back outside the sheet.
+      const f = await page.evaluate(() => { const d = document.querySelector('#sheetRoot [role=dialog]'), id = d && d.getAttribute('aria-labelledby');
+        const name = id && document.getElementById(id) ? document.getElementById(id).textContent.trim() : '';
+        const fields = [...d.querySelectorAll('input,select,textarea')].filter(e => e.checkVisibility && e.checkVisibility() && !['checkbox', 'radio', 'hidden', 'file', 'range'].includes(e.type));
+        const x = d.querySelector('[data-close]'), xr = x && x.getBoundingClientRect();
+        return { name, focus: d.contains(document.activeElement), inert: !!document.querySelector('#appRoot')?.inert,
+          small: fields.filter(e => parseFloat(getComputedStyle(e).fontSize) < 16).map(e => e.id || e.type), close: xr ? Math.round(Math.min(xr.width, xr.height)) : 0 }; });
+      const bad = [!f.name && 'no name', !f.focus && 'focus outside', !f.inert && 'page behind not inert', f.small.length && 'fields under 16px: ' + f.small.join(' '), f.close < 44 && 'close button ' + f.close + 'px'].filter(Boolean);
+      await closeSheet(page);
+      const back = await page.evaluate(() => document.activeElement !== document.body && !document.activeElement.closest('#sheetRoot'));
+      if (!back) bad.push('focus not returned after Escape');
+      if (bad.length) SHEET_A11Y.push(label + ': ' + bad.join(', '));
+      done.push(label);
     }
     await openSheetBy(page, SETTINGS_BTN);
     const x = await page.$('#sheetRoot [data-close]'); assert(x, 'Settings has no close button');
     await x.click(); await page.waitForFunction(() => !document.querySelector('#sheetRoot').innerHTML);
     return done.length + ' sheets (Escape), plus the close button';
   });
+  check('Sheets: named, focus inside, 16px fields, 44px close, focus back after Escape (Phase 12)', SHEET_A11Y.length ? 'FAIL' : 'PASS', SHEET_A11Y.length ? SHEET_A11Y.slice(0, 4).join('; ') : '12 sheets');
   await step('Theme switches (Settings, Appearance)', async () => {
     where = 'flows-theme'; await closeSheet(page); await openSheetBy(page, SETTINGS_BTN);
     const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
