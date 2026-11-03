@@ -1492,5 +1492,7 @@ I18N.load("ja",{
 "✓ Bought:": "✓ 購入済み：",
 "Not bought yet": "まだ買っていない",
 "Let go": "手放す",
-"Nothing needs attention right now.": "今は手入れが必要なものはありません。"
+"Nothing needs attention right now.": "今は手入れが必要なものはありません。",
+"{0} pieces without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "切り抜きのないアイテムが{0}点あります。このスマートフォンで作成します（AIの費用はかかりません）。初回は約{1}MBをダウンロードし、その後は1点あたり約{2}〜{3}秒です。",
+"{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "切り抜きのないアイテムが{0}点あります。このスマートフォンで作成します（AIの費用はかかりません）。初回は約{1}MBをダウンロードし、その後は1点あたり約{2}〜{3}秒です。"
 });

@@ -80,7 +80,7 @@ rounded:
   control: "8px"
   card: "10px"
   canvas: "12px"
-  sheet: "16px"
+  sheet: "20px"
   pill: "999px"
 spacing:
   "1": "4px"
@@ -177,9 +177,9 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 - **Good** (#2b7a4c, soft #dcefe3; dark #6cc38e, #1b3225), **Warn** (#8e6010, soft #f5e8cc; dark #e2b45c, #382d17; #9c6a12 until Phase 5), **Bad** (#b4233c, soft #f7dde1; dark #f2668b, #3d1f29).
 
 ### Today versus rule
-- Done in Phase 5 (v1.51.3): the cream canvas in its four rules (.flatlay, .card .vis.studio, .photo .pv.studio, .piecebig.studio) uses --canvas-1, --canvas-2, --board-mid and --board-edge, with the same values in both dark blocks and no visible change. The viewer's cut-out background (#f3f0ea until v1.61.1) uses the canvas tokens since Phase 9 (v1.62.0). One beige value is still hard-coded: the style art background #ece8e2 (equal to Board), for Phase 12.
+- Done in Phase 5 (v1.51.3): the cream canvas in its four rules (.flatlay, .card .vis.studio, .photo .pv.studio, .piecebig.studio) uses --canvas-1, --canvas-2, --board-mid and --board-edge, with the same values in both dark blocks and no visible change. The viewer's cut-out background (#f3f0ea until v1.61.1) uses the canvas tokens since Phase 9 (v1.62.0). The style pictures in Your style used #ece8e2 (equal to Board) in both themes until Phase 12; since v1.64.0 they sit on the cream canvas (--canvas-1 to --canvas-2) like every garment picture (owner, 2026-11-03), so no beige is hard-coded any more.
 - Done in Phase 5 (v1.51.3): --warn darkened from #9c6a12 to #8e6010 (same hue). Warn on Background 4.99:1 (was 4.27), on Surface 5.26:1, on Raised 5.48:1 and on Warn-soft 4.52:1 (was 3.86), so every place Warn is text (status, banner, condition tags, warning pills, In the wash marks) passes 4.5:1. The smallest change reaching 4.5:1 on Background alone, #976611, would have left Warn-soft at 4.09:1. Dark Warn is unchanged (#e2b45c, 9.42:1 on dark Background, 7.02:1 on dark Warn-soft).
-- Today coral also marks weather icons, calendar dots and the selected borders of style cards, palette options, piece picks and the holiday chip. Rule (decision 1): those selections keep coral only with a second cue (fill, check mark or inset ring).
+- Today coral also marks weather icons and calendar dots. The selections that used coral are ink since their phases: the holiday chip (Phase 8); style cards, palette options and the What I wore piece picks (Phase 12, v1.64.0: a 2px ink border, plus a drawn ink check on style cards and palette options, and the soft fill on piece picks).
 
 ### Named Rules
 **The One Token System Rule.** Use the token names above. Add a token only when none fits, give it a dark value, and update both dark blocks (the prefers-color-scheme block and [data-theme="dark"]).
@@ -211,7 +211,7 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 
 **The Sentence Case Rule.** Strings are written in sentence case; uppercase only through CSS (text-transform), so the translation dictionaries keep matching.
 
-**The No Shrinking Rule.** Do not solve crowding by shrinking text. Body text stays 15px; Impeccable's 16px body floor does not apply here.
+**The No Shrinking Rule.** Do not solve crowding by shrinking text. Body text stays 15px; Impeccable's 16px body floor does not apply here. The one exception is form fields (input, select, textarea): 16px since Phase 12, because iOS Safari zooms into a focused field smaller than 16px.
 
 ## Layout
 
@@ -255,7 +255,7 @@ Today the soft shadow also sits on panels and stat tiles; each screen phase remo
 Gently rounded, with the pill shape reserved for meaning.
 
 - **Rule (plan 7.4):** controls 8px; garment canvas 12px; large compositions 12 to 16px; sheet top corners 20 to 24px. Pills (999px) only where the shape means something: a removable or toggle chip.
-- **Today:** buttons, icon buttons, inputs and tiles 8px; panels, the garment canvas (kit pictures, outfit boards, Closet tile pictures and the garment sheet picture since Phase 9) and the main action 12px; piece preview and cards added after v1.24 14px; sheets 16px (20 to 24px once Phase 12 rewrites the sheets); chips, weather pill and status pills 999px.
+- **Today:** buttons, icon buttons, inputs and tiles 8px; panels, the garment canvas (kit pictures, outfit boards, Closet tile pictures and the garment sheet picture since Phase 9) and the main action 12px; piece preview and cards added after v1.24 14px; sheets 20px (Phase 12; 16px before); chips, weather pill and status pills 999px.
 - **Icons:** inline SVG, 24px viewBox, stroke 1.8 to 2, currentColor, as today. Use them where they help recognition, not on every heading. Life-cycle icons (wear, wash, repair, rotate, donate, recycle) may be added with a consistent stroke and size.
 
 ## Components
@@ -267,7 +267,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - **Default:** Raised background, 1px Line border, 600 weight, 14px, 10px by 14px padding.
 - **Primary:** Ink fill with white text (accent and accent-ink).
 - **Main action ("Wear this"):** Coral fill with Ink text, 48px tall, 700 weight, 15px. One per screen.
-- **Danger / Ghost / Small:** Bad text and border; transparent; 40px minimum height.
+- **Danger / Ghost / Small:** Bad text and border; transparent; 40px minimum height, 44px inside sheets (Phase 12).
 - **Hover / Focus:** hover only for mouse input (the shell since Phase 7; buttons and chips with their screens). Focus is a 2px accent outline offset 2px (:focus-visible).
 
 ### Chips
@@ -296,7 +296,8 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - Before adding a card, ask whether scale, type, spacing or alignment can do the job. Never nest cards.
 
 ### Inputs / Fields
-- **Style:** Raised background, 1px Line border, 8px radius, 10px by 12px padding, labels 13px 600 in Ink.
+- **Style:** Raised background, 1px Line border, 8px radius, 10px by 12px padding, 16px text, at least 44px tall (Phase 12), labels 13px 600 in Ink.
+- **Checkboxes and switches:** checkboxes are drawn in Accent (accent-color). In Settings the on/off rows use a switch (owner, 2026-11-03): the input stays a checkbox, drawn as a 44 by 26px track, Line when off and Accent when on; the whole row is the target.
 - **Focus:** the global focus outline.
 - **Error:** Bad text at 13.5px below the field.
 
@@ -305,7 +306,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - **Rail (700px wide and 600px tall):** a 96px left rail with 24px icons and Settings at its bottom; from 1280px a 208px rail with the logo, wordmark and status at its top, labels beside icons and the Care count at the end of its row.
 
 ### Sheets, toasts and job bar
-- **Sheets:** one openSheet(html) for every sheet; slide up on phones, centre from 700px; Background fill; sticky action row; Escape closes.
+- **Sheets:** one openSheet(html) for every sheet; slide up on phones, centre from 700px; Background fill; sticky action row; Escape closes. Since Phase 12: the dialog is named by its title and takes focus on open, the page behind is inert, a redraw keeps focus on the same control and closing gives focus back to the control that opened it; the sheet and the dimmed layer contain their scroll (overscroll-behavior); 44px close button and buttons; lists sit on the sheet with hairlines (no card inside the sheet). Settings from 1100px wide and 600px tall: a sheet up to 980px with an index of its groups on the left (docs/design/SCREENS.md).
 - **Toasts:** Ink fill with Background text, 12px radius, above the tab bar and safe area.
 - **Job bar:** Raised, with a coral progress bar and spinner, above the tab bar.
 
@@ -313,7 +314,7 @@ Quiet and tactile: plain ink controls with clear pressed and selected states (in
 - Motion follows wardrobe behaviour: an outfit swap, a piece going into the wash, a piece coming back, a sheet moving.
 - Durations: fast 120 to 180ms; normal 200 to 280ms; editorial 300 to 450ms.
 - Every animation sits inside @media (prefers-reduced-motion: no-preference). No continuous or decorative motion. These rules win over review-animations (which wants under 300ms and gentler motion under reduced motion) and over Impeccable's animate defaults.
-- Today: toast entrance 0.2s ease-out, camera flash 0.25s, the outfit's piece press 0.12s (board and kit, scale .97 and .98, cubic-bezier(.23,1,.32,1)) and the job spinner sit inside the query; the Outfits reasons chevron turns in 0.15s inside it (Phase 8); the Settings disclosure chevron still turns in 0.15s outside it.
+- Today: toast entrance 0.2s ease-out, camera flash 0.25s, the outfit's piece press 0.12s (board and kit, scale .97 and .98, cubic-bezier(.23,1,.32,1)) and the job spinner sit inside the query; the Outfits reasons chevron turns in 0.15s inside it (Phase 8); the item editor's More details chevron turns in 0.15s inside it since Phase 12 (it was outside), and so does the knob of the Settings switches.
 
 ## Do's and Don'ts
 

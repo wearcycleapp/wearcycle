@@ -272,13 +272,34 @@ Finished in Phase 10 (v1.63.0, owner 2026-11-01):
 
 ## Settings and other sheets (QUIET UTILITY)
 
-- Group headings, aligned rows, whitespace, restrained dividers. No cards inside cards.
-- Keep every group: Language (first, v1.57.0), Install, Appearance, Style, Weather, Photos, Holidays, Work dress code, Laundry, Reminders, Help, Privacy and your data, account (openSettings, app.js:1269).
-- Same treatment for: Add clothes, Adjust, Condition check, Your style, Style palette, Weather, What I wore, Outfit diary, Closet stats, How Wearcycle decides, Delete my data, Choose a new password, What is this?, consent. All open through openSheet (app.js:1051).
+Built in Phase 12 (v1.64.0). Proposal "Wearcycle Settings redesign" (https://claude.ai/artifact/R5eMHtXfuGrf56m7Tbx6Gf) approved by the owner on 2026-11-03 with the four recommended options: build as shown; from 1100px wide a wider Settings with an index of its groups; the style pictures on the cream canvas in both themes; on/off settings as switches. Critique: .impeccable/critique/2026-11-03T13-43-26Z__app-js.md (26/40).
 
-### Known issues to fix in this phase
-- Hard-coded `#ece8e2` behind the style pictures (`.stylecard .styleart`, styles.css:615): the light Board value, which does not change in dark mode; use `--board` or another token with a dark value.
+Every sheet (openSheet, app.js; 29 places open one):
+- A named dialog: aria-labelledby points at its title (#sheet-title). Opening moves focus to the title; the page behind (#appRoot) is inert while it is open (no Tab, no taps, skipped by screen readers); a redraw of the same sheet keeps focus on the same control (matched by id or data attributes); closing gives focus back to the control that opened it, also when the sheet changed in between (Settings, then Your style).
+- The sheet and the dimmed layer contain their scroll (overscroll-behavior: contain; the layer is overflow hidden). Chromium already kept the page still (the body is locked); the guard is for phones, where the owner saw the page move.
+- 44px close button and buttons (40px small chips); form fields 16px and at least 44px tall, so iOS Safari does not zoom into them; checkboxes in Accent. Corners 20px.
+- Lists sit on the sheet: a .panel inside a sheet is a list with hairlines above and below and between rows, no background, radius or shadow; back-to-back panels read as one list; a panel heading (.panel-h h3) is a group heading.
 
+Settings (openSettings, the sheet class "settings"):
+- "Changes save automatically." under the title (it also shows Saving and Saved). Then one list: Language and the account rows, then the groups in their order (Appearance, Style, Weather, Photos, Holidays, Work dress code, Laundry, Reminders, Help, Privacy and your data), each with a group heading (13px, uppercase by CSS, Muted) and rows of title (15px, 600, wraps; long emails break), explanation (13px Muted) and control at the right. The account row puts its buttons under the email when they do not fit beside it. Server settings and the version end the list.
+- On/off rows (label.li) are switches: the input stays a checkbox, drawn as a 44 by 26px track (Line off, Accent on, a 20px knob); the whole row is the target. The knob moves 18px by transform in 0.15s (cubic-bezier(.23,1,.32,1)) only when motion is welcome.
+- Steppers (Laundry and Reminders, inside their groups): one row, the label then minus, the value (15px, body face) and plus (44px each); the stepper drops under a label that needs the width; the four presets as 40px chips under it. Holiday, appearance, department and dress-code chips are 40px small chips.
+- At least 1100px wide and 600px tall (iPad landscape, Windows): a sheet up to 980px with an index on the left (200px, sticky): one 44px button per group, using the group names (no new strings), the group in view marked aria-current (Accent on Accent-soft, as the rail). A button scrolls its group to the top of the sheet (instant from the keyboard or with reduced motion) and moves focus into the group. Below that width the index is hidden; it keeps tracking, so widening the window with Settings open shows the right group.
+- Every setting and action is kept: the same 69 controls and 38 labels as v1.63.1 (compared by id and data attributes).
+
+Other sheets:
+- Your style: the style pictures on the cream canvas (--canvas-1 to --canvas-2) in both themes; a selected card has a 2px ink border and a drawn ink check at its bottom right, never over the pictures. Style palette: the same ink border and check.
+- Closet stats: the three totals as numbers in the display face (34px) with labels, no cards; the rows use the Care picture (carePic: cut-out on the cream canvas, else the thumbnail; opens the zoom viewer by mouse, touch or keyboard); group headings as in Settings.
+- What I wore: a selected pick has an ink border and the soft fill (was coral); the picks show a piece's cut-out on the cream canvas wherever it has one (they drew only the thumbnail), names 12px.
+- What is this?: colour buttons 40px (were 34px), the order badge 12px. Outfit diary: arrows and day buttons 44px.
+- Every other sheet (Language, Change password, Choose a new password, Add clothes, Adjust, Condition check, Custom palette, Weather, How Wearcycle decides, Delete my data, consent, Share my list, a saved idea, I have one, Possible duplicates, Inspiration from a photo and its result, Style today, Reminders, Decide, and the garment sheets' frame) changes only through the shared frame.
+- The What's new page (whats-new.html): the app's fonts (fonts/fonts.css) and colors, follows the app's Light or Dark choice (theme.js, the same three-state rule as the app), the logo and wordmark link back to the app, 44px language links.
+
+### Known issues fixed in this phase (v1.64.0)
+- The hard-coded `#ece8e2` behind the style pictures: now the cream canvas tokens.
+- Scrolling inside a sheet carrying on to the page behind: overscroll-behavior contain on the sheet and the dimmed layer (not reproducible in Chromium; to confirm on a phone).
+- Form fields under 16px (iPhone and iPad zoom): 19 fields in 6 sheets and the Language select, now 16px.
+- Also found and fixed: no sheet worked with a keyboard or had a name (focus stayed on the page; 10 of 40 Tab presses landed in Settings at 1366); 36px close buttons; coral selected states on Style palette (no second cue), Your style and What I wore; Settings row titles cut with an ellipsis (the email; French "Recadrer les photos sur les vêtements"); the Settings cut-out sentence had no translation ({0}, {1}, {2}, {3} keys, singular and plural, six languages); Closet stats used stat cards and pictures not reachable by keyboard; What I wore never showed cut-outs; the editor's More details chevron turned outside the reduced-motion query; What's new ignored the app's theme.
 
 ## Full-screen and fixed layers
 

@@ -103,4 +103,7 @@ I18N.add("ko",{
 "Pictures download less data: each photo is now saved with a smaller copy, which your phones, tablets and computers download instead of the full photo. Photos added earlier get their copy the first time one of your devices shows them.": "사진을 내려받을 때 데이터를 덜 씁니다. 이제 각 사진은 더 작은 사본과 함께 저장되고, 휴대폰, 태블릿, 컴퓨터는 원본 사진 대신 그 사본을 내려받습니다. 이전에 추가한 사진은 기기에서 처음 표시될 때 사본이 만들어집니다.",
 "Care now has four sections, Repair, Let go, Check and Rotate, with each piece's picture first and larger on tablets and computers. Only sections with something to do appear, and Care says so when nothing needs attention.": "관리가 수선, 떠나보내기, 점검, 번갈아의 네 섹션으로 바뀌었고, 각 옷의 사진이 맨 앞에 나오며 태블릿과 컴퓨터에서는 더 크게 보입니다. 할 일이 있는 섹션만 나타나고, 손볼 것이 없으면 그렇게 알려 줍니다.",
 "On phones, the Add clothes button no longer covers the What's new link at the bottom of an empty Closet.": "휴대폰에서 빈 옷장 아래쪽의 새로운 기능 링크를 옷 추가 버튼이 더 이상 가리지 않습니다.",
+"Settings is one calm list with group headings and switches; on tablets and computers it is wider, with its groups listed on the left.": "설정이 그룹별 제목과 스위치가 있는 차분한 목록 하나가 되었습니다. 태블릿과 컴퓨터에서는 더 넓어지고 왼쪽에 그룹 목록이 표시됩니다.",
+"Every panel that slides up now works with a keyboard and a screen reader, and tapping a text box no longer zooms in on iPhone and iPad.": "아래에서 열리는 모든 패널을 이제 키보드와 스크린 리더로 쓸 수 있고, iPhone과 iPad에서 입력란을 눌러도 화면이 확대되지 않습니다.",
+"What I wore and Closet stats show your cut-outs, and this page follows your light or dark choice.": "내가 입은 옷과 옷장 통계에 배경을 제거한 사진이 표시되고, 이 페이지는 라이트/다크 선택을 따릅니다."
 });

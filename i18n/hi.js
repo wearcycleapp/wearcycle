@@ -1492,5 +1492,7 @@ I18N.load("hi",{
 "✓ Bought:": "✓ खरीदा:",
 "Not bought yet": "अभी नहीं खरीदा",
 "Let go": "विदा करें",
-"Nothing needs attention right now.": "अभी किसी चीज़ पर ध्यान देने की ज़रूरत नहीं है।"
+"Nothing needs attention right now.": "अभी किसी चीज़ पर ध्यान देने की ज़रूरत नहीं है।",
+"{0} pieces without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "{0} पीस के कट-आउट नहीं बने हैं। ये इसी फ़ोन पर बनते हैं (AI का कोई खर्च नहीं); पहली बार लगभग {1} MB डाउनलोड होता है, फिर हर पीस में लगभग {2} से {3} सेकंड लगते हैं।",
+"{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "{0} पीस का कट-आउट नहीं बना है। यह इसी फ़ोन पर बनता है (AI का कोई खर्च नहीं); पहली बार लगभग {1} MB डाउनलोड होता है, फिर हर पीस में लगभग {2} से {3} सेकंड लगते हैं।"
 });

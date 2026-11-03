@@ -103,4 +103,7 @@ I18N.add("ja",{
 "Pictures download less data: each photo is now saved with a smaller copy, which your phones, tablets and computers download instead of the full photo. Photos added earlier get their copy the first time one of your devices shows them.": "画像のダウンロード量が減りました。各写真は小さいコピーと一緒に保存されるようになり、スマートフォン、タブレット、パソコンは元の写真の代わりにそのコピーをダウンロードします。以前に追加した写真は、いずれかの端末で初めて表示されたときにコピーが作られます。",
 "Care now has four sections, Repair, Let go, Check and Rotate, with each piece's picture first and larger on tablets and computers. Only sections with something to do appear, and Care says so when nothing needs attention.": "ケアは「修理」「手放す」「チェック」「日替わり」の4つのセクションになり、各アイテムの写真が先頭に、タブレットとパソコンでは大きく表示されます。やることがあるセクションだけが表示され、何もないときはそう表示されます。",
 "On phones, the Add clothes button no longer covers the What's new link at the bottom of an empty Closet.": "スマートフォンで、空のクローゼットの下にある「新機能」リンクが「服を追加」ボタンで隠れなくなりました。",
+"Settings is one calm list with group headings and switches; on tablets and computers it is wider, with its groups listed on the left.": "設定が、グループごとの見出しとスイッチのある落ち着いた1つのリストになりました。タブレットとパソコンでは幅が広くなり、左側にグループの一覧が表示されます。",
+"Every panel that slides up now works with a keyboard and a screen reader, and tapping a text box no longer zooms in on iPhone and iPad.": "下から開くすべてのパネルがキーボードとスクリーンリーダーで使えるようになり、iPhoneとiPadで入力欄をタップしても画面が拡大されなくなりました。",
+"What I wore and Closet stats show your cut-outs, and this page follows your light or dark choice.": "「着たもの」と「クローゼットの統計」に切り抜きが表示され、このページはライトまたはダークの選択に従います。"
 });

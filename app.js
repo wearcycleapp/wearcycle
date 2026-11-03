@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.63.1';
+const APP_VERSION='1.64.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -1713,8 +1713,23 @@ async function askIdeas(){
 }
 
 /* ---------- sheets ---------- */
-function closeSheet(){ $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; DI=null; }
-function openSheet(html,cls){ guard(); $('#sheetRoot').innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet${cls?' '+cls:''}" role="dialog" aria-modal="true">${html}</div></div>`; document.body.style.overflow='hidden'; }
+// Sheets (Phase 12): one dialog at a time, named by its heading. Opening moves focus into it and makes the page behind
+// inert (no Tab, no taps, skipped by screen readers); closing gives focus back to the control that opened it. A redraw
+// of the same sheet (openSheet again while it is open) keeps focus on the same control when it is still there.
+let SHEET_FROM=null;
+function closeSheet(){ const open=!!$('#sheetRoot').innerHTML; $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; DI=null;
+  const app=$('#appRoot'); if(app) app.inert=false;
+  if(open&&SHEET_FROM&&SHEET_FROM.isConnected&&!SHEET_FROM.closest('[inert]')) try{ SHEET_FROM.focus({preventScroll:true}); }catch(e){}
+  SHEET_FROM=null; }
+function focusKey(el){ if(!el||el===document.body||!el.closest('#sheetRoot .sheet')) return null; if(el.id) return '#'+CSS.escape(el.id);
+  const at=[...el.attributes].filter(a=>a.name.startsWith('data-')&&a.name!=='data-notr').map(a=>`[${a.name}="${CSS.escape(a.value)}"]`).join('');
+  return at?el.tagName.toLowerCase()+at:null; }
+function openSheet(html,cls){ guard(); const root=$('#sheetRoot'), again=!!root.innerHTML, key=again?focusKey(document.activeElement):null;
+  if(!again) SHEET_FROM=document.activeElement&&document.activeElement!==document.body?document.activeElement:null;
+  root.innerHTML=`<div class="scrim" data-scrim="1"><div class="sheet${cls?' '+cls:''}" role="dialog" aria-modal="true">${html}</div></div>`; document.body.style.overflow='hidden';
+  const sh=root.querySelector('.sheet'), h=sh.querySelector('.sheet-h h3'); if(h){ h.id='sheet-title'; h.tabIndex=-1; sh.setAttribute('aria-labelledby','sheet-title'); }
+  const app=$('#appRoot'); if(app) app.inert=true;
+  const back=key&&sh.querySelector(key); try{ if(back) back.focus({preventScroll:true}); else if(!again||!sh.contains(document.activeElement)) (h||sh).focus({preventScroll:true}); }catch(e){} }
 const sheetHead=t=>`<div class="sheet-h"><h3>${t}</h3><span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">${CLOSE_ICON}</button></div>`;
 
 function openAddMenu(){
@@ -1977,54 +1992,68 @@ function applyStyleFields(it,r){
   if(r.material) it.material=String(r.material).slice(0,20);
   if(Array.isArray(r.styles)){ const v=r.styles.filter(x=>STYLES[x]).slice(0,3); if(v.length) it.styles=v; }
 }
+// Settings index (Phase 12, from 1100px wide): one button per group, the group in view marked aria-current.
+const SET_GROUPS=[['sg-lang','Language'],['sg-appearance','Appearance'],['sg-style','Style'],['sg-weather','Weather'],['sg-photos','Photos'],['sg-holidays','Holidays'],['sg-dress','Work dress code'],['sg-laundry','Laundry'],['sg-reminders','Reminders'],['sg-help','Help'],['sg-privacy','Privacy and your data']];
+const CHEV_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+function setIndex(){ const sh=$('#sheetRoot .sheet.settings'); if(!sh) return; const idx=sh.querySelector('.setidx'); if(!idx) return; // tracked at every width, so widening the window with Settings open shows a current index
+  const mark=()=>{ const top=sh.getBoundingClientRect().top+90; let cur=SET_GROUPS[0][0]; for(const [k] of SET_GROUPS){ const el=sh.querySelector('#'+k); if(el&&el.getBoundingClientRect().top<=top) cur=k; }
+    if(sh.scrollTop+sh.clientHeight>=sh.scrollHeight-2) cur=SET_GROUPS[SET_GROUPS.length-1][0];
+    idx.querySelectorAll('button').forEach(b=>{ if(b.dataset.sjump===cur) b.setAttribute('aria-current','true'); else b.removeAttribute('aria-current'); }); };
+  sh.addEventListener('scroll',mark,{passive:true}); mark(); }
+function setJump(k,keys){ const sh=$('#sheetRoot .sheet.settings'), el=sh&&sh.querySelector('#'+k); if(!el) return; // keys: activated from the keyboard, so no animation
+  const y=k==='sg-lang'?0:sh.scrollTop+el.getBoundingClientRect().top-sh.getBoundingClientRect().top-16;
+  sh.scrollTo({top:y,behavior:keys||matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth'});
+  const f=k==='sg-lang'?sh.querySelector('#langSel'):el.nextElementSibling&&el.nextElementSibling.querySelector('button,input,select,a[href]'); if(f) try{ f.focus({preventScroll:true}); }catch(e){} }
 function openSettings(){
   openSheet(sheetHead('Settings')+`
-   <div class="panel"><div class="li langrow"><span class="lgl" aria-hidden="true">${GLOBE_ICON}</span><div class="txt"><b>Language</b><span>Item names you typed stay as they are.</span></div><div class="acts">${langSelect('langSel')}</div></div></div>
-   <div class="panel"><div class="li"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs privately to your account.</span></div><div class="acts"><button class="btn sm" data-act="chpass">Change password</button><button class="btn sm" data-act="signout">Sign out</button></div></div>
+   <p class="hint" id="set-status">Changes save automatically.</p>
+   <div class="setwrap"><nav class="setidx" aria-label="Settings">${SET_GROUPS.map(([k,l])=>`<button type="button" data-sjump="${k}">${l}</button>`).join('')}</nav><div class="setbody">
+   <div class="panel" id="sg-lang"><div class="li langrow"><span class="lgl" aria-hidden="true">${GLOBE_ICON}</span><div class="txt"><b>Language</b><span>Item names you typed stay as they are.</span></div><div class="acts">${langSelect('langSel')}</div></div></div>
+   <div class="panel"><div class="li acct"><div class="txt"><b>${esc(EMAIL||'Signed in')}</b><span>Your closet syncs privately to your account.</span></div><div class="acts"><button class="btn sm" data-act="chpass">Change password</button><button class="btn sm" data-act="signout">Sign out</button></div></div>
    ${S.installEvt?'<div class="li"><div class="txt"><b>Install on this device</b><span>Adds Wearcycle to your home screen.</span></div><div class="acts"><button class="btn sm primary" data-act="install">Install</button></div></div>':''}</div>
-   <h3>Appearance</h3>
+   <h3 id="sg-appearance">Appearance</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Light or dark</b><span>Auto follows your phone's setting.</span>
      <div class="chips" style="margin-top:8px">${[['auto','Auto'],['light','Light mode'],['dark','Dark mode']].map(([k,l])=>`<button type="button" class="chip" data-theme-set="${k}" aria-pressed="${themeGet()===k}">${l}</button>`).join('')}</div></div></div>
 </div>
-   <h3>Style</h3>
+   <h3 id="sg-style">Style</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Shopping department</b><span>${DEPT_HINT} Any: searches cover both; style lists use menswear pieces.</span>${deptChips()}</div></div>
-   <button class="li lirow" data-act="styles"><div class="txt"><b>Your style</b><span>${esc(styleSummary())}</span></div><span class="chev">›</span></button>
+   <button class="li lirow" data-act="styles"><div class="txt"><b>Your style</b><span>${esc(styleSummary())}</span></div><span class="chev" aria-hidden="true">${CHEV_ICON}</span></button>
    <div class="li"><div class="txt"><b>Recognize piece types</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!Array.isArray(i.styles)).length;return n?'The app looks at '+n+' piece'+(n===1?'':'s')+' once to note the type, pattern, fabric and styles (one small request each). New photos get this when they are read.':'Every piece with a photo has its type and styles.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanStyles">Check</button></div></div></div>
    <div class="panel"><div class="li"><div class="txt"><b>Palette: ${esc(palNow().label)}</b><span>${esc(palDesc(palNow()))}</span></div><div class="acts"><button class="btn sm" data-act="palettes">Change</button></div></div></div>
-   <h3>Weather</h3>
+   <h3 id="sg-weather">Weather</h3>
    <div class="panel"><div class="li"><div class="txt"><b>${wxOn()?esc(wxSet().label||'Your location'):'Off'}</b><span>${wxOn()?'Outfits follow today\u2019s forecast.':'Outfits ignore the weather.'}</span></div><div class="acts"><button class="btn sm" data-wx="edit">${wxOn()?'Change':'Set up'}</button></div></div></div>
-   <h3>Photos</h3>
+   <h3 id="sg-photos">Photos</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Crop photos to the clothes</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&!i.box).length;return n?n+(n===1?' photo shows':' photos show')+' the background. The app finds each piece and crops around it (one small request per photo).':'All photos are cropped. New photos are cropped when they are read.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cropAll">Crop</button></div></div>
    <div class="li"><div class="txt"><b>Flat-lay cut-outs</b><span>${(()=>{const n=[...S.items.values()].filter(needsCut).length;return n?n+' piece'+(n===1?'':'s')+' without a cut-out. Made on this phone (no AI cost); the first time downloads about 100 MB, then about 20 to 60 seconds per piece.':'Every piece with a photo has a cut-out.';})()}</span></div><div class="acts"><button class="btn sm" data-act="cutAll" ${CUT.busy?'disabled':''}>Make</button></div></div>
    <label class="li"><div class="txt"><b>Enhance how photos look</b><span>Brighter, clearer photos on screen, with each piece's brightness matched to its main color. Your saved photos are not changed.</span></div><input type="checkbox" id="enhanceT" ${enhanceOn()?'checked':''}></label>
    <label class="li"><div class="txt"><b>Make cut-outs automatically</b><span>Right after you add or re-photograph clothes.</span></div><input type="checkbox" id="autoCutT" ${S.settings.autoCut===false?'':'checked'}></label></div>
-   <h3>Holidays</h3>
+   <h3 id="sg-holidays">Holidays</h3>
    <div class="panel"><div class="li"><div class="txt"><b>Themed outfits</b><span>Two weeks before each holiday you keep on, the Outfits screen suggests looks in its colors.</span>
      <div class="chips" style="flex-wrap:wrap;margin-top:8px">${Object.entries(HOLIDAYS).filter(([k,h])=>!h.region||h.region===region()).map(([k,h])=>`<button type="button" class="chip" data-hol-tog="${k}" aria-pressed="${!holidaysOff().includes(k)}">${h.label}</button>`).join('')}</div></div></div>
    <label class="li"><div class="txt"><b>Holiday look</b><span>A few days before each holiday you keep on, the app takes on its colors with a small greeting.</span></div><input type="checkbox" id="holiLookT" ${S.settings.holidayLook===false?'':'checked'}></label></div>
-   <h3>Work dress code</h3>
+   <h3 id="sg-dress">Work dress code</h3>
    <div class="panel dresspanel"><div class="li" style="flex-direction:column;align-items:stretch;gap:10px">
      <div class="chips" style="flex-wrap:wrap">${Object.entries(DRESS_CODES).map(([k,d])=>`<button class="chip" data-wcode="${k}" aria-pressed="${((S.settings.work||{}).code||'casual')===k}">${esc(d.label)}</button>`).join('')}</div>
      <span class="hint">${esc(DRESS_CODES[(S.settings.work||{}).code||'casual'].desc)} Pieces are sorted into Work automatically from these rules.</span>
      ${[['tees','T-shirts allowed'],['hoodies','Hoodies allowed'],['shorts','Shorts allowed'],['graphics','Big logos, text or prints allowed']].map(([k,l])=>`<label class="row"><input type="checkbox" data-wflag="${k}" ${(Object.assign({},DRESS_CODES[(S.settings.work||{}).code||'casual'],S.settings.work||{}))[k]?'checked':''}> ${l}</label>`).join('')}
    </div>
    <div class="li"><div class="txt"><b>Find logos and prints</b><span>${(()=>{const n=[...S.items.values()].filter(i=>isActive(i)&&i.photo&&['top','outerwear','onepiece'].includes(i.cat)&&typeof i.graphic!=='boolean').length;return n?'The app looks at '+n+(n===1?' top or jacket':' tops and jackets')+' once (one small request each). New photos are checked when they are read.':'All tops and jackets are checked.';})()}</span></div><div class="acts"><button class="btn sm" data-act="scanGraphics">Check</button></div></div></div>
-   <h3>Laundry</h3>
+   <h3 id="sg-laundry">Laundry</h3>
    <div class="panel"><label class="li"><div class="txt"><b>Track what's in the wash</b><span>Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.</span></div><input type="checkbox" id="laundryT" ${laundryOn()?'checked':''}></label>
-    <label class="li"><div class="txt"><b>Put them back automatically</b><span>Off: Wearcycle asks on the Outfits screen. On: pieces return to suggestions after the days below, even if you have not washed them yet.</span></div><input type="checkbox" id="washAutoT" ${S.settings.washAuto?'checked':''}></label></div>
-   ${settingRow('washDays')}
-   <h3>Reminders</h3>
-   ${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}
-   <p class="hint" id="set-status">Changes save automatically.</p>
-   <h3>Help</h3>
-   <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev">›</span></button>
-   <a class="li lirow" href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener" data-wn><div class="txt"><b>What's new</b><span>Changes to the app, newest first.</span></div><span class="chev">›</span></a></div>
-   <h3>Privacy and your data</h3>
-   <div class="panel"><a class="li lirow" href="${pageUrl('privacy.html')}" target="_blank" rel="noopener"><div class="txt"><b>Privacy notice</b><span>What is stored, where, who processes it, and your rights.</span></div><span class="chev">›</span></a>
+    <label class="li"><div class="txt"><b>Put them back automatically</b><span>Off: Wearcycle asks on the Outfits screen. On: pieces return to suggestions after the days below, even if you have not washed them yet.</span></div><input type="checkbox" id="washAutoT" ${S.settings.washAuto?'checked':''}></label>
+   ${settingRow('washDays')}</div>
+   <h3 id="sg-reminders">Reminders</h3>
+   <div class="panel">${settingRow('checkEvery')}${settingRow('checkDays')}${settingRow('unusedDays')}</div>
+   <h3 id="sg-help">Help</h3>
+   <div class="panel"><button class="li lirow" data-act="help"><div class="txt"><b>How Wearcycle decides</b><span>The rules behind outfits, weather, socks, belts, palettes and donations.</span></div><span class="chev" aria-hidden="true">${CHEV_ICON}</span></button>
+   <a class="li lirow" href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener" data-wn><div class="txt"><b>What's new</b><span>Changes to the app, newest first.</span></div><span class="chev" aria-hidden="true">${CHEV_ICON}</span></a></div>
+   <h3 id="sg-privacy">Privacy and your data</h3>
+   <div class="panel"><a class="li lirow" href="${pageUrl('privacy.html')}" target="_blank" rel="noopener"><div class="txt"><b>Privacy notice</b><span>What is stored, where, who processes it, and your rights.</span></div><span class="chev" aria-hidden="true">${CHEV_ICON}</span></a>
    <label class="li"><div class="txt"><b>AI features</b><span>An AI service (Claude by Anthropic) reads the photos you add, checks condition and suggests what to buy. Those photos, or a text list of your clothes, go to Anthropic in the United States, which deletes them within 30 days and does not train on them. Off: you set each piece's category, colors and occasions yourself (Wearcycle guesses the color on your phone). Outfits are only as good as those details.</span></div><input type="checkbox" id="claudeT" ${claudeOn()?'checked':''}></label>
-   <button class="li lirow" data-act="export"><div class="txt"><b>Download my data</b><span>Your clothes, outfit log and settings as a file, plus your photos, in one .zip.</span></div><span class="chev">›</span></button>
-   <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data and account</b><span>Removes your clothes, photos, outfit log and settings from the server, and closes your account.</span></div><span class="chev">›</span></button></div>
-   <div class="row">${FIXED_SERVER?'':'<button class="linkbtn" data-act="server" style="margin:0">Server settings</button>'}<span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div>`);
+   <button class="li lirow" data-act="export"><div class="txt"><b>Download my data</b><span>Your clothes, outfit log and settings as a file, plus your photos, in one .zip.</span></div><span class="chev" aria-hidden="true">${CHEV_ICON}</span></button>
+   <button class="li lirow" data-act="wipe"><div class="txt"><b style="color:var(--bad)">Delete my data and account</b><span>Removes your clothes, photos, outfit log and settings from the server, and closes your account.</span></div><span class="chev" aria-hidden="true">${CHEV_ICON}</span></button></div>
+   <div class="row">${FIXED_SERVER?'':'<button class="linkbtn" data-act="server" style="margin:0">Server settings</button>'}<span class="spacer"></span><span class="hint">Version ${APP_VERSION}</span></div></div></div>`,'settings');
+  setIndex();
 }
 function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="rules helpdoc">    <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.</p>
     <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1, open shoes lose 1.5, shoes made for rain or snow earn +1, and dress shoes and other delicate shoes lose 4, or 2.5 for Formal (smooth soles slip on wet ground and the leather stains). Sneakers or boots worn for the rain do not count as a dress-level clash. Tick "Made for rain or snow" on shoes with grippy rubber soles to keep them in play. Hats are added only when it feels 8° or colder, when it snows, in the rain (a rain hat or a cap, never a beanie) or above 25°; gloves only at 8° or colder and scarves at 10° or colder. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
@@ -2262,13 +2291,13 @@ function openStats(){
   const cpw=priced.filter(i=>i.worn>0).map(i=>({it:i,v:i.price/i.worn})).sort((a,b)=>a.v-b.v);
   const most=items.filter(i=>i.worn>0).sort((a,b)=>b.worn-a.worn).slice(0,5);
   const idle=items.filter(i=>daysSince(i.lastWorn||i.created,now)>=90);
-  const row=(it,right)=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>${right}</span></div></div>`;
+  const row=(it,right)=>`<div class="li">${carePic(it)}<div class="txt"><b${isEx(it)?'':' data-notr'}>${esc(it.name)}</b><span>${right}</span></div></div>`; // the Care picture: cut-out first, keyboard reachable (Phase 12)
   openSheet(sheetHead('Closet stats')+`
    <div class="statgrid"><div><b>${items.length}</b><span>pieces</span></div><div><b>${allLog().length}</b><span>outfit${allLog().length===1?'':'s'} logged</span></div><div><b>${priced.length?money(spent):'–'}</b><span>spent${priced.length<items.length&&priced.length?' ('+priced.length+' priced)':''}</span></div></div>
    <div class="panel"><div class="panel-h"><h3>Most worn</h3></div>${most.length?most.map(i=>row(i,i.worn+' wear'+(i.worn>1?'s':'')+(i.price!=null?' · '+money(i.price/i.worn)+' per wear':''))).join(''):'<div class="li"><span class="hint">Log outfits to see your favourites.</span></div>'}</div>
    <div class="panel"><div class="panel-h"><h3>Cost per wear</h3></div>${cpw.length?cpw.slice(0,3).map(x=>row(x.it,'Best value: '+money(x.v)+' per wear')).join('')+cpw.slice(-2).reverse().filter(x=>!cpw.slice(0,3).includes(x)).map(x=>row(x.it,'Highest: '+money(x.v)+' per wear')).join(''):'<div class="li"><span class="hint">Add the price you paid in an item’s More details to see this. Price divided by times worn.</span></div>'}</div>
    <div class="panel"><div class="panel-h"><h3>Not worn in 90+ days</h3><span class="count">${idle.length}</span></div>${idle.slice(0,6).map(i=>row(i,i.lastWorn?'Last worn '+esc(i.lastWorn):'Never worn')).join('')||'<div class="li"><span class="done">Everything is in rotation.</span></div>'}</div>`);
-  setTimeout(hydrateCuts,0);
+  lazyPics($('#sheetRoot')); setTimeout(hydrateCuts,0);
 }
 
 /* ---------- share: the outfit as a 1080x1920 Story image ---------- */
@@ -2465,13 +2494,13 @@ function openLog(empty){
   const f=S.fits[S.sel]; const o=f&&!empty?hydrate(f.ids):null;
   LG={day:todayISO(),occ:S.occ,sel:new Set(o?coreOf(o).concat(o.acc).map(x=>x.id):[]),adding:!!empty}; LG.first=new Set(LG.sel); drawLog();
 }
-function drawLog(){
+function drawLog(){ setTimeout(hydrateCuts,0); // the picks show cut-outs (Phase 12)
   const items=allItems().filter(isActive); const groups=CATS.map(c=>[c,items.filter(i=>i.cat===c.id)]).filter(([c,l])=>l.length);
   openSheet(sheetHead(LG.edit?'Correct what I wore':'What I wore')+`
    <p class="hint">${LG.edit?'Shows what you logged. Tap pieces to add or remove them, then save. Wear counts are corrected.':LG.adding?'Tap what else you are wearing today, then log it.':'Starts with the outfit on screen. Tap pieces to add or remove them, then log.'}</p>
    ${LG.edit?'':`<div class="field"><span class="lab">Day</span><div class="chips"><button class="chip" data-lgday="${todayISO()}" aria-pressed="${LG.day===todayISO()}">Today</button><button class="chip" data-lgday="${yesterdayISO()}" aria-pressed="${LG.day===yesterdayISO()}">Yesterday</button></div></div>`}
    <div class="field"><span class="lab">Occasion</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.map(o=>`<button class="chip" data-lgocc="${o.id}" aria-pressed="${LG.occ===o.id}">${o.label}</button>`).join('')}</div></div>
-   ${groups.map(([c,l])=>`<div class="field"><span class="lab">${esc(c.label)}</span><div class="pickrow">${l.slice().sort((a,b)=>(LG.first.has(b.id)?1:0)-(LG.first.has(a.id)?1:0)).map(it=>`<button class="pick" data-lgit="${esc(it.id)}" aria-pressed="${LG.sel.has(it.id)}" aria-label="${esc(it.name)}"><span class="mini">${visual(it)}</span><span class="pn">${esc(it.name)}</span></button>`).join('')}</div></div>`).join('')}
+   ${groups.map(([c,l])=>`<div class="field"><span class="lab">${esc(c.label)}</span><div class="pickrow">${l.slice().sort((a,b)=>(LG.first.has(b.id)?1:0)-(LG.first.has(a.id)?1:0)).map(it=>`<button class="pick" data-lgit="${esc(it.id)}" aria-pressed="${LG.sel.has(it.id)}" aria-label="${esc(it.name)}"><span class="mini${it.cut||!thumbSrc(it)?' studio':''}">${smallPic(it)}</span><span class="pn">${esc(it.name)}</span></button>`).join('')}</div></div>`).join('')}
    <div class="row sheet-actions">${LG.edit?`<button class="btn primary" data-lgsave>${LG.sel.size?'Save changes':'Remove this log'}</button>`:`<button class="btn primary" data-lgsave ${LG.sel.size?'':'disabled'}>Log ${LG.sel.size} piece${LG.sel.size===1?'':'s'}</button>`}<button class="btn ghost" data-close>Cancel</button></div>`);
 }
 async function saveLog(){
@@ -2630,6 +2659,7 @@ document.addEventListener('click',async e=>{
     else { const z=+d.vzoom; z===0?viewerSet(1,0,0):zoomAt(VW.s*(z>0?1.5:1/1.5),0,0); } return; }
   const vw=e.target.closest('[data-view]'); if(vw&&!e.target.closest('button')){ openViewer(vw.dataset.view); return; }
   const t=e.target.closest('button,[data-scrim]'); if(!t) return;
+  if(t.dataset.sjump){ setJump(t.dataset.sjump,e.detail===0); return; }
   if(Date.now()-swiped<400 && t.closest('[data-swipe],.lb-track')) return;
   const ds=t.dataset;
   // camera overlay
