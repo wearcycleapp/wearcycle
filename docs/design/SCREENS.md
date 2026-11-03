@@ -6,7 +6,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Phase status (2026-10-31)
 
-Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01), Phase 12 row when it opened (2026-11-03). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01), Phase 12 row when it opened and at its release (2026-11-03). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
 
 | Phase | Status | Release on main |
 | --- | --- | --- |
@@ -22,7 +22,7 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 9 Closet and garment detail | Released 2026-10-31, v1.62.0 | 2fdc070 (v1.62.0) |
 | 10 Care | Released 2026-11-01, v1.63.0 (with it, Shop finished). Partly built before: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet | 6a7e2a5 (v1.58.0); c8e8e4a (v1.63.0) |
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
-| 12 Settings and other sheets | Open since 2026-11-03, with its screen freeze | |
+| 12 Settings and other sheets | Released 2026-11-03, v1.64.0 | f99ad4d |
 | 13 to 15 | Not started | |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
@@ -33,7 +33,7 @@ Between Phases 9 and 10, released on its own (owner, 2026-11-01): v1.62.1 stores
 
 Between Phases 10 and 12, released on its own (owner, 2026-11-01): v1.63.1, Add clothes no longer covers the version line's What's new link on a short Closet page (main b3aa762, 2026-11-03).
 
-Screen freeze while Phase 12 is open (owner, 2026-11-01): no feature work on Settings or any sheet until Phase 12 is released; other chats make bug fixes only. Scope (owner): the Settings sheet and every other sheet, including the newer ones: Language, Change password, Share my list, saved ideas, Possible duplicates, Inspiration from a photo, and the What's new page.
+Screen freeze while Phase 12 was open (owner, 2026-11-01): no feature work on Settings or any sheet until Phase 12 was released; other chats made bug fixes only. Lifted with the release of v1.64.0 (2026-11-03). Scope (owner): the Settings sheet and every other sheet, including the newer ones: Language, Change password, Share my list, saved ideas, Possible duplicates, Inspiration from a photo, and the What's new page.
 
 ## Screen personalities
 
@@ -294,6 +294,7 @@ Other sheets:
 - What is this?: colour buttons 40px (were 34px), the order badge 12px. Outfit diary: arrows and day buttons 44px.
 - Every other sheet (Language, Change password, Choose a new password, Add clothes, Adjust, Condition check, Custom palette, Weather, How Wearcycle decides, Delete my data, consent, Share my list, a saved idea, I have one, Possible duplicates, Inspiration from a photo and its result, Style today, Reminders, Decide, and the garment sheets' frame) changes only through the shared frame.
 - The What's new page (whats-new.html): the app's fonts (fonts/fonts.css) and colors, follows the app's Light or Dark choice (theme.js, the same three-state rule as the app), the logo and wordmark link back to the app, 44px language links.
+- Checked (Chromium build 1243, stubbed sign-in): tools/check.mjs against a v1.63.1 run in the same session, 23 pass and 1 expected fail (the exact diff: the 48 sheet views and the version line on Care at 1920); axe 0, English left 0, text cut 0, detector warnings 0. Worst case: text cut 0 (v1.63.1: the French Settings line twice). Harden: 381 sheet views in 7 languages at 360x800 and 1366x630 with a 73-character email, a 57-character place and 200 pieces, no overflow, cut text, small field or small control. Real data: live check on preview run 41654551979 (v1.64.0), success.
 
 ### Known issues fixed in this phase (v1.64.0)
 - The hard-coded `#ece8e2` behind the style pictures: now the cream canvas tokens.
