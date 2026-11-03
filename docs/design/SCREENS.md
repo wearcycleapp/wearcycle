@@ -6,7 +6,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Phase status (2026-10-31)
 
-Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01), Phase 12 row when it opened (2026-11-03). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
 
 | Phase | Status | Release on main |
 | --- | --- | --- |
@@ -22,13 +22,18 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 9 Closet and garment detail | Released 2026-10-31, v1.62.0 | 2fdc070 (v1.62.0) |
 | 10 Care | Released 2026-11-01, v1.63.0 (with it, Shop finished). Partly built before: v1.58.0 (2026-10-27) put the panels in urgency order, shows 3 pieces then "Show all N", and added the Decide sheet | 6a7e2a5 (v1.58.0); c8e8e4a (v1.63.0) |
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
-| 12 to 15 | Not started | |
+| 12 Settings and other sheets | Open since 2026-11-03, with its screen freeze | |
+| 13 to 15 | Not started | |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
 
 Screen freeze while Phase 10 was open (owner, 2026-11-01): no feature work on Care until Phase 10 was released. Lifted with the release of v1.63.0 (2026-11-01).
 
 Between Phases 9 and 10, released on its own (owner, 2026-11-01): v1.62.1 stores a 1024px copy with each photo (items.body.med); see Closet, Pictures.
+
+Between Phases 10 and 12, released on its own (owner, 2026-11-01): v1.63.1, Add clothes no longer covers the version line's What's new link on a short Closet page (main b3aa762, 2026-11-03).
+
+Screen freeze while Phase 12 is open (owner, 2026-11-01): no feature work on Settings or any sheet until Phase 12 is released; other chats make bug fixes only. Scope (owner): the Settings sheet and every other sheet, including the newer ones: Language, Change password, Share my list, saved ideas, Possible duplicates, Inspiration from a photo, and the What's new page.
 
 ## Screen personalities
 
