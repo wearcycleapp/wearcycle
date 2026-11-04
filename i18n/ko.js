@@ -1494,5 +1494,7 @@ I18N.load("ko",{
 "Let go": "떠나보내기",
 "Nothing needs attention right now.": "지금은 손볼 것이 없습니다.",
 "{0} pieces without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "배경을 제거하지 않은 아이템이 {0}개 있어요. 이 휴대폰에서 만들어요(AI 비용 없음). 처음에는 약 {1}MB를 받고, 그 뒤로는 아이템당 약 {2}~{3}초 걸려요.",
-"{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "배경을 제거하지 않은 아이템이 {0}개 있어요. 이 휴대폰에서 만들어요(AI 비용 없음). 처음에는 약 {1}MB를 받고, 그 뒤로는 아이템당 약 {2}~{3}초 걸려요."
+"{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "배경을 제거하지 않은 아이템이 {0}개 있어요. 이 휴대폰에서 만들어요(AI 비용 없음). 처음에는 약 {1}MB를 받고, 그 뒤로는 아이템당 약 {2}~{3}초 걸려요.",
+"Delete {0} photos?": "사진 {0}장을 삭제할까요?",
+"Delete {0} photo?": "사진 {0}장을 삭제할까요?"
 });

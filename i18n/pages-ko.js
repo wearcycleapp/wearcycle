@@ -105,5 +105,10 @@ I18N.add("ko",{
 "On phones, the Add clothes button no longer covers the What's new link at the bottom of an empty Closet.": "휴대폰에서 빈 옷장 아래쪽의 새로운 기능 링크를 옷 추가 버튼이 더 이상 가리지 않습니다.",
 "Settings is one calm list with group headings and switches; on tablets and computers it is wider, with its groups listed on the left.": "설정이 그룹별 제목과 스위치가 있는 차분한 목록 하나가 되었습니다. 태블릿과 컴퓨터에서는 더 넓어지고 왼쪽에 그룹 목록이 표시됩니다.",
 "Every panel that slides up now works with a keyboard and a screen reader, and tapping a text box no longer zooms in on iPhone and iPad.": "아래에서 열리는 모든 패널을 이제 키보드와 스크린 리더로 쓸 수 있고, iPhone과 iPad에서 입력란을 눌러도 화면이 확대되지 않습니다.",
-"What I wore and Closet stats show your cut-outs, and this page follows your light or dark choice.": "내가 입은 옷과 옷장 통계에 배경을 제거한 사진이 표시되고, 이 페이지는 라이트/다크 선택을 따릅니다."
+"What I wore and Closet stats show your cut-outs, and this page follows your light or dark choice.": "내가 입은 옷과 옷장 통계에 배경을 제거한 사진이 표시되고, 이 페이지는 라이트/다크 선택을 따릅니다.",
+"The sign-in page now shows an outfit laid out like in the app, with the language choice at the top; on tablets and computers the welcome and the form sit side by side.": "로그인 화면에 앱처럼 펼쳐 놓은 코디가 보이고 언어 선택이 위로 옮겨졌습니다. 태블릿과 컴퓨터에서는 환영 문구와 입력 양식이 나란히 놓입니다.",
+"In the camera, tips about light are no longer hidden behind it, Cancel asks before deleting the photos you took, and on a phone turned sideways the buttons move to the side.": "카메라에서 빛에 관한 안내가 더 이상 가려지지 않고, 취소는 찍은 사진을 삭제하기 전에 묻고, 휴대폰을 가로로 돌리면 버튼이 옆으로 이동합니다.",
+"The zoom view's Photo and Cut-out buttons are easy to read, and the camera and the zoom view work with a keyboard.": "확대 보기의 사진·배경 제거 이미지 버튼이 잘 보이고, 카메라와 확대 보기를 키보드로 사용할 수 있습니다.",
+"Progress messages are no longer cut off, What is this? shows the piece larger with its colors named, and buttons respond as soon as you tap them.": "진행 메시지가 더 이상 잘리지 않고, 이건 뭔가요?에서 옷이 더 크게 보이며 고른 색 이름이 표시되고, 버튼은 누르는 즉시 반응합니다.",
+"The card above outfits with one piece and the In the wash list show cut-outs instead of floor photos.": "한 아이템으로 만든 코디 위의 카드와 세탁 중 목록에 바닥 사진 대신 배경 제거 이미지가 표시됩니다."
 });

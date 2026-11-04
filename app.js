@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.64.0';
+const APP_VERSION='1.65.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -106,7 +106,9 @@ function cleanBodyWithId(it){ return Object.assign({id:it.id},cleanBody(it)); }
 // ms 0 keeps the message until it is closed (used for failures the person should read).
 // msg may be a list of sentences: each goes in its own text node, so each is translated by exact match.
 function toast(msg,ms){ const r=$('#toastRoot'); const txt=Array.isArray(msg)?msg.filter(Boolean).map(m=>`<span class="tp">${esc(m)}</span>`).join(' '):esc(msg);
-  r.innerHTML=ms===0?`<div class="toast sticky" role="alert"><span>${txt}</span><button type="button" class="toastx" data-toastx="1" aria-label="Close">${CLOSE_ICON}</button></div>`:`<div class="toast" role="status">${txt}</div>`; clearTimeout(toast.t); if(ms!==0) toast.t=setTimeout(()=>{r.innerHTML='';},ms||2800); }
+  r.innerHTML=ms===0?`<div class="toast sticky"><span>${txt}</span><button type="button" class="toastx" data-toastx="1" aria-label="Close">${CLOSE_ICON}</button></div>`:`<div class="toast">${txt}</div>`;
+  const ct=document.querySelector('#camRoot .cam .top:not([hidden])'); if(ct&&r.firstElementChild) r.firstElementChild.style.top=Math.round(ct.getBoundingClientRect().bottom+8)+'px'; // in the camera: just under its top bar, whatever its height (Phase 13)
+  clearTimeout(toast.t); if(ms!==0) toast.t=setTimeout(()=>{r.innerHTML='';},ms||2800); }
 
 /* ---------- glyphs and visuals ---------- */
 const GLYPH={
@@ -401,7 +403,7 @@ async function makeCut(it,onp){
 function needsCut(it){ return it&&!isEx(it)&&(it.photo||/^data:image/.test(it.thumb||''))&&(!it.cut||CUT.missing.has(it.id))&&isActive(it); }
 /* Background job bar (above the tab bar): shows long-running work without blocking the screen. */
 function job(text,pct){ const r=$('#jobRoot'); if(!r) return; document.body.classList.toggle('hasjob',!!text); if(!text){ r.innerHTML=''; return; }
-  r.innerHTML=`<div class="jobbar" role="status"><span class="spin" aria-hidden="true"></span><span class="jt">${esc(text)}</span>${pct!=null?`<span class="jp"><i style="width:${Math.max(4,Math.min(100,pct))}%"></i></span>`:''}</div>`; }
+  r.innerHTML=`<div class="jobbar"><span class="spin" aria-hidden="true"></span><span class="jt">${esc(text)}</span>${pct!=null?`<span class="jp" aria-hidden="true"><i style="width:${Math.max(4,Math.min(100,pct))}%"></i></span>`:''}</div>`; }
 // Cut-outs run one at a time from a queue, so adding more photos while it works simply extends the queue.
 CUT.queue=[];
 function makeCuts(list,opts){
@@ -495,13 +497,19 @@ window.addEventListener('popstate',()=>{
    zoomed. Shows the full photo when there is one (signed URL), with a switch to the cut-out. */
 const ZOOM_ICON='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.5-4.5M11 8v6M8 11h6"/></svg>';
 const VW={open:false,s:1,x:0,y:0,pts:new Map(),pinch:null,lastTap:0,mode:'photo',it:null};
+// A full-screen layer (camera, zoom viewer) over the app and any open sheet: everything behind it is inert while it is
+// open, and closing it gives the previous state back (a sheet keeps the app inert). Phase 13, as Phase 12 did for sheets.
+function layerOpen(){ const s={}; for(const id of ['appRoot','sheetRoot']){ const el=document.getElementById(id); if(el){ s[id]=el.inert; el.inert=true; } } return s; }
+function layerClose(s){ for(const [id,v] of Object.entries(s||{})){ const el=document.getElementById(id); if(el) el.inert=v; } }
+const ICON_MINUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>';
+const ICON_PLUS='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>';
 async function openViewer(id){
   const it=byId(id)||(ED&&ED.it); if(!it||!(it.photo||it.cut||thumbSrc(it)||(ED&&ED.preview))) return;
-  VW.open=true; VW.it=it; VW.opener=document.activeElement; VW.mode=it.photo||!it.cut||(ED&&ED.preview&&!id)?'photo':'cut'; guard();
-  $('#viewRoot').innerHTML=`<div class="viewer" role="dialog" aria-label="${esc(it.name||'')}"><div class="vtop"><b data-notr>${esc(it.name||'')}</b>${it.cut&&(it.photo||it.thumb)?`<div class="seg2 vseg"><button data-vmode="photo" aria-pressed="${VW.mode==='photo'}">Photo</button><button data-vmode="cut" aria-pressed="${VW.mode==='cut'}">Cut-out</button></div>`:''}<button class="iconbtn" data-vclose aria-label="Close">✕</button></div>
+  const again=VW.open; VW.open=true; VW.it=it; if(!again){ VW.opener=document.activeElement; VW.inert=layerOpen(); } VW.mode=it.photo||!it.cut||(ED&&ED.preview&&!id)?'photo':'cut'; guard();
+  $('#viewRoot').innerHTML=`<div class="viewer" role="dialog" aria-modal="true" aria-label="${esc(it.name||'')}"><div class="vtop"><b data-notr>${esc(it.name||'')}</b>${it.cut&&(it.photo||it.thumb)?`<div class="vseg"><button data-vmode="photo" aria-pressed="${VW.mode==='photo'}">Photo</button><button data-vmode="cut" aria-pressed="${VW.mode==='cut'}">Cut-out</button></div>`:''}<button class="iconbtn" data-vclose aria-label="Close">${CLOSE_ICON}</button></div>
     <div class="vstage" id="vStage"><img id="vImg" alt="${esc(it.name||'')}" draggable="false"><span class="hint" id="vLoad">Loading…</span></div>
-    <div class="vbar"><button class="iconbtn" data-vzoom="-1" aria-label="Zoom out">−</button><input type="range" id="vRange" min="100" max="600" step="10" value="100" aria-label="Zoom"><button class="iconbtn" data-vzoom="1" aria-label="Zoom in">+</button><button class="btn sm ghost" data-vzoom="0">Fit</button></div><p class="vnote" id="vNote" hidden>This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).</p></div>`;
-  document.body.style.overflow='hidden'; await viewerLoad(); bindViewer();
+    <div class="vbar"><button class="iconbtn" data-vzoom="-1" aria-label="Zoom out">${ICON_MINUS}</button><input type="range" id="vRange" min="100" max="600" step="10" value="100" aria-label="Zoom"><button class="iconbtn" data-vzoom="1" aria-label="Zoom in">${ICON_PLUS}</button><button class="btn ghost vfit" data-vzoom="0">Fit</button></div><p class="vnote" id="vNote" hidden>This photo has little detail of the piece. For a sharper view, retake it close up so the piece fills the frame (new photos are saved at higher resolution).</p></div>`;
+  document.body.style.overflow='hidden'; try{ $('#viewRoot [data-vclose]').focus({preventScroll:true}); }catch(e){} await viewerLoad(); bindViewer();
 }
 async function viewerLoad(){
   const it=VW.it, img=$('#vImg'); if(!img) return; let u=''; VW.full=false;
@@ -545,42 +553,53 @@ function bindViewer(){
   st.addEventListener('wheel',e=>{ e.preventDefault(); const [px,py]=rel(e); zoomAt(VW.s*(e.deltaY<0?1.15:1/1.15),px,py); },{passive:false});
   const r=$('#vRange'); if(r) r.oninput=()=>zoomAt(r.value/100,0,0);
 }
-function closeViewer(){ VW.open=false; VW.pts.clear(); VW.pinch=null; $('#viewRoot').innerHTML=''; if(!$('#sheetRoot').innerHTML) document.body.style.overflow='';
+function closeViewer(){ VW.open=false; VW.pts.clear(); VW.pinch=null; $('#viewRoot').innerHTML=''; if(!$('#sheetRoot').innerHTML) document.body.style.overflow=''; layerClose(VW.inert); VW.inert=null;
   const o=VW.opener; VW.opener=null; if(o&&o.isConnected&&o.focus) o.focus({preventScroll:true}); } // back to the picture that opened it (Phase 10: keyboard)
 function openCamera(mode){
   guard();
   return new Promise(resolve=>{
-    CAM.mode=mode; CAM.shots=[]; CAM.resolve=resolve; CAM.darkTold=false;
+    CAM.mode=mode; CAM.shots=[]; CAM.resolve=resolve; CAM.darkTold=false; CAM.ask=false;
+    CAM.opener=document.activeElement; CAM.inert=layerOpen();
     // Photo tips (v1.58.2, owner 2026-10-28): shown before the first batch on each device, and from Tips on the camera.
     CAM.tips=mode==='batch'&&!LS.get('wearcycle.camTips');
     drawCamera(); if(!CAM.tips) startStream();
   });
 }
 const CAM_CHECK='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg>';
+const TIP_ICON={ // drawn like the app's other icons (24px, 1.8 stroke)
+  light:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/></svg>',
+  plain:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="4" y="5" width="16" height="14" rx="2"/></svg>',
+  whole:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>',
+  one:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8l3-2v12"/></svg>'};
 function camTipsHtml(){
-  const tip=(ic,b,t)=>`<li><span class="ic" aria-hidden="true">${ic}</span><span><b>${b}</b><span>${t}</span></span></li>`;
+  const tip=(ic,b,t)=>`<li><span class="ic" aria-hidden="true">${TIP_ICON[ic]}</span><span><b>${b}</b><span>${t}</span></span></li>`;
   return `<div class="camtips"><h2>Before you start</h2><ul>
-    ${tip('☀','Good light','Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.')}
-    ${tip('▭','Plain background','A bed, floor or wall in one color, different from the piece.')}
-    ${tip('⤢','The whole piece','Laid flat and spread out, filling most of the frame, so it is easy to recognize.')}
-    ${tip('1','One piece per photo','Take the next piece in a new photo, then tap Done.')}</ul>
+    ${tip('light','Good light','Near a window in daytime, or under a bright lamp. If your phone has a light, the light button helps.')}
+    ${tip('plain','Plain background','A bed, floor or wall in one color, different from the piece.')}
+    ${tip('whole','The whole piece','Laid flat and spread out, filling most of the frame, so it is easy to recognize.')}
+    ${tip('one','One piece per photo','Take the next piece in a new photo, then tap Done.')}</ul>
     <button class="btn primary camgo" data-cam="tipsok">Start taking photos</button></div>`; }
 function camDoneInner(){ const n=CAM.shots.length; return (n?`<img src="${CAM.lastUrl}" alt="">`:'')+CAM_CHECK+`<span>${n?I18N.tr(`Done (${n})`):I18N.tr('Done')}</span>`; }
 function drawCamera(msg){
   const last=CAM.shots[CAM.shots.length-1], n=CAM.shots.length;
   if(CAM.tips) msg=camTipsHtml();
-  $('#camRoot').innerHTML=`<div class="cam" role="dialog" aria-label="Camera">
+  const had=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('#camRoot')?document.activeElement.dataset.cam:null;
+  $('#camRoot').innerHTML=`<div class="cam${CAM.ask?' asking':''}" role="dialog" aria-modal="true" aria-label="Camera">
     ${msg?`<div class="msg">${msg}</div>`:`<video id="camVideo" playsinline muted autoplay></video><div class="guide" aria-hidden="true"></div><div class="flash" id="camFlash"></div>`}
     <div class="top"${CAM.tips?' hidden':''}><span>${CAM.mode==='batch'?'Good light · plain background · whole piece':CAM.mode==='look'?'Fit the whole outfit in the frame':'Fill the frame with the item'}</span>
-      <span class="camtools">${CAM.mode==='batch'&&!CAM.tips?'<button class="side camtipbtn" data-cam="tips">Tips</button>':''}<button class="side" data-cam="torch" id="camTorch" ${CAM.torchOk||CAM.torchMaybe?'':'hidden'} aria-pressed="${!!CAM.torchOn}" style="width:44px;height:36px" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
-      <button class="side" data-cam="flip" style="width:44px;height:36px" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></span></div>
-    ${CAM.mode==='batch'&&!msg?`<div class="camhint" id="camHint" role="status" aria-live="polite">${n?`Photo ${n} saved. Next piece, or tap Done to add them.`:''}</div>`:''}
+      <span class="camtools">${CAM.mode==='batch'&&!CAM.tips?'<button class="side camtipbtn" data-cam="tips">Tips</button>':''}<button class="side ib" data-cam="torch" id="camTorch" ${CAM.torchOk||CAM.torchMaybe?'':'hidden'} aria-pressed="${!!CAM.torchOn}" aria-label="Flashlight" title="Flashlight"><svg width="20" height="20" viewBox="0 0 24 24" fill="${CAM.torchOn?'currentColor':'none'}" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></button>
+      <button class="side ib" data-cam="flip" aria-label="Switch camera"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 9h13l-4-4M20 15H7l4 4"/></svg></button></span></div>
+    ${CAM.mode==='batch'&&!msg?`<div class="camhint" id="camHint" role="status" aria-live="polite">${CAM.ask?'':n?`Photo ${n} saved. Next piece, or tap Done to add them.`:''}</div>`:''}
+    ${CAM.ask?`<div class="camask" role="alertdialog" aria-labelledby="camAskT"><p id="camAskT">${n===1?'Delete 1 photo?':`Delete ${n} photos?`}</p><div class="row"><button class="btn danger" data-cam="discard">Delete</button><button class="btn" data-cam="keep">Keep</button></div></div>`:''}
     <div class="bar">
       <button class="side" data-cam="cancel">Cancel</button>
       ${msg?'<span></span>':'<button class="shutter" data-cam="shoot" aria-label="Take photo"></button>'}
       ${CAM.mode==='batch'&&CAM.tips?'<span class="side" style="border:0"></span>':CAM.mode==='batch'?`<button class="side camdone${n?' ready':''}" data-cam="done" ${n&&!CAM.tips?'':'disabled'}>${camDoneInner()}</button>`:'<span class="side" style="border:0"></span>'}
     </div></div>`;
   if(!msg && CAM.stream){ const v=$('#camVideo'); v.srcObject=CAM.stream; v.play().catch(()=>{}); }
+  // focus: the confirmation's Keep, the tips' Start, else the control that had it, else the shutter
+  const f=CAM.ask?$('#camRoot [data-cam="keep"]'):CAM.tips?$('#camRoot [data-cam="tipsok"]'):(had&&$(`#camRoot [data-cam="${had}"]`))||$('#camRoot [data-cam="shoot"]')||$('#camRoot [data-cam="gallery"]')||$('#camRoot [data-cam="cancel"]');
+  if(f) try{ f.focus({preventScroll:true}); }catch(e){}
 }
 async function startStream(){
   stopStream();
@@ -655,7 +674,11 @@ function cameraFallback(text){
   drawCamera(`<p>${text}</p><button class="btn primary" data-cam="gallery">Choose photos instead</button>`);
 }
 function stopStream(){ if(CAM.stream){ CAM.stream.getTracks().forEach(t=>t.stop()); CAM.stream=null; } }
-function closeCamera(result){ stopStream(); $('#camRoot').innerHTML=''; const r=CAM.resolve; CAM.resolve=null; if(r) r(result||[]); }
+function closeCamera(result){ stopStream(); $('#camRoot').innerHTML=''; CAM.ask=false; layerClose(CAM.inert); CAM.inert=null; const o=CAM.opener; CAM.opener=null;
+  if(o&&o.isConnected&&!o.closest('[inert]')) try{ o.focus({preventScroll:true}); }catch(e){}
+  const r=CAM.resolve; CAM.resolve=null; if(r) r(result||[]); }
+// Cancel (or Escape) with photos taken asks first (Phase 13; before, it kept them as Done does). Leaving the app still keeps them.
+function camCancel(){ if(CAM.mode==='batch'&&CAM.shots.length&&!CAM.ask){ CAM.ask=true; drawCamera(); return; } closeCamera([]); }
 async function shoot(){
   const v=$('#camVideo'); if(!v||!v.videoWidth||CAM.busy) return; CAM.busy=true;
   const cv=drawScaled(v,2560); const br=brighten(cv);
@@ -813,7 +836,7 @@ function notPickedReason(it,occs){
   return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+'; other pieces score higher'+(neg?'. Best outfit with it: '+neg.charAt(0).toLowerCase()+neg.slice(1):'')+'.';
 }
 function pinCard(){ const it=S.pin&&byId(S.pin); if(!it) return '';
-  return `<div class="pincard"><span class="pv">${visual(it)}</span><div class="txt"><b>Outfits with <span data-notr>${esc(it.name)}</span></b><span>${esc(pinWhy(it))}</span></div><button class="iconbtn" data-unpin aria-label="Show all outfits">✕</button></div>`; }
+  return `<div class="pincard"><span class="pv${it.cut||!thumbSrc(it)?' studio':''}">${smallPic(it)}</span><div class="txt"><b>Outfits with <span data-notr>${esc(it.name)}</span></b><span>${esc(pinWhy(it))}</span></div><button class="iconbtn" data-unpin aria-label="Show all outfits">✕</button></div>`; }
 function pinSee(id){ const it=byId(id); if(!it) return; S.pin=id; const occs=effectiveOccasions(it);
   if(occs.length&&!occs.includes(S.occ)){ S.occ=occs[0]; S.theme=undefined; } S.sel=0; S.seed=0; S.fitKey=''; closeSheet(); goTab('outfits'); renderOutfits(); window.scrollTo(0,0); }
 function regenerate(){
@@ -1300,9 +1323,9 @@ function renderCloset(){ setTimeout(refreshDupRow,0);
   if(!items.length){ box.innerHTML=S.loaded?emptyCloset():'<p class="hint">Loading…</p>'; return; }
   if(S.cat==='laundry'){ const ds=items.filter(i=>i.dirty);
     box.innerHTML=`<div class="panel"><div class="panel-h"><h3>In the wash</h3><span class="count">${ds.length}</span><span class="spacer"></span><button class="btn sm primary" data-act="allClean">Mark all clean</button></div>
-      ${ds.map(it=>`<div class="li">${thumbBox(it)}<div class="txt"><b>${esc(it.name)}</b><span>Worn ${it.wearsSinceWash||1} time${(it.wearsSinceWash||1)===1?'':'s'} since washing${it.lastWorn?', last on '+esc(it.lastWorn):''}</span></div><div class="acts"><button class="btn sm" data-clean="${esc(it.id)}">Clean</button></div></div>`).join('')}</div>
+      ${ds.map(it=>`<div class="li">${carePic(it)}<div class="txt"><b>${esc(it.name)}</b><span>Worn ${it.wearsSinceWash||1} time${(it.wearsSinceWash||1)===1?'':'s'} since washing${it.lastWorn?', last on '+esc(it.lastWorn):''}</span></div><div class="acts"><button class="btn sm" data-clean="${esc(it.id)}">Clean</button></div></div>`).join('')}</div>
       <p class="hint" style="margin-top:10px">Pieces in the wash are left out of outfit suggestions. Change how often a piece needs washing in its More details.</p>`;
-    setTimeout(hydrateCuts,0); return; }
+    lazyPics(box); setTimeout(hydrateCuts,0); return; }
   const list=items.filter(it=>S.cat==='all'||it.cat===S.cat).sort((a,b)=>(b.review?1:0)-(a.review?1:0)||CATS.findIndex(c=>c.id===a.cat)-CATS.findIndex(c=>c.id===b.cat)||String(a.name).localeCompare(b.name));
   const now=Date.now(); const reviews=items.filter(i=>i.review).length;
   box.innerHTML='<div id="dupRow"></div>'+(reviews?`<div class="row" style="margin:0 0 12px"><p class="hint" style="margin:0;flex:1;min-width:200px">${reviews} item${reviews>1?'s':''} marked <span class="ex">Review</span>: check what was filled in automatically. Open any item to correct it, or confirm them all.</p><button class="btn sm primary" data-act="confirmAll" ${S.busy?'disabled':''}>Confirm all ${reviews}</button></div>`:'')+
@@ -1342,9 +1365,6 @@ function sharpen(img,it){ if(!it.photo||isEx(it)||!sb) return;
     const r=img.getBoundingClientRect(), fit=getComputedStyle(img).objectFit, need=Math.ceil((fit==='cover'?Math.max(r.width,r.height):Math.min(r.width,r.height))*(window.devicePixelRatio||1));
     if(k<=4.4||img.dataset.boxed) medUrl(it,!!img.dataset.boxed,need).then(set); else fullPhotoUrl(it.photo).then(set); };
   if(img.complete&&img.naturalWidth) go(); else img.addEventListener('load',go,{once:true}); }
-// Small picture in lists (Care, Shop, history). With a photo, tapping it opens the full-size zoom viewer.
-function thumbBox(it){ const pic=thumbSrc(it)||it.photo||it.cut;
-  return `<div class="thumb${pic?' zoomable':''}"${pic?` data-view="${esc(it.id)}" role="button" aria-label="See full size"`:''}>${thumbSrc(it)?`<img src="${esc(thumbSrc(it))}" alt="">`:glyph(it)}${pic?`<span class="zoomhint sm" aria-hidden="true">${ZOOM_ICON}</span>`:''}</div>`; }
 // Long Care lists (v1.58.0, owner 2026-10-27): the first 3 pieces, then "Show all N" opens the rest in place;
 // the open state lasts for the session, like the Shop folds.
 S.careOpen=new Set();
@@ -2128,8 +2148,8 @@ function privacyCheck(){
     <li>Data processed in another country can be accessed by that country's courts and authorities under its laws.</li>
     <li>You can download or delete everything, or turn AI features off, at any time in Settings.</li></ul>
    <p class="hint"><a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">Read the full privacy notice</a></p>
-   <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn ghost" data-act="privacyNoClaude">Agree, but turn AI features off</button></div>
-   <p class="hint">Without AI features, you set each piece's category, colors and occasions yourself, about 20 seconds per piece. Outfits are only as good as those details.</p>`);
+   <p class="hint">Without AI features, you set each piece's category, colors and occasions yourself, about 20 seconds per piece. Outfits are only as good as those details.</p>
+   <div class="row sheet-actions" style="flex-direction:column;align-items:stretch"><button class="btn primary" data-act="privacyOk">I agree</button><button class="btn" data-act="privacyNoClaude">Agree, but turn AI features off</button></div>`);
 }
 function privacyAgree(claude){ S.settings.consent={v:PRIVACY_V,at:new Date().toISOString(),how:'notice'}; if(!claude) S.settings.claude=false;
   saveCache(); queueSettingsSave(); closeSheet(); toast(claude?'Thanks. You can change this in Settings.':'AI features are off. When you add clothes, you will set their category, colors and occasions. Turn them on any time in Settings.',6000); }
@@ -2204,14 +2224,16 @@ function quickStep(){
   const id=QD.ids[QD.i]; const src=id&&byId(id); if(!src){ closeSheet(); toast('Done. Open any piece in Closet to add more details, like dress level and condition.',5000); return; }
   if(!(QD.it&&QD.it.id===id)){ QD.it=JSON.parse(JSON.stringify(src)); if(/^New item \d+$/.test(QD.it.name||'')) QD.it.cat=null; } const it=QD.it;
   const garment=!it.cat||GARMENT.includes(it.cat);
+  const cols=it.colors||[];
   openSheet(sheetHead('What is this?')+`<p class="hint" style="margin-top:-4px">${QD.i+1} of ${QD.ids.length} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.</p>
-   <div class="qd"><div class="pv">${visual(it)}</div><div class="field" style="flex:1;margin:0"><label for="qd-name">Name (optional)</label><input type="text" id="qd-name" value="${/^New item \d+$/.test(it.name)?'':esc(it.name)}" placeholder="e.g. Navy flannel shirt" maxlength="60">${I18N.lang==='en'?'<span class="hint">Words like flannel, hoodie or linen help Wearcycle guess style and warmth.</span>':''}</div></div>
+   <div class="qd"><div class="qdpic">${carePic(it)}</div><div class="qdfields"><div class="field qdname"><label for="qd-name">Name (optional)</label><input type="text" id="qd-name" value="${/^New item \d+$/.test(it.name)?'':esc(it.name)}" placeholder="e.g. Navy flannel shirt" maxlength="60">${I18N.lang==='en'?'<span class="hint">Words like flannel, hoodie or linen help Wearcycle guess style and warmth.</span>':''}</div>
    <div class="field"><span class="lab">Category</span><div class="chips" style="flex-wrap:wrap">${QD_CATS.map(c=>`<button type="button" class="chip" data-qdcat="${c}" aria-pressed="${it.cat===c}">${CAT[c].label}</button>`).join('')}</div></div>
-   <div class="field"><span class="lab">Colors · main color first</span>${(it.colorGuess||[]).length?`<div class="chips" style="flex-wrap:wrap;margin:0 0 8px"><span class="hint" style="align-self:center">Looks like:</span>${it.colorGuess.map(k=>`<button type="button" class="chip" data-qdcol="${k}" aria-pressed="${(it.colors||[]).includes(k)}"><span class="sw" style="background:${COLORS[k].hex}"></span>${k}</button>`).join('')}</div>`:''}<div class="colors">${Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-qdcol="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('')}</div></div>
+   <div class="field"><span class="lab">Colors · main color first</span>${(it.colorGuess||[]).length?`<div class="chips" style="flex-wrap:wrap;margin:0 0 8px"><span class="hint" style="align-self:center">Looks like:</span>${it.colorGuess.map(k=>`<button type="button" class="chip" data-qdcol="${k}" aria-pressed="${(it.colors||[]).includes(k)}"><span class="sw" style="background:${COLORS[k].hex}"></span>${k}</button>`).join('')}</div>`:''}<div class="colors">${Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-qdcol="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('')}</div>${cols.length?`<p class="qdcols">${cols.map((k,i)=>`<span class="qdc"><span class="sw" style="background:${COLORS[k].hex}"></span><b>${i+1}</b><span>${k}</span></span>`).join('')}</p>`:''}</div>
    ${garment||['belt','watch','hat','bag','socks'].includes(it.cat)?`<div class="field"><span class="lab">Where would you wear it?</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.filter(o=>o.id!=='work'&&o.id!=='formal').map(o=>`<button type="button" class="chip" data-qdocc="${o.id}" aria-pressed="${(it.occ||[]).includes(o.id)}">${o.label}</button>`).join('')}</div>
-     <p class="hint">Work and Formal follow your dress code automatically; change them in the piece's details.</p></div>`:''}
+     <p class="hint">Work and Formal follow your dress code automatically; change them in the piece's details.</p></div>`:''}</div></div>
    <p class="err" id="qd-err"></p>
-   <div class="row sheet-actions"><button class="btn primary" data-qd="save">${QD.i+1<QD.ids.length?'Save and next':'Save'}</button><button class="btn ghost" data-qd="skip">Skip for now</button></div>`);
+   <div class="row sheet-actions"><button class="btn primary" data-qd="save">${QD.i+1<QD.ids.length?'Save and next':'Save'}</button><button class="btn ghost" data-qd="skip">Skip for now</button></div>`,'qdsheet');
+  lazyPics($('#sheetRoot')); setTimeout(hydrateCuts,0);
 }
 async function quickSave(){
   const it=QD.it; if(!it.cat){ $('#qd-err').textContent='Pick a category.'; return; }
@@ -2668,7 +2690,9 @@ document.addEventListener('click',async e=>{
     else if(ds.cam==='done') closeCamera(CAM.shots);
     else if(ds.cam==='tipsok'){ LS.set('wearcycle.camTips',true); CAM.tips=false; drawCamera(); if(!CAM.stream) startStream(); }
     else if(ds.cam==='tips'){ CAM.tips=true; drawCamera(); }
-    else if(ds.cam==='cancel') closeCamera(CAM.mode==='batch'?CAM.shots:[]);
+    else if(ds.cam==='cancel') camCancel();
+    else if(ds.cam==='discard') closeCamera([]);
+    else if(ds.cam==='keep'){ CAM.ask=false; drawCamera(); }
     else if(ds.cam==='flip'){ CAM.facing=CAM.facing==='environment'?'user':'environment'; startStream(); }
     else if(ds.cam==='torch') setTorch(!CAM.torchOn);
     else if(ds.cam==='gallery'&&CAM.mode==='look'){ const r=CAM.resolve; CAM.resolve=null; stopStream(); $('#camRoot').innerHTML=''; r(await pickFiles(false)); }
@@ -2714,7 +2738,7 @@ document.addEventListener('click',async e=>{
   if(ds.wx){ wxAction(ds.wx); return; }
   if(t.id==='addBtn'){ if(S.busy) toast('Still adding the last batch…'); else openAddMenu(); return; }
   if(t.id==='rulesBtn'||t.id==='railSettings'){ openSettings(); return; }
-  if(t.id==='langBtn'||t.id==='railLang'){ openLangs(); return; }
+  if(t.id==='langBtn'||t.id==='railLang'||t.id==='g-langbtn'){ openLangs(); return; }
   if(ds.ideaSave!=null){ const last=S.settings.ideas; const list=ideasState.list||(last&&last.list)||[]; const x=list[+ds.ideaSave]; if(!x) return;
     const sv=S.settings.savedIdeas||[]; const i=sv.findIndex(y=>ideaKey(y)===ideaKey(x));
     S.settings.savedIdeas=i>=0?sv.filter((_,j)=>j!==i):[{id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),item:x.item,color:x.color||'',occasion:x.occasion||'',pairsWith:(x.pairsWith||[]).slice(0,3),why:x.why||'',at:new Date().toISOString()}].concat(sv).slice(0,40);
@@ -2904,14 +2928,21 @@ document.addEventListener('keydown',e=>{ if((e.key==='ArrowLeft'||e.key==='Arrow
     document.querySelector(dot?'.dot[aria-current="true"]':'.look.cur [data-swap]')?.focus({preventScroll:true}); } } });
 document.addEventListener('keydown',e=>{ const v=e.target&&e.target.closest&&e.target.closest('[data-view][role="button"][tabindex]');
   if(v&&(e.key==='Enter'||e.key===' ')){ e.preventDefault(); openViewer(v.dataset.view); } });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(VW.open) history.back(); else if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]); else if($('#sheetRoot').innerHTML) closeSheet(); } }); // the zoom viewer closes as its ✕ does
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){ if(VW.open) history.back(); else if(CAM.resolve){ if(CAM.ask){ CAM.ask=false; drawCamera(); } else camCancel(); } else if($('#sheetRoot').innerHTML) closeSheet(); } }); // the zoom viewer closes as its close button does; the camera as Cancel does
 window.addEventListener('online',()=>{ S.online=true; renderAll(); if(sb&&UID) loadRemote(); });
 window.addEventListener('offline',()=>{ S.online=false; renderAll(); });
 window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); S.installEvt=e; if(UID) renderStatus(); });
 window.addEventListener('appinstalled',()=>{ S.installEvt=null; if(UID){ renderStatus(); toast('Wearcycle is installed. Open it from its home-screen icon.',6000); } });
 
 /* ---------- setup and sign-in screens ---------- */
-function showGate(html){ $('#appRoot').hidden=true; const g=$('#gate'); g.hidden=false; g.innerHTML=`<div class="brandrow"><img class="logo" src="icons/logo-icon.svg" alt="" width="52" height="52"><div class="brand">Wearcycle<small>WEAR · CARE · DONATE · BUY</small></div></div>`+html; }
+function showGate(html,cls){ $('#appRoot').hidden=true; const g=$('#gate'); g.hidden=false; g.className='gate'+(cls?' '+cls:'');
+  g.innerHTML=`<div class="brandrow"><img class="logo" src="icons/logo-icon.svg" alt="" width="52" height="52"><div class="brand">Wearcycle<small>WEAR · CARE · DONATE · BUY</small></div><button type="button" class="langbtn" id="g-langbtn" aria-label="Language">${GLOBE_ICON}<span class="ln" data-notr>${esc(langName(I18N.lang))}</span></button></div>`+html; }
+/* Sign-in and welcome (Phase 13, the brand moment): an outfit laid out on the cream canvas, drawn with the app's own
+   garment pictures (the ones a piece shows before it has a photo), so the first screen shows what Wearcycle does with
+   clothes. Decorative: hidden from screen readers; the headline and the list say it in words. */
+function gateBoard(){ const p=[['outerwear','navy'],['top','white'],['bottom','khaki'],['shoes','brown'],['belt','brown'],['watch','grey'],['hat','beige']].map(([cat,c])=>({id:'gate-'+cat,cat,colors:[c],name:''}));
+  const o={outer:p[0],top:p[1],bottom:p[2],shoes:p[3],acc:p.slice(4)};
+  return `<div class="flatlay gateboard" aria-hidden="true">${flCells(o).map(c=>`<span class="fl${c.small?' small':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${glyph(c.it)}</span>`).join('')}</div>`; }
 function showSetup(again){
   showGate(`<div class="card2"><h3>Connect your database</h3>
     <p class="hint">Paste the two values from your Supabase project (Project Settings, then API Keys). Both are safe to keep on this device. Never paste a secret key here.</p>
@@ -2940,20 +2971,20 @@ function pwCheck(a,b){ if(a.length<8) return 'Use at least 8 characters.'; if(a!
 function showLogin(msg,mode){
   mode=mode||'up';
   const up=mode==='up', reset=mode==='reset';
-  showGate(`<div class="welcome"><h1>Get dressed in seconds.</h1>
-    <p>Photograph your clothes once. Every day, Wearcycle lays out the best outfit from your own closet, for the weather and the occasion, and tells you what to repair, donate or buy.</p>
-    <ul class="perks"><li>Ranked outfits with a reason for each</li><li>Flat-lay view of every look</li><li>Care, donate and shopping lists from what you own</li></ul></div>
-   <div class="card2"><div class="seg2" role="tablist"><button role="tab" aria-selected="${up}" id="g-mode-up">Create account</button><button role="tab" aria-selected="${!up}" id="g-mode-in">Sign in</button></div>
+  showGate(`<section class="welcome"><h1>Get dressed in seconds.</h1>
+    <div class="wpair">${gateBoard()}<p>Photograph your clothes once. Every day, Wearcycle lays out the best outfit from your own closet, for the weather and the occasion, and tells you what to repair, donate or buy.</p></div></section>
+   <section class="card2 gform"><div class="gmode" role="group"><button type="button" aria-pressed="${up}" id="g-mode-up">Create account</button><button type="button" aria-pressed="${!up}" id="g-mode-in">Sign in</button></div>
     <div class="field"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email"></div>
     ${reset?'':pwField('g-pass',up?'Password (8+ characters)':'Password',up?'new-password':'current-password')}
     ${up?pwField('g-pass2','Confirm password','new-password'):''}
     ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
       :`<p class="hint">How your data is handled: <a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">privacy notice</a>.</p>`}
-    <p class="err" id="g-err">${esc(msg||'')}</p>
-    ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back" style="margin:0">Back to sign in</button>'
-      :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'':'<button class="linkbtn" id="g-forgot" style="margin:0">Forgot password?</button>'}`}
-</div>
-    ${FIXED_SERVER?'':'<button class="btn ghost sm" id="g-server" style="align-self:flex-start">Server settings</button>'}<div class="row" style="justify-content:space-between;align-items:center"><p class="hint">Wearcycle v${APP_VERSION}</p>${langSelect('g-lang')}</div>`);
+    <p class="err" id="g-err" role="alert">${esc(msg||'')}</p><p class="gnote" id="g-note" role="status"></p>
+    ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back">Back to sign in</button>'
+      :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'':'<button class="linkbtn" id="g-forgot">Forgot password?</button>'}`}
+    <div class="gfoot"><p class="hint">Wearcycle v${APP_VERSION}</p>${FIXED_SERVER?'':'<button class="btn ghost sm" id="g-server">Server settings</button>'}</div></section>
+   <ul class="perks"><li>Ranked outfits with a reason for each</li><li>Flat-lay view of every look</li><li>Care, donate and shopping lists from what you own</li></ul>`,'login');
+  const note=t=>{ $('#g-err').textContent=''; $('#g-note').textContent=t; }; // confirmations are not errors
   const creds=()=>({email:$('#g-email').value.trim(),password:($('#g-pass')||{}).value||''});
   $('#g-mode-up').onclick=()=>showLogin('','up'); $('#g-mode-in').onclick=()=>showLogin('','in');
   if($('#g-in')) $('#g-in').onclick=async()=>{ const c=creds(); if(!c.email||!c.password){ $('#g-err').textContent='Enter your email and password.'; return; }
@@ -2965,11 +2996,11 @@ function showLogin(msg,mode){
     try{ localStorage.setItem('wearcycle.consent',new Date().toISOString()); }catch(e){}
     $('#g-up').disabled=true; const {data,error}=await sb.auth.signUp({email:c.email,password:c.password,options:{emailRedirectTo:location.origin+location.pathname}}); if($('#g-up')) $('#g-up').disabled=false;
     if(error){ $('#g-err').textContent=/not allowed|disabled/i.test(error.message)?'New accounts are not open yet. If someone created an account for you, use the Sign in tab.':error.message; return; }
-    if(!data.session) $('#g-err').textContent='Almost there: open the confirmation email, tap the link, then sign in here.'; };
+    if(!data.session) note('Almost there: open the confirmation email, tap the link, then sign in here.'); };
   if($('#g-forgot')) $('#g-forgot').onclick=()=>showLogin('','reset');
   if($('#g-back')) $('#g-back').onclick=()=>showLogin('','in');
   if($('#g-reset')) $('#g-reset').onclick=async()=>{ const e=$('#g-email').value.trim(); if(!e){ $('#g-err').textContent='Enter your email.'; return; }
-    const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}); $('#g-err').textContent=error?error.message:'If that email has an account, a reset link is on its way.'; };
+    const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}); if(error) $('#g-err').textContent=error.message; else note('If that email has an account, a reset link is on its way.'); };
   if($('#g-server')) $('#g-server').onclick=()=>showSetup(true);
 }
 // After a reset link (no current password is known) or from Settings (current password required).

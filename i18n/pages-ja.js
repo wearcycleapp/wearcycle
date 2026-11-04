@@ -105,5 +105,10 @@ I18N.add("ja",{
 "On phones, the Add clothes button no longer covers the What's new link at the bottom of an empty Closet.": "スマートフォンで、空のクローゼットの下にある「新機能」リンクが「服を追加」ボタンで隠れなくなりました。",
 "Settings is one calm list with group headings and switches; on tablets and computers it is wider, with its groups listed on the left.": "設定が、グループごとの見出しとスイッチのある落ち着いた1つのリストになりました。タブレットとパソコンでは幅が広くなり、左側にグループの一覧が表示されます。",
 "Every panel that slides up now works with a keyboard and a screen reader, and tapping a text box no longer zooms in on iPhone and iPad.": "下から開くすべてのパネルがキーボードとスクリーンリーダーで使えるようになり、iPhoneとiPadで入力欄をタップしても画面が拡大されなくなりました。",
-"What I wore and Closet stats show your cut-outs, and this page follows your light or dark choice.": "「着たもの」と「クローゼットの統計」に切り抜きが表示され、このページはライトまたはダークの選択に従います。"
+"What I wore and Closet stats show your cut-outs, and this page follows your light or dark choice.": "「着たもの」と「クローゼットの統計」に切り抜きが表示され、このページはライトまたはダークの選択に従います。",
+"The sign-in page now shows an outfit laid out like in the app, with the language choice at the top; on tablets and computers the welcome and the form sit side by side.": "ログイン画面に、アプリと同じように並べたコーデが表示され、言語の選択が上に移りました。タブレットとパソコンでは、ようこその案内とフォームが横に並びます。",
+"In the camera, tips about light are no longer hidden behind it, Cancel asks before deleting the photos you took, and on a phone turned sideways the buttons move to the side.": "カメラで明るさのヒントが隠れなくなり、キャンセルは撮った写真を削除する前に確認し、スマホを横にするとボタンが横に移ります。",
+"The zoom view's Photo and Cut-out buttons are easy to read, and the camera and the zoom view work with a keyboard.": "拡大表示の「写真」と「切り抜き」ボタンが読みやすくなり、カメラと拡大表示をキーボードで操作できるようになりました。",
+"Progress messages are no longer cut off, What is this? shows the piece larger with its colors named, and buttons respond as soon as you tap them.": "進行状況のメッセージが途中で切れなくなり、「これは何？」でアイテムが大きく表示されて選んだ色の名前も出るようになり、ボタンはタップした瞬間に反応します。",
+"The card above outfits with one piece and the In the wash list show cut-outs instead of floor photos.": "1つのアイテムを使ったコーデの上のカードと「洗濯中」の一覧で、床の写真ではなく切り抜きが表示されます。"
 });

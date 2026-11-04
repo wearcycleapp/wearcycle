@@ -61,6 +61,15 @@ h3{font-size:15px;font-weight:700;margin:0}
 .iconbtn svg{width:18px;height:18px}
 .iconbtn.round{width:40px;height:40px;border-radius:999px}
 .linkbtn{display:block;margin:6px 14px 14px;padding:8px 0;border:0;background:none;color:var(--muted);font-size:13.5px;text-decoration:underline;text-underline-offset:3px;text-align:left}
+/* Press feedback (Phase 13, mobile-native): the tap highlight is off (body), so every control shows its own pressed
+   state, at once (a colour change, no movement, so it holds under reduced motion). Controls do not select their label on
+   a long press and do not wait for a double tap. */
+button,[role=button],a.btn,.chip,label.li{touch-action:manipulation}
+button,[role=button],a.btn,.chip{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.btn:active:not(:disabled),.iconbtn:active,.chip:active,.langbtn:active,.linkbtn:active{background:var(--accent-soft)}
+.btn.primary:active:not(:disabled){background:color-mix(in srgb,var(--accent) 82%,var(--bg))}
+.btn.cta:active:not(:disabled){background:color-mix(in srgb,var(--coral) 86%,var(--ink))}
+.chip[aria-pressed="true"]:active{background:color-mix(in srgb,var(--ink) 85%,var(--bg))}
 
 /* ===== 4. Chips ===== */
 .chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
@@ -251,7 +260,7 @@ body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 }
 
 /* ===== 7. Toasts ===== */
-.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:13.5px;z-index:30;max-width:min(calc(100% - 32px),480px);box-shadow:var(--shadow)}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:12px;font-size:13.5px;z-index:70;max-width:min(calc(100% - 32px),480px);box-shadow:var(--shadow)} /* above sheets (20), the camera (40) and the viewer (60): Phase 13 */
 @media (prefers-reduced-motion:no-preference){.toast{animation:up .2s ease-out}@keyframes up{from{transform:translate(-50%,8px);opacity:0}}}
 .toast.sticky{display:flex;align-items:flex-start;gap:8px;padding:10px 6px 10px 14px;width:min(calc(100% - 32px),480px);box-sizing:border-box}
 .toast.sticky span{flex:1;min-width:0;padding-top:2px}
@@ -259,12 +268,16 @@ body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 .toast .toastx svg{width:18px;height:18px}
 body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 @media (min-width:700px) and (min-height:600px){.toast{bottom:calc(24px + env(safe-area-inset-bottom,0px))}}
+@media (max-width:699.98px){ /* where Add clothes floats above the bar (Closet), a toast sits above it, never over it */
+  body:has(#addBtn:not([hidden])) .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
+  body.hasjob:has(#addBtn:not([hidden])) .toast{bottom:calc(196px + env(safe-area-inset-bottom,0px))} }
+body:has(#camRoot .cam) .toast{top:calc(76px + env(safe-area-inset-top,0px));bottom:auto} /* in the camera: under its top bar, clear of the status line and the controls at every size */
 
 /* ===== 8. Job bar (background photo jobs) ===== */
-.jobbar{position:fixed;left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow);font-size:13px;max-width:560px;margin:0 auto}
-.jobbar .jt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.jobbar .jp{width:64px;height:6px;border-radius:3px;background:var(--line);overflow:hidden;flex:none}
-.jobbar .jp i{display:block;height:100%;background:var(--coral);border-radius:3px}
+.jobbar{position:fixed;left:calc(12px + env(safe-area-inset-left,0px));right:calc(12px + env(safe-area-inset-right,0px));bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;align-items:center;gap:10px;padding:10px 12px 12px;border-radius:12px;background:var(--raised);border:1px solid var(--line);box-shadow:var(--shadow);font-size:13px;line-height:1.3;max-width:560px;margin:0 auto;overflow:hidden}
+.jobbar .jt{flex:1;min-width:0;overflow-wrap:anywhere} /* wraps to a second line rather than cutting a translation (Phase 13) */
+.jobbar .jp{position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--line)}
+.jobbar .jp i{display:block;height:100%;background:var(--coral)}
 .jobbar .spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--coral);flex:none}
 @media (prefers-reduced-motion:no-preference){.jobbar .spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}}
 @media (min-width:700px) and (min-height:600px){.jobbar{left:calc(112px + env(safe-area-inset-left,0px));right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px))}}
@@ -290,9 +303,6 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .panel-h p{margin:0;color:var(--muted);font-size:13px}
 .li{display:flex;gap:12px;padding:10px 14px;align-items:center;border-bottom:1px solid var(--line)}
 .li:last-child{border-bottom:0}
-.thumb{width:52px;height:52px;flex:none;border-radius:8px;background:var(--surface);display:grid;place-items:center;overflow:hidden}
-.thumb img{width:100%;height:100%;object-fit:cover}
-.thumb svg.glyph{width:70%;height:70%}
 .li .txt{flex:1;min-width:0}
 .li .txt b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .li .txt span{font-size:12.5px;color:var(--muted)}
@@ -334,8 +344,8 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 /* camera */
 .cam{position:fixed;inset:0;z-index:40;background:#000;display:flex;flex-direction:column}
 .cam video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}
-.cam .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px calc(20px + env(safe-area-inset-bottom,0px));background:#000;color:#fff}
-.cam .top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top,0px)) 16px 12px;color:#fff;background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,0));font-size:14px}
+.cam .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));background:#000;color:#fff}
+.cam .top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;align-items:center;padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) 12px max(16px,env(safe-area-inset-left,0px));gap:12px;color:#fff;background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,0));font-size:14px}
 .cam .shutter{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:rgba(255,255,255,.25);padding:0}
 .cam .shutter:active{background:#fff}
 .cam .side{width:84px;height:48px;border-radius:10px;border:1px solid rgba(255,255,255,.4);background:transparent;color:#fff;font-weight:600;font-size:14px;display:grid;place-items:center;overflow:hidden;padding:0;position:relative}
@@ -353,15 +363,28 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .cam .bar:has(.camdone)>.side:first-child{justify-self:start;width:auto;min-width:72px;max-width:100%;padding:0 10px;white-space:nowrap}
 .cam .bar .camdone{justify-self:end;max-width:100%;white-space:normal;line-height:1.15;text-align:center;padding:4px 10px 4px 0;min-height:52px;height:auto}
 .cam .shutter{flex:none}
-@media (max-width:429.98px){ .cam .bar{padding-left:12px;padding-right:12px;gap:8px} .cam .camdone img{display:none} .cam .camdone svg{margin-left:10px} }
-.cam .camtipbtn{width:auto;min-width:44px;padding:0 12px;height:36px;font-size:13px;white-space:nowrap}
+@media (max-width:429.98px){ .cam .bar{padding-left:max(12px,env(safe-area-inset-left,0px));padding-right:max(12px,env(safe-area-inset-right,0px));gap:8px} .cam .camdone img{display:none} .cam .camdone svg{margin-left:10px} }
+.cam .camtipbtn{width:auto;min-width:44px;padding:0 12px;height:44px;font-size:13px;white-space:nowrap}
+.cam .side.ib{width:44px;height:44px} /* flashlight and switch camera: 44px (36px tall until Phase 13) */
+.cam .side:active,.cam .side.ib:active{background:rgba(255,255,255,.18)}
+.cam .camtools{flex:none}
+/* Cancel with photos taken asks first (Phase 13) */
+.cam .camask{background:#000;color:#fff;text-align:center;padding:12px max(16px,env(safe-area-inset-right,0px)) 4px max(16px,env(safe-area-inset-left,0px))}
+.cam .camask p{margin:0 0 10px;font-size:15px;font-weight:600}
+.cam .camask .row{justify-content:center;gap:12px}
+.cam .camask .btn{min-height:44px;min-width:120px}
+.cam .camask .btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.cam .camask .btn:not(.danger){background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
+.cam.asking .bar{display:none} /* the question takes the controls' place */
+.cam.asking .camask{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
 .cam .camhint{background:#000;color:#fff;font-size:14px;text-align:center;padding:10px 16px 0;min-height:1.4em}
 .cam .camhint:empty{padding:0;min-height:0}
 .cam .msg:has(.camtips){max-width:44ch;margin:auto;text-align:left;align-items:stretch;overflow-y:auto;padding-top:calc(60px + env(safe-area-inset-top,0px))}
 .camtips h2{margin:0 0 6px;font-size:22px;color:#fff}
 .camtips ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
 .camtips li{display:flex;gap:12px;align-items:flex-start}
-.camtips .ic{flex:none;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;font-size:17px;font-weight:700;color:#fff}
+.camtips .ic{flex:none;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.14);display:grid;place-items:center;color:#fff}
+.camtips .ic svg{width:20px;height:20px}
 .camtips li b{display:block;font-size:16px;color:#fff}
 .camtips li span span{display:block;font-size:14px;color:rgba(255,255,255,.82);margin-top:2px}
 .camtips .camgo{margin-top:20px;width:100%;min-height:52px;font-size:16px;justify-content:center;background:#fff;color:#000;border-color:#fff}
@@ -369,13 +392,62 @@ body.hasjob .toast{bottom:calc(140px + env(safe-area-inset-bottom,0px))}
 .cam .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:no-preference){.cam .flash.on{animation:fl .25s ease-out}@keyframes fl{from{opacity:.7}to{opacity:0}}}
 .cam .msg{color:#fff;padding:24px;text-align:center;margin:auto;max-width:36ch;display:flex;flex-direction:column;gap:14px;align-items:center}
-/* auth / setup */
-.gate{max-width:420px;margin:0 auto;padding:48px 16px;display:flex;flex-direction:column;gap:16px}
-.gate .brand{font-size:40px}
-.gate .card2{background:var(--raised);border-radius:12px;box-shadow:var(--shadow);padding:18px;display:flex;flex-direction:column;gap:14px}
-
-/* sign-in logo and version line */
+/* A phone turned sideways (Phase 13): the controls stand on the right, as in the phone's own camera, so the picture
+   keeps the whole height (it had 250 of 390px); the status line and the question lie over the picture's lower edge. */
+@media (orientation:landscape) and (max-height:599.98px){
+  .cam{flex-direction:row;--camside:calc(152px + env(safe-area-inset-right,0px))}
+  .cam video{height:100%;width:auto;flex:1;min-width:0}
+  .cam .bar,.cam .bar:has(.camdone){display:grid;grid-template-columns:auto;grid-template-rows:1fr auto 1fr;justify-items:center;align-items:center;gap:10px;width:var(--camside);padding:calc(12px + env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) 16px}
+  .cam .bar:has(.camdone)>.side:first-child{justify-self:center;align-self:start}
+  .cam .bar .camdone{justify-self:center;align-self:end}
+  .cam .camdone img{display:none}
+  .cam .camdone svg{margin-left:10px}
+  .cam .top{right:var(--camside)}
+  .cam.asking .camask{right:0}
+  .cam .camhint,.cam .camask{position:absolute;left:0;right:var(--camside);bottom:0;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.65) 40%);padding:28px 16px calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+  .cam .guide{inset:20% calc(var(--camside) + 10%) 16% 10%}
+  .cam .msg:has(.camtips){padding-top:calc(24px + env(safe-area-inset-top,0px))}
+  body:has(#camRoot .cam) .toast{top:calc(64px + env(safe-area-inset-top,0px));left:calc(50% - 76px)} }
+/* Sign-in and welcome (Phase 13, the brand moment): the brand row with the language at its end, the headline, the
+   promise, an outfit laid out on the cream canvas (the app's own garment pictures), the perks, then the form on a flat
+   panel. From 900px wide (and on phones turned sideways) the welcome and the form stand side by side and the page fills the window. */
+.gate{max-width:480px;margin:0 auto;padding:28px 16px 40px;display:flex;flex-direction:column;gap:20px}
+.gate .brandrow{gap:12px}
 .gate .logo{width:52px;height:52px}
+.gate .brand{font-size:40px}
+.gate .langbtn{margin-left:auto}
+.gate .card2{background:var(--raised);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px} /* flat: a hairline, no shadow */
+.gate a{color:inherit}
+.welcome{display:flex;flex-direction:column;gap:14px}
+.welcome h1{font-family:var(--f-display);font-weight:800;font-size:44px;line-height:.95;margin:0;letter-spacing:.005em;text-wrap:balance}
+.welcome p{margin:0;color:var(--muted);font-size:15px;max-width:52ch}
+.wpair{display:grid;grid-template-columns:44% minmax(0,1fr);gap:14px;align-items:center} /* phones: the board beside the promise, so the form starts in the first screen */
+.gateboard{width:100%;aspect-ratio:1;pointer-events:none}
+.gateboard .fl{padding:6px}
+.gateboard svg.glyph{filter:drop-shadow(0 2px 2px rgba(50,35,20,.16)) drop-shadow(0 8px 10px rgba(50,35,20,.12))}
+.perks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.perks li{display:flex;gap:10px;align-items:baseline}
+.perks li::before{content:"";flex:none;width:9px;height:5px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateY(-3px) rotate(-45deg)} /* a drawn ink tick (coral is for the action) */
+.gmode{display:grid;grid-template-columns:1fr 1fr;box-shadow:inset 0 -1px 0 var(--line);margin-top:-6px} /* text tabs with an ink underline, as on Outfits */
+.gmode button{min-height:44px;border:0;background:none;font-weight:600;color:var(--muted)}
+.gmode button[aria-pressed="true"]{color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--ink)}
+.gform .btn{min-height:44px}
+.gform .btn.cta{width:100%;min-height:48px}
+.gform .linkbtn{margin:0;padding:0;min-height:44px;align-self:flex-start}
+.gnote{margin:0;font-size:13.5px;color:var(--ink);background:var(--good-soft);border-radius:8px;padding:10px 12px}
+.gnote:empty,.gform .err:empty{display:none}
+.gfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
+@media (min-width:600px){ .gate{max-width:560px;padding-top:40px} } /* iPad portrait and small windows: one wider column */
+@media (min-width:900px), (min-width:700px) and (max-height:599.98px){ /* iPad landscape, computers, phones turned sideways */
+  .gate.login{max-width:1200px;min-height:100vh;min-height:100svh;padding:32px clamp(24px,4vw,64px) 40px;display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,420px);grid-template-rows:auto auto auto;align-content:center;column-gap:clamp(32px,6vw,96px);row-gap:20px}
+  .gate.login .brandrow{grid-column:1 / -1;margin-bottom:8px}
+  .gate.login .welcome{grid-column:1;grid-row:2}
+  .gate.login .perks{grid-column:1;grid-row:3}
+  .gate.login .gform{grid-column:2;grid-row:2 / span 2;align-self:center;padding:24px}
+  .gate.login .wpair{display:flex;flex-direction:column;align-items:flex-start;gap:16px}
+  .gate.login .wpair p{order:-1}
+  .gate.login .welcome h1{font-size:clamp(48px,5vw,64px)}
+  .gate.login .gateboard{aspect-ratio:4/3;width:clamp(220px,calc((100vh - 480px) * 4 / 3),560px);width:clamp(220px,calc((100svh - 480px) * 4 / 3),560px);max-width:100%} }
 .version{margin:28px 0 0;text-align:center;font-size:12px;color:var(--muted)}
 /* Closet below 700px wide, where Add clothes floats above the bar (v1.63.1): a page 22 to 92px taller than the screen
    showed the version line under Add clothes on the first screen (an empty closet at 360x800 is 30px taller). A page at
@@ -498,18 +570,6 @@ details.more .field{margin-top:14px}
 .statgrid span{font-size:13px;color:var(--muted)}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 
-/* v1.15 welcome / sign-in */
-.gate{padding-top:28px}
-.welcome h1{font-family:var(--f-display);font-weight:800;font-size:40px;line-height:1;margin:6px 0 10px;letter-spacing:.01em}
-.welcome p{margin:0 0 10px;color:var(--muted);font-size:15px}
-.perks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:14px}
-.perks li{display:flex;gap:8px;align-items:center}
-.perks li::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--coral);flex:none}
-.seg2{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
-.seg2 button{height:40px;border:0;border-radius:9px;background:none;font-weight:600;color:var(--muted)}
-.seg2 button[aria-selected="true"]{background:var(--raised);color:var(--ink);box-shadow:var(--shadow)}
-.gate .card2 .btn.cta{width:100%}
-.gate a{color:inherit}
 a.lirow{text-decoration:none;color:inherit}
 
 .ex.wash{background:var(--warn-soft);color:var(--warn)}
@@ -568,10 +628,24 @@ a.lirow{text-decoration:none;color:inherit}
 .consent a{color:var(--ink)}
 .plist{margin:0 0 10px;padding-left:18px;display:flex;flex-direction:column;gap:8px;font-size:14px;line-height:1.45}
 
-/* quick details (Claude off) */
-.qd{display:flex;gap:12px;align-items:flex-start;margin:6px 0 12px}
-.qd .pv{width:88px;height:88px;flex:none;border-radius:12px;overflow:hidden;background:var(--raised);display:grid;place-items:center}
-.qd .pv img{width:100%;height:100%;object-fit:cover}
+/* What is this? (Claude off; Phase 13): the piece first and larger (cut-out first, opens the zoom viewer), the name
+   beside it on phones; from 700x600 the garment sheet's layout, the picture 4:5 on the left. The chosen colours are named. */
+.qd{display:grid;grid-template-columns:120px minmax(0,1fr);gap:14px;align-items:start;padding-bottom:4px} /* 4px: nothing touches the sheet's lower edge (detector cramped-padding) */
+.qd .qdfields{display:contents}
+.qd .qdpic{grid-column:1;grid-row:1}
+.qd .qdname{grid-column:2;grid-row:1}
+.qd .qdfields>.field:not(.qdname){grid-column:1 / -1}
+.qd .cpic{width:120px;height:120px;border-radius:12px}
+.qdcols{display:flex;flex-wrap:wrap;gap:6px 14px;margin:8px 0 0;font-size:13px}
+.qdc{display:inline-flex;align-items:center;gap:6px}
+.qdc .sw{width:14px;height:14px;border-radius:50%;border:1px solid var(--line);flex:none}
+.qdc b{font-variant-numeric:tabular-nums}
+@media (min-width:700px) and (min-height:600px){
+  .sheet.qdsheet{max-width:min(880px,calc(100% - 48px))}
+  .qd{grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:24px}
+  .qd .qdfields{display:flex;flex-direction:column;gap:14px;grid-column:2;grid-row:1}
+  .qd .qdpic{position:sticky;top:0}
+  .qd .cpic{width:100%;height:auto;aspect-ratio:4/5} }
 .chip .sw{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px;vertical-align:-1px;border:1px solid var(--line)}
 
 /* shop links (v1.31) */
@@ -669,9 +743,17 @@ button.hint.today.linkish .chev{color:var(--ink)}
 
 
 /* outfits around one piece (v1.35) */
-.pincard{display:flex;gap:12px;align-items:center;background:var(--raised);border:1px solid var(--coral);border-radius:14px;padding:10px 12px;margin-bottom:12px}
+.pincard{display:flex;gap:12px;align-items:center;background:var(--raised);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-bottom:12px}
 .pincard .pv{width:52px;height:52px;flex:none;border-radius:10px;overflow:hidden;background:var(--bg);display:grid;place-items:center}
 .pincard .pv img{width:100%;height:100%;object-fit:cover}
+.pincard .pv.studio{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
+.pincard .pv.studio img{object-fit:contain;padding:8%;box-sizing:border-box}
+.pincard .pv svg.glyph{width:62%;height:68%}
+/* Closet's In the wash list (Phase 13): the Care picture (cut-out first, opens the zoom viewer by keyboard too), kept at
+   list size at every width (Care's rows grow to 160px from 700x600; a list row does not) */
+#closetGrid .li>.cpic{width:56px;height:56px;border-radius:10px;flex:none}
+#closetGrid .li>.cpic .zoomhint.sm{width:18px;height:18px;right:3px;bottom:3px}
+#closetGrid .li>.cpic .zoomhint.sm svg{width:11px;height:11px}
 .pincard .txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
 .pincard .txt span{font-size:13px;color:var(--muted)}
 .pincard .txt b span{font-size:inherit;color:inherit}
@@ -689,17 +771,22 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .zoomable{position:relative;cursor:zoom-in}
 .zoomhint{position:absolute;right:8px;bottom:8px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;pointer-events:none}
 .viewer{position:fixed;inset:0;z-index:60;background:#0b0d12;color:#fff;display:flex;flex-direction:column}
-.viewer .vtop{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 10px}
-.viewer .vtop b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.viewer .iconbtn{color:#fff;border-color:rgba(255,255,255,.35);background:transparent}
-.viewer .vseg button{color:#fff}
+.viewer .vtop{display:flex;align-items:center;gap:10px;padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 10px max(12px,env(safe-area-inset-left,0px))}
+.viewer .vtop b{flex:1;min-width:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;line-height:1.25}
+.viewer .iconbtn{width:44px;height:44px;color:#fff;border-color:rgba(255,255,255,.35);background:transparent}
+.viewer .iconbtn svg{width:20px;height:20px}
+.viewer .iconbtn:active,.viewer .vfit:active{background:rgba(255,255,255,.14)}
+/* Photo / Cut-out, drawn for the dark layer (Phase 13: the labels were white on near-white, 1.04:1) */
+.viewer .vseg{display:flex;flex:none;border-radius:10px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+.viewer .vseg button{min-height:44px;padding:0 14px;border:0;background:transparent;color:#fff;font-weight:600;font-size:14px}
+.viewer .vseg button[aria-pressed="true"]{background:#fff;color:#0b0d12}
 .vstage{flex:1;min-height:0;position:relative;overflow:hidden;touch-action:none;display:grid;place-items:center}
 .vstage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;transform-origin:center;user-select:none;-webkit-user-drag:none}
 .vstage img.cut{background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .vstage .hint{position:absolute;color:#aaa}
-.viewer .vbar{display:flex;align-items:center;gap:10px;padding:10px 14px calc(14px + env(safe-area-inset-bottom,0px))}
-.viewer .vbar input{flex:1}
-.viewer .vbar .btn{color:#fff;border-color:rgba(255,255,255,.35)}
+.viewer .vbar{display:flex;align-items:center;gap:10px;padding:10px max(14px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
+.viewer .vbar input{flex:1;min-width:0;height:44px;accent-color:#fff}
+.viewer .vbar .vfit{min-height:44px;color:#fff;border-color:rgba(255,255,255,.35)}
 .zoomhint.sm{width:18px;height:18px;right:3px;bottom:3px}
 .zoomhint.sm svg{width:11px;height:11px}
 

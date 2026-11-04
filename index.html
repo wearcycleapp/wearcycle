@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content">
 <title>Wearcycle</title>
 <meta name="application-name" content="Wearcycle">
 <meta name="description" content="Wearcycle: your closet, outfits for every kind of day, wear and care tracking, and a shopping list.">
@@ -19,7 +19,7 @@
 </head>
 <body>
 
-<div id="gate" class="gate" hidden></div>
+<main id="gate" class="gate" hidden></main>
 
 <div id="appRoot" hidden>
 <div class="app">
@@ -82,8 +82,8 @@
 <div id="sheetRoot"></div>
 <div id="camRoot"></div>
 <div id="viewRoot"></div>
-<div id="jobRoot"></div>
-<div id="toastRoot"></div>
+<div id="jobRoot" role="status"></div>
+<div id="toastRoot" role="status"></div>
 
 <script src="vendor/supabase.js"></script>
 <script src="config.js"></script>
