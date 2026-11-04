@@ -530,6 +530,36 @@ async function flows(browser, base, state, data) {
     return done.length + ' sheets (Escape), plus the close button';
   });
   check('Sheets: named, focus inside, 16px fields, 44px close, focus back after Escape (Phase 12)', SHEET_A11Y.length ? 'FAIL' : 'PASS', SHEET_A11Y.length ? SHEET_A11Y.slice(0, 4).join('; ') : '12 sheets');
+  // Phase 13: the zoom viewer opened from the keyboard takes focus, keeps the page behind inert, has 44px controls and a
+  // readable Photo / Cut-out switch, and gives focus back on Escape; a toast shows above it; the job bar never cuts its text.
+  await step('Layers: zoom viewer, toast above it, job bar text (Phase 13)', async () => {
+    where = 'flows-layers'; await closeSheet(page); await goTab(page, 'care');
+    const pic = await page.$('#careBody .cpic.zoomable'); assert(pic, 'no zoomable picture in Care');
+    await pic.focus(); await page.keyboard.press('Enter'); await page.waitForSelector('#viewRoot .viewer', { timeout: 5000 }); await page.waitForTimeout(300);
+    const v = await page.evaluate(() => { const r = document.querySelector('#viewRoot'), small = [...r.querySelectorAll('button,input')].filter(e => { const b = e.getBoundingClientRect(); return b.width && b.height < 44; }).map(e => e.getAttribute('aria-label') || e.textContent.trim());
+      const lum = c => { const m = c.match(/[\d.]+/g).map(Number).slice(0, 3).map(x => { x /= 255; return x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+      const bgOf = e => { let n = e; while (n) { const c = getComputedStyle(n).backgroundColor; if (c && !/rgba\(0, 0, 0, 0\)|transparent/.test(c)) return c; n = n.parentElement; } return 'rgb(255,255,255)'; };
+      const seg = [...r.querySelectorAll('[data-vmode]')].map(b => { const a = lum(getComputedStyle(b).color), c = lum(bgOf(b)); return (Math.max(a, c) + .05) / (Math.min(a, c) + .05); });
+      return { focus: r.contains(document.activeElement), inert: !!document.querySelector('#appRoot').inert, small, seg: seg.length ? Math.min(...seg) : null }; });
+    await page.evaluate(() => toast('Layer check')); await page.waitForTimeout(250);
+    const toastOn = await page.evaluate(() => { const t = document.querySelector('#toastRoot .toast'); if (!t) return false; const b = t.getBoundingClientRect(); return t.contains(document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2)); });
+    await page.keyboard.press('Escape'); await page.waitForTimeout(300);
+    const back = await page.evaluate(() => !document.querySelector('#viewRoot').innerHTML && !!document.activeElement.closest('.cpic') && !document.querySelector('#appRoot').inert);
+    if (v.seg == null) { // the switch shows only for a piece with both a photo and a cut-out: open one of those
+      await page.evaluate(() => { const it = allItems().find(i => i.photo && i.cut); if (it) openViewer(it.id); }); await page.waitForTimeout(500);
+      v.seg = await page.evaluate(() => { const r = document.querySelector('#viewRoot'); const lum = c => { const m = c.match(/[\d.]+/g).map(Number).slice(0, 3).map(x => { x /= 255; return x <= .03928 ? x / 12.92 : ((x + .055) / 1.055) ** 2.4; }); return .2126 * m[0] + .7152 * m[1] + .0722 * m[2]; };
+        const bgOf = e => { let n = e; while (n) { const c = getComputedStyle(n).backgroundColor; if (c && !/rgba\(0, 0, 0, 0\)|transparent/.test(c)) return c; n = n.parentElement; } return 'rgb(255,255,255)'; };
+        const seg = [...r.querySelectorAll('[data-vmode]')].map(b => { const a = lum(getComputedStyle(b).color), c = lum(bgOf(b)); return (Math.max(a, c) + .05) / (Math.min(a, c) + .05); });
+        return seg.length ? Math.min(...seg) : null; });
+      await page.keyboard.press('Escape'); await page.waitForTimeout(300); }
+    await page.evaluate(() => { document.querySelector('#toastRoot').innerHTML = ''; job('Adding 12 of 40 · Reading the photo · Making the cut-out · Saving to your closet', 30); }); await page.waitForTimeout(150);
+    const jobCut = await page.evaluate(() => { const t = document.querySelector('.jobbar .jt'); return t.scrollWidth > t.clientWidth + 1 || t.scrollHeight > t.clientHeight + 1; });
+    await page.evaluate(() => job(''));
+    const bad = [!v.focus && 'viewer focus outside', !v.inert && 'page behind the viewer not inert', v.small.length && 'viewer controls under 44px: ' + v.small.join(', '), v.seg != null && v.seg < 4.5 && 'Photo / Cut-out ' + v.seg.toFixed(2) + ':1',
+      !toastOn && 'toast hidden under the viewer', !back && 'focus not back on the picture after Escape', jobCut && 'job bar text cut'].filter(Boolean);
+    assert(!bad.length, bad.join('; '));
+    return 'viewer focus, inert page, 44px controls, switch ' + (v.seg ? v.seg.toFixed(1) + ':1' : 'n/a') + ', toast above, focus back; job text whole';
+  });
   await step('Theme switches (Settings, Appearance)', async () => {
     where = 'flows-theme'; await closeSheet(page); await openSheetBy(page, SETTINGS_BTN);
     const bg = () => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
