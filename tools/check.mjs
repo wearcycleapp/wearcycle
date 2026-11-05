@@ -600,7 +600,7 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
 async function captureShare(browser, base, state) {
   R.share = [];
   const withCut = scenario(null), noCut = { ...withCut, items: withCut.items.map(i => { const body = { ...i.body }; delete body.cut; return { ...i, body }; }) };
-  const long = scenario('long'), dev = DEV['win-1366'];
+  const long = scenario('long'), dev = DEV['win-1366'], enDrawn = {};
   for (const lang of LANGS) for (const [variant, data] of [['cutouts', withCut], ['no-cutouts', noCut], ['long-names', long]]) {
     console.log('share ' + lang + ' ' + variant);
     const ctx = await newContext(browser, base, dev, { lang, data, storageState: state }); const page = await ctx.newPage();
@@ -626,11 +626,58 @@ async function captureShare(browser, base, state) {
           row.over = drawn.filter(t => t.right > t.W || t.left < 0).map(t => ({ s: t.s, by: Math.max(t.right - t.W, -t.left) }));
           row.pics = await page.evaluate(() => window.__pics);
           row.top = Math.min(...drawn.map(t => t.y)); // social apps draw their controls over about the top 14% (269px of 1920)
+          // Text that stays English in another language: the same string as in the English image of this occasion and closet
+          // (piece names are the person's; the wordmark and names, whole or wrapped, are left out).
+          const key = occ + '|' + variant, own = data.items.map(i => String(i.body.name || '').trim()); if (lang === 'en') enDrawn[key] = drawn.map(t => t.s);
+          else row.english = [...new Set(drawn.map(t => t.s))].filter(t => (enDrawn[key] || []).includes(t) && /[A-Za-z]{3}/.test(t) && t !== 'WEARCYCLE' && !own.some(n => n.includes(t.replace(/…$/, ''))));
         } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
         finally { if (!row.na) R.share.push(row); }
       }
     } finally { await ctx.close(); }
   }
+}
+
+// break-ui for the share image (--worst-case): outfits the fixture does not rank, drawn with the app's own shareImage,
+// because the picture has no scrolling to hide behind. Each must stay inside the picture and keep its pictures a usable size.
+const SHARE_SHAPES = {
+  'one-piece': "({onepiece:{...byId('fx-01'),cat:'onepiece',name:'Robe longue en lin lavé à manches courtes et ceinture nouée, coupe évasée',cut:''},shoes:byId('fx-18'),acc:[]})",
+  'single-piece': "({top:byId('fx-03'),acc:[]})",
+  'four-main-six-small': "({outer:{...byId('fx-15'),name:'Manteau de laine bouilli à double boutonnage, doublure satinée, col montant'},top:{...byId('fx-01'),name:'हल्के नीले रंग की सूती शर्ट, लंबी आस्तीन, ऑफ़िस और त्योहारों के लिए'},under:byId('fx-06'),bottom:{...byId('fx-10'),name:'Pantalon chino bleu marine en sergé de coton stretch, coupe droite ajustée'},shoes:{...byId('fx-18'),name:'Chaussures de ville en cuir noir à bout fleuri'},acc:['fx-22','fx-23','fx-24','fx-25','fx-19'].map(byId)})",
+  'hard-names': "({top:{...byId('fx-03'),name:'Pneumonoultramicroscopicsilicovolcanoconiosisextraordinairementlong'},bottom:{...byId('fx-10'),name:'👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻'},shoes:{...byId('fx-18'),name:'日本語の長い名前の白いレザースニーカーとても長い名前のスニーカーです本当に長い'},acc:[{...byId('fx-22'),name:''},{...byId('fx-23'),name:'J'}]})",
+  'missing-files': "({top:{...byId('fx-01'),id:'gone-1',cut:'gone-1-cut.webp',photo:'gone-1.jpg',med:'gone-1-1024.jpg',thumb:''},bottom:{...byId('fx-10'),id:'gone-2',cut:'',photo:'gone-2.jpg',med:'gone-2-1024.jpg'},acc:[]})",
+};
+async function shareWorst(browser, base, state) {
+  R.shareWorst = []; const dev = DEV['win-1366'], data = scenario(null); data.missing = new Set(['gone-1', 'gone-2']);
+  for (const lang of ['en', 'fr', 'hi', 'ja']) {
+    const ctx = await newContext(browser, base, dev, { lang, data, storageState: state }); const page = await ctx.newPage();
+    watchConsole(page, () => 'share-worst-' + lang);
+    try {
+      await page.goto(base + '/index.html'); await waitApp(page);
+      await page.evaluate(() => { const P = CanvasRenderingContext2D.prototype, f = P.fillText, d = P.drawImage; window.__t = []; window.__p = [];
+        P.fillText = function (s, x, y, m) { const r = this.measureText(s); window.__t.push({ s: String(s), l: Math.round(x), r: Math.round(x + r.width), y: Math.round(y), W: this.canvas.width }); return f.call(this, s, x, y, m); };
+        P.drawImage = function (im, x, y, w, h) { if (w && this.canvas.width === 1080) window.__p.push(Math.round(Math.max(w, h))); return d.apply(this, arguments); }; });
+      for (const [shape, expr] of Object.entries(SHARE_SHAPES)) {
+        const name = lang + '-' + shape, row = { name };
+        try {
+          const b64 = await page.evaluate('(async () => { window.__t.length = 0; window.__p.length = 0; const blob = await shareImage(' + expr + '); const u = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); })()');
+          writeFileSync(path.join(A.out, 'screens', 'share-wc-' + name + '.png'), Buffer.from(b64, 'base64'));
+          const m = await page.evaluate(() => ({ t: window.__t, p: window.__p }));
+          row.off = m.t.filter(t => t.r > t.W || t.l < 0).map(t => t.s.slice(0, 40)); row.low = m.t.filter(t => t.y > 1660 && t.s !== 'WEARCYCLE').map(t => t.s.slice(0, 40));
+          // Lines on one baseline must not run into each other (a kind or name wider than its column).
+          row.overlap = m.t.flatMap((a, i) => m.t.slice(i + 1).filter(b => Math.abs(a.y - b.y) < 10 && a.l < b.r && b.l < a.r).map(b => a.s.slice(0, 24) + ' / ' + b.s.slice(0, 24)));
+          row.minPic = Math.min(...m.p.filter(h => h !== 72)); // the larger side of each drawn picture; the logo is 72px
+        } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
+        R.shareWorst.push(row);
+      }
+    } finally { await ctx.close(); }
+  }
+  // A failure must not leave "Preparing the image…" on screen.
+  const ctx = await newContext(browser, base, dev, { data, storageState: state }); const page = await ctx.newPage();
+  try { await page.goto(base + '/index.html'); await waitApp(page);
+    await page.evaluate(() => { HTMLCanvasElement.prototype.toBlob = function () { throw new Error('tainted'); }; shareOutfit(); });
+    await page.waitForFunction(() => !/Preparing/.test(document.querySelector('#toastRoot').textContent) && document.querySelector('#toastRoot').textContent.trim(), null, { timeout: 15000 }).catch(() => {});
+    R.shareFail = await page.evaluate(() => document.querySelector('#toastRoot').textContent.trim());
+  } finally { await ctx.close(); }
 }
 
 /* ---------- functional flows (phone-390, light, English) ---------- */
@@ -783,6 +830,25 @@ function versionCheck() {
   check('APP_VERSION equals the sw.js VERSION', 'PASS', app);
   check('sw.js is non-empty and every shell file exists', missing.length || !shell.length ? 'FAIL' : 'PASS', missing.length ? 'missing: ' + missing.join(', ') : shell.length + ' files');
 }
+// Colors outside styles.css (DESIGN.md, the Colors Outside CSS Rule): every copy must equal the tokens.
+function colorsCheck() {
+  const css = readFileSync(path.join(REPO, 'styles.css'), 'utf8'), rd = f => readFileSync(path.join(REPO, f), 'utf8');
+  const block = sel => { const i = css.indexOf(sel); return i < 0 ? '' : css.slice(i, css.indexOf('}', i)); };
+  const tok = (b, n) => (b.match(new RegExp('--' + n + ':\\s*(#[0-9a-fA-F]{3,8})')) || [])[1]?.toLowerCase();
+  const L = block(':root{'), D = block(':root[data-theme="dark"]'), bad = [];
+  const want = (where, got, exp) => { if (String(got).toLowerCase() !== String(exp).toLowerCase()) bad.push(where + ' ' + got + ', tokens ' + exp); };
+  if (!tok(L, 'bg') || !tok(D, 'bg')) bad.push('tokens not found in styles.css');
+  const metas = f => [...rd(f).matchAll(/name="theme-color" content="(#[0-9a-fA-F]+)" media="\(prefers-color-scheme: (light|dark)\)"/g)].map(m => [m[2], m[1]]);
+  for (const f of ['index.html', 'privacy.html', 'whats-new.html']) { const m = metas(f); if (m.length !== 2) bad.push(f + ': ' + m.length + ' theme-color metas');
+    for (const [k, v] of m) want(f + ' meta ' + k, v, tok(k === 'light' ? L : D, 'bg')); }
+  for (const f of ['theme.js', 'app.js']) { const m = rd(f).match(/dark'?\?'(#[0-9a-fA-F]{6})':'(#[0-9a-fA-F]{6})'/); if (!m) bad.push(f + ': theme colors not found'); else { want(f + ' dark', m[1], tok(D, 'bg')); want(f + ' light', m[2], tok(L, 'bg')); } }
+  const man = JSON.parse(rd('manifest.webmanifest')); want('manifest theme_color', man.theme_color, tok(L, 'ink')); want('manifest background_color', man.background_color, tok(L, 'ink'));
+  for (const f of ['privacy.html', 'whats-new.html']) { const s = rd(f), lt = s.slice(s.indexOf(':root{'), s.indexOf('}', s.indexOf(':root{'))), dk = s.slice(s.indexOf(':root[data-theme="dark"]{'), s.indexOf('}', s.indexOf(':root[data-theme="dark"]{')));
+    for (const n of ['bg', 'ink', 'muted', 'line']) { want(f + ' --' + n, tok(lt, n), tok(L, n)); want(f + ' dark --' + n, tok(dk, n), tok(D, n)); } }
+  const sh = (rd('app.js').match(/const SHARE=\{([^}]*)\}/) || [])[1] || ''; const val = n => (sh.match(new RegExp('\\b' + n + ":'(#[0-9a-fA-F]{6})'")) || [])[1];
+  for (const [k, n, b] of [['bg', 'bg', L], ['ink', 'ink', L], ['muted', 'muted', L], ['onInk', 'bg', L], ['mutedOnInk', 'muted', D], ['c1', 'canvas-1', L], ['c2', 'canvas-2', L]]) want('share image ' + k, val(k), tok(b, n));
+  check('Colors outside styles.css match the tokens', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.slice(0, 5).join('; ') : "theme-color metas (3 pages), theme.js, app.js, manifest, privacy and What's new, share image");
+}
 function detector() {
   const run = targets => {
     const r = spawnSync('npx', ['--yes', 'impeccable@4.5.2', 'detect', '--json', ...targets], { cwd: REPO, encoding: 'utf8', maxBuffer: 64 << 20,
@@ -881,7 +947,7 @@ async function main() {
   AxeBuilder = AxeBuilder.default || AxeBuilder.AxeBuilder || AxeBuilder; PNG = PNG.PNG || PNG; pixelmatch = pixelmatch.default || pixelmatch;
   const started = Date.now();
   console.log('Wearcycle check' + (A.worstCase ? ' (worst case)' : '') + '. Output: ' + A.out);
-  versionCheck();
+  versionCheck(); colorsCheck();
   const server = await startServer();
   let browser;
   try { browser = await PW.chromium.launch({ args: CHROMIUM_ARGS }); } catch (e) { server.stop(); throw e; } // else the local server keeps the run alive
@@ -906,6 +972,7 @@ async function main() {
       }
       if (groups.includes('share')) await captureShare(browser, server.base, state);
     } else {
+      if (groups.includes('share')) await shareWorst(browser, server.base, state);
       const plan = [['long', ['en', 'fr']], ['empty', ['en']], ['many', ['en']], ['care', ['en', 'fr']], ['calm', ['en']]];
       for (const [name, langs] of plan) {
         const d = scenario(name);
@@ -957,12 +1024,19 @@ async function main() {
     if (TA.textOverflow) check('Added views with text cut or spilling', 'INFO', where(c => (c.spilling || []).length + (c.truncated || []).length));
     check('Added views', 'INFO', caps.filter(c => !oldView(c)).length + ' first screens; below the first screen, all views: ' + caps.reduce((n, c) => n + (c.rest || 0), 0) + ' more');
   }
+  if (R.shareWorst) {
+    const bad = R.shareWorst.filter(x => x.error || x.off.length || x.low.length || x.overlap.length || x.minPic < 70);
+    check('Share image, worst case: stays inside the picture, no overlapping lines, pictures at least 70px', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.slice(0, 4).map(x => x.name + ' ' + (x.error || JSON.stringify({ off: x.off, low: x.low, overlap: x.overlap, minPic: x.minPic }))).join('; ') : R.shareWorst.length + ' images; smallest picture ' + Math.min(...R.shareWorst.map(x => x.minPic)) + 'px');
+    check('Share image: a failure says so', R.shareFail === 'Could not make the image.' ? 'PASS' : 'FAIL', R.shareFail);
+  }
   if (R.share) {
     const over = R.share.filter(x => x.over.length), saved = R.share.filter(x => x.file);
     check('Share image: drawn in every language and occasion', R.share.some(x => x.error) ? 'FAIL' : 'PASS', R.share.length + ' images, ' + saved.length + ' saved; ' + R.share.filter(x => x.error).map(x => x.name + ' ' + x.error).slice(0, 3).join('; '));
     { const pics = R.share.flatMap(x => x.pics || []), top = Math.min(...R.share.map(x => x.top ?? 9999));
       check('Share image: pictures and first line', 'INFO', pics.length + ' pictures, ' + pics.filter(k => k > 1.1).length + ' drawn larger than 1.1x their file (up to ' + Math.max(0, ...pics) + 'x); highest text starts at ' + top + 'px (social apps cover about the top 269px)'); }
-    check('Share image: all text inside the picture', over.length ? 'REVIEW' : 'PASS', over.length ? over.length + ' of ' + R.share.length + ': ' + over.slice(0, 4).map(x => x.name + ' "' + x.over[0].s.slice(0, 40) + '" +' + x.over[0].by + 'px').join('; ') : R.share.length + ' images');
+    { const eng = R.share.filter(x => (x.english || []).length); check('Share image: no English left in other languages', eng.length ? 'REVIEW' : 'PASS', eng.length ? eng.length + ': ' + eng.slice(0, 4).map(x => x.name + ' "' + x.english[0].slice(0, 40) + '"').join('; ') : 'every kind, occasion and palette line translated');
+      const high = R.share.filter(x => x.top < 269); check('Share image: text starts below the area social apps cover (269px)', high.length ? 'FAIL' : 'PASS', high.length ? high.length + ' images, highest ' + Math.min(...high.map(x => x.top)) + 'px' : ''); }
+    check('Share image: all text inside the picture', over.length ? 'FAIL' : 'PASS', over.length ? over.length + ' of ' + R.share.length + ': ' + over.slice(0, 4).map(x => x.name + ' "' + x.over[0].s.slice(0, 40) + '" +' + x.over[0].by + 'px').join('; ') : R.share.length + ' images');
   }
   check('Piece names cut with an ellipsis', 'INFO', T.userNamesCut + ' (user-typed names may be truncated; listed per view in summary.json)');
   if (R.wearSizes) {
@@ -1005,7 +1079,7 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, render: R.render, totals: T, share: R.share, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, share: R.share, shareWorst: R.shareWorst, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',

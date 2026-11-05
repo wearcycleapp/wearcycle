@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.65.0';
+const APP_VERSION='1.66.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -2322,40 +2322,88 @@ function openStats(){
   lazyPics($('#sheetRoot')); setTimeout(hydrateCuts,0);
 }
 
-/* ---------- share: the outfit as a 1080x1920 Story image ---------- */
+/* ---------- share: the outfit as a 1080x1920 Story image (Phase 14) ---------- */
 function loadImg(src){ return new Promise(res=>{ if(!src){ res(null); return; } const im=new Image(); im.onload=()=>res(im); im.onerror=()=>res(null); im.src=src; }); }
-async function pieceImage(it){
-  const cu=it.cut?await cutUrl(it):''; if(cu){ const im=await loadImg(cu); if(im) return {im,cut:true}; }
-  if(thumbSrc(it)){ const im=await loadImg(thumbSrc(it)); if(im) return {im,cut:false}; }
+// The picture leaves the app, so it always uses the light palette: the token values in styles.css, in both themes.
+const SHARE={W:1080,H:1920,M:72,bg:'#f6f4f1',ink:'#1b2433',muted:'#5b6270',onInk:'#f6f4f1',mutedOnInk:'#9aa2b0',c1:'#f7f4ef',c2:'#ebe4d9',disp:'"Big Shoulders Display","Arial Narrow",Impact,sans-serif',body:'Figtree,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif'};
+// A piece's picture by its drawn size, as on screen: the cut-out wherever there is one, the stored 1024px copy of a photo
+// when the thumbnail would be soft (examples and offline keep the thumbnail), the garment glyph when there is no picture.
+async function pieceImage(it,need){
+  const cu=it.cut?await cutUrl(it):''; if(cu){ const im=await loadImg(cu); if(im) return {im,kind:'cut'}; }
+  if(it.photo&&!isEx(it)&&need>256){ const u=await medUrl(it,true,need).catch(()=>''); const im=u&&await loadImg(u); if(im) return {im,kind:'photo'}; }
+  if(thumbSrc(it)){ const im=await loadImg(thumbSrc(it)); if(im) return {im,kind:'photo'}; }
   const svg=glyph(it).replace('<svg ','<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" ');
-  const im=await loadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)); return im?{im,cut:true}:null;
+  const im=await loadImg('data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)); return im?{im,kind:'glyph'}:null;
+}
+// Lines that fit maxW: breaks at spaces, and inside a word only when it is wider than the line or the script has no spaces.
+// Whole graphemes, so a Hindi cluster or an emoji is never split. With maxLines, the last line ends in … (only piece names
+// the person typed use it; translated text always keeps every line).
+function shareLines(g,text,maxW,maxLines){
+  const seg=window.Intl&&Intl.Segmenter?new Intl.Segmenter(I18N.locale,{granularity:'grapheme'}):null, chars=t=>seg?[...seg.segment(t)].map(x=>x.segment):[...t];
+  const lines=[]; let cur=''; const put=()=>{ if(cur) lines.push(cur); cur=''; };
+  for(const word of String(text).trim().split(/\s+/)){ const t=cur?cur+' '+word:word;
+    if(g.measureText(t).width<=maxW){ cur=t; continue; }
+    if(g.measureText(word).width<=maxW){ put(); cur=word; continue; }
+    if(cur&&!/[぀-ヿ㐀-鿿가-힯]/.test(word)) put(); else if(cur) cur+=' ';
+    for(const c of chars(word)){ if(g.measureText(cur+c).width>maxW&&cur.trim()){ put(); } cur+=c; } }
+  put(); if(!maxLines||lines.length<=maxLines) return lines;
+  const out=lines.slice(0,maxLines); let l=out[maxLines-1]; while(l&&g.measureText(l+'…').width>maxW) l=chars(l).slice(0,-1).join(''); out[maxLines-1]=l.trimEnd()+'…'; return out; }
+function shareCanvas(g,x,y,w,h,r){ const c=g.createRadialGradient(x+w/2,y+h*.4,0,x+w/2,y+h*.4,Math.max(w,h)*.75); c.addColorStop(0,SHARE.c1); c.addColorStop(1,SHARE.c2); g.fillStyle=c; g.beginPath(); g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h); g.fill(); }
+function shareDraw(g,p,x,y,w,h,r){ if(!p) return; const fit=p.kind!=='photo'||!!p.fitted, pad=p.kind==='cut'?Math.round(Math.min(w,h)*.08):p.kind==='glyph'?Math.round(Math.min(w,h)*.21):0;
+  const bw=w-2*pad,bh=h-2*pad,k=fit?Math.min(bw/p.im.width,bh/p.im.height):Math.max(bw/p.im.width,bh/p.im.height),dw=p.im.width*k,dh=p.im.height*k,dx=x+(w-dw)/2,dy=y+(h-dh)/2;
+  g.save(); if(p.kind==='photo'){ g.beginPath(); g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h); g.clip(); } else { g.shadowColor='rgba(50,35,20,.18)'; g.shadowBlur=18; g.shadowOffsetY=8; }
+  g.drawImage(p.im,dx,dy,dw,dh); g.restore(); }
+// The kit (direction A, what a phone shows and what a Story is seen on): the main garments as 4:5 pictures with their kind
+// and name, then shoes and accessories in one row, every piece named.
+async function shareKit(g,o,top,bottom){ const {W,M}=SHARE, cw=W-2*M, gap=24;
+  const main=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom]].filter(Boolean);
+  const small=(o.shoes?[['shoes',o.shoes]]:[]).concat(o.acc.map((a,k)=>['acc'+k,a]));
+  if(main.length<2&&small.length&&small[0][0]==='shoes') main.push(small.shift());
+  const kind=(slot,it)=>I18N.tr(slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&o.under&&canOpen(o.top))?'Top, worn open':CAT[it.cat].label);
+  const nm=it=>isEx(it)?I18N.tr(it.name):it.name;
+  const n=Math.max(1,main.length), mw=Math.floor((cw-(n-1)*gap)/n), nameS=n>3?32:n>2?36:40, nameF=`600 ${nameS}px `, nameL=Math.round(nameS*1.2), kindS=n>3?30:34, kindF=`500 ${kindS}px `;
+  g.font=kindF+SHARE.body; const kinds=main.map(([s,it])=>shareLines(g,kind(s,it),mw)), kindLines=Math.max(1,...kinds.map(l=>l.length)), kindL=Math.round(kindS*1.15); // a translated kind keeps every line
+  g.font=nameF+SHARE.body; const mainNames=main.map(([,it])=>shareLines(g,nm(it),mw,3)), mainLines=Math.max(1,...mainNames.map(l=>l.length));
+  const sw=small.length?Math.min(168,Math.floor((cw-(small.length-1)*gap)/small.length)):0;
+  g.font='500 32px '+SHARE.body; const smallNames=small.map(([,it])=>shareLines(g,nm(it),sw,3)), smallLines=small.length?Math.max(1,...smallNames.map(l=>l.length)):0;
+  const smallH=small.length?sw+12+smallLines*38+32:0, kindH=kindLines*kindL, nameH=12+kindH+6+mainLines*nameL, avail=bottom-top-smallH-nameH;
+  const mh=Math.min(avail,Math.round(mw*(n>2?1.7:1.35)));
+  let y=top;
+  const pics=await Promise.all(main.map(([,it])=>pieceImage(it,Math.max(mw,mh)))); 
+  main.forEach(([s,it],k)=>{ const x=M+k*(mw+gap), p=pics[k]; shareCanvas(g,x,y,mw,mh,16); if(p) p.fitted=!!it.box; shareDraw(g,p,x,y,mw,mh,16);
+    g.textBaseline='alphabetic'; g.font=kindF+SHARE.body; g.fillStyle=SHARE.muted; kinds[k].forEach((l,j)=>g.fillText(l,x,y+mh+12+kindL*(j+.8)));
+    g.font=nameF+SHARE.body; g.fillStyle=SHARE.ink; mainNames[k].forEach((l,j)=>g.fillText(l,x,y+mh+12+kindH+6+nameL*(j+.8))); });
+  y+=mh+nameH;
+  if(small.length){ y+=32; const sp=await Promise.all(small.map(([,it])=>pieceImage(it,sw)));
+    small.forEach(([,it],k)=>{ const x=M+k*(sw+gap), p=sp[k]; shareCanvas(g,x,y,sw,sw,12); if(p) p.fitted=!!it.box; shareDraw(g,p,x,y,sw,sw,12);
+      g.font='500 32px '+SHARE.body; g.fillStyle=SHARE.muted; smallNames[k].forEach((l,j)=>g.fillText(l,x,y+sw+12+38*(j+.8))); }); y+=smallH-32; }
+  return y;
+}
+async function shareImage(o){ const {W,H,M}=SHARE, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d'), cw=W-2*M;
+  const occ=I18N.tr(OCC[S.occ].label).toLocaleUpperCase(I18N.locale), date=new Date().toLocaleDateString(I18N.locale,{weekday:'long',month:'long',day:'numeric'});
+  const cols=coreOf(o).map(primary).filter(c=>COLORS[c]), why=I18N.tr(WardrobeLogic.harmony(cols).why);
+  try{ await Promise.race([Promise.all([document.fonts.load('800 120px "Big Shoulders Display"',occ),document.fonts.load('600 34px Figtree'),document.fonts.load('500 28px Figtree')]),new Promise(r=>setTimeout(r,2000))]); }catch(e){} // never hold the picture back for a font
+  g.fillStyle=SHARE.bg; g.fillRect(0,0,W,H);
+  // Ink above and below: social apps draw their own controls over those edges (about the top 14%), so text starts at 269px.
+  let size=128; g.font=`800 ${size}px ${SHARE.disp}`; while(size>64&&g.measureText(occ).width>cw){ size-=4; g.font=`800 ${size}px ${SHARE.disp}`; }
+  const mo=g.measureText(occ), occY=276+Math.ceil(mo.actualBoundingBoxAscent), dateY=occY+Math.ceil(mo.actualBoundingBoxDescent)+54, headEnd=dateY+36, footStart=1660;
+  g.fillStyle=SHARE.ink; g.fillRect(0,0,W,headEnd); g.fillRect(0,footStart,W,H-footStart);
+  g.textBaseline='alphabetic'; g.fillStyle=SHARE.onInk; g.fillText(occ,M,occY);
+  g.font='500 40px '+SHARE.body; g.fillStyle=SHARE.mutedOnInk; g.fillText(date,M,dateY);
+  // The palette and why it works, above the footer; every line of a translation is kept.
+  g.font='600 36px '+SHARE.body; const whyL=shareLines(g,why,cw-(cols.length?cols.length*44+28:0)), swY=footStart-40-Math.max(44,whyL.length*46)/2;
+  let x=M; for(const c of cols){ g.beginPath(); g.arc(x+18,swY,18,0,7); g.fillStyle=COLORS[c].hex; g.fill(); g.lineWidth=2; g.strokeStyle='rgba(27,36,51,.25)'; g.stroke(); x+=44; } if(cols.length) x+=28;
+  g.fillStyle=SHARE.ink; const y0=swY-(whyL.length-1)*23+13; whyL.forEach((l,k)=>g.fillText(l,x,y0+k*46));
+  const areaEnd=swY-Math.max(22,whyL.length*23)-32;
+  await shareKit(g,o,headEnd+40,areaEnd);
+  const logo=await loadImg('icons/logo-icon.svg'); if(logo) g.drawImage(logo,M,footStart+36,72,72);
+  g.font=`800 56px ${SHARE.disp}`; g.fillStyle=SHARE.onInk; g.fillText('WEARCYCLE',M+92,footStart+92);
+  return new Promise(r=>cv.toBlob(r,'image/png'));
 }
 async function shareOutfit(){
   const f=S.fits[S.sel]; if(!f) return; const o=hydrate(f.ids);
   toast('Preparing the image…',0);
-  const W=1080,H=1920, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d');
-  const bg=g.createRadialGradient(W/2,H*0.42,80,W/2,H*0.45,H*0.8); bg.addColorStop(0,'#f7f4ef'); bg.addColorStop(0.7,'#efe9e0'); bg.addColorStop(1,'#e5dccf');
-  g.fillStyle=bg; g.fillRect(0,0,W,H);
-  g.fillStyle='#1b2433'; g.font='800 84px "Big Shoulders Display", Impact, sans-serif'; g.textBaseline='alphabetic';
-  g.fillText(I18N.tr(OCC[S.occ].label).toUpperCase(),72,190);
-  g.font='500 38px Figtree, system-ui, sans-serif'; g.fillStyle='#5b6270';
-  g.fillText(new Date().toLocaleDateString(I18N.locale,{weekday:'long',month:'long',day:'numeric'}),72,250);
-  const bx=40,by=300,bw=W-80,bh=Math.round(bw*1.25);
-  for(const c of flCells(o)){
-    const p=await pieceImage(c.it); if(!p) continue;
-    const pad=c.small?8:18, x=bx+c.x/100*bw+pad, y=by+c.y/100*bh+pad, w=c.w/100*bw-2*pad, h=c.h/100*bh-2*pad;
-    const k=Math.min(w/p.im.width,h/p.im.height), dw=p.im.width*k, dh=p.im.height*k, dx=x+(w-dw)/2, dy=y+(h-dh)/2;
-    g.save(); g.shadowColor='rgba(50,35,20,.22)'; g.shadowBlur=24; g.shadowOffsetY=10;
-    if(!p.cut){ g.beginPath(); g.roundRect?g.roundRect(dx,dy,dw,dh,16):g.rect(dx,dy,dw,dh); g.clip(); }
-    g.drawImage(p.im,dx,dy,dw,dh); g.restore();
-  }
-  const cols=coreOf(o).map(primary).filter(c=>COLORS[c]); let x=72; const yy=by+bh+90;
-  for(const c of cols){ g.beginPath(); g.arc(x+28,yy,28,0,7); g.fillStyle=COLORS[c].hex; g.fill(); g.lineWidth=4; g.strokeStyle='#f7f4ef'; g.stroke(); x+=48; }
-  g.fillStyle='#1b2433'; g.font='600 34px Figtree, system-ui, sans-serif';
-  g.fillText(I18N.tr(WardrobeLogic.harmony(cols).why),72,yy+90);
-  const logo=await loadImg('icons/logo-icon.svg'); if(logo) g.drawImage(logo,72,H-150,72,72);
-  g.font='800 52px "Big Shoulders Display", Impact, sans-serif'; g.fillText('WEARCYCLE',164,H-95);
-  const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+  const blob=await shareImage(o).catch(()=>null);
   $('#toastRoot').innerHTML='';
   if(!blob){ toast('Could not make the image.'); return; }
   const file=new File([blob],'wearcycle-outfit.png',{type:'image/png'});
@@ -2418,7 +2466,7 @@ function openWxSheet(msg){
   const w=wxSet(); const cc=w.cc||((navigator.language||'').split('-')[1]||'CA').toUpperCase();
   const off=w.off||0;
   openSheet(sheetHead('Weather')+`
-   <p class="hint">${wxOn()?'Now using: <b>'+esc(w.label||'your location')+'</b>.':'Pick where to check the forecast.'} Outfits use the feels-like temperature and rain chance from now until 9 pm.</p>
+   <p class="hint">${wxOn()?'Now using: <b>'+esc(w.label||'your location')+'</b>.':'Pick where to check the forecast.'} <span>Outfits use the feels-like temperature and rain chance from now until 9 pm.</span></p>
    <button class="btn primary" data-wx="gps" style="justify-content:flex-start;padding:14px">Use my current location <span class="hint" style="color:inherit;opacity:.8;margin-left:auto">approximate</span></button>
    <div class="field"><label for="wx-q">Or postal code or city</label><div class="row" style="flex-wrap:nowrap"><input type="text" id="wx-q" value="${esc(w.mode==='place'?w.q||'':'')}" placeholder="e.g. M5V 3L9 or Toronto" autocomplete="postal-code" style="flex:1">
      <select id="wx-cc" aria-label="Country" style="width:auto">${COUNTRIES.map(([k,n])=>`<option value="${k}" ${k===cc?'selected':''}>${k}</option>`).join('')}</select></div>
@@ -2936,7 +2984,7 @@ window.addEventListener('appinstalled',()=>{ S.installEvt=null; if(UID){ renderS
 
 /* ---------- setup and sign-in screens ---------- */
 function showGate(html,cls){ $('#appRoot').hidden=true; const g=$('#gate'); g.hidden=false; g.className='gate'+(cls?' '+cls:'');
-  g.innerHTML=`<div class="brandrow"><img class="logo" src="icons/logo-icon.svg" alt="" width="52" height="52"><div class="brand">Wearcycle<small>WEAR · CARE · DONATE · BUY</small></div><button type="button" class="langbtn" id="g-langbtn" aria-label="Language">${GLOBE_ICON}<span class="ln" data-notr>${esc(langName(I18N.lang))}</span></button></div>`+html; }
+  g.innerHTML=`<div class="brandrow"><img class="logo" src="icons/logo-icon.svg" alt="" width="52" height="52"><div class="brand">Wearcycle<small data-notr>WEAR · CARE · DONATE · BUY</small></div><button type="button" class="langbtn" id="g-langbtn" aria-label="Language">${GLOBE_ICON}<span class="ln" data-notr>${esc(langName(I18N.lang))}</span></button></div>`+html; }
 /* Sign-in and welcome (Phase 13, the brand moment): an outfit laid out on the cream canvas, drawn with the app's own
    garment pictures (the ones a piece shows before it has a photo), so the first screen shows what Wearcycle does with
    clothes. Decorative: hidden from screen readers; the headline and the list say it in words. */

@@ -1496,5 +1496,6 @@ I18N.load("ja",{
 "{0} pieces without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "切り抜きのないアイテムが{0}点あります。このスマートフォンで作成します（AIの費用はかかりません）。初回は約{1}MBをダウンロードし、その後は1点あたり約{2}〜{3}秒です。",
 "{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "切り抜きのないアイテムが{0}点あります。このスマートフォンで作成します（AIの費用はかかりません）。初回は約{1}MBをダウンロードし、その後は1点あたり約{2}〜{3}秒です。",
 "Delete {0} photos?": "{0}枚の写真を削除しますか？",
-"Delete {0} photo?": "{0}枚の写真を削除しますか？"
+"Delete {0} photo?": "{0}枚の写真を削除しますか？",
+"Outfits use the feels-like temperature and rain chance from now until 9 pm.": "コーデには、現在から午後9時までの体感温度と降水確率を使います。"
 });

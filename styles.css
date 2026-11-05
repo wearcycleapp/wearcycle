@@ -88,8 +88,8 @@ button,[role=button],a.btn,.chip{-webkit-user-select:none;user-select:none;-webk
 .sheet-actions{position:sticky;bottom:calc(-20px - env(safe-area-inset-bottom,0px));z-index:2;background:var(--bg);margin:0 -16px calc(-20px - env(safe-area-inset-bottom,0px));padding:12px 16px calc(14px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line)}
 .field{display:flex;flex-direction:column;gap:6px}
 .field>label,.field>.lab{font-family:var(--f-body);font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:var(--ink)}
-.field>label.row{flex-wrap:nowrap;align-items:flex-start;gap:10px;font-weight:500;font-size:13px;color:var(--muted)}
-.field>label.row input{margin-top:2px;flex:none}
+.field>label.row{flex-wrap:nowrap;align-items:center;gap:10px;min-height:44px;font-weight:500;font-size:13px;color:var(--muted)} /* Phase 14: 44px rows, so stacked checkboxes are not too close (axe target-size) */
+.field>label.row input{flex:none}
 .field input[type=text],.field input[type=email],.field input[type=password],.field input[type=url],.field input[type=month],.field input[type=number],.field select,.field textarea{background:var(--raised);border:1px solid var(--line);border-radius:8px;padding:10px 12px;width:100%;min-width:0}
 .field textarea{min-height:64px;resize:vertical}
 .err{color:var(--bad);font-size:13.5px;margin:0}
@@ -373,7 +373,7 @@ body:has(#camRoot .cam) .toast{top:calc(76px + env(safe-area-inset-top,0px));bot
 .cam .camask p{margin:0 0 10px;font-size:15px;font-weight:600}
 .cam .camask .row{justify-content:center;gap:12px}
 .cam .camask .btn{min-height:44px;min-width:120px}
-.cam .camask .btn.danger{background:var(--bad);border-color:var(--bad);color:#fff}
+.cam .camask .btn.danger{background:var(--bad);border-color:var(--bad);color:var(--accent-ink)}
 .cam .camask .btn:not(.danger){background:transparent;color:#fff;border-color:rgba(255,255,255,.5)}
 .cam.asking .bar{display:none} /* the question takes the controls' place */
 .cam.asking .camask{padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
@@ -539,7 +539,7 @@ details.more{border:1px solid var(--line);border-radius:12px;padding:0 12px;back
 details.more summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:2px;padding:12px 0;min-height:44px}
 details.more summary::-webkit-details-marker{display:none}
 details.more summary b{font-size:14px;display:flex;justify-content:space-between}
-details.more summary b::after{content:"›";color:var(--muted);font-size:20px;line-height:1}
+details.more summary b::after{content:"›";color:var(--muted);font-size:20px;line-height:1;width:20px;text-align:center} /* Phase 14: a square box, so the arrow turns inside it */
 @media (prefers-reduced-motion:no-preference){ details.more summary b::after{transition:transform .15s cubic-bezier(.23,1,.32,1)} } /* Phase 12: only when motion is welcome */
 details.more[open] summary b::after{transform:rotate(90deg)}
 details.more summary span{font-size:12.5px;color:var(--muted)}

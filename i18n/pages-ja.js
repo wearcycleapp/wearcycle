@@ -110,5 +110,8 @@ I18N.add("ja",{
 "In the camera, tips about light are no longer hidden behind it, Cancel asks before deleting the photos you took, and on a phone turned sideways the buttons move to the side.": "カメラで明るさのヒントが隠れなくなり、キャンセルは撮った写真を削除する前に確認し、スマホを横にするとボタンが横に移ります。",
 "The zoom view's Photo and Cut-out buttons are easy to read, and the camera and the zoom view work with a keyboard.": "拡大表示の「写真」と「切り抜き」ボタンが読みやすくなり、カメラと拡大表示をキーボードで操作できるようになりました。",
 "Progress messages are no longer cut off, What is this? shows the piece larger with its colors named, and buttons respond as soon as you tap them.": "進行状況のメッセージが途中で切れなくなり、「これは何？」でアイテムが大きく表示されて選んだ色の名前も出るようになり、ボタンはタップした瞬間に反応します。",
-"The card above outfits with one piece and the In the wash list show cut-outs instead of floor photos.": "1つのアイテムを使ったコーデの上のカードと「洗濯中」の一覧で、床の写真ではなく切り抜きが表示されます。"
+"The card above outfits with one piece and the In the wash list show cut-outs instead of floor photos.": "1つのアイテムを使ったコーデの上のカードと「洗濯中」の一覧で、床の写真ではなく切り抜きが表示されます。",
+"The picture you share of an outfit is new: each piece is named and sharper, the text fits in every language, and it stays clear of the buttons social apps draw on top.": "共有するコーデの画像を一新しました。各アイテムの名前が入ってより鮮明になり、どの言語でも文字が収まり、SNSアプリが上部に表示するボタンに重なりません。",
+"The privacy notice now uses the app's fonts and follows your light or dark choice.": "プライバシー通知がアプリのフォントを使い、ライトまたはダークの設定に従うようになりました。",
+"The camera's Delete button is easier to read in dark mode, a sentence in the Weather settings is now translated, and the checkboxes in a piece's details are easier to tap.": "カメラの削除ボタンがダークモードで読みやすくなり、天気設定の文章が翻訳され、アイテムの詳細のチェックボックスが押しやすくなりました。"
 });

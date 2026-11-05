@@ -332,6 +332,17 @@ async function deviceChecks(browser, engine, dev, state) {
       await goTab(page, 'closet'); done.push(await openSheet(page, '#closetGrid [data-edit]', 'item editor'));
       done.push(await openSheet(page, SETTINGS_BTN, 'settings'));
       return done.join(', '); });
+    // Phase 14: the share image on real data. A picture from another address would taint the canvas and the image would fail.
+    await step(tag + 'share image', async () => { await goTab(page, 'outfits'); 
+      const has = await page.evaluate(() => !!S.fits[S.sel]); if (!has) return { status: 'REVIEW', detail: 'no outfit on this occasion' };
+      const dlp = page.waitForEvent('download', { timeout: 40000 });
+      await page.evaluate(() => { const P = CanvasRenderingContext2D.prototype, o = P.fillText; window.__over = 0; window.__shareTop = 9999; P.fillText = function (s, x, y, m) { const r = this.measureText(s); if (x + r.width > this.canvas.width || x < 0) window.__over++; window.__shareTop = Math.min(window.__shareTop, y - r.actualBoundingBoxAscent); return o.call(this, s, x, y, m); }; shareOutfit(); });
+      const dl = await dlp; const file = await dl.path(); const bytes = file ? readFileSync(file) : Buffer.alloc(0); await dl.delete().catch(() => {});
+      const f = await page.evaluate(() => ({ over: window.__over, top: Math.round(window.__shareTop) }));
+      const png = bytes.length > 24 && bytes.readUInt32BE(0) === 0x89504e47, W = png ? bytes.readUInt32BE(16) : 0, H = png ? bytes.readUInt32BE(20) : 0;
+      if (!png || W !== 1080 || H !== 1920) throw new Error('not a 1080x1920 PNG: ' + W + 'x' + H + ', ' + bytes.length + ' bytes');
+      if (f.over) throw new Error(f.over + ' lines off the picture'); if (f.top < 269) throw new Error('text starts at ' + f.top + 'px');
+      return Math.round(bytes.length / 1024) + ' KB PNG, 1080x1920, text from ' + f.top + 'px, none off the picture'; });
     await step(tag + 'no horizontal overflow', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { await goTab(page, t);
       const o = await page.evaluate(() => document.documentElement.scrollWidth - innerWidth); if (o > 1) throw new Error(t + ' is ' + o + 'px too wide'); } return 'four tabs'; });
     if (engine === 'chromium' && dev.id === 'phone-390') await claudeCheck(page);

@@ -1496,5 +1496,6 @@ I18N.load("es",{
 "{0} pieces without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "{0} prendas sin recorte. Se hacen en este teléfono (sin costo de IA); la primera vez se descargan unos {1} MB y luego tarda unos {2} a {3} segundos por prenda.",
 "{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "{0} prenda sin recorte. Se hace en este teléfono (sin costo de IA); la primera vez se descargan unos {1} MB y luego tarda unos {2} a {3} segundos por prenda.",
 "Delete {0} photos?": "¿Eliminar {0} fotos?",
-"Delete {0} photo?": "¿Eliminar {0} foto?"
+"Delete {0} photo?": "¿Eliminar {0} foto?",
+"Outfits use the feels-like temperature and rain chance from now until 9 pm.": "Los conjuntos usan la sensación térmica y la probabilidad de lluvia desde ahora hasta las 9 p. m."
 });

@@ -110,5 +110,8 @@ I18N.add("ko",{
 "In the camera, tips about light are no longer hidden behind it, Cancel asks before deleting the photos you took, and on a phone turned sideways the buttons move to the side.": "카메라에서 빛에 관한 안내가 더 이상 가려지지 않고, 취소는 찍은 사진을 삭제하기 전에 묻고, 휴대폰을 가로로 돌리면 버튼이 옆으로 이동합니다.",
 "The zoom view's Photo and Cut-out buttons are easy to read, and the camera and the zoom view work with a keyboard.": "확대 보기의 사진·배경 제거 이미지 버튼이 잘 보이고, 카메라와 확대 보기를 키보드로 사용할 수 있습니다.",
 "Progress messages are no longer cut off, What is this? shows the piece larger with its colors named, and buttons respond as soon as you tap them.": "진행 메시지가 더 이상 잘리지 않고, 이건 뭔가요?에서 옷이 더 크게 보이며 고른 색 이름이 표시되고, 버튼은 누르는 즉시 반응합니다.",
-"The card above outfits with one piece and the In the wash list show cut-outs instead of floor photos.": "한 아이템으로 만든 코디 위의 카드와 세탁 중 목록에 바닥 사진 대신 배경 제거 이미지가 표시됩니다."
+"The card above outfits with one piece and the In the wash list show cut-outs instead of floor photos.": "한 아이템으로 만든 코디 위의 카드와 세탁 중 목록에 바닥 사진 대신 배경 제거 이미지가 표시됩니다.",
+"The picture you share of an outfit is new: each piece is named and sharper, the text fits in every language, and it stays clear of the buttons social apps draw on top.": "공유하는 코디 이미지가 새로워졌습니다. 각 아이템의 이름이 표시되고 더 선명해졌으며, 텍스트가 모든 언어에서 잘리지 않고 소셜 앱이 위쪽에 표시하는 버튼과 겹치지 않습니다.",
+"The privacy notice now uses the app's fonts and follows your light or dark choice.": "개인정보 안내가 이제 앱의 글꼴을 사용하고 라이트 또는 다크 선택을 따릅니다.",
+"The camera's Delete button is easier to read in dark mode, a sentence in the Weather settings is now translated, and the checkboxes in a piece's details are easier to tap.": "카메라의 삭제 버튼이 다크 모드에서 더 읽기 쉬워졌고, 날씨 설정의 문장이 번역되었으며, 아이템 세부 정보의 체크박스를 누르기 쉬워졌습니다."
 });
