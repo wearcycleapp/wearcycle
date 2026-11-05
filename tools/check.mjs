@@ -600,15 +600,17 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
 async function captureShare(browser, base, state) {
   R.share = [];
   const withCut = scenario(null), noCut = { ...withCut, items: withCut.items.map(i => { const body = { ...i.body }; delete body.cut; return { ...i, body }; }) };
-  const dev = DEV['win-1366'];
-  for (const lang of LANGS) for (const [variant, data] of [['cutouts', withCut], ['no-cutouts', noCut]]) {
+  const long = scenario('long'), dev = DEV['win-1366'];
+  for (const lang of LANGS) for (const [variant, data] of [['cutouts', withCut], ['no-cutouts', noCut], ['long-names', long]]) {
     console.log('share ' + lang + ' ' + variant);
     const ctx = await newContext(browser, base, dev, { lang, data, storageState: state }); const page = await ctx.newPage();
     watchConsole(page, () => 'share-' + lang + '-' + variant);
     try {
       await page.goto(base + '/index.html'); await waitApp(page);
       await page.evaluate(() => { const P = CanvasRenderingContext2D.prototype, o = P.fillText; window.__drawn = [];
-        P.fillText = function (s, x, y, m) { const w = this.measureText(s).width, l = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x; window.__drawn.push({ s: String(s), left: Math.round(l), right: Math.round(l + w), W: this.canvas.width }); return o.call(this, s, x, y, m); }; });
+        const di = P.drawImage; window.__pics = [];
+        P.drawImage = function (im, x, y, w, h) { if (w && im.naturalWidth > 0 && this.canvas.width === 1080) window.__pics.push(Math.round(Math.max(w / im.naturalWidth, h / im.naturalHeight) * 10) / 10); return di.apply(this, arguments); };
+        P.fillText = function (s, x, y, m) { const w = this.measureText(s).width, l = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x; window.__drawn.push({ s: String(s), left: Math.round(l), right: Math.round(l + w), W: this.canvas.width, y: Math.round(y - this.measureText(s).actualBoundingBoxAscent) }); return o.call(this, s, x, y, m); }; });
       const occs = await page.evaluate(() => [...document.querySelectorAll('#occChips [data-occ]')].map(b => b.dataset.occ));
       const first = await page.evaluate(() => document.querySelector('#occChips [aria-pressed="true"]')?.dataset.occ);
       for (const occ of [first, ...occs.filter(o => o !== first)]) {
@@ -616,11 +618,14 @@ async function captureShare(browser, base, state) {
         try {
           await page.click('#occChips [data-occ="' + occ + '"]'); await settle(page);
           if (!(await page.evaluate(() => !!S.fits[S.sel]))) { row.na = true; continue; }
-          await page.evaluate(() => { window.__drawn.length = 0; });
+          await page.evaluate(() => { window.__drawn.length = 0; window.__pics.length = 0; });
           const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), page.evaluate(() => { shareOutfit(); })]);
-          const keep = occ === first || (variant === 'cutouts' && ['fr', 'hi'].includes(lang));
+          const keep = occ === first || (variant !== 'no-cutouts' && ['fr', 'hi'].includes(lang));
           if (keep) { row.file = 'share-' + name + '.png'; await dl.saveAs(path.join(A.out, 'screens', row.file)); } else await dl.delete();
-          row.over = (await page.evaluate(() => window.__drawn)).filter(t => t.right > t.W || t.left < 0).map(t => ({ s: t.s, by: Math.max(t.right - t.W, -t.left) }));
+          const drawn = await page.evaluate(() => window.__drawn);
+          row.over = drawn.filter(t => t.right > t.W || t.left < 0).map(t => ({ s: t.s, by: Math.max(t.right - t.W, -t.left) }));
+          row.pics = await page.evaluate(() => window.__pics);
+          row.top = Math.min(...drawn.map(t => t.y)); // social apps draw their controls over about the top 14% (269px of 1920)
         } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
         finally { if (!row.na) R.share.push(row); }
       }
@@ -955,6 +960,8 @@ async function main() {
   if (R.share) {
     const over = R.share.filter(x => x.over.length), saved = R.share.filter(x => x.file);
     check('Share image: drawn in every language and occasion', R.share.some(x => x.error) ? 'FAIL' : 'PASS', R.share.length + ' images, ' + saved.length + ' saved; ' + R.share.filter(x => x.error).map(x => x.name + ' ' + x.error).slice(0, 3).join('; '));
+    { const pics = R.share.flatMap(x => x.pics || []), top = Math.min(...R.share.map(x => x.top ?? 9999));
+      check('Share image: pictures and first line', 'INFO', pics.length + ' pictures, ' + pics.filter(k => k > 1.1).length + ' drawn larger than 1.1x their file (up to ' + Math.max(0, ...pics) + 'x); highest text starts at ' + top + 'px (social apps cover about the top 269px)'); }
     check('Share image: all text inside the picture', over.length ? 'REVIEW' : 'PASS', over.length ? over.length + ' of ' + R.share.length + ': ' + over.slice(0, 4).map(x => x.name + ' "' + x.over[0].s.slice(0, 40) + '" +' + x.over[0].by + 'px').join('; ') : R.share.length + ' images');
   }
   check('Piece names cut with an ellipsis', 'INFO', T.userNamesCut + ' (user-typed names may be truncated; listed per view in summary.json)');

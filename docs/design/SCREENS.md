@@ -24,7 +24,8 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
 | 12 Settings and other sheets | Released 2026-11-03, v1.64.0 | f99ad4d |
 | 13 Full-screen and fixed layers | Released 2026-11-03, v1.65.0 | 0e4c1d4, 8a23253 |
-| 14 to 15 | Not started | |
+| 14 Share image, privacy page, colors outside CSS | Open since 2026-11-04 (coverage tooling released first) | |
+| 15 Final audits | Not started | |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
 
@@ -37,6 +38,8 @@ Between Phases 10 and 12, released on its own (owner, 2026-11-01): v1.63.1, Add 
 Screen freeze while Phase 12 was open (owner, 2026-11-01): no feature work on Settings or any sheet until Phase 12 was released; other chats made bug fixes only. Lifted with the release of v1.64.0 (2026-11-03). Scope (owner): the Settings sheet and every other sheet, including the newer ones: Language, Change password, Share my list, saved ideas, Possible duplicates, Inspiration from a photo, and the What's new page.
 
 Screen freeze while Phase 13 was open (owner, 2026-11-03): no feature work on these layers until Phase 13 was released; bug fixes continued. Lifted with the release of v1.65.0 (2026-11-03). Scope (owner): sign-in and welcome (the brand moment, and the first thing a new public user sees), the camera, the zoom viewer, the job bar, toasts, the "What is this?" step and the consent sheet, with a mobile-native pass (safe areas, input zoom, tap highlight). Also in this phase, found in Phase 12: the Outfits pin card and Closet's In the wash list show the floor photo instead of the cut-out.
+
+Screen freeze while Phase 14 is open (owner, 2026-11-04): no feature work on the share image or privacy.html until Phase 14 is released; bug fixes continue. Scope (owner): the share image in shareOutfit (new type and colors, the Phase 6 direction, every language, with and without cut-outs), privacy.html (the app's fonts and Light or Dark choice, no wording change), theme-color metas and manifest colors.
 
 ## Screen personalities
 
