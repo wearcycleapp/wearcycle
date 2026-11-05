@@ -427,9 +427,17 @@ async function captureSet(browser, base, state, { dev, theme, lang, data, tag, s
       cap.img = { kb: Math.round((net.bytes - seen.bytes) / 1024), files: net.files - seen.files }; seen = { ...net }; // the first view includes the app opening
       if (runAxe && !A.noAxe) cap.axe = await axe(page, inSheet);
       if (snapshots) await snapshot(page, view);
-      cap.rest = await captureRest(page, where, inSheet ? 'sheet' : 'page'); seen = { ...net };
     } catch (e) { cap.error = String(e && e.message || e).split('\n')[0]; }
     R.captures.push(cap);
+  }
+  // Below the first screen, in a second pass: scrolling through loads pictures and moves layers, which changed later first
+  // screens by up to 17 levels when it ran between them (16 of 112, measured against a run without it).
+  for (const view of views) {
+    where = tag + '-' + view; const cap = R.captures.find(c => c.name === where);
+    if (!cap || cap.na || cap.error) continue;
+    try { await openView(page, view); await page.evaluate(() => window.scrollTo(0, 0)); await settle(page);
+      cap.rest = await captureRest(page, where, ['preview', 'editor', 'settings'].includes(view) ? 'sheet' : 'page');
+    } catch (e) { cap.error = 'below the first screen: ' + String(e && e.message || e).split('\n')[0]; }
   }
   await ctx.close();
 }
@@ -457,6 +465,7 @@ async function snapshot(page, view) {
 }
 
 /* ---------- the rest of what users see (owner, Phase 14 step 0) ---------- */
+const PROPER_NAMES = ['Supabase, Inc.', 'Cloudflare, Inc.', 'Google (Gmail)', 'Open-Meteo', 'Open-Meteo.com', 'Zippopotam.us', 'wearcycle.app@gmail.com']; // not English left to translate
 const shotOpts = () => ({ scale: A.cssPixels ? 'css' : 'device', animations: 'disabled', caret: 'hide' });
 // Below the first screen: the page once, whole (scrolled through first, so pictures that load near the screen are there);
 // a sheet, which scrolls on its own, one screen at a time (88px overlap, so a line cut by the sticky buttons shows whole).
@@ -484,6 +493,7 @@ async function capturedView(page, cap, { where, lang, texts, inSheet, rest, runA
   const pending = await settle(page); if (pending) cap.cutsPending = pending;
   await page.screenshot({ path: path.join(A.out, 'screens', where + '.png'), fullPage: A.fullPage, ...shotOpts() });
   Object.assign(cap, await pageFacts(page, lang, texts, inSheet));
+  cap.english = (cap.english || []).filter(t => !PROPER_NAMES.includes(t));
   if (inSheet === true) { cap.pictures = await page.evaluate(PICTURES, true); delete cap.pictures.wear; }
   if (runAxe && !A.noAxe) cap.axe = await axe(page, inSheet);
   if (snap) await snapshot(page, cap.view);
@@ -974,9 +984,12 @@ async function main() {
   let det = null;
   if (!A.noDetector && !A.worstCase) {
     try { det = detector(); const snap = det.snapshots || { warnings: 0, advisories: 0, hiddenElementsExcluded: {} };
-      T.detectorWarnings = det.static.warnings + snap.warnings; T.detectorAdvisories = det.static.advisories + snap.advisories;
+      const addedW = (snap.findings || []).filter(f => !f.advisory && !VIEWS.includes(path.basename(f.file || '', '.html')));
+      T.detectorWarningsAdded = addedW.length; // the added views' snapshots: their own line, the baseline does not have them
+      T.detectorWarnings = det.static.warnings + snap.warnings - addedW.length; T.detectorAdvisories = det.static.advisories + snap.advisories;
       T.detectorHiddenExcluded = Object.values(snap.hiddenElementsExcluded || {}).reduce((a, b) => a + b, 0);
-      const w = T.detectorWarnings + ' (index.html + styles.css ' + det.static.warnings + (det.snapshots ? ', screen snapshots ' + snap.warnings : '') + ')';
+      const w = T.detectorWarnings + ' (index.html + styles.css ' + det.static.warnings + (det.snapshots ? ', screen snapshots ' + (snap.warnings - addedW.length) : '') + ')';
+      if (R.captures.some(c => !VIEWS.includes(c.view))) check('Added views: detector warnings', addedW.length ? 'REVIEW' : 'PASS', addedW.length + (addedW.length ? ': ' + [...new Set(addedW.map(f => f.antipattern + ' ' + path.basename(f.file, '.html')))].slice(0, 6).join(', ') : ''));
       if (base && base.detectorWarnings != null) check('Detector warnings (npx impeccable@4.5.2 detect)', T.detectorWarnings <= base.detectorWarnings ? 'PASS' : 'FAIL', w + ' (baseline ' + base.detectorWarnings + '). Rules: detector.json');
       else check('Detector warnings (npx impeccable@4.5.2 detect)', T.detectorWarnings ? 'REVIEW' : 'PASS', w + (T.detectorWarnings ? ' (no baseline yet: recorded for Phase 4)' : '') + '. Rules: detector.json');
       check('Detector advisories (recorded, not gated)', 'INFO', T.detectorAdvisories + ' (index.html + styles.css ' + det.static.advisories + (det.snapshots ? ', screen snapshots ' + snap.advisories + '; ' + T.detectorHiddenExcluded + ' hidden elements left out of the snapshots' : '') + ')');
