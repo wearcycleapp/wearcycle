@@ -337,6 +337,10 @@ Built in Phase 14 (v1.66.0). Proposal "Wearcycle share image and privacy" (https
 
 - Each screen phase removes its own overridden declarations and unused rules (the lists above: 70 overridden declarations in total, 2 + 47 + 17 + 2 + 2, plus the unused Outfits rules). Removing them changes nothing on screen; prove it with `node tools/check.mjs --css-pixels --compare <before> --exact` on a before captured in the same session.
 
+## Responsiveness (v1.66.1, owner 2026-11-05)
+- Wear this: every piece is saved at once and the screen is drawn once (it was drawn again after each piece; with 97 pieces on a 4x slowed phone that froze the app 3 to 6 s per piece, about 28 s in all, with no visible change for the first 6 s). Now the button changes in about 0.1 s and everything is saved within about 0.5 s.
+- Care and Shop are drawn only while open; when hidden they are marked stale and drawn on opening. Care draws first with "Checking…" (role=status) in Not getting picked, then fills that group after the frame is painted; reasons past the first three are worked out on "Show all"; reasons are kept until the list changes. The Shop season preview is worked out only while its row is open. Tools wait for the Checking line to go before measuring Care.
+
 ## Naming the AI (v1.58.4, owner 2026-10-29)
 
 - Everyday screens describe what a feature does, with "AI" where it matters (Fill in automatically, Shopping ideas, Check condition from the photo, Reading the photo, Filled in by AI, AI features). They do not say Claude.

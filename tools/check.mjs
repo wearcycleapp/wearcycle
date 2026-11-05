@@ -243,7 +243,9 @@ const sheetOpen = page => page.evaluate(() => !!document.querySelector('#sheetRo
 async function closeSheet(page) { if (!(await sheetOpen(page))) return; await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#sheetRoot').innerHTML, null, { timeout: 5000 }); }
 // Settings: the header button with the bottom bar, the rail's last button with the rail (Phase 7).
 const SETTINGS_BTN = '#rulesBtn:visible, #railSettings:visible';
-async function goTab(page, tab) { await closeSheet(page); await page.click('nav.tabs button[data-tab="' + tab + '"]'); await page.waitForSelector('#tab-' + tab + ':not([hidden])'); }
+async function goTab(page, tab) { await closeSheet(page); await page.click('nav.tabs button[data-tab="' + tab + '"]'); await page.waitForSelector('#tab-' + tab + ':not([hidden])');
+  // Care fills in "Not getting picked" just after it is drawn (v1.66.1): wait for its "Checking" line to go.
+  if (tab === 'care') await page.waitForFunction(() => !document.querySelector('#careBody [role=status]'), null, { timeout: 30000 }); }
 async function openSheetBy(page, selector) { await page.click(selector); await page.waitForSelector('#sheetRoot .sheet', { timeout: 5000 }); }
 
 /* ---------- sign-in ---------- */

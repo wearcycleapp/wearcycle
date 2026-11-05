@@ -1497,5 +1497,6 @@ I18N.load("hi",{
 "{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "{0} पीस का कट-आउट नहीं बना है। यह इसी फ़ोन पर बनता है (AI का कोई खर्च नहीं); पहली बार लगभग {1} MB डाउनलोड होता है, फिर हर पीस में लगभग {2} से {3} सेकंड लगते हैं।",
 "Delete {0} photos?": "{0} फ़ोटो हटाएँ?",
 "Delete {0} photo?": "{0} फ़ोटो हटाएँ?",
-"Outfits use the feels-like temperature and rain chance from now until 9 pm.": "आउटफ़िट अभी से रात 9 बजे तक का महसूस होने वाला तापमान और बारिश की संभावना देखकर चुने जाते हैं।"
+"Outfits use the feels-like temperature and rain chance from now until 9 pm.": "आउटफ़िट अभी से रात 9 बजे तक का महसूस होने वाला तापमान और बारिश की संभावना देखकर चुने जाते हैं।",
+"Checking…": "जांच हो रही है…"
 });

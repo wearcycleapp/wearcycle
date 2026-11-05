@@ -1497,5 +1497,6 @@ I18N.load("tl",{
 "{0} piece without a cut-out. Made on this phone (no AI cost); the first time downloads about {1} MB, then about {2} to {3} seconds per piece.": "{0} pirasong walang cut-out. Ginagawa sa teleponong ito (walang bayad sa AI); sa unang beses, mga {1} MB ang dina-download, pagkatapos mga {2} hanggang {3} segundo bawat piraso.",
 "Delete {0} photos?": "Burahin ang {0} litrato?",
 "Delete {0} photo?": "Burahin ang {0} litrato?",
-"Outfits use the feels-like temperature and rain chance from now until 9 pm.": "Ginagamit ng mga outfit ang feels-like na temperatura at tsansa ng ulan mula ngayon hanggang 9 pm."
+"Outfits use the feels-like temperature and rain chance from now until 9 pm.": "Ginagamit ng mga outfit ang feels-like na temperatura at tsansa ng ulan mula ngayon hanggang 9 pm.",
+"Checking…": "Sinusuri…"
 });

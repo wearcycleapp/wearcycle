@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.66.0';
+const APP_VERSION='1.66.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -449,10 +449,10 @@ async function retryCuts(){
 }
 
 /* ---------- persistence ---------- */
-async function writeItem(it){
-  if(isEx(it)){ const i=S.examples.findIndex(e=>e.id===it.id); if(i>=0) S.examples[i]=it; renderAll(); return true; }
+async function writeItem(it,quiet){
+  if(isEx(it)){ const i=S.examples.findIndex(e=>e.id===it.id); if(i>=0) S.examples[i]=it; if(!quiet) renderAll(); return true; }
   if(!canWrite()){ toast('You are offline. Changes need a connection.'); return false; }
-  const prev=S.items.get(it.id); S.items.set(it.id,it); renderAll();
+  const prev=S.items.get(it.id); S.items.set(it.id,it); if(!quiet) renderAll();
   // A piece already in the closet is updated, never re-created: if it was deleted meanwhile (on another phone, tab or
   // by an earlier tap) the update matches no row, and it stays deleted instead of coming back.
   let error=null;
@@ -462,7 +462,7 @@ async function writeItem(it){
   if(error){ if(prev) S.items.set(it.id,prev); else S.items.delete(it.id); renderAll(); toast('Could not save: '+(error.message||'unknown error'),4500); return false; }
   saveCache(); return true;
 }
-async function patchItem(id,patch){ const it=byId(id); if(!it) return false; return writeItem(Object.assign({},it,patch)); }
+async function patchItem(id,patch,quiet){ const it=byId(id); if(!it) return false; return writeItem(Object.assign({},it,patch),quiet); }
 async function loadRemote(){
   const [it,we,se]=await Promise.all([
     sb.from('items').select('id,body'),
@@ -759,7 +759,11 @@ function applyHolidayLook(){
   const lg=top.querySelector('.logo'); lg.insertAdjacentHTML('afterend',`<span class="holibadge" aria-hidden="true" style="color:${h.accent}"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span>`);
   top.insertAdjacentHTML('afterend',`<div id="holiBar" class="holibar" style="--hb:${h.accent}"><span class="hbicon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="currentColor">${h.icon}</svg></span><span class="hbtxt"><b>${h.inDays===0?h.hello:h.label}</b>${h.inDays===0?'':`<span>${whenLabel(h.inDays)}</span>`}</span><button class="btn sm" data-theme-go="${h.id}">Themed outfits</button></div>`);
 }
-function renderAll(){ applyHolidayLook(); renderStatus(); renderOutfits(); renderCloset(); renderCare(); renderShop(); const v=$('#appVersion'); if(v) v.innerHTML=`<span data-notr>Wearcycle v${APP_VERSION}</span> · <a href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener" data-wn>What's new</a>`; }
+// Care and Shop each cost hundreds of ms (they rank outfits for "Not getting picked" and the season preview), so
+// while hidden they are only marked stale and drawn when opened (v1.66.1: Wear this froze the phone for seconds).
+const STALE=new Set(), LAZYTAB={care:()=>renderCare(),shop:()=>renderShop()};
+function renderAll(){ applyHolidayLook(); renderStatus(); renderOutfits(); renderCloset();
+  for(const [t,f] of Object.entries(LAZYTAB)){ if(S.tab===t){ STALE.delete(t); f(); } else STALE.add(t); } const v=$('#appVersion'); if(v) v.innerHTML=`<span data-notr>Wearcycle v${APP_VERSION}</span> · <a href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener" data-wn>What's new</a>`; }
 // Language (v1.57.0, owner 2026-10-27): a globe button in the header and the rail with the current language's own
 // name, a sheet listing the seven languages each in its own name, the first row of Settings, and a one-time
 // suggestion when the phone's language is one Wearcycle has but the app shows another (never switched silently).
@@ -825,7 +829,9 @@ function pinWhy(it){
 // Care: pieces that never make the suggestions, with the most likely reason and a way to see outfits with them.
 let NP={key:'',list:[]};
 function ctxFor(o){ return Object.assign(ctx(),{style:styleTarget(o),theme:null}); }
-function notPickedReason(it,occs){
+function notPickedReason(it,occs){ const k=NP.key+'|'+it.id+'|'+occs.join(','); if(NP.why&&NP.why.has(k)) return NP.why.get(k); const r=npWhy(it,occs); (NP.why||(NP.why=new Map())).set(k,r); return r; }
+// Each reason ranks outfits with the piece pinned, so it is kept until the list itself is worked out again (v1.66.1).
+function npWhy(it,occs){
   if(it.dirty) return 'In the wash: it returns to suggestions when you mark it clean.';
   if(it.repair&&!occs.some(o=>repairOk(it,o))) return 'Marked as needing repair.';
   if(!occs.length) return 'No occasions set, so it is never suggested. Open it and pick where you would wear it.';
@@ -1439,11 +1445,16 @@ function renderCare(){
     groups.check.length?cGroup('check','Condition check due','Take a fresh photo, or rate it yourself.',groups.check.map(([it,f])=>cRow(it,f.text,b('data-check',it.id,'Check','primary')))):'',
     down.length?cGroup('moved-down-a-level','Moved down a level','Still useful, but no longer counted for work or going out.',down.map(([it,f])=>cRow(it,f.text,b('data-check',it.id,'Recheck')+(isEx(it)?'':b('data-decide',it.id,'Decide','ghost'))))):''].filter(Boolean));
   // Rotate: shoes that need a rest; pieces not getting picked
-  const tired=WardrobeLogic.shoeLoad(items,allLog(),now), np=notPickedList(items);
+  // "Not getting picked" ranks outfits for every occasion (seconds on a slow phone): when it has to be worked out
+  // again, Care is drawn first with a "Checking" line, then that group is filled in (v1.66.1).
+  const npKey=fitKeyNow()+'|'+allLog().length, npWait=NP.key!==npKey;
+  if(npWait) requestAnimationFrame(()=>setTimeout(()=>{ if(S.tab!=='care'){ STALE.add('care'); return; } notPickedList(allItems()); renderCare(); },0)); // after Care is on screen
+  const tired=WardrobeLogic.shoeLoad(items,allLog(),now), np=npWait?[]:notPickedList(items);
   const rotate=cSec('rotate','Rotate',null,[
+    npWait?`<div class="cgrp"><h4 class="cgh">Not getting picked</h4><p class="cgd" role="status">Checking…</p></div>`:'',
     tired.length?cGroup('give-them-a-rest','Give them a rest','Shoes need a day to air out between wears.',tired.map(x=>cRow(x.item,'Worn on '+x.days+' of the last 30 days.',open(x.item)))):'',
-    np.length?cGroup('notpicked','Not getting picked','Pieces that are in none of the top suggestions for any occasion right now, and why.',np.map(({item:it,occs})=>cRow(it,notPickedReason(it,occs),(occs.length&&!it.dirty?b('data-pinsee',it.id,'See outfits'):'')+open(it)))):''].filter(Boolean));
-  const calm=rs.length||donate.length||groups.check.length||down.length||tired.length||np.length?'':'<p class="ccalm">Nothing needs attention right now.</p>';
+    np.length?cGroup('notpicked','Not getting picked','Pieces that are in none of the top suggestions for any occasion right now, and why.',np.map(({item:it,occs},k)=>cRow(it,k<3||S.careOpen.has('notpicked')?notPickedReason(it,occs):'',(occs.length&&!it.dirty?b('data-pinsee',it.id,'See outfits'):'')+open(it))+(k===3&&!S.careOpen.has('notpicked')?'<span data-lazy hidden></span>':''))):''].filter(Boolean));
+  const calm=rs.length||donate.length||groups.check.length||down.length||tired.length||np.length||npWait?'':'<p class="ccalm">Nothing needs attention right now.</p>';
   box.innerHTML=calm+'<div class="carev">'+repair+letgo+check+rotate+'</div>';
   lazyPics(box);
 }
@@ -1676,12 +1687,13 @@ function renderShop(){
   const coming=[]; const w=wxSet(); const plan=seasonPlan(Date.now(),wxOn()?w.lat:NaN);
   if(plan){ const se=SEASONS[plan.id]; const list=seasonChecklist(plan.id,items); const okL=list.filter(x=>x.have.length>=x.need), miss=list.filter(x=>x.have.length<x.need);
     const rot=seasonRotation(plan.id,items,Date.now());
-    const prev=['work','out'].map(o=>{ const c=Object.assign(ctx(),{wx:se.wx,style:styleTarget(o),theme:null}); const r=suggest(items,o,c,{n:1,layer:true}); const f=r.outfits[0];
+    // The preview ranks outfits twice, so it is worked out only while the row is open (v1.66.1).
+    const prev=!S.shopOpen.has('season')?'':['work','out'].map(o=>{ const c=Object.assign(ctx(),{wx:se.wx,style:styleTarget(o),theme:null}); const r=suggest(items,o,c,{n:1,layer:true}); const f=r.outfits[0];
       return f?`<div class="seaprev">${miniBoard(f.o)}<span>${OCC[o].label}</span></div>`:''; }).join('');
     const body=`<p class="hint">${plan.upcoming?'Starts '+fmtDay(plan.start)+'. ':''}${se.desc}</p>
       ${miss.map(x=>`<a class="lrow shop" href="${shopUrl(shopQ(x.label))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b>${x.label}</b><span>${x.have.length} of ${x.need}</span><span data-notr>${esc(x.have.slice(0,3).map(i=>i.name).join(', '))}</span></span>${SHOP_GO}</a>`).join('')}
       ${okL.length?`<p class="hint"><span>${'Ready: '+okL.map(x=>x.label.toLowerCase()).join(', ')}</span></p>`:''}
-      ${prev?`<p class="sh4">${'What you would wear on a '+se.label.toLowerCase()+' day'}</p><div class="seaprevs">${prev}</div>`:''}
+      ${S.shopOpen.has('season')?'':'<span data-lazy hidden></span>'}${prev?`<p class="sh4">${'What you would wear on a '+se.label.toLowerCase()+' day'}</p><div class="seaprevs">${prev}</div>`:''}
       ${rot.bringOut.length?`<p class="hint"><b>Bring these out</b> <span data-notr>${esc(rot.bringOut.slice(0,8).map(i=>i.name).join(', '))}</span></p>`:''}
       ${rot.store.length?`<p class="hint"><b>Can go into storage</b> <span data-notr>${esc(rot.store.slice(0,8).map(i=>i.name).join(', '))}</span></p>`:''}`;
     coming.push(fold('season',se.label,`${plan.upcoming?`<span>${fmtDay(plan.start)}</span> · `:''}<span>${okL.length} of ${list.length} ready</span>`,miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1),body)); }
@@ -2528,12 +2540,14 @@ async function cropAll(){
 
 /* ---------- actions ---------- */
 // Adds one wear to each piece (count, last worn, laundry); used when logging and when pieces are added to a log.
+// Every piece is saved at once and the screen is drawn once, by logWear (v1.66.1; one render per piece froze phones).
 async function countWears(list,day,occ){
-  const washed=[];
+  const washed=[], jobs=[];
   for(const it of list){ const p={worn:(it.worn||0)+1,lastWorn:(it.lastWorn&&it.lastWorn>day)?it.lastWorn:day,wearsSinceCheck:(it.wearsSinceCheck||0)+1,wearsSinceWash:(it.wearsSinceWash||0)+1};
     const we=washEvery(it);
     if(laundryOn()&&we>0&&!it.dirty&&(p.wearsSinceWash>=we||(occ==='sport'&&!NOWASH.includes(it.cat)))){ p.dirty=true; p.dirtyOn=day; washed.push(it.name); }
-    await patchItem(it.id,p); }
+    jobs.push(patchItem(it.id,p,true)); }
+  await Promise.all(jobs);
   if(washed.length) setTimeout(()=>toast('To the wash: '+washed.join(', ')+'. They return to suggestions when you mark them clean in Closet.',6500),900);
 }
 // Takes one wear off a piece that was logged but not worn (count, last worn, laundry if that wear sent it to the wash).
@@ -2713,6 +2727,7 @@ async function confirmAll(){
 function goTab(tab){
   S.tab=tab; if(tab!=='outfits') guard();
   for(const b of document.querySelectorAll('nav.tabs button')){ if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
+  if(STALE.has(tab)){ STALE.delete(tab); LAZYTAB[tab](); }
   for(const s of document.querySelectorAll('section.tab')) s.hidden=s.id!=='tab-'+tab;
   renderStatus(); window.scrollTo(0,0);
   if(tab==='outfits'){ fitLooks(); fitKit(); } // sized again here: a resize or rotation while Outfits was hidden could not measure it
@@ -2887,9 +2902,9 @@ document.addEventListener('click',async e=>{
   if(ds.styleWork!==undefined){ const st=styleSet(), k=ds.styleWork; st.work=!k?[]:(st.work.includes(k)?st.work.filter(x=>x!==k):st.work.concat([k])); saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
   if(ds.fold){ const id=ds.fold, on=t.getAttribute('aria-expanded')!=='true'; if(on) S.shopOpen.add(id); else S.shopOpen.delete(id);
-    t.setAttribute('aria-expanded',String(on)); const el=document.getElementById('fold-'+id); if(el){ el.hidden=!on; if(on) setTimeout(hydrateCuts,0); } return; }
+    t.setAttribute('aria-expanded',String(on)); const el=document.getElementById('fold-'+id); if(on&&el&&el.querySelector('[data-lazy]')){ renderShop(); const nb=document.querySelector(`[data-fold="${id}"]`); if(nb) nb.focus(); setTimeout(hydrateCuts,0); return; } if(el){ el.hidden=!on; if(on) setTimeout(hydrateCuts,0); } return; }
   if(ds.more){ const id=ds.more, on=t.getAttribute('aria-expanded')!=='true'; if(on) S.careOpen.add(id); else S.careOpen.delete(id);
-    const el=document.getElementById('more-'+id); if(el) el.hidden=!on; t.setAttribute('aria-expanded',String(on));
+    const el=document.getElementById('more-'+id); if(on&&el&&el.querySelector('[data-lazy]')){ renderCare(); const nb=document.querySelector(`[data-more="${id}"]`); if(nb) nb.focus(); setTimeout(hydrateCuts,0); return; } if(el) el.hidden=!on; t.setAttribute('aria-expanded',String(on));
     const n=el?el.children.length+3:0; t.textContent=on?I18N.tr('Show fewer'):I18N.tr(`Show all ${n}`); if(on) setTimeout(hydrateCuts,0); return; }
   if(ds.decide){ openDecide(ds.decide); return; }
   if((ds.repairmark||ds.homechores||ds.donate||ds.recycle)&&t.closest('.decide')) closeSheet();

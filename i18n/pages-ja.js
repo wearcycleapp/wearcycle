@@ -113,5 +113,7 @@ I18N.add("ja",{
 "The card above outfits with one piece and the In the wash list show cut-outs instead of floor photos.": "1つのアイテムを使ったコーデの上のカードと「洗濯中」の一覧で、床の写真ではなく切り抜きが表示されます。",
 "The picture you share of an outfit is new: each piece is named and sharper, the text fits in every language, and it stays clear of the buttons social apps draw on top.": "共有するコーデの画像を一新しました。各アイテムの名前が入ってより鮮明になり、どの言語でも文字が収まり、SNSアプリが上部に表示するボタンに重なりません。",
 "The privacy notice now uses the app's fonts and follows your light or dark choice.": "プライバシー通知がアプリのフォントを使い、ライトまたはダークの設定に従うようになりました。",
-"The camera's Delete button is easier to read in dark mode, a sentence in the Weather settings is now translated, and the checkboxes in a piece's details are easier to tap.": "カメラの削除ボタンがダークモードで読みやすくなり、天気設定の文章が翻訳され、アイテムの詳細のチェックボックスが押しやすくなりました。"
+"The camera's Delete button is easier to read in dark mode, a sentence in the Weather settings is now translated, and the checkboxes in a piece's details are easier to tap.": "カメラの削除ボタンがダークモードで読みやすくなり、天気設定の文章が翻訳され、アイテムの詳細のチェックボックスが押しやすくなりました。",
+"Wear this responds at once: the pieces are saved together instead of one by one, and the app no longer stops for seconds while it saves.": "「これを着る」がすぐに反応するようになりました。アイテムを1点ずつではなくまとめて保存し、保存中にアプリが数秒止まることはなくなりました。",
+"Care shows right away and fills in Not getting picked a moment later.": "「ケア」はすぐに表示され、「選ばれないアイテム」は少し後に表示されます。"
 });
