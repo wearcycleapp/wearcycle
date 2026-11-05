@@ -4,8 +4,13 @@
 //
 //   node tools/check.mjs [--worst-case] [--compare <folder> [--exact]] [--baseline <summary.json>] [--strict]
 //                        [--out <folder>] [--full-page] [--css-pixels] [--devices a,b] [--views a,b] [--no-axe] [--no-detector]
-//                        [--stub-auth] [--base-url <url>]
+//                        [--stub-auth] [--base-url <url>] [--no-rest]
 //
+// --views takes the views below and the groups signed-out, pages, sheets, layers, camera and share (default: everything).
+// What users see (owner, Phase 14 step 0): the first screen of each view as before, then what lies below it: name--full.png
+// for a tab or page (scrolled through first, so lazy pictures load), name--2.png, --3... for a sheet that scrolls (--no-rest
+// leaves these out). The camera uses Chromium's fake capture device with one still frame written by this script, so it is
+// deterministic; the device's default test pattern moves. Share images are the canvas's own 1080x1920 PNG.
 // Deterministic: fixed clock (closet.json "now"), stubbed Open-Meteo (fixtures/weather.json), the fixture closet
 // (fixtures/closet.json) in place of the Supabase items, wears and settings, animations off, service worker blocked.
 // Every request to Supabase except sign-in is answered locally, so a run never writes to a real account.
@@ -40,7 +45,7 @@ const flag = n => argv.includes('--' + n);
 const opt = n => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1] : undefined; };
 const A = {
   worstCase: flag('worst-case'), compare: opt('compare'), exact: flag('exact'), baseline: opt('baseline'), strict: flag('strict'),
-  fullPage: flag('full-page'), cssPixels: flag('css-pixels'), noAxe: flag('no-axe'), noDetector: flag('no-detector'), stubAuth: flag('stub-auth'),
+  fullPage: flag('full-page'), cssPixels: flag('css-pixels'), noAxe: flag('no-axe'), noDetector: flag('no-detector'), stubAuth: flag('stub-auth'), noRest: flag('no-rest'),
   baseUrl: opt('base-url'), devices: opt('devices'), views: opt('views'),
   out: path.resolve(opt('out') || path.join(os.tmpdir(), 'wearcycle-check', flag('worst-case') ? 'worst-case' : 'run')),
 };
@@ -76,6 +81,9 @@ const DEV = Object.fromEntries(DEVICES.map(d => [d.id, d]));
 const VIEWS = ['outfits', 'closet', 'care', 'shop', 'preview', 'editor', 'settings'];
 const pickList = (all, s) => s ? all.filter(x => s.split(',').includes(x.id || x)) : all;
 const devices = pickList(DEVICES, A.devices), views = pickList(VIEWS, A.views);
+const GROUPS = ['signed-out', 'pages', 'sheets', 'layers', 'camera', 'share'];
+const groups = A.views ? GROUPS.filter(g => A.views.split(',').includes(g)) : GROUPS;
+const LANGS = ['en', 'es', 'fr', 'tl', 'hi', 'ja', 'ko'];
 
 /* ---------- results ---------- */
 const R = { checks: [], captures: [], console: [], unexpectedHosts: new Set(), writes: [], functions: [], expected404: new Set(), auth: {}, snapHidden: {}, render: {}, compare: null };
@@ -101,7 +109,7 @@ function scenario(name) {
   const base = { items: CLOSET.items, wears: CLOSET.wears, settings: CLOSET.settings, missing: new Set() };
   if (!name) return base;
   const sc = WORST.scenarios[name]; let d = sc.from ? scenario(sc.from) : { ...base };
-  d = { ...d, items: (sc.items || d.items).map(i => ({ ...i, body: { ...i.body } })), wears: sc.wears || d.wears, missing: new Set(d.missing) };
+  d = { ...d, items: (sc.items || d.items).map(i => ({ ...i, body: { ...i.body } })), wears: sc.wears || d.wears, settings: { ...d.settings, ...(sc.settings || {}) }, missing: new Set(d.missing) };
   for (const [id, n] of Object.entries(sc.rename || {})) { const it = d.items.find(i => i.id === id); if (it) it.body.name = n; }
   if (sc.keep) d.items = d.items.filter(i => sc.keep.includes(i.id)); // Phase 10: only these pieces
   for (const [id, f] of Object.entries(sc.patch || {})) { const it = d.items.find(i => i.id === id); if (it) Object.assign(it.body, f); } // a few fields per piece
@@ -176,21 +184,22 @@ function makeRouter(base, data) {
 
 /* ---------- browser helpers ---------- */
 let PW, AxeBuilder, PNG, pixelmatch;
-async function newContext(browser, base, dev, { theme = 'light', lang = 'en', data, storageState } = {}) {
+async function newContext(browser, base, dev, { theme = 'light', lang = 'en', data, storageState, known = true, clock = NOW } = {}) {
   const ctx = await browser.newContext({
     viewport: { width: dev.width, height: dev.height }, deviceScaleFactor: dev.dpr, isMobile: dev.touch, hasTouch: dev.touch,
     locale: CLOSET.locale, timezoneId: CLOSET.timezone, colorScheme: theme, reducedMotion: 'reduce', serviceWorkers: 'block', storageState,
   });
-  await ctx.clock.setFixedTime(NOW);
-  await ctx.addInitScript(({ theme, lang }) => {
+  await ctx.clock.setFixedTime(clock);
+  await ctx.addInitScript(({ theme, lang, known }) => {
     try {
       if (sessionStorage.getItem('wc-check')) return; // only on the first load of the tab, so in-app switches survive a reload
       sessionStorage.setItem('wc-check', '1');
       localStorage.setItem('wearcycle.theme', theme); localStorage.setItem('wearcycle.lang', lang);
-      localStorage.setItem('wearcycle.known', 'true'); localStorage.setItem('wardrobe.installDismissed', 'true');
+      if (known) localStorage.setItem('wearcycle.known', 'true'); else localStorage.removeItem('wearcycle.known');
+      localStorage.setItem('wardrobe.installDismissed', 'true');
       if (lang !== 'en') localStorage.setItem('wearcycle.i18nDebug', '1'); else localStorage.removeItem('wearcycle.i18nDebug');
     } catch (e) {}
-  }, { theme, lang });
+  }, { theme, lang, known });
   await ctx.route('**/*', makeRouter(base, data));
   return ctx;
 }
@@ -275,10 +284,10 @@ async function signIn(browser, base, data) {
 // English left in fr/ja: a visible text node the translation layer could not match (I18N.missing, enabled with
 // wearcycle.i18nDebug) that reads as English: two or more English function words, or the exact text of a literal in
 // the app source. Dates and places the browser formats in French, piece names and the brand are not counted.
-const SOURCE = ['app.js', 'logic.js', 'index.html'].map(f => readFileSync(path.join(REPO, f), 'utf8')).join('\n');
-async function pageFacts(page, lang, texts, inSheet) {
+const SOURCE = ['app.js', 'logic.js', 'index.html', 'privacy.html', 'whats-new.html'].map(f => readFileSync(path.join(REPO, f), 'utf8')).join('\n');
+async function pageFacts(page, lang, texts, inSheet) { // inSheet: true for the open sheet, or the selector of a layer
   return page.evaluate(({ lang, texts, inSheet, source }) => {
-    const root = inSheet && document.querySelector('#sheetRoot .sheet') || document.body;
+    const root = inSheet && document.querySelector(inSheet === true ? '#sheetRoot .sheet' : inSheet) || document.body;
     const W = innerWidth, out = { overflowX: document.documentElement.scrollWidth - W, wide: [], truncated: [], userTruncated: [], spilling: [], english: [] };
     const sel = el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : '');
     const scroller = el => { for (let p = el.parentElement; p; p = p.parentElement) { const s = getComputedStyle(p).overflowX; if (s === 'auto' || s === 'scroll') return true; } return false; };
@@ -317,7 +326,7 @@ async function pageFacts(page, lang, texts, inSheet) {
 }
 async function axe(page, sheet) {
   let b = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']);
-  if (sheet) b = b.include('#sheetRoot'); // a sheet view counts only the sheet; the tab behind it has its own capture
+  if (sheet) b = b.include(sheet === true ? '#sheetRoot' : sheet); // a sheet or layer view counts only itself; the tab behind it has its own capture
   const res = await b.analyze();
   return res.violations.filter(v => v.impact === 'serious' || v.impact === 'critical')
     .map(v => ({ id: v.id, impact: v.impact, help: v.help, nodes: v.nodes.length, targets: v.nodes.slice(0, 3).map(n => n.target.join(' ')) }));
@@ -417,30 +426,196 @@ async function captureSet(browser, base, state, { dev, theme, lang, data, tag, s
       cap.pictures = await page.evaluate(PICTURES, inSheet); delete cap.pictures.wear;
       cap.img = { kb: Math.round((net.bytes - seen.bytes) / 1024), files: net.files - seen.files }; seen = { ...net }; // the first view includes the app opening
       if (runAxe && !A.noAxe) cap.axe = await axe(page, inSheet);
-      if (snapshots) { // static copy for the detector: scripts removed, blob: images (cut-outs) inlined as data URLs,
-        // hidden elements removed (only what is on screen counts)
-        const { html, hidden } = await page.evaluate(() => {
-          const live = [...document.images], d = document.documentElement.cloneNode(true), copies = [...d.querySelectorAll('img')];
-          live.forEach((im, k) => { if (!im.currentSrc.startsWith('blob:') || !im.naturalWidth || !copies[k]) return;
-            const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); copies[k].src = c.toDataURL('image/webp'); });
-          // Hidden: display none (styles.css makes [hidden] display:none !important), or visibility hidden with nothing
-          // visible inside. The copy has the same document order as the page, so index k matches. Parts of an SVG are
-          // left alone (they are drawn through their svg); a removed element takes its descendants with it.
-          const liveEls = [...document.body.querySelectorAll('*')], copyEls = [...d.querySelector('body').querySelectorAll('*')];
-          let hidden = 0;
-          liveEls.forEach((el, k) => {
-            const c = copyEls[k]; if (!c || el.ownerSVGElement || !d.contains(c)) return;
-            const cs = getComputedStyle(el), invisible = cs.visibility === 'hidden' || cs.visibility === 'collapse';
-            if (cs.display === 'none' || (invisible && ![...el.querySelectorAll('*')].some(x => getComputedStyle(x).visibility === 'visible'))) { c.remove(); hidden++; }
-          });
-          d.querySelectorAll('script').forEach(s => s.remove()); return { html: '<!doctype html>\n' + d.outerHTML, hidden }; });
-        writeFileSync(path.join(A.out, 'snapshots', view + '.html'), html);
-        R.snapHidden[view] = hidden;
-      }
+      if (snapshots) await snapshot(page, view);
+      cap.rest = await captureRest(page, where, inSheet ? 'sheet' : 'page'); seen = { ...net };
     } catch (e) { cap.error = String(e && e.message || e).split('\n')[0]; }
     R.captures.push(cap);
   }
   await ctx.close();
+}
+
+// Static copy for the detector: scripts removed, blob: images (cut-outs) inlined as data URLs, hidden elements removed
+// (only what is on screen counts).
+async function snapshot(page, view) {
+  const { html, hidden } = await page.evaluate(() => {
+    const live = [...document.images], d = document.documentElement.cloneNode(true), copies = [...d.querySelectorAll('img')];
+    live.forEach((im, k) => { if (!im.currentSrc.startsWith('blob:') || !im.naturalWidth || !copies[k]) return;
+      const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; c.getContext('2d').drawImage(im, 0, 0); copies[k].src = c.toDataURL('image/webp'); });
+    // Hidden: display none (styles.css makes [hidden] display:none !important), or visibility hidden with nothing
+    // visible inside. The copy has the same document order as the page, so index k matches. Parts of an SVG are
+    // left alone (they are drawn through their svg); a removed element takes its descendants with it.
+    const liveEls = [...document.body.querySelectorAll('*')], copyEls = [...d.querySelector('body').querySelectorAll('*')];
+    let hidden = 0;
+    liveEls.forEach((el, k) => {
+      const c = copyEls[k]; if (!c || el.ownerSVGElement || !d.contains(c)) return;
+      const cs = getComputedStyle(el), invisible = cs.visibility === 'hidden' || cs.visibility === 'collapse';
+      if (cs.display === 'none' || (invisible && ![...el.querySelectorAll('*')].some(x => getComputedStyle(x).visibility === 'visible'))) { c.remove(); hidden++; }
+    });
+    d.querySelectorAll('script').forEach(s => s.remove()); return { html: '<!doctype html>\n' + d.outerHTML, hidden }; });
+  writeFileSync(path.join(A.out, 'snapshots', view + '.html'), html);
+  R.snapHidden[view] = hidden;
+}
+
+/* ---------- the rest of what users see (owner, Phase 14 step 0) ---------- */
+const shotOpts = () => ({ scale: A.cssPixels ? 'css' : 'device', animations: 'disabled', caret: 'hide' });
+// Below the first screen: the page once, whole (scrolled through first, so pictures that load near the screen are there);
+// a sheet, which scrolls on its own, one screen at a time (88px overlap, so a line cut by the sticky buttons shows whole).
+async function captureRest(page, where, kind) {
+  if (A.noRest || A.fullPage) return 0;
+  const file = s => path.join(A.out, 'screens', where + '--' + s + '.png');
+  if (kind === 'sheet') {
+    let n = 1;
+    while (n < 12) {
+      const moved = await page.evaluate(() => { const s = document.querySelector('#sheetRoot .sheet'); if (!s || s.scrollTop + s.clientHeight >= s.scrollHeight - 1) return false; s.scrollTop += s.clientHeight - 88; return true; });
+      if (!moved) break;
+      n++; await settle(page); await page.screenshot({ path: file(n), ...shotOpts() });
+    }
+    await page.evaluate(() => { const s = document.querySelector('#sheetRoot .sheet'); if (s) s.scrollTop = 0; });
+    return n - 1;
+  }
+  const h = await page.evaluate(() => document.documentElement.scrollHeight - innerHeight);
+  if (h <= 1) return 0;
+  await page.evaluate(async () => { const end = document.documentElement.scrollHeight; for (let y = 0; y < end; y += Math.round(innerHeight * .8)) { scrollTo(0, y); await new Promise(r => setTimeout(r, 60)); } });
+  await settle(page); await page.evaluate(() => scrollTo(0, 0)); await settle(page);
+  await page.screenshot({ path: file('full'), fullPage: true, ...shotOpts() });
+  return 1;
+}
+async function capturedView(page, cap, { where, lang, texts, inSheet, rest, runAxe, snap }) {
+  const pending = await settle(page); if (pending) cap.cutsPending = pending;
+  await page.screenshot({ path: path.join(A.out, 'screens', where + '.png'), fullPage: A.fullPage, ...shotOpts() });
+  Object.assign(cap, await pageFacts(page, lang, texts, inSheet));
+  if (inSheet === true) { cap.pictures = await page.evaluate(PICTURES, true); delete cap.pictures.wear; }
+  if (runAxe && !A.noAxe) cap.axe = await axe(page, inSheet);
+  if (snap) await snapshot(page, cap.view);
+  cap.rest = rest ? await captureRest(page, where, rest) : 0;
+}
+// Each sheet the app can open that the views above do not capture: [view, tab first, expression that opens it, shown only if].
+const SHEET_VIEWS = [
+  ['language', 'outfits', 'openLangs()'], ['reminders', 'outfits', 'openReminders()'], ['adjust', 'outfits', 'openAdjust()'],
+  ['style-today', 'outfits', 'openStyleMenu()', '!!document.querySelector(".stylebtn")?.checkVisibility()'],
+  ['diary', 'outfits', 'DI=null,openDiary()'], ['weather', 'outfits', 'openWxSheet()'], ['what-i-wore', 'outfits', 'openLog()'],
+  ['add-clothes', 'closet', 'openAddMenu()'], ['new-item', 'closet', 'openEditor()'], ['stats', 'closet', 'openStats()'],
+  ['duplicates', 'closet', '(S.dups=[{a:byId("fx-01"),b:byId("fx-02"),h:2,c:3}],openDups())'],
+  ['what-is-this', 'closet', 'QD.it=null,openQuick(["fx-03"])'],
+  ['condition-check', 'care', 'openCheck("fx-11")'], ['decide', 'care', 'openDecide("fx-02")'],
+  ['share-list', 'shop', 'openWishlist()'], ['saved-idea', 'shop', 'openIdea("idea-1")'],
+  ['have-one', 'shop', '(()=>{const k=S.settings.style.pick[0],e=styleEss(k,allItems().filter(isActive)).find(x=>!x.have);openEss(k,e.label);})()'],
+  ['your-style', 'outfits', 'openStyles()'], ['style-palette', 'outfits', 'openPalettes()'], ['custom-palette', 'outfits', 'openPaletteCustom()'],
+  ['inspiration', 'outfits', 'openInspo()'],
+  ['inspiration-result', 'outfits', 'INSPO={look:{label:"Smart casual Friday",base:["classic"],pieces:["Navy blazer","White oxford shirt","Khaki chinos","Brown loafers","Silk pocket square"],colors:["navy","white","khaki"],summary:"A relaxed blazer look for the end of the week."},saved:null},openInspoResult()'],
+  ['help', 'outfits', 'openHelp()'], ['delete-data', 'outfits', 'openWipe()'], ['change-password', 'outfits', 'askNewPassword(true)'], ['new-password', 'outfits', 'askNewPassword(false)'],
+  ['consent', 'outfits', '(S.settings.consent=null,localStorage.removeItem("wearcycle.consent"),privacyCheck())'],
+];
+// The still frame for Chromium's fake camera: a dark garment on a light floor (a bright frame, so the app adds no "dark photo" toast).
+function fakeCameraArgs() {
+  const W = 1280, H = 960, y = Buffer.alloc(W * H, 226), u = Buffer.alloc(W * H / 4, 122), v = Buffer.alloc(W * H / 4, 134);
+  const garment = (x, yy) => { const nx = x / W - .5, ny = yy / H; return (ny > .22 && ny < .82 && Math.abs(nx) < .17) || (ny > .22 && ny < .45 && Math.abs(nx) < .31 && (ny - .22) > (Math.abs(nx) - .17) * .4); };
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (garment(i, j)) y[j * W + i] = 58;
+  for (let j = 0; j < H / 2; j++) for (let i = 0; i < W / 2; i++) if (garment(i * 2, j * 2)) { u[j * W / 2 + i] = 146; v[j * W / 2 + i] = 118; }
+  const file = path.join(A.out, 'fake-camera.y4m');
+  writeFileSync(file, Buffer.concat([Buffer.from('YUV4MPEG2 W' + W + ' H' + H + ' F30:1 Ip A1:1 C420\nFRAME\n'), y, u, v]));
+  return ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-video-capture=' + file];
+}
+async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang, tag, runAxe, snapshots, only, longNames }) {
+  const on = g => groups.includes(g) && (!only || only.includes(g));
+  const texts0 = userTexts(scenario(null));
+  const record = async (page, setWhere, view, inSheet, rest, open, texts = texts0, snap = snapshots) => {
+    const where = tag + '-' + view, cap = { name: where, device: dev.id, theme, lang, view }; setWhere(where);
+    try {
+      if ((await open()) === false) { cap.na = true; R.captures.push(cap); return; }
+      await capturedView(page, cap, { where, lang, texts, inSheet, rest, runAxe, snap });
+    } catch (e) { cap.error = String(e && e.message || e).split('\n')[0]; }
+    R.captures.push(cap);
+  };
+  const session = async (b, opts, run) => {
+    const ctx = await newContext(b, base, dev, { theme, lang, ...opts }); const page = await ctx.newPage(); let w = tag;
+    watchConsole(page, () => w); try { await run(page, x => { w = x; }); } finally { await ctx.close(); }
+  };
+  if (on('signed-out')) await session(browser, { data: scenario(null), known: false }, async (page, sw) => {
+    await page.goto(base + '/index.html'); await page.waitForSelector('#g-email', { timeout: 15000 });
+    await record(page, sw, 'signup', null, 'page', () => {});
+    await record(page, sw, 'signin', null, 'page', () => page.click('#g-mode-in'));
+    await record(page, sw, 'signin-error', null, 'page', () => page.click('#g-in'));
+    await record(page, sw, 'reset', null, 'page', () => page.click('#g-forgot'));
+  });
+  if (on('pages')) await session(browser, { data: scenario(null) }, async (page, sw) => {
+    for (const [view, file] of [['privacy', 'privacy.html'], ['whats-new', 'whats-new.html']])
+      await record(page, sw, view, null, 'page', async () => { await page.goto(base + '/' + file); await page.waitForLoadState('load'); });
+  });
+  if (on('sheets') || on('layers')) {
+    const data = scenario('sheets');
+    if (longNames) for (const [id, n] of Object.entries(WORST.scenarios.long.rename || {})) { const it = data.items.find(i => i.id === id); if (it) it.body.name = n; }
+    const texts = userTexts(data);
+    await session(browser, { data, storageState: state, clock: new Date(CLOSET.busyMorning) }, async (page, sw) => {
+      await page.goto(base + '/index.html'); await waitApp(page);
+      if (on('sheets')) for (const [view, tab, expr, cond] of SHEET_VIEWS) {
+        await record(page, sw, 'sheet-' + view, true, 'sheet', async () => {
+          await closeSheet(page); await goTab(page, tab); await page.evaluate(() => window.scrollTo(0, 0));
+          if (cond && !(await page.evaluate(cond))) return false;
+          await page.evaluate('void (' + expr + ')'); await page.waitForSelector('#sheetRoot .sheet', { timeout: 5000 });
+        }, texts);
+      }
+      await closeSheet(page);
+      if (on('layers')) {
+        const shut = async () => { await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#viewRoot').innerHTML, null, { timeout: 5000 }); };
+        await goTab(page, 'closet');
+        await record(page, sw, 'viewer-photo', '#viewRoot', null, async () => { await page.evaluate(() => { openViewer('fx-01'); }); await page.waitForFunction(() => { const i = document.querySelector('#vImg'); return i && i.complete && i.naturalWidth; }, null, { timeout: 8000 }); }, texts);
+        await record(page, sw, 'viewer-cut', '#viewRoot', null, async () => { await page.click('#viewRoot [data-vmode="cut"]'); await page.waitForFunction(() => { const i = document.querySelector('#vImg'); return i && i.classList.contains('cut') && i.complete && i.naturalWidth; }, null, { timeout: 8000 }); }, texts);
+        await shut();
+        await record(page, sw, 'job', '#jobRoot', null, async () => { await page.evaluate(() => job('Adding 12 of 40 · Reading the photo · Making the cut-out · Saving to your closet', 30)); }, texts);
+        await page.evaluate(() => job(''));
+        await record(page, sw, 'toast', '#toastRoot', null, async () => { await page.evaluate(() => toast('Done. Open any piece in Closet to add more details, like dress level and condition.', 0)); }, texts);
+        await page.evaluate(() => { document.querySelector('#toastRoot').innerHTML = ''; });
+      }
+    });
+  }
+  if (on('camera') && camBrowser) await session(camBrowser, { data: scenario(null), storageState: state }, async (page, sw) => {
+    await page.goto(base + '/index.html'); await waitApp(page);
+    const live = async () => {
+      await page.waitForFunction(() => { const v = document.querySelector('#camVideo'); return v && v.videoWidth > 0 && v.currentTime > 0; }, null, { timeout: 10000 });
+      await page.waitForFunction(() => { const c = typeof CAM !== 'undefined' && CAM; return c && (c.torchOk || c.torchMaybe); }, null, { timeout: 3000 }).catch(() => {}); // the flashlight button appears after the track is asked
+    };
+    await record(page, sw, 'camera-tips', '#camRoot', null, async () => { await page.evaluate(() => { openCamera('batch'); }); await page.waitForSelector('#camRoot .camtips'); });
+    await record(page, sw, 'camera-live', '#camRoot', null, async () => { await page.click('#camRoot [data-cam="tipsok"]'); await live(); });
+    await record(page, sw, 'camera-photo-taken', '#camRoot', null, async () => { await page.click('#camRoot [data-cam="shoot"]'); await page.waitForSelector('#camRoot .camdone.ready'); });
+    await record(page, sw, 'camera-delete-question', '#camRoot', null, async () => { await page.click('#camRoot [data-cam="cancel"]'); await page.waitForSelector('#camRoot .camask'); });
+    await page.click('#camRoot [data-cam="discard"]'); await page.waitForFunction(() => !document.querySelector('#camRoot').innerHTML);
+    await record(page, sw, 'camera-one-piece', '#camRoot', null, async () => { await page.evaluate(() => { openCamera('single'); }); await page.waitForSelector('#camVideo'); await live(); });
+    await record(page, sw, 'camera-blocked', '#camRoot', null, async () => { await page.evaluate(() => { stopStream(); cameraFallback('Camera access is blocked. Allow it in Chrome: tap the icon left of the address, then Permissions, then Camera.'); }); });
+    await page.evaluate(() => closeCamera([]));
+  });
+}
+// The share image in every language and occasion: the canvas's PNG (saved for every language, with and without cut-outs,
+// on the first occasion, and for French and Hindi on every occasion) and every text it draws, measured against the canvas.
+async function captureShare(browser, base, state) {
+  R.share = [];
+  const withCut = scenario(null), noCut = { ...withCut, items: withCut.items.map(i => { const body = { ...i.body }; delete body.cut; return { ...i, body }; }) };
+  const dev = DEV['win-1366'];
+  for (const lang of LANGS) for (const [variant, data] of [['cutouts', withCut], ['no-cutouts', noCut]]) {
+    console.log('share ' + lang + ' ' + variant);
+    const ctx = await newContext(browser, base, dev, { lang, data, storageState: state }); const page = await ctx.newPage();
+    watchConsole(page, () => 'share-' + lang + '-' + variant);
+    try {
+      await page.goto(base + '/index.html'); await waitApp(page);
+      await page.evaluate(() => { const P = CanvasRenderingContext2D.prototype, o = P.fillText; window.__drawn = [];
+        P.fillText = function (s, x, y, m) { const w = this.measureText(s).width, l = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x; window.__drawn.push({ s: String(s), left: Math.round(l), right: Math.round(l + w), W: this.canvas.width }); return o.call(this, s, x, y, m); }; });
+      const occs = await page.evaluate(() => [...document.querySelectorAll('#occChips [data-occ]')].map(b => b.dataset.occ));
+      const first = await page.evaluate(() => document.querySelector('#occChips [aria-pressed="true"]')?.dataset.occ);
+      for (const occ of [first, ...occs.filter(o => o !== first)]) {
+        const name = lang + '-' + occ + '-' + variant, row = { name, lang, occ, variant, over: [] };
+        try {
+          await page.click('#occChips [data-occ="' + occ + '"]'); await settle(page);
+          if (!(await page.evaluate(() => !!S.fits[S.sel]))) { row.na = true; continue; }
+          await page.evaluate(() => { window.__drawn.length = 0; });
+          const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), page.evaluate(() => { shareOutfit(); })]);
+          const keep = occ === first || (variant === 'cutouts' && ['fr', 'hi'].includes(lang));
+          if (keep) { row.file = 'share-' + name + '.png'; await dl.saveAs(path.join(A.out, 'screens', row.file)); } else await dl.delete();
+          row.over = (await page.evaluate(() => window.__drawn)).filter(t => t.right > t.W || t.left < 0).map(t => ({ s: t.s, by: Math.max(t.right - t.W, -t.left) }));
+        } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
+        finally { if (!row.na) R.share.push(row); }
+      }
+    } finally { await ctx.close(); }
+  }
 }
 
 /* ---------- functional flows (phone-390, light, English) ---------- */
@@ -695,6 +870,8 @@ async function main() {
   const server = await startServer();
   let browser;
   try { browser = await PW.chromium.launch({ args: CHROMIUM_ARGS }); } catch (e) { server.stop(); throw e; } // else the local server keeps the run alive
+  let camBrowser = null; // only the camera views run with the fake capture device, so the other screenshots keep their launch flags
+  if (groups.includes('camera') && !A.worstCase) camBrowser = await PW.chromium.launch({ args: [...CHROMIUM_ARGS, ...fakeCameraArgs()] });
   R.render = { browser: 'chromium ' + browser.version(), args: CHROMIUM_ARGS };
   try {
     const data = scenario(null);
@@ -710,7 +887,9 @@ async function main() {
         const tag = s.dev.id + '-' + s.theme + '-' + s.lang;
         console.log('capture ' + tag);
         await captureSet(browser, server.base, state, { ...s, data, tag, runAxe: true, snapshots: s.dev.id === 'phone-390' && s.theme === 'light' });
+        await captureAdded(browser, camBrowser, server.base, state, { ...s, tag, runAxe: true, snapshots: s.dev.id === 'phone-390' && s.theme === 'light' });
       }
+      if (groups.includes('share')) await captureShare(browser, server.base, state);
     } else {
       const plan = [['long', ['en', 'fr']], ['empty', ['en']], ['many', ['en']], ['care', ['en', 'fr']], ['calm', ['en']]];
       for (const [name, langs] of plan) {
@@ -718,10 +897,11 @@ async function main() {
         for (const dev of devices.filter(d_ => ['phone-360', 'win-1366'].includes(d_.id))) for (const lang of langs) {
           const tag = 'wc-' + name + '-' + dev.id + '-' + lang; console.log('capture ' + tag);
           await captureSet(browser, server.base, state, { dev, theme: 'light', lang, data: d, tag, runAxe: false, snapshots: false });
+          if (name === 'long') await captureAdded(browser, null, server.base, state, { dev, theme: 'light', lang, tag, runAxe: false, snapshots: false, only: ['sheets', 'layers'], longNames: true });
         }
       }
     }
-  } finally { await browser.close(); server.stop(); }
+  } finally { await browser.close(); if (camBrowser) await camBrowser.close(); server.stop(); }
 
   const caps = R.captures.filter(c => !c.na);
   const errs = caps.filter(c => c.error);
@@ -738,8 +918,10 @@ async function main() {
   // Gate against the baseline only on the devices it has: a device added later (phone-land, Phase 7) has nothing to
   // compare with. The summary keeps the totals over every device.
   const later = baseDevices ? [...new Set(R.captures.map(c => c.device))].filter(d => !baseDevices.has(d)) : [];
-  const G = later.length ? totals(c => baseDevices.has(c.device)) : T;
-  const gnote = k => later.length ? '; ' + later.join(', ') + ' not in the baseline, all devices ' + T[k] : '';
+  // The views added in Phase 14 step 0 have their own lines below: the baseline does not have them.
+  const oldView = c => VIEWS.includes(c.view), T0 = totals(oldView), TA = totals(c => !oldView(c));
+  const G = later.length ? totals(c => oldView(c) && baseDevices.has(c.device)) : T0;
+  const gnote = k => later.length ? '; ' + later.join(', ') + ' not in the baseline, all devices ' + T0[k] : '';
   if (!A.worstCase) {
     T.wearThisVisible = R.wearThis ? R.wearThis.visible : null;
     if (R.wearThis) {
@@ -750,6 +932,21 @@ async function main() {
     gate('No English left in French and Japanese', G.englishLeft, base && base.englishLeft, true, gnote('englishLeft'));
   }
   gate('No app text cut off or spilling (all languages)', G.textOverflow, base && base.textOverflow, false, gnote('textOverflow'));
+  if (R.captures.some(c => !oldView(c))) { // no baseline for these: anything found shows as REVIEW, with where in summary.md
+    const where = f => [...new Set(caps.filter(c => !oldView(c) && f(c)).map(c => c.view))].slice(0, 8).join(', ');
+    if (!A.noAxe && !A.worstCase) gate('Added views: axe-core, serious or critical nodes', TA.axeSerious, null, false, '');
+    if (!A.noAxe && !A.worstCase && TA.axeSerious) check('Added views with axe-core findings', 'INFO', where(c => (c.axe || []).length));
+    if (!A.worstCase) gate('Added views: English left in French and Japanese', TA.englishLeft, null, false, '');
+    if (TA.englishLeft) check('Added views with English left', 'INFO', where(c => (c.english || []).length));
+    gate('Added views: app text cut off or spilling', TA.textOverflow, null, false, '');
+    if (TA.textOverflow) check('Added views with text cut or spilling', 'INFO', where(c => (c.spilling || []).length + (c.truncated || []).length));
+    check('Added views', 'INFO', caps.filter(c => !oldView(c)).length + ' first screens; below the first screen, all views: ' + caps.reduce((n, c) => n + (c.rest || 0), 0) + ' more');
+  }
+  if (R.share) {
+    const over = R.share.filter(x => x.over.length), saved = R.share.filter(x => x.file);
+    check('Share image: drawn in every language and occasion', R.share.some(x => x.error) ? 'FAIL' : 'PASS', R.share.length + ' images, ' + saved.length + ' saved; ' + R.share.filter(x => x.error).map(x => x.name + ' ' + x.error).slice(0, 3).join('; '));
+    check('Share image: all text inside the picture', over.length ? 'REVIEW' : 'PASS', over.length ? over.length + ' of ' + R.share.length + ': ' + over.slice(0, 4).map(x => x.name + ' "' + x.over[0].s.slice(0, 40) + '" +' + x.over[0].by + 'px').join('; ') : R.share.length + ' images');
+  }
   check('Piece names cut with an ellipsis', 'INFO', T.userNamesCut + ' (user-typed names may be truncated; listed per view in summary.json)');
   if (R.wearSizes) {
     const req = R.wearSizes.filter(x => x.required), miss = req.filter(x => !x.visible), at = x => x.missing ? 'no button' : x.top + '-' + x.bottom + ' of ' + x.vh;
@@ -788,7 +985,7 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, render: R.render, totals: T, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, share: R.share, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',

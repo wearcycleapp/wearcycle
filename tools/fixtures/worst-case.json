@@ -1,5 +1,5 @@
 {
- "_about": "break-ui data for tools/check.mjs --worst-case. Each scenario starts from closet.json (or another scenario) and changes only the data, never the app. Names are realistic user input in French, Tagalog and Hindi, with emoji, a one-letter name, extra spaces and an unbroken word. \"care\" fills every Care group (3 to repair, 3 to let go, 4 checks due, 4 moved down a level, shoes worn on 18 and 25 of the last 30 days, 2 donated or recycled) through \"patch\" (fields per piece) and \"addWears\" (logged outfits added to closet.json's); \"calm\" keeps 6 pieces in good order, so nothing needs care (Phase 10).",
+ "_about": "break-ui data for tools/check.mjs --worst-case. Each scenario starts from closet.json (or another scenario) and changes only the data, never the app. Names are realistic user input in French, Tagalog and Hindi, with emoji, a one-letter name, extra spaces and an unbroken word. \"care\" fills every Care group (3 to repair, 3 to let go, 4 checks due, 4 moved down a level, shoes worn on 18 and 25 of the last 30 days, 2 donated or recycled) through \"patch\" (fields per piece) and \"addWears\" (logged outfits added to closet.json's); \"calm\" keeps 6 pieces in good order, so nothing needs care (Phase 10). \"sheets\" gives the sheets check.mjs opens what they need: the busy Care set, saved ideas and a photo style (Phase 14 step 0).",
  "scenarios": {
   "long": {
    "rename": {
@@ -74,6 +74,18 @@
      "fx-21": {"cond": 5, "wearsSinceCheck": 0, "lastCheck": "2026-10-01", "lastWorn": "2026-10-10", "repair": false}
    },
    "wears": []
+  },
+  "sheets": {
+   "from": "care",
+   "settings": {
+    "savedIdeas": [
+     {"id": "idea-1", "item": "Navy wool overcoat", "color": "navy", "occasion": "work", "pairsWith": ["White oxford shirt", "Navy chinos"], "why": "Covers cold mornings at work.", "at": "2026-10-10T12:00:00.000Z"},
+     {"id": "idea-2", "item": "White leather sneakers", "color": "white", "occasion": "out", "pairsWith": [], "why": "", "at": "2026-09-01T12:00:00.000Z"}
+    ],
+    "looks": [
+     {"id": "look-1", "label": "Smart casual Friday", "base": ["classic"], "pieces": ["Navy blazer", "White oxford shirt", "Khaki chinos", "Brown loafers"], "colors": ["navy", "white", "khaki"], "summary": "A relaxed blazer look for the end of the week."}
+    ]
+   }
   }
  }
 }
