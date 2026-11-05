@@ -188,7 +188,7 @@ Ink and cream with one coral signal; status colors only where they mean somethin
 
 **The Canvas Rule.** Cream is for the garment canvas. Do not make every panel cream.
 
-**The Colors Outside CSS Rule.** When the palette changes, also update the theme-color metas in index.html (#f6f4f1 light, #12161e dark), manifest.webmanifest (#1b2433), the share image in app.js and privacy.html.
+**The Colors Outside CSS Rule.** When the palette changes, also update the theme-color metas in index.html, privacy.html and whats-new.html (#f6f4f1 light, #12161e dark), theme.js and app.js, manifest.webmanifest (#1b2433), the share image's palette (SHARE in app.js) and the tokens in privacy.html and whats-new.html. tools/check.mjs compares all of them with styles.css (Phase 14).
 
 ## Typography
 

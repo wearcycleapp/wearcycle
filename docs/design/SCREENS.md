@@ -24,7 +24,7 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 11 Shop | Released early, 2026-10-27, v1.55.0 (follow-ups v1.56.0 to v1.61.0) | 4686467 |
 | 12 Settings and other sheets | Released 2026-11-03, v1.64.0 | f99ad4d |
 | 13 Full-screen and fixed layers | Released 2026-11-03, v1.65.0 | 0e4c1d4, 8a23253 |
-| 14 Share image, privacy page, colors outside CSS | Open since 2026-11-04 (coverage tooling released first) | |
+| 14 Share image, privacy page, colors outside CSS | Open since 2026-11-04 (coverage tooling released first, main 86bcedd) | |
 | 15 Final audits | Not started | |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
@@ -317,7 +317,21 @@ Other sheets:
 - Job bar (Phase 13): the text takes the full width and wraps, never cut; progress is a 3px coral line along the lower edge. Toasts (Phase 13): above every layer; on phones above Add clothes when it shows; #toastRoot and #jobRoot are status regions from page load.
 - What is this? (Phase 13): the piece first, as the Care picture (cut-out first; opens the zoom viewer), 120px beside the name on phones; from 700x600 the garment sheet's layout, the picture 4:5 on the left of a sheet up to 880px. The chosen colors are named under the swatches, in order. Consent sheet: what turning AI off costs comes before the two choices.
 - Found in Phase 12, fixed in Phase 13: the Outfits pin card shows the piece's cut-out on the cream canvas (smallPic), with a hairline instead of the coral border; Closet's In the wash list uses the Care picture at 56px at every width (cut-out first, keyboard reachable).
-- The share image (canvas in shareOutfit, app.js) and privacy.html are redesigned separately in Phase 14.
+
+## Share image and privacy page (Phase 14)
+
+Built in Phase 14 (v1.66.0). Proposal "Wearcycle share image and privacy" (https://claude.ai/artifact/TdVUYCQXugbGzJXTR22UAn) approved by the owner on 2026-11-04 with the four recommended options: the kit with every piece named; the privacy page as shown, with theme-color metas on it and on What's new; the manifest stays ink; the found bugs fixed in this release. Critique: .impeccable/critique/2026-11-05T03-34-09Z__app-js.md (25/40).
+
+- Share image (shareImage, shareKit, app.js): 1080 by 1920, always the light palette (SHARE, the tokens' values) because it leaves the app. An ink band holds the occasion (display face, 128px, smaller only to fit) and the date, with text starting at 276px, below the area social apps cover (third-party guides to Meta's Stories safe zone give about the top 14%, 269px). The kit of direction A follows: main garments as pictures on the cream canvas with their kind and name, then shoes and accessories in one row, every piece named. Then the palette with its reason, and a second ink band with the logo and wordmark.
+- Text wraps at spaces, and inside a word only when it is wider than its column or the script has no spaces, by whole graphemes. Translated text keeps every line; a name the person typed takes up to 3 lines, then "…". The names leave the app with the picture (owner accepted, 2026-11-04).
+- Pictures: the cut-out wherever there is one; otherwise, drawn over 256px, the stored 1024px copy (medUrl, at most 4 per image, the first time only); otherwise the thumbnail, then the garment glyph. Fonts are waited for, at most 2 seconds. A failure clears "Preparing the image…" and says "Could not make the image."
+- Privacy page (privacy.html): the treatment What's new got in Phase 12, with the wording unchanged (59 text elements and their links identical in 7 languages). Both pages have theme-color metas.
+- Manifest colors stay ink #1b2433 (owner, 2026-11-04): a theme-specific manifest color exists only as a WICG proposal (user_preferences).
+- tools/check.mjs: colors outside CSS compared with the tokens; the share image in 7 languages, 6 occasions and 3 closets (off the picture and above 269px fail); --worst-case draws hard outfits (a dress, one piece, 4 main and 6 small, hard names, missing files). tools/live-check.mjs draws it on real data on all three devices.
+
+### Known issues fixed in this phase (v1.66.0)
+- Found by the wider check (Phase 14 step 0): the camera's Delete in dark, 2.98:1, now Accent-ink, 5.23:1; "Outfits use the feels-like temperature…" in the Weather sheet was English in every language; stacked checkboxes in .field too close (axe target-size), now 44px rows; the sign-in tagline is the brand line, in English in every language (data-notr); the More details arrow's rotated box spilled 8px out of its row (nothing visible was cut).
+- Not reviewed yet, for Phase 15: 11 detector cramped-padding warnings on added sheets; not captured: the wish-list picture, the offline banner, the language suggestion banner, the install prompt, added sheets with an empty closet.
 
 ## Every screen
 

@@ -628,8 +628,9 @@ async function captureShare(browser, base, state) {
           row.top = Math.min(...drawn.map(t => t.y)); // social apps draw their controls over about the top 14% (269px of 1920)
           // Text that stays English in another language: the same string as in the English image of this occasion and closet
           // (piece names are the person's; the wordmark and names, whole or wrapped, are left out).
-          const key = occ + '|' + variant, own = data.items.map(i => String(i.body.name || '').trim()); if (lang === 'en') enDrawn[key] = drawn.map(t => t.s);
-          else row.english = [...new Set(drawn.map(t => t.s))].filter(t => (enDrawn[key] || []).includes(t) && /[A-Za-z]{3}/.test(t) && t !== 'WEARCYCLE' && !own.some(n => n.includes(t.replace(/…$/, ''))));
+          const key = occ + '|' + variant, own = data.items.map(i => String(i.body.name || '').trim().replace(/\s+/g, ' ')); if (lang === 'en') enDrawn[key] = drawn.map(t => t.s);
+          else { const dict = lang === 'en' ? '' : readFileSync(path.join(REPO, 'i18n', lang + '.js'), 'utf8').toLowerCase(); // a word the dictionary keeps the same ("Formal" in Spanish) is translated
+            row.english = [...new Set(drawn.map(t => t.s))].filter(t => (enDrawn[key] || []).includes(t) && /[A-Za-z]{3}/.test(t) && t !== 'WEARCYCLE' && !own.some(n => n.includes(t.replace(/…$/, ''))) && !dict.includes(': "' + t.toLowerCase() + '"')); }
         } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
         finally { if (!row.na) R.share.push(row); }
       }
