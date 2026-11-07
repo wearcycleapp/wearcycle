@@ -117,5 +117,7 @@ I18N.add("ko",{
 "Wear this responds at once: the pieces are saved together instead of one by one, and the app no longer stops for seconds while it saves.": "이제 '이 코디 입기'가 바로 반응합니다. 옷을 하나씩이 아니라 한꺼번에 저장해, 저장하는 동안 앱이 몇 초씩 멈추지 않습니다.",
 "Care shows right away and fills in Not getting picked a moment later.": "'관리'가 바로 표시되고 '선택되지 않는 아이템'은 잠시 후 채워집니다.",
 "In the picture you share of an outfit, a long word now breaks with a hyphen instead of being cut, and the outfit sits in the middle of its space instead of leaving an empty band above the colors.": "공유하는 코디 이미지에서 긴 단어가 잘리지 않고 하이픈으로 줄바꿈되며, 코디가 색상 위에 빈 띠를 남기지 않고 공간의 가운데에 놓입니다.",
-"When you share the picture of an outfit, it no longer comes with the line “Picked with Wearcycle”, which some apps showed over the bottom of the picture.": "코디 이미지를 공유할 때 더 이상 “Wearcycle로 고른 코디”라는 문구가 함께 보내지지 않습니다. 일부 앱에서는 이 문구가 이미지 아래쪽에 겹쳐 표시되었습니다."
+"When you share the picture of an outfit, it no longer comes with the line “Picked with Wearcycle”, which some apps showed over the bottom of the picture.": "코디 이미지를 공유할 때 더 이상 “Wearcycle로 고른 코디”라는 문구가 함께 보내지지 않습니다. 일부 앱에서는 이 문구가 이미지 아래쪽에 겹쳐 표시되었습니다.",
+"In the picture you share of an outfit, the names of the main pieces now take up to four lines before they are shortened.": "공유하는 코디 이미지에서 주요 아이템 이름이 줄여지기 전에 최대 네 줄까지 표시됩니다.",
+"In English, the color light blue is now written as two words everywhere in the app, including the picture you share.": "영어에서 색상 “light blue”가 이제 앱 전체에서 두 단어로 표시되며, 공유하는 이미지에서도 마찬가지입니다."
 });

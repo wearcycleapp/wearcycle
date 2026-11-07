@@ -117,5 +117,7 @@ I18N.add("ja",{
 "Wear this responds at once: the pieces are saved together instead of one by one, and the app no longer stops for seconds while it saves.": "「これを着る」がすぐに反応するようになりました。アイテムを1点ずつではなくまとめて保存し、保存中にアプリが数秒止まることはなくなりました。",
 "Care shows right away and fills in Not getting picked a moment later.": "「ケア」はすぐに表示され、「選ばれないアイテム」は少し後に表示されます。",
 "In the picture you share of an outfit, a long word now breaks with a hyphen instead of being cut, and the outfit sits in the middle of its space instead of leaving an empty band above the colors.": "共有するコーデの画像で、長い単語が途中で切れずにハイフンで改行されるようになり、コーデが色の上に空白の帯を残さずスペースの中央に配置されるようになりました。",
-"When you share the picture of an outfit, it no longer comes with the line “Picked with Wearcycle”, which some apps showed over the bottom of the picture.": "コーデの画像を共有するとき、「Wearcycleで選びました」という一文が付かなくなりました。一部のアプリでは、この一文が画像の下部に重ねて表示されていました。"
+"When you share the picture of an outfit, it no longer comes with the line “Picked with Wearcycle”, which some apps showed over the bottom of the picture.": "コーデの画像を共有するとき、「Wearcycleで選びました」という一文が付かなくなりました。一部のアプリでは、この一文が画像の下部に重ねて表示されていました。",
+"In the picture you share of an outfit, the names of the main pieces now take up to four lines before they are shortened.": "共有するコーデの画像で、メインのアイテム名が省略されるまでに最大4行まで表示されるようになりました。",
+"In English, the color light blue is now written as two words everywhere in the app, including the picture you share.": "英語表示では、色の「light blue」がアプリ全体（共有する画像を含む）で2語で表示されるようになりました。"
 });

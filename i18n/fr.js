@@ -774,6 +774,7 @@ I18N.load("fr",{
 "green": "vert",
 "teal": "sarcelle",
 "lightblue": "bleu clair",
+"light blue": "bleu clair",
 "blue": "bleu",
 "purple": "violet",
 "today": "aujourd’hui",

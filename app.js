@@ -1,7 +1,7 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.66.3';
-const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
+const APP_VERSION='1.66.4';
+const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
 
@@ -1202,11 +1202,11 @@ function hydratePhotos(){ document.querySelectorAll('#fits img[data-photo]').for
 function paletteStrip(o){
   const core=coreOf(o); const h=WardrobeLogic.harmony(core.map(primary).filter(c=>COLORS[c]));
   const adv=adviceText();
-  return `<div class="palette"><span class="sws">${core.filter(i=>COLORS[primary(i)]).map(i=>`<span class="sw" style="background:${COLORS[primary(i)].hex}" title="${esc(primary(i))}: ${esc(i.name)}"></span>`).join('')}</span>
+  return `<div class="palette"><span class="sws">${core.filter(i=>COLORS[primary(i)]).map(i=>`<span class="sw" style="background:${COLORS[primary(i)].hex}" title="${esc(colorName(primary(i)))}: ${esc(i.name)}"></span>`).join('')}</span>
     <span class="pl"><b>${esc(h.why)}</b>${adv?`<span>${esc(adv)}</span>`:''}</span></div>`;
 }
 function palNow(){ return paletteOf(S.settings.palette||'any',S.settings.paletteCustom); }
-function palDesc(p){ return (S.settings.palette==='custom'&&p.colors)?p.colors.join(', '):p.desc; }
+function palDesc(p){ return (S.settings.palette==='custom'&&p.colors)?p.colors.map(colorName).join(', '):p.desc; }
 function openAdjust(){
   const auto=needsLayer(wxForScore()), pal=palNow();
   openSheet(sheetHead('Adjust')+`
@@ -1387,7 +1387,7 @@ function openDecide(id){ const it=byId(id); if(!it) return; const f=careFlags(it
 // Drop-off finder. Opens a Google Maps search (Maps URLs need no API key and open the Maps app on Android).
 // Near the weather place when one is set, otherwise "near me" so Maps uses the phone's own location.
 // Google search on the Shopping tab (udm=28), in the app's language; opens only when tapped.
-function shopQ(...parts){ const d={men:'men\'s',women:'women\'s'}[S.settings.dept]; return [d].concat(parts).filter(Boolean).map(p=>I18N.lang==='en'?p:I18N.tr(String(p))).join(' '); }
+function shopQ(...parts){ const d={men:'men\'s',women:'women\'s'}[S.settings.dept]; return [d].concat(parts).filter(Boolean).map(p=>COLORS[p]?colorName(p):p).map(p=>I18N.lang==='en'?p:I18N.tr(String(p))).join(' '); }
 function shopUrl(q){ return 'https://www.google.com/search?udm=28&q='+encodeURIComponent(q).replace(/'/g,'%27'); } // %27: some chat apps end a link at an apostrophe
 const SHOP_GO='<span class="go">Shop ›</span>';
 const DEPTS=[['men',"Men's"],['women',"Women's"],['any','Any']];
@@ -1464,19 +1464,19 @@ let ideasState={busy:false,list:null,err:''};
 // on every device without asking Claude again.
 const ideaKey=x=>(String(x.item||'')+'|'+String(x.color||'')).toLowerCase();
 const ideaQ=x=>[x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?(COLORS[x.color]?shopQ(x.color):x.color):'',x.item].filter(Boolean).join(' ');
-const ideaText=x=>String(x.item||'')+(x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())?' ('+x.color+')':'');
-function ideaLink(x){ return `<a class="idea shop" href="${shopUrl(ideaQ(x))}" target="_blank" rel="noopener"><b data-notr>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b><span>${OCC[x.occasion]?`<span>${OCC[x.occasion].label}</span>`:`<span data-notr>${esc(x.occasion||'')}</span>`}${x.pairsWith&&x.pairsWith.length?` · <span>pairs with</span> <span data-notr>${esc(x.pairsWith.join(', '))}</span>`:''}</span><span data-notr>${esc(x.why||'')}</span>${SHOP_GO}</a>`; }
+const ideaText=x=>String(x.item||'')+(x.color&&!String(x.item).toLowerCase().includes(String(x.color).toLowerCase())&&!String(x.item).toLowerCase().includes(colorName(x.color))?' ('+colorName(x.color)+')':'');
+function ideaLink(x){ return `<a class="idea shop" href="${shopUrl(ideaQ(x))}" target="_blank" rel="noopener"><b data-notr>${esc(x.item)}${x.color?' · '+esc(colorName(x.color)):''}</b><span>${OCC[x.occasion]?`<span>${OCC[x.occasion].label}</span>`:`<span data-notr>${esc(x.occasion||'')}</span>`}${x.pairsWith&&x.pairsWith.length?` · <span>pairs with</span> <span data-notr>${esc(x.pairsWith.join(', '))}</span>`:''}</span><span data-notr>${esc(x.why||'')}</span>${SHOP_GO}</a>`; }
 // Saved ideas against the closet (v1.61.0, owner 2026-10-31): a piece added on or after the day an idea was saved
 // and matching it (same rule as style essentials: exact first, then another material in the named color) marks it
 // bought. "I have one" picks the piece; "Not bought yet" stops the automatic match. settings.haveFor.ideas[id] = item id or ''.
 function ideasOwned(saved,items){ const ch=(S.settings.haveFor||{}).ideas||{}, used=new Set(), out=new Map(), act=items.filter(isActive);
   for(const x of saved){ const c=ch[x.id]; if(c==null||c==='') continue; const it=act.find(i=>String(i.id)===String(c)); if(it){ used.add(it); out.set(x.id,{it,manual:true}); } }
   for(const loose of [false,true]) for(const x of saved){ if(out.has(x.id)||ch[x.id]==='') continue; const day=String(x.at||'').slice(0,10);
-    const descs=String(x.item||'').split(/\s+or\s+|\s*·\s*/i).filter(Boolean).map(d=>(x.color&&COLORS[x.color]&&!d.toLowerCase().includes(x.color)?x.color+' ':'')+d);
+    const descs=String(x.item||'').split(/\s+or\s+|\s*·\s*/i).filter(Boolean).map(d=>(x.color&&COLORS[x.color]&&!d.toLowerCase().includes(x.color)&&!d.toLowerCase().includes(colorName(x.color))?colorName(x.color)+' ':'')+d);
     const it=act.find(i=>!used.has(i)&&String(i.created||'').slice(0,10)>=day&&descs.some(d=>WardrobeLogic.pieceMatch(i,d,loose)));
     if(it){ used.add(it); out.set(x.id,{it}); } }
   return out; }
-function ideaRow(x,own){ const head=`<b data-notr>${esc(x.item)}${x.color?' · '+esc(x.color):''}</b>`;
+function ideaRow(x,own){ const head=`<b data-notr>${esc(x.item)}${x.color?' · '+esc(colorName(x.color)):''}</b>`;
   const sub=own?`<span><span>✓ Bought:</span> <span data-notr>${esc(own.it.name||'')}</span>${own.manual?` · <span>Chosen by you</span>`:''}</span>`
     :`<span>${OCC[x.occasion]?`<span>${OCC[x.occasion].label}</span>`:`<span data-notr>${esc(x.occasion||'')}</span>`}${x.pairsWith&&x.pairsWith.length?` · <span>pairs with</span> <span data-notr>${esc(x.pairsWith.join(', '))}</span>`:''}</span><span data-notr>${esc(x.why||'')}</span>`;
   return `<div class="idearow${own?' own':''}"><button type="button" class="idea shop" data-idea-open="${esc(x.id)}" aria-haspopup="dialog">${head}${sub}${own?'':'<span class="go">Shop ›</span>'}</button><button type="button" class="iconbtn ideadel" data-idea-del="${esc(x.id)}" aria-label="Remove from saved ideas">✕</button></div>`; }
@@ -1526,7 +1526,7 @@ function openWishlist(){
   const cats=Object.keys(MEAS).filter(c=>L.some(x=>x.cat===c));
   openSheet(sheetHead('Share my list')+`<p class="hint">Pick what to include. Sizes are saved for next time.</p>
    <label class="wlall"><input type="checkbox" id="wl-all"><span>Select all</span></label>
-   <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.idea?`<span><span data-notr>${esc(ideaText(x.idea&&(S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}))}</span></span>`:x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(x.color)}</span> · <span>${esc(x.label)}</span></span>`}</label>
+   <div class="wl">${L.map((x,k)=>`<div class="wlrow"><label class="wlpick"><input type="checkbox" id="wl-on-${k}" ${x.on?'checked':''}><span class="bsw sm${x.piece?' own':''}" aria-hidden="true">${buyPic(x)}</span>${x.idea?`<span><span data-notr>${esc(ideaText(x.idea&&(S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}))}</span></span>`:x.piece&&byId(x.piece)?.name?`<span><span data-notr>${esc(byId(x.piece).name)}</span></span>`:`<span><span class="cw">${esc(colorName(x.color))}</span> · <span>${esc(x.label)}</span></span>`}</label>
      ${SIZE_CATS[x.cat]?`<label class="wlsize"><span>Size</span><input type="text" id="wl-size-${k}" data-cat="${x.cat}" value="${esc(sz[x.cat]||'')}" maxlength="20" autocomplete="off" aria-required="true" aria-describedby="wl-err"></label>`:''}</div>`).join('')}</div>
    ${cats.length?measHtml(cats):''}
    <label class="wllinks"><input type="checkbox" id="wl-links" ${LS.get('wearcycle.wlLinks')===false?'':'checked'}><span>Include shop links</span></label>
@@ -1563,8 +1563,8 @@ function wishlistText(){
   const items=[]; L.forEach((x,k)=>{ if(!$('#wl-on-'+k)?.checked) return;
     let name, color='';
     if(x.idea){ const it=(S.settings.savedIdeas||[]).find(i=>i.id===x.idea)||{item:x.label}; name=one(it.item); color=COLORS[it.color]?it.color:''; }
-    else { color=COLORS[x.color]?x.color:''; const l=one(I18N.tr(x.label)), c=I18N.tr(x.color||'');
-      name=I18N.lang==='en'?(String(l).toLowerCase().includes(String(x.color||'').toLowerCase())?l:c+' '+l):l+(c?' · '+low(c):''); }
+    else { color=COLORS[x.color]?x.color:''; const l=one(I18N.tr(x.label)), c=I18N.tr(colorName(x.color||''));
+      name=I18N.lang==='en'?(String(l).toLowerCase().includes(String(x.color||'').toLowerCase())||String(l).toLowerCase().includes(c)?l:c+' '+l):l+(c?' · '+low(c):''); }
     items.push({name:cap(name.trim()),cat:x.cat,color,q:x.q?one(x.q):''}); });
   if(!items.length){ $('#wl-err').textContent=I18N.tr('Pick at least one piece.'); return ''; }
   const kinds=Object.keys(SIZE_CATS).filter(c=>items.some(x=>x.cat===c));
@@ -1640,16 +1640,16 @@ function renderShop(){
     const low=lowOf(it);
     const why=cond<=1?'Worn out':`<span>Condition ${cond} of 5</span> · <span>${low==='out'?'Below the going-out level':'Below the work level'}</span>`;
     add({key:'r'+it.id,piece:it.id,cat:it.cat,color:col||'grey',bad:cond<=1?1:0,why,
-      title:it.name?`<span data-notr>${esc(it.name)}</span>`:`<span class="cw">${esc(col)}</span> · <span>${esc(kind)}</span>`,
+      title:it.name?`<span data-notr>${esc(it.name)}</span>`:`<span class="cw">${esc(colorName(col))}</span> · <span>${esc(kind)}</span>`,
       q:shopQ(col,useMat,kind),label:I18N.lang==='en'?(useMat?useMat+' ':'')+kind:(I18N.dict&&I18N.dict[kind]!=null?kind:CAT[it.cat].label.toLowerCase()),need:1}); }
   const gapCard=(x,n)=>{ const c=n.colors[0]||{}; return {key:n.slot+'|'+(c.color||''),cat:n.slot,color:c.color||'grey',why:`<span>${OCC[x.occ].label}</span> · <span>${slotName[n.slot]}</span> · <span>${n.have} of ${n.target}</span>`,
-    title:`<span class="cw">${esc(c.color||'')}</span> · <span>${esc(n.idea)}</span>`,big:c.adds?`+${c.adds} <small>${c.adds===1?'outfit':'outfits'}</small>`:'',
+    title:`<span class="cw">${esc(colorName(c.color||''))}</span> · <span>${esc(n.idea)}</span>`,big:c.adds?`+${c.adds} <small>${c.adds===1?'outfit':'outfits'}</small>`:'',
     label:n.idea,sub:(n.tired||[]).map(t=>`<span class="bsub"><span data-notr>${esc(t.item.name)}</span>: <span>Worn on ${t.days} of the last 30 days.</span></span>`).join(''),q:shopQ(c.color,n.idea),need:1}; };
   // A gap caused by pieces already on a Replace card is not repeated as its own card (By occasion still shows it).
   // Only when replacing those pieces fills the whole gap.
   const replaced=(occ,n)=>retire.filter(it=>it.cat===n.slot&&(it.cond??4)>1&&lowOf(it)===occ).length>=n.target-n.have;
   for(const x of g.filter(x=>x.occ==='work'||x.occ==='out')) for(const n of x.needs) if(!replaced(x.occ,n)) add(gapCard(x,n));
-  const vCard=r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),why:'Most new pairings',title:`<span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span>`,
+  const vCard=r=>({key:r.slot+'|'+r.color,cat:r.slot,color:r.color,label:r.label.toLowerCase(),why:'Most new pairings',title:`<span class="cw">${esc(colorName(r.color))}</span> · <span>${esc(r.label.toLowerCase())}</span>`,
     big:`+${r.adds} <small>${r.adds===1?'outfit':'outfits'}</small>`,sub:`<span class="bsub">${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span>`,pairs:r.pairs,q:shopQ(r.color,r.label.toLowerCase())});
   const needAny=retire.length||g.some(x=>x.needs.length);
   if(needAny&&v.list[0]) add(vCard(v.list[0]));
@@ -1665,7 +1665,7 @@ function renderShop(){
   const covered=g.filter(x=>!x.needs.length).map(x=>OCC[x.occ].label);
   const summary=needAny?`<p class="ssum"><b>${pl(shown.length,'1 buy would help most.','{0} buys would help most.')}</b>${covered.length?` <span>${'Covered: '+covered.join(', ')+'.'}</span>`:''}</p>`
     :`<p class="ssum"><b>Nothing to buy right now. Every occasion is covered.</b></p>`;
-  const ideaRows=moreIdeas.map(r=>`<a class="lrow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b><span class="cw">${esc(r.color)}</span> · <span>${esc(r.label.toLowerCase())}</span></b><span>+${r.adds} ${r.adds===1?'outfit':'outfits'} · ${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span></span>${SHOP_GO}</a>`).join('');
+  const ideaRows=moreIdeas.map(r=>`<a class="lrow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b><span class="cw">${esc(colorName(r.color))}</span> · <span>${esc(r.label.toLowerCase())}</span></b><span>+${r.adds} ${r.adds===1?'outfit':'outfits'} · ${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span></span>${SHOP_GO}</a>`).join('');
   // Needs past the first three: one row each with the same reason line and Shop link as a card.
   const needRow=c=>`<a class="lrow shop" href="${shopUrl(c.q)}" target="_blank" rel="noopener"><span class="bsw sm${c.piece?' own':''}" aria-hidden="true">${buyPic(c)}</span><span class="t"><b>${c.title}</b><span class="nwhy">${c.why}</span>${c.group?c.sub:''}</span>${SHOP_GO}</a>`;
   const buy=shown.length?`<section class="panel" aria-labelledby="h-buy"><div class="panel-h"><h3 id="h-buy">Buy next</h3><span class="count">${shown.length}</span><span class="spacer"></span>${shareBtn}</div>${shown.map(buyCard).join('')}
@@ -1676,7 +1676,7 @@ function renderShop(){
   const needHtml=n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" role="img" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
       ${(n.tired||[]).length?`<div class="opt">Another pair lets your shoes rest between wears.</div>${n.tired.map(x=>`<div class="opt hint"><span data-notr>${esc(x.item.name)}</span>: <span>Worn on ${x.days} of the last 30 days.</span></div>`).join('')}`:''}
       <div class="opt">Add ${n.target-n.have}: ${esc(n.idea)}</div>
-      <div class="opt">${n.colors.map(c=>`<a class="shopc" href="${shopUrl(shopQ(c.color,n.idea))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[c.color].hex}"></span>${c.color} <em>${c.adds?'+'+c.adds+' outfit'+(c.adds===1?'':'s'):'pairs widely'}</em></a>`).join(' &nbsp;or&nbsp; ')}</div>
+      <div class="opt">${n.colors.map(c=>`<a class="shopc" href="${shopUrl(shopQ(c.color,n.idea))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[c.color].hex}"></span>${colorName(c.color)} <em>${c.adds?'+'+c.adds+' outfit'+(c.adds===1?'':'s'):'pairs widely'}</em></a>`).join(' &nbsp;or&nbsp; ')}</div>
       <div class="opt"><a class="shoplink" href="${shopUrl(shopQ(n.idea))}" target="_blank" rel="noopener">Shop ${esc(n.idea)} ›</a></div></div>`;
   const occRows=g.map(x=>x.needs.length
     ?fold('occ-'+x.occ,OCC[x.occ].label,x.needs.map(n=>`<span>${slotName[n.slot]}</span> <span>${n.have} of ${n.target}</span>`).join(' · '),pillHtml(x.needs.length===1?'1 gap':x.needs.length+' gaps'),x.needs.map(needHtml).join(''))
@@ -1699,7 +1699,7 @@ function renderShop(){
     coming.push(fold('season',se.label,`${plan.upcoming?`<span>${fmtDay(plan.start)}</span> · `:''}<span>${okL.length} of ${list.length} ready</span>`,miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1),body)); }
   const hs=holidaysSoon(30);
   if(hs.length) coming.push(fold('holidays','Holidays',hs.map(h=>`<span>${h.label}</span> <span>${fmtDay(h.date)}</span>`).join(' · '),'',hs.map(h=>{ const own=h.colors.map(c=>[c,items.filter(i=>isActive(i)&&primary(i)===c).length]);
-      return `<div class="li hol"><span class="sws">${h.colors.slice(0,4).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><div class="txt"><b>${h.label} · ${fmtDay(h.date)}</b><span>${h.tip}</span><span>${'You own: '+own.map(([c,n])=>I18N.t(c)+' '+n).join(' · ')}</span></div><div class="acts"><button class="btn sm" data-theme-go="${h.id}">See outfits</button></div></div>`; }).join('')));
+      return `<div class="li hol"><span class="sws">${h.colors.slice(0,4).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><div class="txt"><b>${h.label} · ${fmtDay(h.date)}</b><span>${h.tip}</span><span>${'You own: '+own.map(([c,n])=>I18N.t(colorName(c))+' '+n).join(' · ')}</span></div><div class="acts"><button class="btn sm" data-theme-go="${h.id}">See outfits</button></div></div>`; }).join('')));
   const comingP=coming.length?`<section class="panel" aria-labelledby="h-coming"><div class="panel-h"><h3 id="h-coming">Coming up</h3></div>${coming.join('')}</section>`:'';
   // Build toward a style: what to add per style; the owned essentials behind one row.
   const st=styleSet(); const lr=learned(); const keys=[...new Set(st.pick.length?st.pick.concat(st.work):lr.ids.concat(st.work))];
@@ -1729,7 +1729,7 @@ function versaPanel(items){
   const pl=(n,one,many)=>(n===1?one:many).replace('{0}',n);
   return `<div class="panel"><div class="panel-h"><h3>More outfits from one purchase</h3></div>
     <div class="li"><span class="hint">Pieces that pair with the most of what you own, in color pairings you can't make today (you have ${v.looks} now).</span></div>
-    ${v.list.map(r=>`<a class="li lirow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[r.color].hex}"></span><div class="txt"><b>${esc(r.label)} · ${esc(r.color)}</b><span style="display:block">${pl(r.newLooks,'1 new color pairing','{0} new color pairings')} · ${pl(r.adds,'1 more outfit','{0} more outfits')}</span>${r.pairs.length?`<span style="display:block">pairs with ${esc(r.pairs.map(x=>x.name).join(', '))}</span>`:''}</div>${SHOP_GO}</a>`).join('')}</div>`;
+    ${v.list.map(r=>`<a class="li lirow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="swatch" style="background:${COLORS[r.color].hex}"></span><div class="txt"><b>${esc(r.label)} · ${esc(colorName(r.color))}</b><span style="display:block">${pl(r.newLooks,'1 new color pairing','{0} new color pairings')} · ${pl(r.adds,'1 more outfit','{0} more outfits')}</span>${r.pairs.length?`<span style="display:block">pairs with ${esc(r.pairs.map(x=>x.name).join(', '))}</span>`:''}</div>${SHOP_GO}</a>`).join('')}</div>`;
 }
 async function askIdeas(){
   if(ideasState.busy) return; ideasState={busy:true,list:ideasState.list,err:''}; renderShop();
@@ -1780,7 +1780,7 @@ function openEditor(id){
 }
 function drawEditor(){ setTimeout(hydrateCuts,0);
   const it=ED.it; const pv=ED.cropChanged?ED.thumb:(ED.preview||thumbSrc(it)); const hasPic=!!(ED.blob||it.photo)&&!isEx(it); const cropped=ED.cropChanged?!!ED.newBox:!!it.box;
-  const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
+  const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${colorName(k)}${ix>=0?', choice '+(ix+1):''}" title="${colorName(k)}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
   const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b><span>${key==='cond'?labels[n]:labels[n].split(' ')[0]}</span></button>`).join('')}</div>`;
   const showCut=it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id), saved=ED.id&&!ED.blob&&!ED.cropChanged&&!isEx(it);
   openSheet(sheetHead(ED.id?(it.review?'Review item':'Edit item'):'New item')+`
@@ -1829,7 +1829,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
 function readEditorFields(){ if(!ED) return; const it=ED.it, g=s=>$(s); if(g('#f-rain')) it.rain=g('#f-rain').checked; if(g('#f-open')) it.open=g('#f-open').checked; if(g('#f-belt')) it.belt=g('#f-belt').checked; if(g('#f-graphic')) it.graphic=g('#f-graphic').checked; if(g('#f-dirty')){ const d=g('#f-dirty').checked; if(d!==!!it.dirty){ it.dirty=d; if(d) it.dirtyOn=todayISO(); else { it.wearsSinceWash=0; delete it.dirtyOn; } } } if(g('#f-repair')){ const r=g('#f-repair').checked; if(r&&!it.repair){ it.repair=true; it.repairOn=todayISO(); } if(!r&&it.repair){ delete it.repair; delete it.repairNote; delete it.repairOn; delete it.repairOk; } } if(it.repair&&g('#f-repairNote')) it.repairNote=g('#f-repairNote').value.trim(); if(it.repair&&g('#f-repairOk')) it.repairOk=g('#f-repairOk').checked; if(g('#f-inner')) it.inner=g('#f-inner').checked; if(g('#f-base')) it.base=g('#f-base').checked; if(g('#f-name')) it.name=g('#f-name').value.trim(); if(g('#f-cat')) it.cat=g('#f-cat').value; if(g('#f-bought')) it.bought=g('#f-bought').value; if(g('#f-notes')) it.notes=g('#f-notes').value.trim(); if(g('#f-price')){ const v=parseFloat(g('#f-price').value); if(isFinite(v)&&v>=0) it.price=Math.round(v*100)/100; else delete it.price; } }
 async function editorSetPhoto(blob){
   try{ const p=await prepare(blob); if(!ED) return; ED.blob=p.full; ED.med=p.med; ED.thumb=p.thumb; ED.newBox=null; ED.cropChanged=false; if(ED.preview) URL.revokeObjectURL(ED.preview); ED.preview=URL.createObjectURL(p.full); ED.ai=null;
-    if(!claudeOn()&&!(ED.it.colors||[]).length){ const g=await guessColors(p.full).catch(()=>[]); if(ED&&g.length){ ED.it.colors=[g[0]]; ED.ai='Main color guessed on your phone: '+g[0]+(g.length>1?' (or maybe '+g.slice(1).join(', ')+')':'')+'. Check it, then set the category and occasions.'; } } }
+    if(!claudeOn()&&!(ED.it.colors||[]).length){ const g=await guessColors(p.full).catch(()=>[]); if(ED&&g.length){ ED.it.colors=[g[0]]; ED.ai='Main color guessed on your phone: '+colorName(g[0])+(g.length>1?' (or maybe '+g.slice(1).map(colorName).join(', ')+')':'')+'. Check it, then set the category and occasions.'; } } }
   catch(e){ toast('That image could not be opened.'); }
   if(ED) drawEditor();
 }
@@ -1980,7 +1980,7 @@ function openInspoResult(){
   const done=INSPO.saved&&looks().find(l=>l.id===INSPO.saved);
   openSheet(sheetHead('Inspiration from a photo')+`<div class="inspo">
    <div class="inspo-h"><b data-notr>${esc(L.label)}</b>${L.summary?`<span data-notr>${esc(L.summary)}</span>`:''}
-    <div class="inspo-c">${L.colors.map(c=>`<span class="cdot"><i style="background:${COLORS[c].hex}"></i><span>${esc(c)}</span></span>`).join('')}</div>
+    <div class="inspo-c">${L.colors.map(c=>`<span class="cdot"><i style="background:${COLORS[c].hex}"></i><span>${esc(colorName(c))}</span></span>`).join('')}</div>
     ${L.base.length?`<span class="hint"><span>Close to</span> ${L.base.map(b=>`<span>${STYLES[b].label}</span>`).join(', ')}</span>`:''}</div>
    <h4>In your closet <span class="n">${have.length}</span></h4>
    ${have.length?`<div class="inspo-l">${have.map(e=>`<div class="inspo-r"><i>${smallPic(e.have)}</i><span><span data-notr>${esc(e.label)}</span> → <b data-notr>${esc(e.have.name)}</b></span></div>`).join('')}</div>`:'<p class="hint">Nothing in your closet matches yet.</p>'}
@@ -2240,7 +2240,7 @@ function quickStep(){
   openSheet(sheetHead('What is this?')+`<p class="hint" style="margin-top:-4px">${QD.i+1} of ${QD.ids.length} · AI features are off, so these details come from you. Outfits use them to pick and match pieces.</p>
    <div class="qd"><div class="qdpic">${carePic(it)}</div><div class="qdfields"><div class="field qdname"><label for="qd-name">Name (optional)</label><input type="text" id="qd-name" value="${/^New item \d+$/.test(it.name)?'':esc(it.name)}" placeholder="e.g. Navy flannel shirt" maxlength="60">${I18N.lang==='en'?'<span class="hint">Words like flannel, hoodie or linen help Wearcycle guess style and warmth.</span>':''}</div>
    <div class="field"><span class="lab">Category</span><div class="chips" style="flex-wrap:wrap">${QD_CATS.map(c=>`<button type="button" class="chip" data-qdcat="${c}" aria-pressed="${it.cat===c}">${CAT[c].label}</button>`).join('')}</div></div>
-   <div class="field"><span class="lab">Colors · main color first</span>${(it.colorGuess||[]).length?`<div class="chips" style="flex-wrap:wrap;margin:0 0 8px"><span class="hint" style="align-self:center">Looks like:</span>${it.colorGuess.map(k=>`<button type="button" class="chip" data-qdcol="${k}" aria-pressed="${(it.colors||[]).includes(k)}"><span class="sw" style="background:${COLORS[k].hex}"></span>${k}</button>`).join('')}</div>`:''}<div class="colors">${Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-qdcol="${k}" aria-pressed="${ix>=0}" aria-label="${k}${ix>=0?', choice '+(ix+1):''}" title="${k}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('')}</div>${cols.length?`<p class="qdcols">${cols.map((k,i)=>`<span class="qdc"><span class="sw" style="background:${COLORS[k].hex}"></span><b>${i+1}</b><span>${k}</span></span>`).join('')}</p>`:''}</div>
+   <div class="field"><span class="lab">Colors · main color first</span>${(it.colorGuess||[]).length?`<div class="chips" style="flex-wrap:wrap;margin:0 0 8px"><span class="hint" style="align-self:center">Looks like:</span>${it.colorGuess.map(k=>`<button type="button" class="chip" data-qdcol="${k}" aria-pressed="${(it.colors||[]).includes(k)}"><span class="sw" style="background:${COLORS[k].hex}"></span>${colorName(k)}</button>`).join('')}</div>`:''}<div class="colors">${Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-qdcol="${k}" aria-pressed="${ix>=0}" aria-label="${colorName(k)}${ix>=0?', choice '+(ix+1):''}" title="${colorName(k)}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('')}</div>${cols.length?`<p class="qdcols">${cols.map((k,i)=>`<span class="qdc"><span class="sw" style="background:${COLORS[k].hex}"></span><b>${i+1}</b><span>${colorName(k)}</span></span>`).join('')}</p>`:''}</div>
    ${garment||['belt','watch','hat','bag','socks'].includes(it.cat)?`<div class="field"><span class="lab">Where would you wear it?</span><div class="chips" style="flex-wrap:wrap">${OCCASIONS.filter(o=>o.id!=='work'&&o.id!=='formal').map(o=>`<button type="button" class="chip" data-qdocc="${o.id}" aria-pressed="${(it.occ||[]).includes(o.id)}">${o.label}</button>`).join('')}</div>
      <p class="hint">Work and Formal follow your dress code automatically; change them in the piece's details.</p></div>`:''}</div></div>
    <p class="err" id="qd-err"></p>
@@ -2249,7 +2249,7 @@ function quickStep(){
 }
 async function quickSave(){
   const it=QD.it; if(!it.cat){ $('#qd-err').textContent='Pick a category.'; return; }
-  const nm=($('#qd-name')||{}).value; const c0=(it.colors||[])[0]; it.name=(nm||'').trim()||(I18N.lang==='en'?(c0+' '+CAT[it.cat].label.toLowerCase()).replace(/^./,c=>c.toUpperCase()):I18N.tr(CAT[it.cat].label)+' ('+I18N.tr(c0)+')');
+  const nm=($('#qd-name')||{}).value; const c0=(it.colors||[])[0]; it.name=(nm||'').trim()||(I18N.lang==='en'?(colorName(c0)+' '+CAT[it.cat].label.toLowerCase()).replace(/^./,c=>c.toUpperCase()):I18N.tr(CAT[it.cat].label)+' ('+I18N.tr(colorName(c0))+')');
   if(!(it.colors||[]).length){ $('#qd-err').textContent='Pick at least one color.'; return; }
   if(GARMENT.includes(it.cat)&&!(it.occ||[]).length&&!$('#qd-err').dataset.warned){ $('#qd-err').dataset.warned='1'; $('#qd-err').textContent='No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.'; return; }
   delete it._typed; delete it.colorGuess; it.review=false;
@@ -2381,7 +2381,7 @@ async function shareKit(g,o,top,bottom){ const {W,M}=SHARE, cw=W-2*M, gap=24;
   const nm=it=>isEx(it)?I18N.tr(it.name):it.name;
   const n=Math.max(1,main.length), mw=Math.floor((cw-(n-1)*gap)/n), nameS=n>3?32:n>2?36:40, nameF=`600 ${nameS}px `, nameL=Math.round(nameS*1.2), kindS=n>3?30:34, kindF=`500 ${kindS}px `;
   g.font=kindF+SHARE.body; const kinds=main.map(([s,it])=>shareLines(g,kind(s,it),mw)), kindLines=Math.max(1,...kinds.map(l=>l.length)), kindL=Math.round(kindS*1.15); // a translated kind keeps every line
-  g.font=nameF+SHARE.body; const mainNames=main.map(([,it])=>shareLines(g,nm(it),mw,3)), mainLines=Math.max(1,...mainNames.map(l=>l.length));
+  g.font=nameF+SHARE.body; const mainNames=main.map(([,it])=>shareLines(g,nm(it),mw,4)), mainLines=Math.max(1,...mainNames.map(l=>l.length)); // 4 lines, then "…" (owner's picture, 2026-11-07: "Grey / Quarter-Zip / Rates…")
   const sw=small.length?Math.min(168,Math.floor((cw-(small.length-1)*gap)/small.length)):0;
   g.font='500 32px '+SHARE.body; const smallNames=small.map(([,it])=>shareLines(g,nm(it),sw,sw<150?4:3)), smallLines=small.length?Math.max(1,...smallNames.map(l=>l.length)):0;
   const smallH=small.length?sw+12+smallLines*38+32:0, kindH=kindLines*kindL, nameH=12+kindH+6+mainLines*nameL, avail=bottom-top-smallH-nameH;
@@ -2474,7 +2474,7 @@ let PCOL=null;
 function openPaletteCustom(){
   PCOL=new Set(S.settings.paletteCustom||[]);
   openSheet(sheetHead('Custom palette')+`<p class="hint">Tick the colors to dress in, for example the colors a photographer suggests. Every outfit option is built from pieces in these colors; another color comes in only when you have nothing of that kind in them.</p>
-   <div class="chips pcols">${Object.entries(COLORS).map(([k,v])=>`<button type="button" class="chip pcol" data-pcol="${k}" aria-pressed="${PCOL.has(k)}"><span class="sw" style="background:${v.hex}"></span>${k}</button>`).join('')}</div>
+   <div class="chips pcols">${Object.entries(COLORS).map(([k,v])=>`<button type="button" class="chip pcol" data-pcol="${k}" aria-pressed="${PCOL.has(k)}"><span class="sw" style="background:${v.hex}"></span>${colorName(k)}</button>`).join('')}</div>
    <p class="err" id="pc-err" role="alert"></p>
    <div class="row"><button class="btn primary" data-act="palsave">Use these colors</button><button class="btn ghost" data-act="palettes">Back</button></div>`);
 }

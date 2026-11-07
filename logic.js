@@ -25,6 +25,8 @@ const COLORS={
   red:{hex:'#b9322e',h:0},burgundy:{hex:'#6e1f2f',h:345},pink:{hex:'#e29ab0',h:340},orange:{hex:'#d6742a',h:28},
   yellow:{hex:'#e0be42',h:50},green:{hex:'#3e8a4d',h:130},teal:{hex:'#2e8987',h:178},lightblue:{hex:'#9bbfe5',h:210},
   blue:{hex:'#3566c4',h:220},purple:{hex:'#6a4a9c',h:275}};
+// The word shown for a color key; a key that is not a word gets one (owner, 2026-11-07: "(lightblue)" on his shared picture).
+const COLOR_NAME={lightblue:'light blue'}, colorName=c=>COLOR_NAME[c]||c;
 // Optional style palettes the owner can prefer. Outfits whose main colors all sit in the palette rank higher.
 const PALETTES={
   any:{label:'Any colors',colors:null,desc:'No preference: only color harmony counts.'},
@@ -125,12 +127,12 @@ function eligible(items,occ,inclDirty){ return items.filter(it=>(inclDirty?isAct
 function harmony(colorNames){
   const chrom=[...new Set(colorNames.filter(c=>COLORS[c] && COLORS[c].h!==undefined))];
   if(chrom.length===0) return {s:2,why:'All-neutral palette'};
-  if(chrom.length===1) return {s:2,why:'Neutral base with one accent color ('+chrom[0]+')'};
+  if(chrom.length===1) return {s:2,why:'Neutral base with one accent color ('+colorName(chrom[0])+')'};
   if(chrom.length===2){
     const d=hueDist(COLORS[chrom[0]].h,COLORS[chrom[1]].h);
-    if(d<=45) return {s:1,why:'Analogous colors ('+chrom.join(' + ')+')'};
-    if(d>=150) return {s:1,why:'Complementary colors ('+chrom.join(' + ')+')'};
-    return {s:-2,why:'Two accent colors that compete ('+chrom.join(' + ')+')',neg:1};
+    if(d<=45) return {s:1,why:'Analogous colors ('+chrom.map(colorName).join(' + ')+')'};
+    if(d>=150) return {s:1,why:'Complementary colors ('+chrom.map(colorName).join(' + ')+')'};
+    return {s:-2,why:'Two accent colors that compete ('+chrom.map(colorName).join(' + ')+')',neg:1};
   }
   return {s:-3,why:'Three or more accent colors',neg:1};
 }
@@ -231,7 +233,7 @@ function scoreOutfit(o,occ,ctx){
   const P=ctx.palette?paletteOf(ctx.palette,ctx.paletteColors):null, pal=P&&P.colors;
   if(pal){ const out=core.filter(i=>primary(i)&&!pal.includes(primary(i)));
     if(!out.length){ s+=1; reasons.push({t:'Fits your '+P.label.toLowerCase()+' palette'}); }
-    else { s-=0.5*out.length; reasons.push({t:[...new Set(out.map(i=>primary(i)))].join(' and ')+(new Set(out.map(i=>primary(i))).size>1?' are':' is')+' outside your '+P.label.toLowerCase()+' palette',neg:true}); } }
+    else { s-=0.5*out.length; reasons.push({t:[...new Set(out.map(i=>primary(i)))].map(colorName).join(' and ')+(new Set(out.map(i=>primary(i))).size>1?' are':' is')+' outside your '+P.label.toLowerCase()+' palette',neg:true}); } }
   const h=harmony(core.map(primary).filter(Boolean)); s+=h.s; reasons.push({t:h.why,neg:!!h.neg});
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
   // An open shirt over a t-shirt is the outer layer of a relaxed look; under a blazer or suit jacket it makes three layers.
@@ -742,7 +744,7 @@ function themeScore(o,th){
   return {s,r};
 }
 
-return {PALETTES,paletteOf,shoeLoad,OVERUSE_MIN,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
+return {PALETTES,paletteOf,shoeLoad,OVERUSE_MIN,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
   daysSince,localDayGap,notPicked,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,wetRisk,accWeatherOk,tailored,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps,versatility,VERSA};
 })();

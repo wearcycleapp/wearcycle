@@ -774,6 +774,7 @@ I18N.load("tl",{
 "green": "berde",
 "teal": "teal",
 "lightblue": "light blue",
+"light blue": "light blue",
 "blue": "asul",
 "purple": "lila",
 "today": "ngayon",

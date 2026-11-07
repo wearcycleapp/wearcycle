@@ -774,6 +774,7 @@ I18N.load("ko",{
 "green": "초록색",
 "teal": "청록색",
 "lightblue": "하늘색",
+"light blue": "하늘색",
 "blue": "파란색",
 "purple": "보라색",
 "today": "오늘",

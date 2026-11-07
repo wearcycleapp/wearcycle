@@ -774,6 +774,7 @@ I18N.load("hi",{
 "green": "हरा",
 "teal": "टील",
 "lightblue": "हल्का नीला",
+"light blue": "हल्का नीला",
 "blue": "नीला",
 "purple": "बैंगनी",
 "today": "आज",

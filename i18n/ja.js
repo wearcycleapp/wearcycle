@@ -774,6 +774,7 @@ I18N.load("ja",{
 "green": "緑",
 "teal": "ティール",
 "lightblue": "水色",
+"light blue": "水色",
 "blue": "青",
 "purple": "紫",
 "today": "今日",
