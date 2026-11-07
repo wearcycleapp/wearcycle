@@ -4,8 +4,15 @@
 //
 //   node tools/check.mjs [--worst-case] [--compare <folder> [--exact]] [--baseline <summary.json>] [--strict]
 //                        [--out <folder>] [--full-page] [--css-pixels] [--devices a,b] [--views a,b] [--no-axe] [--no-detector]
-//                        [--stub-auth] [--base-url <url>] [--no-rest]
+//                        [--stub-auth] [--base-url <url>] [--no-rest] [--quick] [--no-speed]
 //
+// Two modes (Phase 15): the full run (the default: everything, before a release, about 35 minutes) and --quick for
+// everyday work: the main screens (the four tabs, piece preview, editor, Settings) on phone-390, ipad-820 and win-1366,
+// light, English, first screens only, plus the functional flows and the speed check (a few minutes). --devices and --views
+// still narrow either mode.
+// Speed (Phase 15): the phone profile with Chromium's CPU slowed 4x and a 100-piece closet; times "Wear this", each tab
+// switch and opening a sheet: from the tap to the frame painted with its result, and the longest main-thread task after
+// the tap; fails above SPEED_BUDGET. --no-speed leaves it out.
 // --views takes the views below and the groups signed-out, pages, sheets, layers, camera and share (default: everything).
 // What users see (owner, Phase 14 step 0): the first screen of each view as before, then what lies below it: name--full.png
 // for a tab or page (scrolled through first, so lazy pictures load), name--2.png, --3... for a sheet that scrolls (--no-rest
@@ -46,7 +53,7 @@ const opt = n => { const i = argv.indexOf('--' + n); return i >= 0 ? argv[i + 1]
 const A = {
   worstCase: flag('worst-case'), compare: opt('compare'), exact: flag('exact'), baseline: opt('baseline'), strict: flag('strict'),
   fullPage: flag('full-page'), cssPixels: flag('css-pixels'), noAxe: flag('no-axe'), noDetector: flag('no-detector'), stubAuth: flag('stub-auth'), noRest: flag('no-rest'),
-  baseUrl: opt('base-url'), devices: opt('devices'), views: opt('views'),
+  baseUrl: opt('base-url'), devices: opt('devices'), views: opt('views'), quick: flag('quick'), noSpeed: flag('no-speed'),
   out: path.resolve(opt('out') || path.join(os.tmpdir(), 'wearcycle-check', flag('worst-case') ? 'worst-case' : 'run')),
 };
 const inside = (p, dir) => { const r = path.relative(dir, p); return r === '' || (!r.startsWith('..') && !path.isAbsolute(r)); };
@@ -80,9 +87,11 @@ const DEVICES = [
 const DEV = Object.fromEntries(DEVICES.map(d => [d.id, d]));
 const VIEWS = ['outfits', 'closet', 'care', 'shop', 'preview', 'editor', 'settings'];
 const pickList = (all, s) => s ? all.filter(x => s.split(',').includes(x.id || x)) : all;
-const devices = pickList(DEVICES, A.devices), views = pickList(VIEWS, A.views);
-const GROUPS = ['signed-out', 'pages', 'sheets', 'layers', 'camera', 'share'];
-const groups = A.views ? GROUPS.filter(g => A.views.split(',').includes(g)) : GROUPS;
+if (A.quick) A.noRest = true; // first screens only
+const devices = pickList(DEVICES, A.devices || (A.quick ? 'phone-390,ipad-820,win-1366' : undefined)), views = pickList(VIEWS, A.views);
+const GROUPS = ['signed-out', 'pages', 'banners', 'sheets', 'layers', 'camera', 'share'];
+const groups = A.views ? GROUPS.filter(g => A.views.split(',').includes(g)) : A.quick ? [] : GROUPS;
+const THEMES = A.quick ? ['light'] : ['light', 'dark'];
 const LANGS = ['en', 'es', 'fr', 'tl', 'hi', 'ja', 'ko'];
 
 /* ---------- results ---------- */
@@ -155,6 +164,8 @@ function makeRouter(base, data) {
           return json(route, []);
         }
         R.writes.push(m + ' ' + table);
+        if (data.writeDelay) await new Promise(r => setTimeout(r, data.writeDelay)); // the speed check's network
+        R.writeAt = Date.now();
         if (m === 'POST' && /return=representation/.test(req.headers()['prefer'] || '')) {
           let b = []; try { b = JSON.parse(req.postData() || '[]'); } catch {}
           return json(route, (Array.isArray(b) ? b : [b]).map((r, k) => ({ id: 99000 + k, ...r })), 201);
@@ -184,22 +195,23 @@ function makeRouter(base, data) {
 
 /* ---------- browser helpers ---------- */
 let PW, AxeBuilder, PNG, pixelmatch;
-async function newContext(browser, base, dev, { theme = 'light', lang = 'en', data, storageState, known = true, clock = NOW } = {}) {
+async function newContext(browser, base, dev, { theme = 'light', lang = 'en', data, storageState, known = true, clock = NOW, locale = CLOSET.locale, installAsk = false } = {}) {
   const ctx = await browser.newContext({
     viewport: { width: dev.width, height: dev.height }, deviceScaleFactor: dev.dpr, isMobile: dev.touch, hasTouch: dev.touch,
-    locale: CLOSET.locale, timezoneId: CLOSET.timezone, colorScheme: theme, reducedMotion: 'reduce', serviceWorkers: 'block', storageState,
+    locale, timezoneId: CLOSET.timezone, colorScheme: theme, reducedMotion: 'reduce', serviceWorkers: 'block', storageState,
   });
   await ctx.clock.setFixedTime(clock);
-  await ctx.addInitScript(({ theme, lang, known }) => {
+  await ctx.addInitScript(({ theme, lang, known, installAsk }) => {
     try {
       if (sessionStorage.getItem('wc-check')) return; // only on the first load of the tab, so in-app switches survive a reload
       sessionStorage.setItem('wc-check', '1');
-      localStorage.setItem('wearcycle.theme', theme); localStorage.setItem('wearcycle.lang', lang);
+      localStorage.setItem('wearcycle.theme', theme);
+      if (lang) localStorage.setItem('wearcycle.lang', lang); else localStorage.removeItem('wearcycle.lang'); // no lang: the phone's language decides
       if (known) localStorage.setItem('wearcycle.known', 'true'); else localStorage.removeItem('wearcycle.known');
-      localStorage.setItem('wardrobe.installDismissed', 'true');
-      if (lang !== 'en') localStorage.setItem('wearcycle.i18nDebug', '1'); else localStorage.removeItem('wearcycle.i18nDebug');
+      if (installAsk) localStorage.removeItem('wardrobe.installDismissed'); else localStorage.setItem('wardrobe.installDismissed', 'true');
+      if (lang && lang !== 'en') localStorage.setItem('wearcycle.i18nDebug', '1'); else localStorage.removeItem('wearcycle.i18nDebug');
     } catch (e) {}
-  }, { theme, lang, known });
+  }, { theme, lang, known, installAsk });
   await ctx.route('**/*', makeRouter(base, data));
   return ctx;
 }
@@ -409,6 +421,95 @@ async function busyMorning(browser, base, state, data) {
   }
 }
 
+/* ---------- speed (Phase 15) ---------- */
+// The phone profile with Chromium's CPU slowed 4x (stands in for a mid-range phone, as in the v1.66.1 probe), a closet of
+// 100 pieces (the fixture and 75 copies; the wear log kept) and every write answered locally after 300 ms. Each tap:
+// shown = from the tap to the first frame painted with its result (a requestAnimationFrame loop watches for the result,
+// then waits for that frame to be painted); task = the longest main-thread task (Long Tasks API) from the tap until the
+// result and, for Wear this, until the last write: taps made meanwhile wait for it. Both gate. summary.json also keeps
+// the Event Timing duration (inp: input to the next paint after the handlers; under 16 ms nothing is recorded), which
+// misses work done a frame later and came back empty on v1.66.0's busy page in one of two runs, so it does not gate.
+// Three fresh runs; the median of each figure is gated against SPEED_BUDGET (ms), the worst run is reported.
+const SPEED = { rate: 4, pieces: 100, writeDelay: 300, runs: 3 };
+// Budgets (ms), Phase 15 step 0, from runs on 2026-11-07 (Chromium build 1243, medians of 3): Wear this shown 106 to 136
+// and longest task 86 to 98 on v1.67.1 and v1.66.1, 6,527 and 5,673 on v1.66.0 (the freeze the owner reported); tabs
+// 68 to 285; sheets 55 to 169. 500 ms is where web.dev rates responsiveness (INP) poor and about twice the slowest
+// measured, so the container's noise does not trip it. The task after opening Care (Not getting picked, 2.2 to 2.4 s since
+// v1.66.1) is reported, not gated.
+const SPEED_BUDGET = { wear: 500, wearTask: 500, tab: 500, sheet: 500 };
+function speedData() {
+  const b = scenario(null), extra = Array.from({ length: SPEED.pieces - b.items.length }, (_, k) => { const src = b.items[k % b.items.length];
+    return { ...src, id: 'sp-' + String(k + 1).padStart(3, '0'), body: { ...src.body, name: src.body.name + ' ' + (k + 2) } }; });
+  return { ...b, items: b.items.concat(extra), writeDelay: SPEED.writeDelay };
+}
+async function speed(browser, base, state) {
+  const data = speedData(); R.speed = [];
+  for (let run = 0; run < SPEED.runs; run++) {
+    const ctx = await newContext(browser, base, DEV['phone-390'], { data, storageState: state });
+    const page = await ctx.newPage(); watchConsole(page, () => 'speed'); const row = {};
+    try {
+      await page.goto(base + '/index.html'); await waitApp(page);
+      // Entries reach an observer only when the page is idle; takeRecords() collects the ones still pending (a page kept
+      // busy, as v1.66.0 was, would otherwise lose them).
+      await page.evaluate(() => { window.__ev = []; window.__lt = [];
+        const ev = l => { for (const e of l) if (e.interactionId) window.__ev.push({ t: e.startTime, d: e.duration }); }, lt = l => { for (const e of l) window.__lt.push({ t: e.startTime, d: e.duration }); };
+        window.__obs = [[new PerformanceObserver(l => ev(l.getEntries())), ev], [new PerformanceObserver(l => lt(l.getEntries())), lt]];
+        window.__obs[0][0].observe({ type: 'event', durationThreshold: 16 }); window.__obs[1][0].observe({ type: 'longtask' });
+        window.__take = () => { for (const [o, f] of window.__obs) f(o.takeRecords()); }; });
+      const cdp = await ctx.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: SPEED.rate });
+      const tap = async (key, selector, ready, waitWrites) => {
+        const t = await page.evaluate(src => { const cond = eval(src); window.__shown = null;
+          // seen in a frame's animation callbacks: that frame paints next, then this task runs (before tasks the app queues later)
+          const loop = () => { if (cond()) setTimeout(() => { window.__shown = performance.now(); }, 0); else requestAnimationFrame(loop); };
+          requestAnimationFrame(loop); return performance.now(); }, ready);
+        const t0 = Date.now(), w0 = R.writes.length;
+        await page.click(selector, { timeout: 60000 });
+        await page.waitForFunction(() => window.__shown != null, null, { timeout: 60000, polling: 50 });
+        const readyMs = Date.now() - t0;
+        let lastWrite = null;
+        if (waitWrites) { let n = -1, still = 0; // until no new write for 2 s (each takes 300 ms) and the page is idle, at most 90 s
+          while (Date.now() - t0 < 90000) { await page.waitForTimeout(250); if (R.writes.length !== n) { n = R.writes.length; still = 0; } else still += 250;
+            if (still >= 2000) { await page.evaluate(() => 1); if (R.writes.length === n) break; } } // the evaluation waits for a busy page
+          lastWrite = R.writes.length > w0 ? R.writeAt - t0 : null; }
+        await page.waitForTimeout(400); // a last task may still be running
+        const m = await page.evaluate(t => { __take(); const ev = __ev.filter(e => e.t >= t - 5), start = ev.length ? Math.min(...ev.map(e => e.t)) : t;
+          return { shown: Math.round(__shown - start), inp: Math.round(Math.max(0, ...ev.map(e => e.d))), task: Math.round(Math.max(0, ...__lt.filter(e => e.t >= t - 5).map(e => e.d))) }; }, t);
+        row[key] = { shown: m.shown, inp: m.inp, task: m.task, ready: readyMs, ...(waitWrites ? { writes: R.writes.length - w0, lastWrite } : {}) };
+        await page.evaluate(() => { __ev.length = 0; __lt.length = 0; });
+      };
+      const shown = id => '() => { const s = document.querySelector("#tab-' + id + '"); return s && !s.hidden; }';
+      for (const tab of ['closet', 'care', 'shop', 'outfits']) {
+        await tap('tab-' + tab, 'nav.tabs button[data-tab="' + tab + '"]', shown(tab));
+        if (tab === 'care') { const t0 = Date.now(); await page.waitForFunction(() => !document.querySelector('#careBody [role=status]'), null, { timeout: 60000, polling: 50 }); row['care-fill'] = { ready: row['tab-care'].ready + Date.now() - t0 }; }
+      }
+      await page.waitForTimeout(500);
+      await tap('sheet-settings', SETTINGS_BTN, '() => !!document.querySelector("#sheetRoot .sheet")'); await closeSheet(page);
+      await tap('sheet-piece', '.fit.hero [data-swap]', '() => !!document.querySelector("#sheetRoot .sheet")'); await closeSheet(page);
+      await page.waitForTimeout(500);
+      await tap('wear', '.fit.hero [data-wear]', '() => !!document.querySelector(".fit.hero .worn-ok")', true);
+    } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
+    finally { await ctx.close(); }
+    R.speed.push(row);
+  }
+}
+function speedChecks() {
+  if (!R.speed) return;
+  const ok = R.speed.filter(r => !r.error), med = a => { const v = a.filter(x => x != null).sort((x, y) => x - y); return v.length ? v[Math.floor((v.length - 1) / 2)] : null; };
+  const fig = (key, f) => med(ok.map(r => r[key] && r[key][f])), worst = (key, f) => Math.max(...ok.map(r => (r[key] && r[key][f]) || 0));
+  const ms = v => v == null ? 'n/a' : v < 16 ? '<16 ms' : v + ' ms';
+  if (!ok.length) return check('Speed (4x CPU, 100 pieces)', 'FAIL', R.speed.map(r => r.error).join('; '));
+  const B = SPEED_BUDGET, gateIf = (v, b) => !b || v == null || v <= b;
+  const wear = fig('wear', 'shown'), wearTask = fig('wear', 'task');
+  check('Speed: Wear this, shown and longest task until saved (budget ' + B.wear + ' and ' + B.wearTask + ' ms)', gateIf(wear, B.wear) && gateIf(wearTask, B.wearTask) ? 'PASS' : 'FAIL',
+    'median ' + ms(wear) + ' and ' + ms(wearTask) + ' (worst ' + ms(worst('wear', 'shown')) + ', ' + ms(worst('wear', 'task')) + '); ' + fig('wear', 'writes') + ' writes, the last after ' + fig('wear', 'lastWrite') + ' ms');
+  const line = k => k.replace(/^(tab|sheet)-/, '') + ' ' + ms(fig(k, 'shown')) + ' (task ' + ms(fig(k, 'task')) + ')';
+  const tabs = ['closet', 'care', 'shop', 'outfits'].map(t => 'tab-' + t), tabMax = Math.max(...tabs.map(k => fig(k, 'shown') || 0));
+  check('Speed: tab switches, shown (budget ' + B.tab + ' ms)', gateIf(tabMax, B.tab) ? 'PASS' : 'FAIL', tabs.map(line).join(', ') + '; Care filled in after ' + fig('care-fill', 'ready') + ' ms');
+  const sh = ['sheet-settings', 'sheet-piece'], shMax = Math.max(...sh.map(k => fig(k, 'shown') || 0));
+  check('Speed: opening a sheet, shown (budget ' + B.sheet + ' ms)', gateIf(shMax, B.sheet) ? 'PASS' : 'FAIL', sh.map(line).join(', '));
+  if (ok.length < R.speed.length) check('Speed: every run completed', 'FAIL', R.speed.filter(r => r.error).map(r => r.error).join('; '));
+}
+
 /* ---------- views ---------- */
 async function openView(page, view) {
   if (['outfits', 'closet', 'care', 'shop'].includes(view)) { await goTab(page, view); return true; }
@@ -539,7 +640,9 @@ function fakeCameraArgs() {
   writeFileSync(file, Buffer.concat([Buffer.from('YUV4MPEG2 W' + W + ' H' + H + ' F30:1 Ip A1:1 C420\nFRAME\n'), y, u, v]));
   return ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream', '--use-file-for-fake-video-capture=' + file];
 }
-async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang, tag, runAxe, snapshots, only, longNames }) {
+// Sheets that open one particular piece or saved idea: not applicable to an empty closet.
+const SHEETS_NEED_ITEMS = ['duplicates', 'what-is-this', 'condition-check', 'decide', 'saved-idea'];
+async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang, tag, runAxe, snapshots, only, longNames, sheetData }) {
   const on = g => groups.includes(g) && (!only || only.includes(g));
   const texts0 = userTexts(scenario(null));
   const record = async (page, setWhere, view, inSheet, rest, open, texts = texts0, snap = snapshots) => {
@@ -565,13 +668,27 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
     for (const [view, file] of [['privacy', 'privacy.html'], ['whats-new', 'whats-new.html']])
       await record(page, sw, view, null, 'page', async () => { await page.goto(base + '/' + file); await page.waitForLoadState('load'); });
   });
+  if (on('banners')) { // Phase 15 step 0: the notices above Outfits, one at a time
+    const data = scenario(null), texts = userTexts(data);
+    const banner = (view, opts, raise) => session(browser, { data, storageState: state, ...opts }, async (page, sw) => {
+      await page.goto(base + '/index.html'); await waitApp(page); let wear = null;
+      await record(page, sw, view, null, null, async () => { await goTab(page, 'outfits'); await raise(page); await page.waitForSelector('#banner .banner', { timeout: 5000 });
+        await page.evaluate(() => window.scrollTo(0, 0)); await settle(page); wear = (await page.evaluate(PICTURES)).wear || null; }, texts);
+      const cap = R.captures[R.captures.length - 1]; if (cap && cap.name === tag + '-' + view) cap.wear = wear; });
+    await banner('banner-offline', {}, page => page.context().setOffline(true));
+    // Shown when the phone's language is one the app offers and nobody chose a language yet: an English app on a French phone.
+    if (lang === 'en') await banner('banner-language', { lang: null, locale: 'fr-CA' }, () => {});
+    await banner('banner-install', { installAsk: true }, page => page.evaluate(() => { const e = new Event('beforeinstallprompt', { cancelable: true });
+      e.prompt = () => Promise.resolve(); e.userChoice = Promise.resolve({ outcome: 'dismissed' }); window.dispatchEvent(e); }));
+  }
   if (on('sheets') || on('layers')) {
-    const data = scenario('sheets');
+    const data = scenario(sheetData || 'sheets');
     if (longNames) for (const [id, n] of Object.entries(WORST.scenarios.long.rename || {})) { const it = data.items.find(i => i.id === id); if (it) it.body.name = n; }
     const texts = userTexts(data);
     await session(browser, { data, storageState: state, clock: new Date(CLOSET.busyMorning) }, async (page, sw) => {
       await page.goto(base + '/index.html'); await waitApp(page);
       if (on('sheets')) for (const [view, tab, expr, cond] of SHEET_VIEWS) {
+        if (!data.items.length && SHEETS_NEED_ITEMS.includes(view)) { R.captures.push({ name: tag + '-sheet-' + view, device: dev.id, theme, lang, view: 'sheet-' + view, na: true }); continue; }
         await record(page, sw, 'sheet-' + view, true, 'sheet', async () => {
           await closeSheet(page); await goTab(page, tab); await page.evaluate(() => window.scrollTo(0, 0));
           if (cond && !(await page.evaluate(cond))) return false;
@@ -655,6 +772,28 @@ async function captureShare(browser, base, state) {
         finally { if (!row.na) R.share.push(row); }
       }
     } finally { await ctx.close(); }
+  }
+  // The wish-list picture (Shop > Share my list > Include a picture of the list, v1.58.8), drawn by wishCard with the
+  // Shop list of the "sheets" closet, in every language (Phase 15 step 0).
+  R.wishPic = [];
+  for (const lang of LANGS) {
+    const row = { lang }, ctx = await newContext(browser, base, dev, { lang, data: scenario('sheets'), storageState: state, clock: new Date(CLOSET.busyMorning) }), page = await ctx.newPage();
+    watchConsole(page, () => 'wish-picture-' + lang);
+    try {
+      await page.goto(base + '/index.html'); await waitApp(page); await goTab(page, 'shop');
+      await page.evaluate(() => { openWishlist(); }); await page.waitForSelector('#sheetRoot .sheet', { timeout: 5000 });
+      const r = await page.evaluate(async () => { const P = CanvasRenderingContext2D.prototype, f = P.fillText, drawn = [];
+        P.fillText = function (s, x, y, m) { const w = this.measureText(s).width, l = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x;
+          drawn.push({ s: String(s), l: Math.round(l), r: Math.round(l + w), W: this.canvas.width, px: parseFloat((this.font.match(/(\d+(?:\.\d+)?)px/) || [])[1]) || 0 }); return f.call(this, s, x, y, m); };
+        const t = wishlistText(); if (!t) return { error: 'no list text' }; const b = await wishCard(); P.fillText = f; if (!b) return { error: 'no picture' };
+        const u = new Uint8Array(await b.arrayBuffer()); let bin = ''; for (let i = 0; i < u.length; i += 8192) bin += String.fromCharCode.apply(null, u.subarray(i, i + 8192));
+        const im = await createImageBitmap(b); return { b64: btoa(bin), w: im.width, h: im.height, drawn }; });
+      if (r.error) row.error = r.error;
+      else { row.file = 'wishlist-' + lang + '.png'; writeFileSync(path.join(A.out, 'screens', row.file), Buffer.from(r.b64, 'base64'));
+        row.size = r.w + 'x' + r.h; row.lines = r.drawn.length; row.over = r.drawn.filter(t => t.r > t.W || t.l < 0).map(t => t.s.slice(0, 40)); row.minPx = Math.min(...r.drawn.map(t => t.px)); }
+    } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
+    finally { await ctx.close(); }
+    R.wishPic.push(row);
   }
 }
 
@@ -995,9 +1134,10 @@ async function main() {
     check('Sign-in', 'PASS', R.auth.mode + ': ' + R.auth.reason);
     if (!A.worstCase) {
       await flows(browser, server.base, state, data);
-      if (views.includes('outfits')) { await wearSizes(browser, server.base, state, data); await busyMorning(browser, server.base, state, data); }
+      if (!A.noSpeed) await speed(browser, server.base, state);
+      if (views.includes('outfits') && !A.quick) { await wearSizes(browser, server.base, state, data); await busyMorning(browser, server.base, state, data); }
       const sets = [];
-      for (const dev of devices) for (const theme of ['light', 'dark']) sets.push({ dev, theme, lang: 'en' });
+      for (const dev of devices) for (const theme of THEMES) sets.push({ dev, theme, lang: 'en' });
       if (devices.includes(DEV['phone-360'])) for (const lang of ['fr', 'ja']) sets.push({ dev: DEV['phone-360'], theme: 'light', lang });
       for (const s of sets) {
         const tag = s.dev.id + '-' + s.theme + '-' + s.lang;
@@ -1015,6 +1155,7 @@ async function main() {
           const tag = 'wc-' + name + '-' + dev.id + '-' + lang; console.log('capture ' + tag);
           await captureSet(browser, server.base, state, { dev, theme: 'light', lang, data: d, tag, runAxe: false, snapshots: false });
           if (name === 'long') await captureAdded(browser, null, server.base, state, { dev, theme: 'light', lang, tag, runAxe: false, snapshots: false, only: ['sheets', 'layers'], longNames: true });
+          if (name === 'empty') await captureAdded(browser, null, server.base, state, { dev, theme: 'light', lang, tag, runAxe: false, snapshots: false, only: ['sheets'], sheetData: 'empty' }); // Phase 15 step 0
         }
       }
     }
@@ -1029,6 +1170,9 @@ async function main() {
   check('No horizontal overflow', wide.length ? 'FAIL' : 'PASS', wide.length ? wide.map(c => c.name + ' +' + c.overflowX + 'px ' + c.wide.slice(0, 2).join(' ')).slice(0, 5).join('; ') : 'all views');
   check('No console errors', R.console.length ? 'FAIL' : 'PASS', R.console.length ? R.console.slice(0, 4).map(c => c.where + ': ' + c.text).join(' | ') : '');
   check('Network stays local (Supabase, Open-Meteo stubbed)', R.unexpectedHosts.size ? 'FAIL' : 'PASS', R.unexpectedHosts.size ? 'blocked: ' + [...R.unexpectedHosts].join(', ') : R.writes.length + ' writes and ' + R.functions.length + ' function calls answered locally');
+  speedChecks();
+  { const b = caps.filter(c => /^banner-/.test(c.view) && c.wear && ['phone-360', 'phone-390'].includes(c.device)), hid = b.filter(c => !c.wear.visible);
+    if (b.length) check('Banners on Outfits: Wear this still in the first screen on phones', hid.length ? 'FAIL' : 'PASS', hid.length ? hid.map(c => c.name + ' ' + c.wear.top + '-' + c.wear.bottom + ' of ' + c.wear.vh).slice(0, 4).join('; ') : b.length + ' views'); }
   let base = null, baseDevices = null;
   if (A.baseline) { const bs = JSON.parse(readFileSync(path.resolve(A.baseline), 'utf8')); base = bs.totals || null; baseDevices = new Set((bs.captures || []).map(c => c.device)); }
   const T = totals();
@@ -1073,6 +1217,8 @@ async function main() {
       check('Share image, worst case: color names as words ("light blue")', raw.length || !lb || !lb.lightBlue ? 'FAIL' : 'PASS', raw.length ? raw.slice(0, 4).map(x => x.name + ' "' + x.rawColor[0] + '"').join('; ') : lb && lb.lightBlue ? 'en-owner-2026-11-07b says light blue' : 'en-owner-2026-11-07b: light blue not drawn'); }
     check('Share image: a failure says so', R.shareFail === 'Could not make the image.' ? 'PASS' : 'FAIL', R.shareFail);
   }
+  if (R.wishPic) { const bad = R.wishPic.filter(x => x.error || (x.over || []).length);
+    check('Wish-list picture: drawn in every language, text inside', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.map(x => x.lang + ' ' + (x.error || 'off the picture: ' + x.over.slice(0, 2).join(' / '))).join('; ') : R.wishPic.length + ' pictures ' + R.wishPic[0].size + ', ' + R.wishPic.map(x => x.lines).join('/') + ' lines; smallest text ' + Math.min(...R.wishPic.map(x => x.minPx)) + 'px of ' + R.wishPic[0].size.split('x')[0]); }
   if (R.shareSent) {
     const bad = R.shareSent.filter(x => x.keys.join() !== 'files,title' || x.files.length !== 1 || !/^image\/png wearcycle-outfit\.png$/.test(x.files[0]) || !x.title);
     check('Share image: the share menu gets the picture and its title, no message', bad.length || !R.shareSent.length ? 'FAIL' : 'PASS', bad.length ? bad.map(x => x.lang + ' ' + JSON.stringify({ keys: x.keys, title: x.title, files: x.files })).slice(0, 4).join('; ') : R.shareSent.length + ' languages: ' + R.shareSent.map(x => x.lang + ' "' + x.title + '"').join(', '));
@@ -1128,7 +1274,7 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, render: R.render, totals: T, share: R.share, shareSent: R.shareSent, shareWorst: R.shareWorst, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, speed: R.speed, speedBudget: SPEED_BUDGET, share: R.share, shareSent: R.shareSent, shareWorst: R.shareWorst, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',
