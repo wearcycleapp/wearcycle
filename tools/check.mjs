@@ -287,8 +287,10 @@ async function signIn(browser, base, data) {
 // wearcycle.i18nDebug) that reads as English: two or more English function words, or the exact text of a literal in
 // the app source. Dates and places the browser formats in French, piece names and the brand are not counted.
 const SOURCE = ['app.js', 'logic.js', 'index.html', 'privacy.html', 'whats-new.html'].map(f => readFileSync(path.join(REPO, f), 'utf8')).join('\n');
-// Color keys that are not words (logic.js COLOR_NAME): on screen they must show as their name (owner, 2026-11-07: "(lightblue)").
-const RAW_COLORS = [...((readFileSync(path.join(REPO, 'logic.js'), 'utf8').match(/const COLOR_NAME=\{([^}]*)\}/) || [])[1] || '').matchAll(/(\w+):/g)].map(m => m[1]);
+// Color keys (logic.js COLORS) that are not English words: on screen they must show as their name (owner, 2026-11-07:
+// "(lightblue)"). Worked out from COLORS itself, not from COLOR_NAME, so the check also bites on code without that table.
+const COLOR_WORDS = ['black', 'white', 'grey', 'navy', 'beige', 'khaki', 'brown', 'denim', 'olive', 'red', 'burgundy', 'pink', 'orange', 'yellow', 'green', 'teal', 'blue', 'purple'];
+const RAW_COLORS = [...((readFileSync(path.join(REPO, 'logic.js'), 'utf8').match(/const COLORS=\{([\s\S]*?)\};/) || [])[1] || '').matchAll(/(\w+):\{hex/g)].map(m => m[1]).filter(k => !COLOR_WORDS.includes(k));
 const RAW_COLOR_RE = RAW_COLORS.length ? new RegExp('\\b(' + RAW_COLORS.join('|') + ')\\b', 'i') : null;
 async function pageFacts(page, lang, texts, inSheet) { // inSheet: true for the open sheet, or the selector of a layer
   return page.evaluate(({ lang, texts, inSheet, source, rawColors }) => {
