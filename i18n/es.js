@@ -320,7 +320,6 @@ I18N.load("es",{
 "Photos": "Fotos",
 "Pick at least one color.": "Elige al menos un color.",
 "Pick where to check the forecast.": "Elige dónde consultar el pronóstico.",
-"Picked with Wearcycle": "Elegido con Wearcycle",
 "Pieces": "Prendas",
 "Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.": "Las prendas van al lavado después del número de usos fijado y salen de las sugerencias hasta que las marques como limpias.",
 "Pieces in the wash are left out of outfit suggestions. Change how often a piece needs washing in its More details.": "Las prendas en el lavado no se incluyen en las sugerencias de conjuntos. Cambia cada cuánto hay que lavar una prenda en sus Más detalles.",

@@ -320,7 +320,6 @@ I18N.load("hi",{
 "Photos": "फ़ोटो",
 "Pick at least one color.": "कम से कम एक रंग चुनें।",
 "Pick where to check the forecast.": "चुनें कि पूर्वानुमान कहाँ का देखना है।",
-"Picked with Wearcycle": "Wearcycle से चुना गया",
 "Pieces": "पीस",
 "Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.": "तय बार पहनने के बाद पीस धुलाई में चले जाते हैं और जब तक आप उन्हें साफ़ मार्क नहीं करते, सुझावों से बाहर रहते हैं।",
 "Pieces in the wash are left out of outfit suggestions. Change how often a piece needs washing in its More details.": "धुलाई वाले पीस आउटफ़िट सुझावों में शामिल नहीं होते। कोई पीस कितनी बार पहनने पर धोना है, यह उसकी ज़्यादा जानकारी में बदलें।",

@@ -320,7 +320,6 @@ I18N.load("ja",{
 "Photos": "写真",
 "Pick at least one color.": "色を1つ以上選んでください。",
 "Pick where to check the forecast.": "天気予報を確認する場所を選んでください。",
-"Picked with Wearcycle": "Wearcycleで選びました",
 "Pieces": "アイテム",
 "Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.": "設定した回数着用したアイテムは洗濯に回り、洗濯済みにするまで提案から外れます。",
 "Pieces in the wash are left out of outfit suggestions. Change how often a piece needs washing in its More details.": "洗濯中のアイテムはコーデの提案から外れます。洗濯の頻度は各アイテムの「詳細」で変更できます。",

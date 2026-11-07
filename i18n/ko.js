@@ -320,7 +320,6 @@ I18N.load("ko",{
 "Photos": "사진",
 "Pick at least one color.": "색상을 하나 이상 선택하세요.",
 "Pick where to check the forecast.": "예보를 확인할 위치를 선택하세요.",
-"Picked with Wearcycle": "Wearcycle로 고른 코디",
 "Pieces": "아이템",
 "Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.": "아이템은 정해진 착용 횟수가 지나면 세탁으로 들어가고, 세탁 완료로 표시할 때까지 추천에서 빠져요.",
 "Pieces in the wash are left out of outfit suggestions. Change how often a piece needs washing in its More details.": "세탁 중인 아이템은 코디 추천에서 빠져요. 세탁 주기는 각 아이템의 '상세 정보'에서 바꿀 수 있어요.",

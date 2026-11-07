@@ -320,7 +320,6 @@ I18N.load("tl",{
 "Photos": "Mga litrato",
 "Pick at least one color.": "Pumili ng kahit isang kulay.",
 "Pick where to check the forecast.": "Piliin kung saan titingnan ang forecast.",
-"Picked with Wearcycle": "Pinili gamit ang Wearcycle",
 "Pieces": "Mga piraso",
 "Pieces go to the wash after their set number of wears and leave suggestions until you mark them clean.": "Napupunta sa labahan ang mga piraso pagkatapos ng itinakdang bilang ng suot at hindi isinasama sa mga mungkahi hanggang markahan mo silang malinis.",
 "Pieces in the wash are left out of outfit suggestions. Change how often a piece needs washing in its More details.": "Hindi isinasama sa mga mungkahing outfit ang mga pirasong nasa labahan. Baguhin kung gaano kadalas kailangang labhan ang isang piraso sa Iba pang detalye nito.",

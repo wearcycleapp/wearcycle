@@ -116,5 +116,6 @@ I18N.add("ko",{
 "The camera's Delete button is easier to read in dark mode, a sentence in the Weather settings is now translated, and the checkboxes in a piece's details are easier to tap.": "카메라의 삭제 버튼이 다크 모드에서 더 읽기 쉬워졌고, 날씨 설정의 문장이 번역되었으며, 아이템 세부 정보의 체크박스를 누르기 쉬워졌습니다.",
 "Wear this responds at once: the pieces are saved together instead of one by one, and the app no longer stops for seconds while it saves.": "이제 '이 코디 입기'가 바로 반응합니다. 옷을 하나씩이 아니라 한꺼번에 저장해, 저장하는 동안 앱이 몇 초씩 멈추지 않습니다.",
 "Care shows right away and fills in Not getting picked a moment later.": "'관리'가 바로 표시되고 '선택되지 않는 아이템'은 잠시 후 채워집니다.",
-"In the picture you share of an outfit, a long word now breaks with a hyphen instead of being cut, and the outfit sits in the middle of its space instead of leaving an empty band above the colors.": "공유하는 코디 이미지에서 긴 단어가 잘리지 않고 하이픈으로 줄바꿈되며, 코디가 색상 위에 빈 띠를 남기지 않고 공간의 가운데에 놓입니다."
+"In the picture you share of an outfit, a long word now breaks with a hyphen instead of being cut, and the outfit sits in the middle of its space instead of leaving an empty band above the colors.": "공유하는 코디 이미지에서 긴 단어가 잘리지 않고 하이픈으로 줄바꿈되며, 코디가 색상 위에 빈 띠를 남기지 않고 공간의 가운데에 놓입니다.",
+"When you share the picture of an outfit, it no longer comes with the line “Picked with Wearcycle”, which some apps showed over the bottom of the picture.": "코디 이미지를 공유할 때 더 이상 “Wearcycle로 고른 코디”라는 문구가 함께 보내지지 않습니다. 일부 앱에서는 이 문구가 이미지 아래쪽에 겹쳐 표시되었습니다."
 });
