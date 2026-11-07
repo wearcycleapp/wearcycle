@@ -798,7 +798,7 @@ button.hint.today.linkish .chev{color:var(--ink)}
 .ssum{margin:0;font-size:15px;line-height:1.4}
 .ssum b{font-weight:700}
 .ssum span{color:var(--muted)}
-.cw{text-transform:capitalize}
+.cw{display:inline-block}.cw::first-letter{text-transform:uppercase} /* sentence case: "Light blue", "Bleu clair" (capitalize gave "Light Blue") */
 .buy{display:flex;align-items:flex-start;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line)}
 .bsw{width:56px;height:70px;flex:none;border-radius:10px;display:grid;place-items:center;background:radial-gradient(120% 90% at 50% 40%,var(--canvas-1) 0%,var(--canvas-2) 100%)}
 .bsw svg.glyph{width:42px;height:42px}
