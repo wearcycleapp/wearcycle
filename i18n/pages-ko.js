@@ -119,5 +119,6 @@ I18N.add("ko",{
 "In the picture you share of an outfit, a long word now breaks with a hyphen instead of being cut, and the outfit sits in the middle of its space instead of leaving an empty band above the colors.": "공유하는 코디 이미지에서 긴 단어가 잘리지 않고 하이픈으로 줄바꿈되며, 코디가 색상 위에 빈 띠를 남기지 않고 공간의 가운데에 놓입니다.",
 "When you share the picture of an outfit, it no longer comes with the line “Picked with Wearcycle”, which some apps showed over the bottom of the picture.": "코디 이미지를 공유할 때 더 이상 “Wearcycle로 고른 코디”라는 문구가 함께 보내지지 않습니다. 일부 앱에서는 이 문구가 이미지 아래쪽에 겹쳐 표시되었습니다.",
 "In the picture you share of an outfit, the names of the main pieces now take up to four lines before they are shortened.": "공유하는 코디 이미지에서 주요 아이템 이름이 줄여지기 전에 최대 네 줄까지 표시됩니다.",
-"In English, the color light blue is now written as two words everywhere in the app, including the picture you share.": "영어에서 색상 “light blue”가 이제 앱 전체에서 두 단어로 표시되며, 공유하는 이미지에서도 마찬가지입니다."
+"In English, the color light blue is now written as two words everywhere in the app, including the picture you share.": "영어에서 색상 “light blue”가 이제 앱 전체에서 두 단어로 표시되며, 공유하는 이미지에서도 마찬가지입니다.",
+"New logo: a circle with a crew neck cut into its top, in white on ink with a touch of coral. It stays recognizable at small sizes. On Android, the icon on your home screen changes by itself after you open the app, once the phone is charging on Wi-Fi with the app closed.": "새 로고: 위쪽에 크루넥을 새긴 원을 잉크 바탕에 흰색으로, 코랄을 살짝 더했습니다. 작은 크기에서도 알아보기 쉽습니다. Android에서는 앱을 연 뒤, 앱을 닫고 휴대폰을 Wi-Fi로 충전하는 동안 홈 화면 아이콘이 저절로 바뀝니다."
 });

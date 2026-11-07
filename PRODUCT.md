@@ -45,7 +45,7 @@ Gap-based shopping and the detail rules (socks, belts, open shirts, accessories,
 
 ## Brand Commitments
 
-- Name Wearcycle. Logo: a t-shirt outline drawn as a cycle with two arrows and a coral hem accent (icons/logo-icon.svg). Tagline "WEAR · CARE · DONATE · BUY" on the sign-in screen only. Welcome headline "Get dressed in seconds."
+- Name Wearcycle. Logo (v1.67.0, owner 2026-11-07): a circle drawn in one white line with a crew neck cut into its top, on an ink square, with a short coral arc at the lower right (about 8% of the symbol); icons/logo-icon.svg, logo-mark.svg, the PNG icons and a monochrome icon for themed home screens. The shape carries recognition; color must never be needed to tell it apart. Tagline "WEAR · CARE · DONATE · BUY" on the sign-in screen only. Welcome headline "Get dressed in seconds."
 - Keep the Ink & Coral identity: ink #1B2433, coral #FF7A59, neutral #F6F4F1, the warm cream garment canvas, the condensed display type, light and dark themes (owner, 2026-10-18). Coral is not a selected-state color (redesign decision 1, 2026-10-12).
 - Clothes are the hero: the person's own garments (photos, cut-outs, color glyphs) lead every screen and the interface supports them (owner, 2026-10-18).
 - Sustainable without cliches: wear longer, repair, donate and recycle; no eco slogans, no guilt, never encourage buying to fill a screen; when an occasion is covered, say so plainly (owner, 2026-10-18).
