@@ -600,7 +600,7 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
 // The share image in every language and occasion: the canvas's PNG (saved for every language, with and without cut-outs,
 // on the first occasion, and for French and Hindi on every occasion) and every text it draws, measured against the canvas.
 async function captureShare(browser, base, state) {
-  R.share = [];
+  R.share = []; R.shareSent = [];
   const withCut = scenario(null), noCut = { ...withCut, items: withCut.items.map(i => { const body = { ...i.body }; delete body.cut; return { ...i, body }; }) };
   const long = scenario('long'), dev = DEV['win-1366'], enDrawn = {};
   for (const lang of LANGS) for (const [variant, data] of [['cutouts', withCut], ['no-cutouts', noCut], ['long-names', long]]) {
@@ -615,6 +615,12 @@ async function captureShare(browser, base, state) {
         P.fillText = function (s, x, y, m) { const w = this.measureText(s).width, l = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x; window.__drawn.push({ s: String(s), left: Math.round(l), right: Math.round(l + w), W: this.canvas.width, y: Math.round(y - this.measureText(s).actualBoundingBoxAscent) }); return o.call(this, s, x, y, m); }; });
       const occs = await page.evaluate(() => [...document.querySelectorAll('#occChips [data-occ]')].map(b => b.dataset.occ));
       const first = await page.evaluate(() => document.querySelector('#occChips [aria-pressed="true"]')?.dataset.occ);
+      // What the phone's share menu receives (headless Chromium has none, so the images below come through the download):
+      // the picture and its title only, no message (owner, 2026-11-07: WhatsApp drew "Picked with Wearcycle" over the picture).
+      if (variant === 'cutouts' && first) R.shareSent.push({ lang, ...await page.evaluate(async () => { let got = null; const had = Object.getOwnPropertyNames(navigator);
+        navigator.canShare = () => true; navigator.share = async d => { got = d; };
+        try { await shareOutfit(); } finally { if (!had.includes('canShare')) delete navigator.canShare; if (!had.includes('share')) delete navigator.share; }
+        return got ? { keys: Object.keys(got).sort(), title: got.title, files: [...(got.files || [])].map(f => f.type + ' ' + f.name) } : { keys: [], files: [] }; }) });
       for (const occ of [first, ...occs.filter(o => o !== first)]) {
         const name = lang + '-' + occ + '-' + variant, row = { name, lang, occ, variant, over: [] };
         try {
@@ -1044,6 +1050,10 @@ async function main() {
     check('Share image, worst case: room left over is shared above and below the outfit', off.length ? 'FAIL' : 'PASS', off.length ? off.slice(0, 4).map(x => x.name + ' above ' + x.above + ', below ' + x.below).join('; ') : 'largest band ' + Math.max(...R.shareWorst.map(x => Math.max(x.above, x.below))) + 'px');
     check('Share image: a failure says so', R.shareFail === 'Could not make the image.' ? 'PASS' : 'FAIL', R.shareFail);
   }
+  if (R.shareSent) {
+    const bad = R.shareSent.filter(x => x.keys.join() !== 'files,title' || x.files.length !== 1 || !/^image\/png wearcycle-outfit\.png$/.test(x.files[0]) || !x.title);
+    check('Share image: the share menu gets the picture and its title, no message', bad.length || !R.shareSent.length ? 'FAIL' : 'PASS', bad.length ? bad.map(x => x.lang + ' ' + JSON.stringify({ keys: x.keys, title: x.title, files: x.files })).slice(0, 4).join('; ') : R.shareSent.length + ' languages: ' + R.shareSent.map(x => x.lang + ' "' + x.title + '"').join(', '));
+  }
   if (R.share) {
     const over = R.share.filter(x => x.over.length), saved = R.share.filter(x => x.file);
     check('Share image: drawn in every language and occasion', R.share.some(x => x.error) ? 'FAIL' : 'PASS', R.share.length + ' images, ' + saved.length + ' saved; ' + R.share.filter(x => x.error).map(x => x.name + ' ' + x.error).slice(0, 3).join('; '));
@@ -1094,7 +1104,7 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, render: R.render, totals: T, share: R.share, shareWorst: R.shareWorst, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, share: R.share, shareSent: R.shareSent, shareWorst: R.shareWorst, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',
