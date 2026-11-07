@@ -632,7 +632,7 @@ async function captureShare(browser, base, state) {
           // (piece names are the person's; the wordmark and names, whole or wrapped, are left out).
           const key = occ + '|' + variant, own = data.items.map(i => String(i.body.name || '').trim().replace(/\s+/g, ' ')); if (lang === 'en') enDrawn[key] = drawn.map(t => t.s);
           else { const dict = lang === 'en' ? '' : readFileSync(path.join(REPO, 'i18n', lang + '.js'), 'utf8').toLowerCase(); // a word the dictionary keeps the same ("Formal" in Spanish) is translated
-            row.english = [...new Set(drawn.map(t => t.s))].filter(t => (enDrawn[key] || []).includes(t) && /[A-Za-z]{3}/.test(t) && t !== 'WEARCYCLE' && !own.some(n => n.includes(t.replace(/…$/, ''))) && !dict.includes(': "' + t.toLowerCase() + '"')); }
+            row.english = [...new Set(drawn.map(t => t.s))].filter(t => (enDrawn[key] || []).includes(t) && /[A-Za-z]{3}/.test(t) && t !== 'WEARCYCLE' && !own.some(n => n.includes(t.replace(/[…-]$/, ''))) && !dict.includes(': "' + t.toLowerCase() + '"')); }
         } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
         finally { if (!row.na) R.share.push(row); }
       }
