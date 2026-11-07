@@ -287,8 +287,11 @@ async function signIn(browser, base, data) {
 // wearcycle.i18nDebug) that reads as English: two or more English function words, or the exact text of a literal in
 // the app source. Dates and places the browser formats in French, piece names and the brand are not counted.
 const SOURCE = ['app.js', 'logic.js', 'index.html', 'privacy.html', 'whats-new.html'].map(f => readFileSync(path.join(REPO, f), 'utf8')).join('\n');
+// Color keys that are not words (logic.js COLOR_NAME): on screen they must show as their name (owner, 2026-11-07: "(lightblue)").
+const RAW_COLORS = [...((readFileSync(path.join(REPO, 'logic.js'), 'utf8').match(/const COLOR_NAME=\{([^}]*)\}/) || [])[1] || '').matchAll(/(\w+):/g)].map(m => m[1]);
+const RAW_COLOR_RE = RAW_COLORS.length ? new RegExp('\\b(' + RAW_COLORS.join('|') + ')\\b', 'i') : null;
 async function pageFacts(page, lang, texts, inSheet) { // inSheet: true for the open sheet, or the selector of a layer
-  return page.evaluate(({ lang, texts, inSheet, source }) => {
+  return page.evaluate(({ lang, texts, inSheet, source, rawColors }) => {
     const root = inSheet && document.querySelector(inSheet === true ? '#sheetRoot .sheet' : inSheet) || document.body;
     const W = innerWidth, out = { overflowX: document.documentElement.scrollWidth - W, wide: [], truncated: [], userTruncated: [], spilling: [], english: [] };
     const sel = el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : '');
@@ -306,6 +309,12 @@ async function pageFacts(page, lang, texts, inSheet) { // inSheet: true for the 
       (cut ? (texts.includes(t) ? out.userTruncated : out.truncated) : out.spilling).push(sel(el) + ' "' + t.slice(0, 60) + '"');
     }
     out.wide = [...new Set(out.wide)].slice(0, 8);
+    // A color key shown as text or read out by a screen reader (the person's own names are left out).
+    if (rawColors.length) { const re = new RegExp('\\b(' + rawColors.join('|') + ')\\b', 'i'), keys = new Set();
+      for (const el of root.querySelectorAll('*')) { if (!el.checkVisibility || !el.checkVisibility() || el.closest('[data-notr],script,style')) continue;
+        for (const n of el.childNodes) if (n.nodeType === 3 && re.test(n.nodeValue) && !texts.some(u => n.nodeValue.includes(u))) keys.add('"' + n.nodeValue.trim().slice(0, 50) + '"');
+        for (const a of ['aria-label', 'title']) { const v = el.getAttribute(a); if (v && re.test(v) && !texts.some(u => v.includes(u))) keys.add(a + ' "' + v.slice(0, 50) + '"'); } }
+      out.colorKeys = [...keys].slice(0, 6); }
     if (lang !== 'en') {
       const miss = window.I18N && I18N.missing; const seen = new Set();
       const FW = /^(the|of|to|with|without|and|or|is|are|was|be|your|you|this|that|it|its|not|from|by|will|can|about|then|each|when|what|how|which|has|have|do|after|before|into|until|only|more)$/i;
@@ -324,7 +333,7 @@ async function pageFacts(page, lang, texts, inSheet) { // inSheet: true for the 
       }
     }
     return out;
-  }, { lang, texts, inSheet, source: SOURCE });
+  }, { lang, texts, inSheet, source: SOURCE, rawColors: RAW_COLORS });
 }
 async function axe(page, sheet) {
   let b = new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']);
@@ -632,6 +641,7 @@ async function captureShare(browser, base, state) {
           if (keep) { row.file = 'share-' + name + '.png'; await dl.saveAs(path.join(A.out, 'screens', row.file)); } else await dl.delete();
           const drawn = await page.evaluate(() => window.__drawn);
           row.over = drawn.filter(t => t.right > t.W || t.left < 0).map(t => ({ s: t.s, by: Math.max(t.right - t.W, -t.left) }));
+          row.rawColor = RAW_COLOR_RE ? drawn.filter(t => RAW_COLOR_RE.test(t.s)).map(t => t.s) : [];
           row.pics = await page.evaluate(() => window.__pics);
           row.top = Math.min(...drawn.map(t => t.y)); // social apps draw their controls over about the top 14% (269px of 1920)
           // Text that stays English in another language: the same string as in the English image of this occasion and closet
@@ -655,6 +665,9 @@ const SHARE_SHAPES = {
   'hard-names': "({top:{...byId('fx-03'),name:'Pneumonoultramicroscopicsilicovolcanoconiosisextraordinairementlong'},bottom:{...byId('fx-10'),name:'👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻'},shoes:{...byId('fx-18'),name:'日本語の長い名前の白いレザースニーカーとても長い名前のスニーカーです本当に長い'},acc:[{...byId('fx-22'),name:''},{...byId('fx-23'),name:'J'}]})",
   // The owner's shared picture, 2026-11-07 (WhatsApp screenshot): 4 main pieces and 6 small ones, his names.
   'owner-2026-11-07': "({outer:{...byId('fx-15'),name:'Hooded Wool Duffle Coat'},top:{...byId('fx-01'),name:'Blue Plaid Flannel Shirt'},under:{...byId('fx-06'),name:'True Classic white round neck t-shirt'},bottom:{...byId('fx-10'),name:'Blue Straight Jeans'},shoes:{...byId('fx-18'),name:'White Low-Top Sneakers'},acc:[{...byId('fx-22'),name:'Black Leather Belt'},{...byId('fx-23'),name:'Silver Chronograph Watch'},{...byId('fx-24'),name:'Black Sling Bag'},{...byId('fx-25'),name:'Grey Pom Beanie'},{...byId('fx-19'),name:'Black Wool Scarf'}]})",
+  // His second picture, 2026-11-07 (after v1.66.3): "Grey / Quarter-Zip / Rates…" and "(lightblue)". The real name of the
+  // quarter-zip is not known: a stand-in with the same first three lines; the tee is light blue, the only accent color.
+  'owner-2026-11-07b': "({outer:{...byId('fx-15'),name:'Hooded Wool Duffle Coat',colors:['brown']},top:{...byId('fx-01'),name:'Grey Quarter-Zip Rates Sweatshirt',colors:['grey']},under:{...byId('fx-06'),name:'Blue Crew Neck Tee',colors:['lightblue']},bottom:{...byId('fx-10'),name:'Blue Straight Jeans',colors:['denim']},shoes:{...byId('fx-18'),name:'White Low-Top Sneakers'},acc:[{...byId('fx-22'),name:'Black Leather Belt'},{...byId('fx-23'),name:'Silver Chronograph Watch'},{...byId('fx-24'),name:'Black Sling Bag'},{...byId('fx-25'),name:'Grey Pom Beanie'},{...byId('fx-19'),name:'Black Wool Scarf'}]})",
   'missing-files': "({top:{...byId('fx-01'),id:'gone-1',cut:'gone-1-cut.webp',photo:'gone-1.jpg',med:'gone-1-1024.jpg',thumb:''},bottom:{...byId('fx-10'),id:'gone-2',cut:'',photo:'gone-2.jpg',med:'gone-2-1024.jpg'},acc:[]})",
 };
 async function shareWorst(browser, base, state) {
@@ -684,6 +697,8 @@ async function shareWorst(browser, base, state) {
           // Lines on one baseline must not run into each other (a kind or name wider than its column).
           row.overlap = m.t.flatMap((a, i) => m.t.slice(i + 1).filter(b => Math.abs(a.y - b.y) < 10 && a.l < b.r && b.l < a.r).map(b => a.s.slice(0, 24) + ' / ' + b.s.slice(0, 24)));
           row.minPic = Math.min(...m.p.filter(h => h !== 72)); // the larger side of each drawn picture; the logo is 72px
+          row.cut = m.t.filter(t => t.s.endsWith('…')).map(t => t.s); row.rawColor = RAW_COLOR_RE ? m.t.filter(t => RAW_COLOR_RE.test(t.s)).map(t => t.s) : [];
+          row.lightBlue = /\blight blue\b/.test(m.t.map(t => t.s).join(' '));
         } catch (e) { row.error = String(e && e.message || e).split('\n')[0]; }
         R.shareWorst.push(row);
       }
@@ -1032,6 +1047,8 @@ async function main() {
     gate('No English left in French and Japanese', G.englishLeft, base && base.englishLeft, true, gnote('englishLeft'));
   }
   gate('No app text cut off or spilling (all languages)', G.textOverflow, base && base.textOverflow, false, gnote('textOverflow'));
+  { const all = R.captures.filter(c => !c.na && !c.error), raw = all.filter(c => (c.colorKeys || []).length);
+    check('Color names shown as words, not keys (' + RAW_COLORS.join(', ') + ')', raw.length ? 'FAIL' : 'PASS', raw.length ? raw.length + ' views: ' + raw.slice(0, 4).map(c => c.view + ' ' + c.colorKeys[0]).join('; ') : all.length + ' views'); }
   if (R.captures.some(c => !oldView(c))) { // no baseline for these: anything found shows as REVIEW, with where in summary.md
     const where = f => [...new Set(caps.filter(c => !oldView(c) && f(c)).map(c => c.view))].slice(0, 8).join(', ');
     if (!A.noAxe && !A.worstCase) gate('Added views: axe-core, serious or critical nodes', TA.axeSerious, null, false, '');
@@ -1048,6 +1065,10 @@ async function main() {
     const split = R.shareWorst.filter(x => (x.midWord || []).length), off = R.shareWorst.filter(x => Math.abs(x.above - x.below) > 2 && x.below > 2);
     check('Share image, worst case: a word broken inside has a hyphen (scripts with spaces)', split.length ? 'FAIL' : 'PASS', split.length ? split.slice(0, 4).map(x => x.name + ' ' + x.midWord.slice(0, 2).join(', ')).join('; ') : '');
     check('Share image, worst case: room left over is shared above and below the outfit', off.length ? 'FAIL' : 'PASS', off.length ? off.slice(0, 4).map(x => x.name + ' above ' + x.above + ', below ' + x.below).join('; ') : 'largest band ' + Math.max(...R.shareWorst.map(x => Math.max(x.above, x.below))) + 'px');
+    { const own = R.shareWorst.filter(x => /^[a-z]+-owner-/.test(x.name)), cut = own.filter(x => (x.cut || []).length);
+      check("Share image, worst case: the owner's outfits keep every name whole (4 lines)", cut.length || !own.length ? 'FAIL' : 'PASS', cut.length ? cut.slice(0, 4).map(x => x.name + ' "' + x.cut[0] + '"').join('; ') : own.length + ' images'); }
+    { const raw = R.shareWorst.filter(x => (x.rawColor || []).length), lb = R.shareWorst.find(x => x.name === 'en-owner-2026-11-07b');
+      check('Share image, worst case: color names as words ("light blue")', raw.length || !lb || !lb.lightBlue ? 'FAIL' : 'PASS', raw.length ? raw.slice(0, 4).map(x => x.name + ' "' + x.rawColor[0] + '"').join('; ') : lb && lb.lightBlue ? 'en-owner-2026-11-07b says light blue' : 'en-owner-2026-11-07b: light blue not drawn'); }
     check('Share image: a failure says so', R.shareFail === 'Could not make the image.' ? 'PASS' : 'FAIL', R.shareFail);
   }
   if (R.shareSent) {
@@ -1061,6 +1082,7 @@ async function main() {
       check('Share image: pictures and first line', 'INFO', pics.length + ' pictures, ' + pics.filter(k => k > 1.1).length + ' drawn larger than 1.1x their file (up to ' + Math.max(0, ...pics) + 'x); highest text starts at ' + top + 'px (social apps cover about the top 269px)'); }
     { const eng = R.share.filter(x => (x.english || []).length); check('Share image: no English left in other languages', eng.length ? 'REVIEW' : 'PASS', eng.length ? eng.length + ': ' + eng.slice(0, 4).map(x => x.name + ' "' + x.english[0].slice(0, 40) + '"').join('; ') : 'every kind, occasion and palette line translated');
       const high = R.share.filter(x => x.top < 269); check('Share image: text starts below the area social apps cover (269px)', high.length ? 'FAIL' : 'PASS', high.length ? high.length + ' images, highest ' + Math.min(...high.map(x => x.top)) + 'px' : ''); }
+    { const raw = R.share.filter(x => (x.rawColor || []).length); check('Share image: color names as words, not keys', raw.length ? 'FAIL' : 'PASS', raw.length ? raw.length + ' images: ' + raw.slice(0, 4).map(x => x.name + ' "' + x.rawColor[0] + '"').join('; ') : R.share.length + ' images'); }
     check('Share image: all text inside the picture', over.length ? 'FAIL' : 'PASS', over.length ? over.length + ' of ' + R.share.length + ': ' + over.slice(0, 4).map(x => x.name + ' "' + x.over[0].s.slice(0, 40) + '" +' + x.over[0].by + 'px').join('; ') : R.share.length + ' images');
   }
   check('Piece names cut with an ellipsis', 'INFO', T.userNamesCut + ' (user-typed names may be truncated; listed per view in summary.json)');
