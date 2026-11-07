@@ -647,6 +647,8 @@ const SHARE_SHAPES = {
   'single-piece': "({top:byId('fx-03'),acc:[]})",
   'four-main-six-small': "({outer:{...byId('fx-15'),name:'Manteau de laine bouilli à double boutonnage, doublure satinée, col montant'},top:{...byId('fx-01'),name:'हल्के नीले रंग की सूती शर्ट, लंबी आस्तीन, ऑफ़िस और त्योहारों के लिए'},under:byId('fx-06'),bottom:{...byId('fx-10'),name:'Pantalon chino bleu marine en sergé de coton stretch, coupe droite ajustée'},shoes:{...byId('fx-18'),name:'Chaussures de ville en cuir noir à bout fleuri'},acc:['fx-22','fx-23','fx-24','fx-25','fx-19'].map(byId)})",
   'hard-names': "({top:{...byId('fx-03'),name:'Pneumonoultramicroscopicsilicovolcanoconiosisextraordinairementlong'},bottom:{...byId('fx-10'),name:'👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻👩🏽‍💻'},shoes:{...byId('fx-18'),name:'日本語の長い名前の白いレザースニーカーとても長い名前のスニーカーです本当に長い'},acc:[{...byId('fx-22'),name:''},{...byId('fx-23'),name:'J'}]})",
+  // The owner's shared picture, 2026-11-07 (WhatsApp screenshot): 4 main pieces and 6 small ones, his names.
+  'owner-2026-11-07': "({outer:{...byId('fx-15'),name:'Hooded Wool Duffle Coat'},top:{...byId('fx-01'),name:'Blue Plaid Flannel Shirt'},under:{...byId('fx-06'),name:'True Classic white round neck t-shirt'},bottom:{...byId('fx-10'),name:'Blue Straight Jeans'},shoes:{...byId('fx-18'),name:'White Low-Top Sneakers'},acc:[{...byId('fx-22'),name:'Black Leather Belt'},{...byId('fx-23'),name:'Silver Chronograph Watch'},{...byId('fx-24'),name:'Black Sling Bag'},{...byId('fx-25'),name:'Grey Pom Beanie'},{...byId('fx-19'),name:'Black Wool Scarf'}]})",
   'missing-files': "({top:{...byId('fx-01'),id:'gone-1',cut:'gone-1-cut.webp',photo:'gone-1.jpg',med:'gone-1-1024.jpg',thumb:''},bottom:{...byId('fx-10'),id:'gone-2',cut:'',photo:'gone-2.jpg',med:'gone-2-1024.jpg'},acc:[]})",
 };
 async function shareWorst(browser, base, state) {
@@ -658,13 +660,20 @@ async function shareWorst(browser, base, state) {
       await page.goto(base + '/index.html'); await waitApp(page);
       await page.evaluate(() => { const P = CanvasRenderingContext2D.prototype, f = P.fillText, d = P.drawImage; window.__t = []; window.__p = [];
         P.fillText = function (s, x, y, m) { const r = this.measureText(s); window.__t.push({ s: String(s), l: Math.round(x), r: Math.round(x + r.width), y: Math.round(y), W: this.canvas.width }); return f.call(this, s, x, y, m); };
-        P.drawImage = function (im, x, y, w, h) { if (w && this.canvas.width === 1080) window.__p.push(Math.round(Math.max(w, h))); return d.apply(this, arguments); }; });
+        P.drawImage = function (im, x, y, w, h) { if (w && this.canvas.width === 1080) { window.__p.push(Math.round(Math.max(w, h))); window.__boxes.push([Math.round(y), Math.round(y + h)]); } return d.apply(this, arguments); };
+        window.__boxes = []; window.__cells = []; const rr = P.roundRect; P.roundRect = function (x, y, w, h) { if (this.canvas.width === 1080) window.__cells.push([Math.round(y), Math.round(y + h)]); return rr.apply(this, arguments); };
+        // Where the outfit sits in its area, and every break inside a word (only scripts without spaces may break without a hyphen).
+        const kit = window.shareKit; window.shareKit = async function (g, o, top, bottom) { window.__cells.length = 0; const end = await kit.apply(this, arguments); window.__area = { top, bottom, start: Math.min(...window.__cells.map(c => c[0])), end }; return end; };
+        const sl = window.shareLines; window.__splits = []; window.shareLines = function (g, text) { const out = sl.apply(this, arguments), src = String(text).trim().replace(/\s+/g, ' ');
+          let pos = 0; out.slice(0, -1).forEach(l => { let s = l.replace(/…$/, ''), hy = s.endsWith('-'); const at = src.indexOf(s, pos); if (at < 0 && hy) { s = s.slice(0, -1); } const i = src.indexOf(s, pos); if (i < 0) return; pos = i + s.length;
+            if (src[pos] && src[pos] !== ' ' && !hy && !/-$/.test(s) && /\p{L}\p{M}*$/u.test(s) && /^\p{L}/u.test(src.slice(pos)) && !/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(s.slice(-1) + src[pos])) window.__splits.push(s.slice(-10) + '|' + src.slice(pos, pos + 6)); if (src[pos] === ' ') pos++; }); return out; }; });
       for (const [shape, expr] of Object.entries(SHARE_SHAPES)) {
         const name = lang + '-' + shape, row = { name };
         try {
-          const b64 = await page.evaluate('(async () => { window.__t.length = 0; window.__p.length = 0; const blob = await shareImage(' + expr + '); const u = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); })()');
+          const b64 = await page.evaluate('(async () => { window.__t.length = 0; window.__p.length = 0; window.__boxes.length = 0; window.__splits.length = 0; const blob = await shareImage(' + expr + '); const u = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); })()');
           writeFileSync(path.join(A.out, 'screens', 'share-wc-' + name + '.png'), Buffer.from(b64, 'base64'));
-          const m = await page.evaluate(() => ({ t: window.__t, p: window.__p }));
+          const m = await page.evaluate(() => ({ t: window.__t, p: window.__p, b: window.__boxes, a: window.__area, splits: window.__splits }));
+          row.above = m.a.start - m.a.top; row.below = m.a.bottom - m.a.end; row.midWord = m.splits;
           row.off = m.t.filter(t => t.r > t.W || t.l < 0).map(t => t.s.slice(0, 40)); row.low = m.t.filter(t => t.y > 1660 && t.s !== 'WEARCYCLE').map(t => t.s.slice(0, 40));
           // Lines on one baseline must not run into each other (a kind or name wider than its column).
           row.overlap = m.t.flatMap((a, i) => m.t.slice(i + 1).filter(b => Math.abs(a.y - b.y) < 10 && a.l < b.r && b.l < a.r).map(b => a.s.slice(0, 24) + ' / ' + b.s.slice(0, 24)));
@@ -1030,6 +1039,9 @@ async function main() {
   if (R.shareWorst) {
     const bad = R.shareWorst.filter(x => x.error || x.off.length || x.low.length || x.overlap.length || x.minPic < 70);
     check('Share image, worst case: stays inside the picture, no overlapping lines, pictures at least 70px', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.slice(0, 4).map(x => x.name + ' ' + (x.error || JSON.stringify({ off: x.off, low: x.low, overlap: x.overlap, minPic: x.minPic }))).join('; ') : R.shareWorst.length + ' images; smallest picture ' + Math.min(...R.shareWorst.map(x => x.minPic)) + 'px');
+    const split = R.shareWorst.filter(x => (x.midWord || []).length), off = R.shareWorst.filter(x => Math.abs(x.above - x.below) > 2 && x.below > 2);
+    check('Share image, worst case: a word broken inside has a hyphen (scripts with spaces)', split.length ? 'FAIL' : 'PASS', split.length ? split.slice(0, 4).map(x => x.name + ' ' + x.midWord.slice(0, 2).join(', ')).join('; ') : '');
+    check('Share image, worst case: room left over is shared above and below the outfit', off.length ? 'FAIL' : 'PASS', off.length ? off.slice(0, 4).map(x => x.name + ' above ' + x.above + ', below ' + x.below).join('; ') : 'largest band ' + Math.max(...R.shareWorst.map(x => Math.max(x.above, x.below))) + 'px');
     check('Share image: a failure says so', R.shareFail === 'Could not make the image.' ? 'PASS' : 'FAIL', R.shareFail);
   }
   if (R.share) {

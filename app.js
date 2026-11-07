@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.66.1';
+const APP_VERSION='1.66.2';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -2356,8 +2356,14 @@ function shareLines(g,text,maxW,maxLines){
   for(const word of String(text).trim().split(/\s+/)){ const t=cur?cur+' '+word:word;
     if(g.measureText(t).width<=maxW){ cur=t; continue; }
     if(g.measureText(word).width<=maxW){ put(); cur=word; continue; }
-    if(cur&&!/[぀-ヿ㐀-鿿가-힯]/.test(word)) put(); else if(cur) cur+=' ';
-    for(const c of chars(word)){ if(g.measureText(cur+c).width>maxW&&cur.trim()){ put(); } cur+=c; } }
+    if(/[぀-ヿ㐀-鿿가-힯]/.test(word)){ if(cur) cur+=' '; for(const c of chars(word)){ if(g.measureText(cur+c).width>maxW&&cur.trim()){ put(); } cur+=c; } continue; } // no spaces in the script: break anywhere
+    // A word wider than the column (owner's picture, 2026-11-07: "Chronog / raph"): break it with a hyphen, after a hyphen it
+    // already has when one fits, keeping at least 2 letters on each side.
+    put(); let gs=chars(word);
+    while(g.measureText(gs.join('')).width>maxW&&gs.length>3){ let n=2; while(n<gs.length-2&&g.measureText(gs.slice(0,n+1).join('')+'-').width<=maxW) n++;
+      const h=gs.slice(0,n).lastIndexOf('-'); if(h>=1) n=h+1; const head=gs.slice(0,n).join('');
+      lines.push(head.endsWith('-')||!/\p{L}\p{M}*$/u.test(head)||!/^\p{L}/u.test(gs[n])?head:head+'-'); gs=gs.slice(n); } // a hyphen only between letters (not inside emoji)
+    cur=gs.join(''); }
   put(); if(!maxLines||lines.length<=maxLines) return lines;
   const out=lines.slice(0,maxLines); let l=out[maxLines-1]; while(l&&g.measureText(l+'…').width>maxW) l=chars(l).slice(0,-1).join(''); out[maxLines-1]=l.trimEnd()+'…'; return out; }
 function shareCanvas(g,x,y,w,h,r){ const c=g.createRadialGradient(x+w/2,y+h*.4,0,x+w/2,y+h*.4,Math.max(w,h)*.75); c.addColorStop(0,SHARE.c1); c.addColorStop(1,SHARE.c2); g.fillStyle=c; g.beginPath(); g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h); g.fill(); }
@@ -2377,10 +2383,10 @@ async function shareKit(g,o,top,bottom){ const {W,M}=SHARE, cw=W-2*M, gap=24;
   g.font=kindF+SHARE.body; const kinds=main.map(([s,it])=>shareLines(g,kind(s,it),mw)), kindLines=Math.max(1,...kinds.map(l=>l.length)), kindL=Math.round(kindS*1.15); // a translated kind keeps every line
   g.font=nameF+SHARE.body; const mainNames=main.map(([,it])=>shareLines(g,nm(it),mw,3)), mainLines=Math.max(1,...mainNames.map(l=>l.length));
   const sw=small.length?Math.min(168,Math.floor((cw-(small.length-1)*gap)/small.length)):0;
-  g.font='500 32px '+SHARE.body; const smallNames=small.map(([,it])=>shareLines(g,nm(it),sw,3)), smallLines=small.length?Math.max(1,...smallNames.map(l=>l.length)):0;
+  g.font='500 32px '+SHARE.body; const smallNames=small.map(([,it])=>shareLines(g,nm(it),sw,sw<150?4:3)), smallLines=small.length?Math.max(1,...smallNames.map(l=>l.length)):0;
   const smallH=small.length?sw+12+smallLines*38+32:0, kindH=kindLines*kindL, nameH=12+kindH+6+mainLines*nameL, avail=bottom-top-smallH-nameH;
   const mh=Math.min(avail,Math.round(mw*(n>2?1.7:1.35)));
-  let y=top;
+  let y=top+Math.max(0,Math.floor((avail-mh)/2)); // room left over goes above and below the outfit, not into one band over the palette (owner's picture, 2026-11-07)
   const pics=await Promise.all(main.map(([,it])=>pieceImage(it,Math.max(mw,mh)))); 
   main.forEach(([s,it],k)=>{ const x=M+k*(mw+gap), p=pics[k]; shareCanvas(g,x,y,mw,mh,16); if(p) p.fitted=!!it.box; shareDraw(g,p,x,y,mw,mh,16);
     g.textBaseline='alphabetic'; g.font=kindF+SHARE.body; g.fillStyle=SHARE.muted; kinds[k].forEach((l,j)=>g.fillText(l,x,y+mh+12+kindL*(j+.8)));

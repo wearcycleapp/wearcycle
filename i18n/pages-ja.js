@@ -115,5 +115,6 @@ I18N.add("ja",{
 "The privacy notice now uses the app's fonts and follows your light or dark choice.": "プライバシー通知がアプリのフォントを使い、ライトまたはダークの設定に従うようになりました。",
 "The camera's Delete button is easier to read in dark mode, a sentence in the Weather settings is now translated, and the checkboxes in a piece's details are easier to tap.": "カメラの削除ボタンがダークモードで読みやすくなり、天気設定の文章が翻訳され、アイテムの詳細のチェックボックスが押しやすくなりました。",
 "Wear this responds at once: the pieces are saved together instead of one by one, and the app no longer stops for seconds while it saves.": "「これを着る」がすぐに反応するようになりました。アイテムを1点ずつではなくまとめて保存し、保存中にアプリが数秒止まることはなくなりました。",
-"Care shows right away and fills in Not getting picked a moment later.": "「ケア」はすぐに表示され、「選ばれないアイテム」は少し後に表示されます。"
+"Care shows right away and fills in Not getting picked a moment later.": "「ケア」はすぐに表示され、「選ばれないアイテム」は少し後に表示されます。",
+"In the picture you share of an outfit, a long word now breaks with a hyphen instead of being cut, and the outfit sits in the middle of its space instead of leaving an empty band above the colors.": "共有するコーデの画像で、長い単語が途中で切れずにハイフンで改行されるようになり、コーデが色の上に空白の帯を残さずスペースの中央に配置されるようになりました。"
 });
