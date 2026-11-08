@@ -6,7 +6,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Phase status (2026-10-31)
 
-Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01), Phase 12 row when it opened and at its release (2026-11-03), Phase 13 row when it opened and at its release (2026-11-03), Phase 14 row when it opened (2026-11-04) and at its release (2026-11-05). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01), Phase 12 row when it opened and at its release (2026-11-03), Phase 13 row when it opened and at its release (2026-11-03), Phase 14 row when it opened (2026-11-04) and at its release (2026-11-05), Phase 15 row at its release (2026-11-07). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
 
 | Phase | Status | Release on main |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 12 Settings and other sheets | Released 2026-11-03, v1.64.0 | f99ad4d |
 | 13 Full-screen and fixed layers | Released 2026-11-03, v1.65.0 | 0e4c1d4, 8a23253 |
 | 14 Share image, privacy page, colors outside CSS | Released 2026-11-05, v1.66.0 (coverage tooling released first, main 86bcedd) | d43035a, ced4d1c |
-| 15 Final audits | Not started | |
+| 15 Final audits | Released 2026-11-07, v1.68.0 (step 0 tooling released first, main 809f4d1) | 809f4d1 (step 0); v1.68.0 in the Project log |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
 
@@ -40,6 +40,8 @@ Screen freeze while Phase 12 was open (owner, 2026-11-01): no feature work on Se
 Screen freeze while Phase 13 was open (owner, 2026-11-03): no feature work on these layers until Phase 13 was released; bug fixes continued. Lifted with the release of v1.65.0 (2026-11-03). Scope (owner): sign-in and welcome (the brand moment, and the first thing a new public user sees), the camera, the zoom viewer, the job bar, toasts, the "What is this?" step and the consent sheet, with a mobile-native pass (safe areas, input zoom, tap highlight). Also in this phase, found in Phase 12: the Outfits pin card and Closet's In the wash list show the floor photo instead of the cut-out.
 
 Screen freeze while Phase 14 was open (owner, 2026-11-04): no feature work on the share image or privacy.html until Phase 14 was released; bug fixes continued. Lifted with the release of v1.66.0 (2026-11-05). Scope (owner): the share image in shareOutfit (new type and colors, the Phase 6 direction, every language, with and without cut-outs), privacy.html (the app's fonts and Light or Dark choice, no wording change), theme-color metas and manifest colors.
+
+Every screen freeze is lifted with the release of v1.68.0 (owner's Phase 15 brief, 2026-11-07): the redesign phases are done and feature work may touch any screen. The rules in this file stay. Closing summary: "Redesign closing summary" below.
 
 ## Screen personalities
 
@@ -322,10 +324,12 @@ Other sheets:
 
 Built in Phase 14 (v1.66.0). Proposal "Wearcycle share image and privacy" (https://claude.ai/artifact/TdVUYCQXugbGzJXTR22UAn) approved by the owner on 2026-11-04 with the four recommended options: the kit with every piece named; the privacy page as shown, with theme-color metas on it and on What's new; the manifest stays ink; the found bugs fixed in this release. Critique: .impeccable/critique/2026-11-05T03-34-09Z__app-js.md (25/40).
 
-- Share image (shareImage, shareKit, app.js): 1080 by 1920, always the light palette (SHARE, the tokens' values) because it leaves the app. An ink band holds the occasion (display face, 128px, smaller only to fit) and the date, with text starting at 276px, below the area social apps cover (third-party guides to Meta's Stories safe zone give about the top 14%, 269px). The kit of direction A follows: main garments as pictures on the cream canvas with their kind and name, then shoes and accessories in one row, every piece named. Then the palette with its reason, and a second ink band with the logo and wordmark.
-- Text wraps at spaces, and inside a word only when it is wider than its column or the script has no spaces, by whole graphemes; a break between two letters gets a hyphen (after a hyphen the word already has, when one fits), with at least 2 letters on each side (v1.66.2, owner's WhatsApp screenshot of 2026-11-07: "Silver Chronog / raph…"). Translated text keeps every line; a name the person typed takes up to 4 lines, then "…" (v1.66.4, owner's second screenshot of 2026-11-07: "Grey / Quarter-Zip / Rates…"; v1.66.0 gave the main pieces 3).
+- Share image (shareImage, shareKit, app.js): 1080 by 1920, always the light palette (SHARE, the tokens' values) because it leaves the app. An ink band holds the occasion (display face, 128px, smaller only to fit) and the date, with text starting at 276px, below the area social apps cover (third-party guides to Meta's Stories safe zone give about the top 14%, 269px). The kit of direction A follows: main garments as pictures on the cream canvas with their kind and name, then shoes and accessories, every piece named in ink (Phase 15; small names were muted). Then the palette with its reason, and a second ink band with the logo and wordmark.
+- Text wraps at spaces, and inside a word only when it is wider than its column or the script has no spaces, by whole graphemes; a break between two letters gets a hyphen (after a hyphen the word already has, when one fits), with at least 2 letters on each side (v1.66.2, owner's WhatsApp screenshot of 2026-11-07: "Silver Chronog / raph…"). Translated text keeps every line; a name the person typed takes up to 4 lines, then "…" (v1.66.4, owner's second screenshot of 2026-11-07: "Grey / Quarter-Zip / Rates…"; v1.66.0 gave the main pieces 3). Japanese and other scripts without spaces follow the line-breaking rules: no line starts with closing punctuation or a small kana, none ends with an opening bracket (Phase 15: "トップス（ / 前開き）").
+- Every text is 36px or more on the 1080px picture, 12px where it is seen 360px wide (owner, 2026-11-07): kinds 36px (were 30 and 34), names 36 to 40px (32), shoes and accessories 36px (32); the wish-list picture too (labels and numbers were 30px, lines 34px). Text is 4.5:1 or more against what is behind it, measured from the PNG; the wordmark 14.2:1.
+- Shoes and accessories (Phase 15, owner's picture "Silver / Chrono- / graph / Watch"): one row while every word of their names fits a column (4 columns are 216px; "Chronograph" is 215px at 36px); otherwise two columns, each picture with its name beside it, pictures 124 to 168px, for which the main pictures give up height down to 1.3 times their width (1.1 with two). In the owner's two 10-piece outfits: main pictures 363 to about 275px tall, accessories 136px to 152px and 124px (owner chose this balance, 2026-11-07).
 - Colors are named in words: a color key that is not a word shows as its name from logic.js COLOR_NAME ("light blue", v1.66.4), in the palette reason and everywhere else in the app; stored colors keep their keys. tools/check.mjs fails on a key shown as text, in a view or on the picture.
-- Room the outfit does not need is shared above and below it (v1.66.2; before, it all fell into one band above the palette line, 202px with the owner's 4 main pieces and 6 small ones). The names leave the app with the picture (owner accepted, 2026-11-04).
+- Room the outfit does not need first makes the row of shoes and accessories larger, up to 288px and three quarters of a main picture's width (Phase 15, owner: the empty band used for larger accessories); what is left is shared above and below the outfit (v1.66.2; before, it all fell into one band above the palette line, 202px with the owner's 4 main pieces and 6 small ones). The names leave the app with the picture (owner accepted, 2026-11-04).
 - The phone's share menu gets the picture and its title ("My outfit") and no message (v1.66.3, owner 2026-11-07: WhatsApp drew the message "Picked with Wearcycle" as a caption over the lower part of the picture, which also greyed the wordmark). tools/check.mjs checks what the share menu receives.
 - Pictures: the cut-out wherever there is one; otherwise, drawn over 256px, the stored 1024px copy (medUrl, at most 4 per image, the first time only); otherwise the thumbnail, then the garment glyph. Fonts are waited for, at most 2 seconds. A failure clears "Preparing the image…" and says "Could not make the image."
 - Privacy page (privacy.html): the treatment What's new got in Phase 12, with the wording unchanged (59 text elements and their links identical in 7 languages). Both pages have theme-color metas.
@@ -334,7 +338,26 @@ Built in Phase 14 (v1.66.0). Proposal "Wearcycle share image and privacy" (https
 
 ### Known issues fixed in this phase (v1.66.0)
 - Found by the wider check (Phase 14 step 0): the camera's Delete in dark, 2.98:1, now Accent-ink, 5.23:1; "Outfits use the feels-like temperature…" in the Weather sheet was English in every language; stacked checkboxes in .field too close (axe target-size), now 44px rows; the sign-in tagline is the brand line, in English in every language (data-notr); the More details arrow's rotated box spilled 8px out of its row (nothing visible was cut).
-- Not reviewed yet, for Phase 15: 11 detector cramped-padding warnings on added sheets; not captured: the wish-list picture, the offline banner, the language suggestion banner, the install prompt, added sheets with an empty closet.
+- Done in Phase 15: the 11 detector cramped-padding warnings on added sheets reviewed one by one, all false positives (9 sheets: the detector reads calc(20px + env(safe-area-inset-bottom)) as 0; the language list and the Measurements box: 48px rows with centred text), recorded in tools/check.mjs DETECTOR_REVIEWED; the wish-list picture, the offline banner, the language suggestion, the install prompt and the added sheets with an empty closet are captured.
+
+## Redesign closing summary (Phase 15, 2026-11-07)
+
+From v1.47 (the last release before the redesign plan) to v1.68.0, measured against the Phase 4 baseline (docs/design/baseline, recorded on v1.49.1's app files, 2026-10-19) with tools/check.mjs on the same fixture closet, fixed clock and review sizes (the final run adds 390 sideways, 13 Wear this sizes and the added views):
+| Measure | Phase 4 baseline | v1.68.0 |
+| --- | --- | --- |
+| axe serious or critical issues | 142 | 0 |
+| English left in French and Japanese | 2 | 0 |
+| App text cut or spilling | 12 | 0 |
+| Piece names cut | 9 | 0 |
+| Wear this in the first screen at 390x844 | no (950 to 998px of 844) | yes (695 to 743px), and at 13 of 13 sizes |
+| Detector warnings, main screens | 15 (dark-glow 9, low-contrast 4, side-tab 2) | 0 |
+| Detector advisories | 149 | 110 (font sizes 82: see below) |
+| Screens captured | 98 | 838, plus 726 added first screens, 543 below them, 126 share pictures |
+| Impeccable critique (whole app, degraded) | not run | 29/40 (.impeccable/critique/2026-11-08T02-26-48Z__app-js.md) |
+
+What changed, by phase: the shared foundation (tokens, buttons, chips, sheets, navigation, toasts) and the Phase 6 direction (cream garment canvas, Big Shoulders headings, Ink & Coral with coral only for the main action); the navigation shell (bottom tabs on phones, a side rail from 1280px); Outfits (one pick per screen, numbered picks, the kit on the canvas, Wear this always in the first screen); Closet and the garment sheet (gallery tiles, cut-outs first, the zoom viewer); Care (urgency order, Repair, Let go, Check, Rotate, the Decide sheet); Shop (what to buy and why, the wish list and its picture); Settings and every sheet (one calm list, keyboard and screen-reader behaviour, 44px targets); full-screen layers (sign-in and welcome, camera, viewer, job bar, toasts); the share picture and the privacy page; and Phase 15's fixes above. Speed (phone profile, CPU 4x, 100 pieces): Wear this shown in about 0.1 s and saved in under 1 s (v1.66.0: 6 s), tabs and sheets under 0.25 s, Care's longest task under 0.1 s (was 2.2 s).
+
+Not done, for later work (proposed in Phase 15): a type scale with a 12px floor in the app (styles.css has 25 font sizes, from 9px); WebKit on a real iPad and Android Chrome on a real phone are checked by the live check's WebKit and Chromium runs, not by hand.
 
 ## Every screen
 
@@ -342,7 +365,9 @@ Built in Phase 14 (v1.66.0). Proposal "Wearcycle share image and privacy" (https
 
 ## Responsiveness (v1.66.1, owner 2026-11-05)
 - Wear this: every piece is saved at once and the screen is drawn once (it was drawn again after each piece; with 97 pieces on a 4x slowed phone that froze the app 3 to 6 s per piece, about 28 s in all, with no visible change for the first 6 s). Now the button changes in about 0.1 s and everything is saved within about 0.5 s.
-- Care and Shop are drawn only while open; when hidden they are marked stale and drawn on opening. Care draws first with "Checking…" (role=status) in Not getting picked, then fills that group after the frame is painted; reasons past the first three are worked out on "Show all"; reasons are kept until the list changes. The Shop season preview is worked out only while its row is open. Tools wait for the Checking line to go before measuring Care.
+- Care and Shop are drawn only while open; when hidden they are marked stale and drawn on opening. Care draws first with "Checking…" (role=status) in Not getting picked; the list and its reasons come from a background worker (npworker.js, the same logic.js; Phase 15: on a phone profile slowed 4x the page was held 2.2 s, now its longest task is under 100 ms). The 3 rows on show get their reasons first ("Checking…" until then, data-wait), the rows behind Show all next; Care is drawn again as answers come, keeping the focused control. Without a worker (none, or it failed) the page works them out as in v1.66.1. tools/check.mjs checks that the worker's list and reasons equal the page's. The Shop season preview is worked out only while its row is open. Tools wait for the Checking lines to go before measuring Care.
+- suggest() ranks a sample of 3,000 when an occasion has more combinations (about 100 pieces); the sample is seeded by the day unless the caller passes its own (Outfits does; New ideas changes it), so the same closet gives the same outfits and Care list all day (logic.js, owner approved 2026-11-07).
+- Banners never above the outfit: the What's new notice (v1.58.5) and the install prompt (Phase 15: it pushed Wear this under the tab bar at 360 and 390) show on Closet, Care and Shop; Install stays in Settings. On phones (under 460px) the header's status never pushes Settings off the screen: offline, the banner says it and the label hides; while syncing, the label takes the language button's place (Language stays in Settings), with an 8px gap and no letter spacing under 380px for French and Spanish. The language suggestion puts its buttons under its sentence on phones.
 
 ## Naming the AI (v1.58.4, owner 2026-10-29)
 

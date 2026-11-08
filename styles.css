@@ -179,12 +179,25 @@ header.top .langbtn+.iconbtn{margin-left:0}
 header.top .status:not(.hidden){margin-left:auto}
 header.top .status:not(.hidden)+.langbtn{margin-left:0}
 @media (max-width:379.98px){ header.top .langbtn .ln{display:none} }
+/* Phones: a status pushed Settings off the right edge (Phase 15). Offline, the banner says it, so the label goes; while
+   syncing, the label takes the language button's place (Language stays in Settings). */
+@media (max-width:459.98px){
+  header.top .status.warn{display:none}
+  header.top .status.warn+.langbtn{margin-left:auto}
+  header.top .status:not(.hidden):not(.warn)+.langbtn{display:none}
+}
+@media (max-width:379.98px){ /* French and Spanish "Syncing" at 360 */
+  header.top:has(.status:not(.hidden):not(.warn)){gap:8px}
+  header.top .status{letter-spacing:0}
+}
 #railLang{display:none}
 .banner.langask b{display:inline-flex;align-items:center;gap:8px}
 .wnbanner a{color:inherit;font-weight:700;text-underline-offset:3px}
 .wnbanner [data-act="wnDismiss"]{min-width:44px;min-height:44px}
 .version a{color:inherit;text-underline-offset:3px}
 .banner.langask svg{width:18px;height:18px;flex:none}
+/* Phones: the sentence on its own line, the two buttons under it (it was a 4-line column at 390, Phase 15) */
+@media (max-width:459.98px){ .banner.langask{flex-wrap:wrap;align-items:center} .banner.langask>div{flex-basis:100%} }
 .langlist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}
 .langopt{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 14px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:500 16px var(--f-body);text-align:left;cursor:pointer}
 .langopt:last-child{border-bottom:0}

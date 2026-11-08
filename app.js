@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.67.1';
+const APP_VERSION='1.68.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -793,7 +793,8 @@ function renderStatus(){
   else if(S.fromCache){ st.textContent='Syncing'; st.className='status'; }
   else { st.textContent=''; st.className='status ok hidden'; }
   b+=langSuggest(); b+=whatsNewBanner();
-  if(S.online && S.installEvt && !LS.get('wardrobe.installDismissed')) b+='<div class="banner" style="background:var(--accent-soft)"><div style="flex:1"><b style="color:var(--accent)">Install Wearcycle</b> to open it from your home screen like any app.</div><button class="btn sm primary" data-act="install">Install</button><button class="btn sm ghost" data-act="installNo">Later</button></div>';
+  // never above the outfit, where it pushed Wear this under the tab bar (Phase 15); Settings has Install too
+  if(S.online && S.installEvt && S.tab!=='outfits' && !LS.get('wardrobe.installDismissed')) b+='<div class="banner" style="background:var(--accent-soft)"><div style="flex:1"><b style="color:var(--accent)">Install Wearcycle</b> to open it from your home screen like any app.</div><button class="btn sm primary" data-act="install">Install</button><button class="btn sm ghost" data-act="installNo">Later</button></div>';
   $('#banner').innerHTML=b;
   $('#addBtn').hidden=S.tab!=='closet';
   const n=allItems().filter(it=>(isActive(it)&&it.repair)||careFlags(it,Date.now(),S.settings).some(f=>f.kind==='retire'||f.kind==='check'||f.kind==='downgraded')).length;
@@ -827,20 +828,59 @@ function pinWhy(it){
   return inTop?'It is also in today\u2019s picks for '+OCC[S.occ].label.toLowerCase()+'.':'It fits '+OCC[S.occ].label.toLowerCase()+', but other pieces score higher today. Open Why this outfit? to see what holds it back.';
 }
 // Care: pieces that never make the suggestions, with the most likely reason and a way to see outfits with them.
+// Working them out ranks outfits for every occasion (about 2 s on a slow phone, which froze the page in Phase 14), so
+// a background worker (npworker.js, the same logic.js) does it and Care fills in when the answers come. Without a
+// worker (none, or it failed) the page does it as in v1.66.1: Care first, then the list (Phase 15).
 let NP={key:'',list:[]};
 function ctxFor(o){ return Object.assign(ctx(),{style:styleTarget(o),theme:null}); }
-function notPickedReason(it,occs){ const k=NP.key+'|'+it.id+'|'+occs.join(','); if(NP.why&&NP.why.has(k)) return NP.why.get(k); const r=npWhy(it,occs); (NP.why||(NP.why=new Map())).set(k,r); return r; }
+const npKeyNow=()=>fitKeyNow()+'|'+allLog().length, npK=(it,occs)=>NP.key+'|'+it.id+'|'+occs.join(',');
+function notPickedReason(it,occs){ const k=npK(it,occs); if(NP.why&&NP.why.has(k)) return NP.why.get(k); const r=npWhy(it,occs); (NP.why||(NP.why=new Map())).set(k,r); return r; }
 // Each reason ranks outfits with the piece pinned, so it is kept until the list itself is worked out again (v1.66.1).
-function npWhy(it,occs){
+function npQuick(it,occs){
   if(it.dirty) return 'In the wash: it returns to suggestions when you mark it clean.';
   if(it.repair&&!occs.some(o=>repairOk(it,o))) return 'Marked as needing repair.';
   if(!occs.length) return 'No occasions set, so it is never suggested. Open it and pick where you would wear it.';
   if(!(it.colors||[]).length) return 'No color set, so it cannot be matched. Open it and pick its color.';
-  const o=occs[0]; const r=suggest(allItems(),o,ctxFor(o),{n:1,layer:layerOn(),pin:it}); const f=r.outfits[0];
-  if(!f) return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+', but nothing to pair it with there yet.';
-  const neg=(f.reasons||[]).filter(x=>x.neg).map(x=>x.t)[0];
-  return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+'; other pieces score higher'+(neg?'. Best outfit with it: '+neg.charAt(0).toLowerCase()+neg.slice(1):'')+'.';
-}
+  return ''; }
+function npText(occs,has,neg){
+  if(!has) return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+', but nothing to pair it with there yet.';
+  return 'Set for '+occs.map(x=>OCC[x].label.toLowerCase()).join(', ')+'; other pieces score higher'+(neg?'. Best outfit with it: '+neg.charAt(0).toLowerCase()+neg.slice(1):'')+'.'; }
+function npWhy(it,occs){ const q=npQuick(it,occs); if(q) return q;
+  const o=occs[0]; const f=suggest(allItems(),o,ctxFor(o),{n:1,layer:layerOn(),pin:it}).outfits[0];
+  return npText(occs,!!f,f?(f.reasons||[]).filter(x=>x.neg).map(x=>x.t)[0]:''); }
+// The worker gets what the ranking reads: the pieces without their pictures, one context per occasion (with the page's
+// clock), the dress code and the department; it answers with ids. A worker error turns it off for the session.
+const NPW={w:null,seq:0,wait:new Map(),off:typeof Worker==='undefined'};
+function npLite(it){ const o=Object.assign({},it); delete o.thumb; delete o.cut; delete o.photo; delete o.med; return o; }
+function npAsk(msg){ return new Promise((res,rej)=>{ try{
+  if(NPW.off) throw new Error('no worker');
+  if(!NPW.w){ NPW.w=new Worker('npworker.js');
+    NPW.w.onmessage=e=>{ const p=NPW.wait.get(e.data.id); if(p){ NPW.wait.delete(e.data.id); p.res(e.data); } };
+    NPW.w.onerror=()=>{ NPW.off=true; try{ NPW.w.terminate(); }catch(x){} NPW.w=null; const w=[...NPW.wait.values()]; NPW.wait.clear(); w.forEach(p=>p.rej(new Error('worker failed'))); }; }
+  const id=++NPW.seq; NPW.wait.set(id,{res,rej});
+  NPW.w.postMessage(Object.assign({id,work:S.settings.work,dept:S.settings.dept,items:allItems().map(npLite),ctxs:Object.fromEntries(OCCASIONS.map(o=>[o.id,ctxFor(o.id)]))},msg));
+  }catch(x){ NPW.off=true; rej(x); } }); }
+// Draw Care again with the answers (keeping the focused control), or later when Care is not the open tab.
+function npDraw(){ if(S.tab!=='care'){ STALE.add('care'); return; } const box=$('#careBody'), a=document.activeElement;
+  const at=a&&a!==document.body&&box.contains(a)?[...a.attributes].find(x=>x.name.startsWith('data-')):null;
+  const sel=at?`[${at.name}="${CSS.escape(at.value)}"]`:'', k=sel?[...box.querySelectorAll(sel)].indexOf(a):-1; // a piece can be in two groups
+  renderCare(); if(sel){ const n=box.querySelectorAll(sel)[k]; if(n) n.focus({preventScroll:true}); } }
+// The list for this closet, then the reasons: the 3 rows on show first, the others behind Show all next.
+function npStart(key){ if(NP.pend===key) return; NP.pend=key;
+  npAsk({kind:'list',n:8}).then(r=>{ if(NP.pend!==key) return; NP.pend='';
+    if(npKeyNow()!==key){ npDraw(); return; } // the closet changed meanwhile: ask again
+    NP={key,list:r.list.map(x=>({item:byId(x.id),occs:x.occs})).filter(x=>x.item),why:new Map()};
+    const rows=npRows(allItems()).filter(x=>!npQuick(x.item,x.occs)), ask=(part,draw)=>{ if(!part.length) return;
+      npAsk({kind:'why',layer:layerOn(),pins:part.map(x=>({id:x.item.id,occ:x.occs[0]}))}).then(a=>{ if(NP.key!==key) return;
+        for(const w of a.why){ const x=part.find(p=>p.item.id===w.id); if(x) NP.why.set(npK(x.item,x.occs),npText(x.occs,w.has,w.neg)); }
+        if(draw()) npDraw(); }).catch(()=>npDraw()); };
+    const first=new Set(npRows(allItems()).slice(0,3).map(x=>x.item.id));
+    ask(rows.filter(x=>first.has(x.item.id)),()=>true); ask(rows.filter(x=>!first.has(x.item.id)),()=>S.careOpen.has('notpicked'));
+    npDraw(); })
+  .catch(()=>{ if(NP.pend!==key) return; NP.pend=''; npDraw(); }); }
+// A row's reason: worked out already, quick, from the worker (Checking… until it answers) or, without one, on the page.
+function npReason(it,occs){ const q=npQuick(it,occs); if(q) return q; const k=npK(it,occs);
+  return NP.why&&NP.why.has(k)?NP.why.get(k):NPW.off?notPickedReason(it,occs):null; }
 function pinCard(){ const it=S.pin&&byId(S.pin); if(!it) return '';
   return `<div class="pincard"><span class="pv${it.cut||!thumbSrc(it)?' studio':''}">${smallPic(it)}</span><div class="txt"><b>Outfits with <span data-notr>${esc(it.name)}</span></b><span>${esc(pinWhy(it))}</span></div><button class="iconbtn" data-unpin aria-label="Show all outfits">✕</button></div>`; }
 function pinSee(id){ const it=byId(id); if(!it) return; S.pin=id; const occs=effectiveOccasions(it);
@@ -1410,13 +1450,14 @@ function repairShop(it){ return ['shoes','belt','bag'].includes(it.cat)?{q:'shoe
 function carePic(it){ const src=thumbSrc(it), ready=it.cut&&!CUT.missing.has(it.id)?CUT.urls.get(it.cut):'', zoom=!!(src||it.photo||it.cut);
   const img=ready?`<img data-cut="${esc(it.id)}" src="${esc(ready)}" alt="" class="cut">`:src?`<img data-pick="${esc(it.id)}"${it.box&&!it.cut?' data-boxed="1"':''} src="${esc(src)}" alt="" class="${it.box&&!it.cut?'fitted':'cover'}"${!it.cut&&enhanceOn()&&it.thumb?` data-enh="${esc(it.id)}"`:''}>`:glyph(it);
   return `<span class="cpic${it.cut||!src?' studio':''}${zoom?' zoomable':''}"${zoom?` data-view="${esc(it.id)}" role="button" tabindex="0" aria-label="See full size"`:''}>${img}${zoom?`<span class="zoomhint sm" aria-hidden="true">${ZOOM_ICON}</span>`:''}</span>`; }
-function cRow(it,why,acts){ const one=(acts.match(/<(button|a) /g)||[]).length===1; return `<div class="crow${one?' one':''}">${carePic(it)}<div class="ctxt"><span class="cnl"><b class="cname"${isEx(it)?'':' data-notr'}>${esc(it.name)}</b>${isEx(it)?'<span class="ex">Example</span>':''}</span><span class="cwhy">${esc(why)}</span><div class="cacts">${acts}</div></div></div>`; }
+function cRow(it,why,acts){ const one=(acts.match(/<(button|a) /g)||[]).length===1; return `<div class="crow${one?' one':''}">${carePic(it)}<div class="ctxt"><span class="cnl"><b class="cname"${isEx(it)?'':' data-notr'}>${esc(it.name)}</b>${isEx(it)?'<span class="ex">Example</span>':''}</span>${why===null?'<span class="cwhy" data-wait>Checking…</span>':`<span class="cwhy">${esc(why)}</span>`}<div class="cacts">${acts}</div></div></div>`; }
 // A group inside a section: its title and count (left out when the section has only this group and says the same),
 // one line of explanation, the first 3 rows then Show all, and anything that follows the list (the drop-off guide).
 function cGroup(id,title,desc,rows,n,tail){ return `<div class="cgrp">${title?`<h4 class="cgh">${title} <span class="n">${n??rows.length}</span></h4>`:''}${desc?`<p class="cgd">${desc}</p>`:''}<div class="crows">${moreRows(id,rows)}</div>${tail||''}</div>`; }
 function cSec(id,title,n,groups){ return groups.length?`<section class="csec csec-${id}" aria-labelledby="cs-${id}"><h3 class="csh" id="cs-${id}">${title}${n!=null?` <span class="n">${n}</span>`:''}</h3>${groups.join('')}</section>`:''; }
-function notPickedList(items){
-  const act=items.filter(isActive); const key=fitKeyNow()+'|'+allLog().length; if(NP.key!==key){ NP={key,list:notPicked(allItems(),ctxFor,{n:8})}; }
+function notPickedList(items){ const key=npKeyNow(); if(NP.key!==key){ NP={key,list:notPicked(allItems(),ctxFor,{n:8})}; } return npRows(items); }
+function npRows(items){ // from NP.list, worked out for this closet
+  const act=items.filter(isActive);
   const extra=act.filter(i=>(i.cond??4)>1&&!i.dirty&&!effectiveOccasions(i).length&&['top','bottom','onepiece','outerwear','shoes'].includes(i.cat)&&!NP.list.some(x=>x.item.id===i.id)).map(i=>({item:i,occs:effectiveOccasions(i)}));
   // in the wash: back on its own once clean (v1.58.0); under repair: it is in Repair already (Phase 10)
   return NP.list.filter(x=>(x.item.cond??4)>1&&!x.item.dirty&&!x.item.repair).concat(extra.filter(x=>!x.item.repair)).slice(0,12); }
@@ -1446,14 +1487,15 @@ function renderCare(){
     down.length?cGroup('moved-down-a-level','Moved down a level','Still useful, but no longer counted for work or going out.',down.map(([it,f])=>cRow(it,f.text,b('data-check',it.id,'Recheck')+(isEx(it)?'':b('data-decide',it.id,'Decide','ghost'))))):''].filter(Boolean));
   // Rotate: shoes that need a rest; pieces not getting picked
   // "Not getting picked" ranks outfits for every occasion (seconds on a slow phone): when it has to be worked out
-  // again, Care is drawn first with a "Checking" line, then that group is filled in (v1.66.1).
-  const npKey=fitKeyNow()+'|'+allLog().length, npWait=NP.key!==npKey;
-  if(npWait) requestAnimationFrame(()=>setTimeout(()=>{ if(S.tab!=='care'){ STALE.add('care'); return; } notPickedList(allItems()); renderCare(); },0)); // after Care is on screen
-  const tired=WardrobeLogic.shoeLoad(items,allLog(),now), np=npWait?[]:notPickedList(items);
+  // again, Care is drawn first with a "Checking" line, then that group is filled in (v1.66.1), by the worker (Phase 15).
+  const npKey=npKeyNow(), npWait=NP.key!==npKey;
+  if(npWait&&!NPW.off) npStart(npKey);
+  else if(npWait) requestAnimationFrame(()=>setTimeout(()=>{ if(S.tab!=='care'){ STALE.add('care'); return; } notPickedList(allItems()); renderCare(); },0)); // after Care is on screen
+  const tired=WardrobeLogic.shoeLoad(items,allLog(),now), np=npWait?[]:npRows(items);
   const rotate=cSec('rotate','Rotate',null,[
     npWait?`<div class="cgrp"><h4 class="cgh">Not getting picked</h4><p class="cgd" role="status">Checking…</p></div>`:'',
     tired.length?cGroup('give-them-a-rest','Give them a rest','Shoes need a day to air out between wears.',tired.map(x=>cRow(x.item,'Worn on '+x.days+' of the last 30 days.',open(x.item)))):'',
-    np.length?cGroup('notpicked','Not getting picked','Pieces that are in none of the top suggestions for any occasion right now, and why.',np.map(({item:it,occs},k)=>cRow(it,k<3||S.careOpen.has('notpicked')?notPickedReason(it,occs):'',(occs.length&&!it.dirty?b('data-pinsee',it.id,'See outfits'):'')+open(it))+(k===3&&!S.careOpen.has('notpicked')?'<span data-lazy hidden></span>':''))):''].filter(Boolean));
+    np.length?cGroup('notpicked','Not getting picked','Pieces that are in none of the top suggestions for any occasion right now, and why.',np.map(({item:it,occs},k)=>cRow(it,k<3||S.careOpen.has('notpicked')?npReason(it,occs):'',(occs.length&&!it.dirty?b('data-pinsee',it.id,'See outfits'):'')+open(it))+(k===3&&!S.careOpen.has('notpicked')?'<span data-lazy hidden></span>':''))):''].filter(Boolean));
   const calm=rs.length||donate.length||groups.check.length||down.length||tired.length||np.length||npWait?'':'<p class="ccalm">Nothing needs attention right now.</p>';
   box.innerHTML=calm+'<div class="carev">'+repair+letgo+check+rotate+'</div>';
   lazyPics(box);
@@ -2356,7 +2398,11 @@ function shareLines(g,text,maxW,maxLines){
   for(const word of String(text).trim().split(/\s+/)){ const t=cur?cur+' '+word:word;
     if(g.measureText(t).width<=maxW){ cur=t; continue; }
     if(g.measureText(word).width<=maxW){ put(); cur=word; continue; }
-    if(/[぀-ヿ㐀-鿿가-힯]/.test(word)){ if(cur) cur+=' '; for(const c of chars(word)){ if(g.measureText(cur+c).width>maxW&&cur.trim()){ put(); } cur+=c; } continue; } // no spaces in the script: break anywhere
+    if(/[぀-ヿ㐀-鿿가-힯]/.test(word)){ if(cur) cur+=' '; for(const c of chars(word)){ if(g.measureText(cur+c).width>maxW&&cur.trim()){
+      // no spaces in the script: break anywhere, except before closing punctuation or a small kana, or after an opening
+      // bracket (Japanese line breaking rules; "トップス（ / 前開き）", Phase 15): those characters move to the next line
+      const cs=chars(cur); let carry=''; if(/^[）」』】〕］｝〉》)\]、。，．・：；？！ー…”’ぁぃぅぇぉっゃゅょァィゥェォッャュョ]/u.test(c)&&cs.length>1) carry=cs.pop();
+      while(cs.length>1&&/[（「『【〔［｛〈《(\[“‘]$/u.test(cs[cs.length-1])) carry=cs.pop()+carry; cur=cs.join(''); put(); cur=carry; } cur+=c; } continue; }
     // A word wider than the column (owner's picture, 2026-11-07: "Chronog / raph"): break it with a hyphen, after a hyphen it
     // already has when one fits, keeping at least 2 letters on each side.
     put(); let gs=chars(word);
@@ -2372,29 +2418,46 @@ function shareDraw(g,p,x,y,w,h,r){ if(!p) return; const fit=p.kind!=='photo'||!!
   g.save(); if(p.kind==='photo'){ g.beginPath(); g.roundRect?g.roundRect(x,y,w,h,r):g.rect(x,y,w,h); g.clip(); } else { g.shadowColor='rgba(50,35,20,.18)'; g.shadowBlur=18; g.shadowOffsetY=8; }
   g.drawImage(p.im,dx,dy,dw,dh); g.restore(); }
 // The kit (direction A, what a phone shows and what a Story is seen on): the main garments as 4:5 pictures with their kind
-// and name, then shoes and accessories in one row, every piece named.
+// and name, then shoes and accessories, every piece named in ink. Every text is 36px or more: 12px where the picture is
+// seen 360px wide (Phase 15). Shoes and accessories sit in one row when each word of their names fits a column; else (5 or
+// more, owner's picture, 2026-11-07: "Chrono- / graph") in two columns, a name beside each picture, up to 168px, for which
+// the main pictures give up height. Room the main pictures leave makes the row's pictures larger, up to 288px and three
+// quarters of a main picture's width (owner, 2026-11-07: the empty band used for larger accessories).
 async function shareKit(g,o,top,bottom){ const {W,M}=SHARE, cw=W-2*M, gap=24;
   const main=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom]].filter(Boolean);
   const small=(o.shoes?[['shoes',o.shoes]]:[]).concat(o.acc.map((a,k)=>['acc'+k,a]));
   if(main.length<2&&small.length&&small[0][0]==='shoes') main.push(small.shift());
   const kind=(slot,it)=>I18N.tr(slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&o.under&&canOpen(o.top))?'Top, worn open':CAT[it.cat].label);
   const nm=it=>isEx(it)?I18N.tr(it.name):it.name;
-  const n=Math.max(1,main.length), mw=Math.floor((cw-(n-1)*gap)/n), nameS=n>3?32:n>2?36:40, nameF=`600 ${nameS}px `, nameL=Math.round(nameS*1.2), kindS=n>3?30:34, kindF=`500 ${kindS}px `;
-  g.font=kindF+SHARE.body; const kinds=main.map(([s,it])=>shareLines(g,kind(s,it),mw)), kindLines=Math.max(1,...kinds.map(l=>l.length)), kindL=Math.round(kindS*1.15); // a translated kind keeps every line
+  const n=Math.max(1,main.length), mw=Math.floor((cw-(n-1)*gap)/n), nameS=n>2?36:40, nameF=`600 ${nameS}px `, nameL=Math.round(nameS*1.2), kindF='500 36px ', kindL=41;
+  g.font=kindF+SHARE.body; const kinds=main.map(([s,it])=>shareLines(g,kind(s,it),mw)), kindLines=Math.max(1,...kinds.map(l=>l.length)); // a translated kind keeps every line
   g.font=nameF+SHARE.body; const mainNames=main.map(([,it])=>shareLines(g,nm(it),mw,4)), mainLines=Math.max(1,...mainNames.map(l=>l.length)); // 4 lines, then "…" (owner's picture, 2026-11-07: "Grey / Quarter-Zip / Rates…")
-  const sw=small.length?Math.min(168,Math.floor((cw-(small.length-1)*gap)/small.length)):0;
-  g.font='500 32px '+SHARE.body; const smallNames=small.map(([,it])=>shareLines(g,nm(it),sw,sw<150?4:3)), smallLines=small.length?Math.max(1,...smallNames.map(l=>l.length)):0;
-  const smallH=small.length?sw+12+smallLines*38+32:0, kindH=kindLines*kindL, nameH=12+kindH+6+mainLines*nameL, avail=bottom-top-smallH-nameH;
-  const mh=Math.min(avail,Math.round(mw*(n>2?1.7:1.35)));
+  const kindH=kindLines*kindL, nameH=12+kindH+6+mainLines*nameL, full=Math.round(mw*(n>2?1.7:1.35)), room=bottom-top-nameH-full; // room for the shoes and accessories
+  // Shoes and accessories: names 36px, 43px a line; 32px between the outfit and them.
+  const k=small.length, sF='500 36px '+SHARE.body, sL=43, colW=k?Math.floor((cw-(k-1)*gap)/k):0, listW=Math.floor((cw-gap)/2); g.font=sF;
+  const row=!k||small.every(([,it])=>String(nm(it)).trim().split(/\s+/).every(w=>{ const x=g.measureText(w).width; return x<=colW||x>listW-140; })); // a word too long both ways breaks anyway
+  let sw=0, smallNames=[], smallH=0, rowsH=[], rg=16;
+  if(k&&row){ smallNames=small.map(([,it])=>shareLines(g,nm(it),colW,4)); const fixed=12+Math.max(1,...smallNames.map(l=>l.length))*sL+32, base=Math.min(168,colW);
+    sw=Math.min(Math.max(base,Math.min(colW,288,Math.round(mw*.75))),Math.max(base,room-fixed)); smallH=sw+fixed; }
+  else if(k){ const lay=s=>{ const names=small.map(([,it])=>shareLines(g,nm(it),listW-s-16,4)), hs=[];
+      for(let r=0;r<k;r+=2) hs.push(Math.max(s,...names.slice(r,r+2).map(l=>l.length*sL))); return {s,names,hs,h:32+hs.reduce((a,b)=>a+b,0)+(hs.length-1)*rg}; };
+    const keep=Math.min(full,Math.round(mw*(n>2?1.3:1.1))), space=bottom-top-nameH-keep; // main pictures give up height down to 1.3 (1.1) times their width
+    let L=lay(168); for(let s=164;s>=124&&L.h>space;s-=4) L=lay(s); // then the largest that fit, at least 124px (a garment glyph 72px)
+    sw=L.s; smallNames=L.names; rowsH=L.hs; smallH=L.h; }
+  const avail=bottom-top-smallH-nameH, mh=Math.min(avail,full);
   let y=top+Math.max(0,Math.floor((avail-mh)/2)); // room left over goes above and below the outfit, not into one band over the palette (owner's picture, 2026-11-07)
   const pics=await Promise.all(main.map(([,it])=>pieceImage(it,Math.max(mw,mh)))); 
   main.forEach(([s,it],k)=>{ const x=M+k*(mw+gap), p=pics[k]; shareCanvas(g,x,y,mw,mh,16); if(p) p.fitted=!!it.box; shareDraw(g,p,x,y,mw,mh,16);
     g.textBaseline='alphabetic'; g.font=kindF+SHARE.body; g.fillStyle=SHARE.muted; kinds[k].forEach((l,j)=>g.fillText(l,x,y+mh+12+kindL*(j+.8)));
     g.font=nameF+SHARE.body; g.fillStyle=SHARE.ink; mainNames[k].forEach((l,j)=>g.fillText(l,x,y+mh+12+kindH+6+nameL*(j+.8))); });
   y+=mh+nameH;
-  if(small.length){ y+=32; const sp=await Promise.all(small.map(([,it])=>pieceImage(it,sw)));
-    small.forEach(([,it],k)=>{ const x=M+k*(sw+gap), p=sp[k]; shareCanvas(g,x,y,sw,sw,12); if(p) p.fitted=!!it.box; shareDraw(g,p,x,y,sw,sw,12);
-      g.font='500 32px '+SHARE.body; g.fillStyle=SHARE.muted; smallNames[k].forEach((l,j)=>g.fillText(l,x,y+sw+12+38*(j+.8))); }); y+=smallH-32; }
+  if(k){ const y0=y+32, sp=await Promise.all(small.map(([,it])=>pieceImage(it,sw))); g.font=sF; g.fillStyle=SHARE.ink;
+    small.forEach(([,it],i)=>{ let x,py,tx,ty;
+      if(row){ x=M+i*(colW+gap); py=y0; tx=x; ty=y0+sw+12; }
+      else { const r=Math.floor(i/2), rt=y0+rowsH.slice(0,r).reduce((a,b)=>a+b,0)+r*rg; x=M+(i%2)*(listW+gap); py=rt+Math.round((rowsH[r]-sw)/2); tx=x+sw+16; ty=rt+Math.round((rowsH[r]-smallNames[i].length*sL)/2); }
+      const p=sp[i]; shareCanvas(g,x,py,sw,sw,12); if(p) p.fitted=!!it.box; shareDraw(g,p,x,py,sw,sw,12);
+      g.font=sF; g.fillStyle=SHARE.ink; smallNames[i].forEach((l,j)=>g.fillText(l,tx,ty+sL*(j+.8))); });
+    y+=smallH; }
   return y;
 }
 async function shareImage(o){ const {W,H,M}=SHARE, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d'), cw=W-2*M;
@@ -2438,21 +2501,22 @@ function wrapText(g,t,maxW){ const words=String(t).split(/(\s+)/), lines=[]; let
   if(cur.trim()) lines.push(cur.trim()); return lines; }
 async function wishCard(){ const D=WL.data; if(!D) return null; try{ await document.fonts.ready; }catch(e){}
   const W=1080, pad=72, cv=document.createElement('canvas'), g=cv.getContext('2d'); cv.width=W; cv.height=10;
-  const body='600 44px Figtree, system-ui, sans-serif', small='500 34px Figtree, system-ui, sans-serif', head='800 96px "Big Shoulders Display", Impact, sans-serif';
+  // every text 36px or more: 12px where the picture is seen 360px wide (Phase 15; labels and numbers were 30px)
+  const body='600 44px Figtree, system-ui, sans-serif', small='500 36px Figtree, system-ui, sans-serif', head='800 96px "Big Shoulders Display", Impact, sans-serif';
   // measure
   g.font=body; const rows=D.items.map(x=>wrapText(g,x.name,W-pad*2-150));
   g.font=small; const info=[D.sizeLine?[D.sizesLabel,wrapText(g,D.sizeLine,W-pad*2)]:null,D.measLine?[D.measLabel,wrapText(g,D.measLine,W-pad*2)]:null].filter(Boolean);
   const noteL=D.note?wrapText(g,D.note,W-pad*2):[];
-  let H=260+info.reduce((a,[,l])=>a+44+l.length*46+18,0)+(info.length?30:0)+rows.reduce((a,l)=>a+Math.max(1,l.length)*56+50,0)+(noteL.length?noteL.length*46+40:0)+190;
+  let H=260+info.reduce((a,[,l])=>a+48+l.length*48+18,0)+(info.length?30:0)+rows.reduce((a,l)=>a+Math.max(1,l.length)*56+50,0)+(noteL.length?noteL.length*46+40:0)+190;
   cv.height=H;
   const bg=g.createLinearGradient(0,0,0,H); bg.addColorStop(0,'#f7f4ef'); bg.addColorStop(1,'#ebe4d9'); g.fillStyle=bg; g.fillRect(0,0,W,H);
   let y=170; g.fillStyle='#1b2433'; g.font=head; g.textBaseline='alphabetic'; g.fillText(D.title.toUpperCase(),pad,y);
   g.fillStyle='#ff7a59'; g.fillRect(pad,y+28,120,8); y+=110;
-  for(const [lab,lines] of info){ g.font='700 30px Figtree, system-ui, sans-serif'; g.fillStyle='#5b6270'; g.fillText(lab.toUpperCase(),pad,y); y+=48;
-    g.font=small; g.fillStyle='#1b2433'; for(const l of lines){ g.fillText(l,pad,y); y+=46; } y+=18; }
+  for(const [lab,lines] of info){ g.font='700 36px Figtree, system-ui, sans-serif'; g.fillStyle='#5b6270'; g.fillText(lab.toUpperCase(),pad,y); y+=52;
+    g.font=small; g.fillStyle='#1b2433'; for(const l of lines){ g.fillText(l,pad,y); y+=48; } y+=18; }
   if(info.length){ g.fillStyle='rgba(27,36,51,.14)'; g.fillRect(pad,y-10,W-pad*2,2); y+=40; }
   D.items.forEach((x,i)=>{ const lines=rows[i], top=y-40;
-    g.beginPath(); g.arc(pad+30,top+28,30,0,7); g.fillStyle='#1b2433'; g.fill(); g.fillStyle='#f7f4ef'; g.font='700 30px Figtree, system-ui, sans-serif'; g.textAlign='center'; g.fillText(String(i+1),pad+30,top+39); g.textAlign='left';
+    g.beginPath(); g.arc(pad+30,top+28,30,0,7); g.fillStyle='#1b2433'; g.fill(); g.fillStyle='#f7f4ef'; g.font='700 36px Figtree, system-ui, sans-serif'; g.textAlign='center'; g.fillText(String(i+1),pad+30,top+41); g.textAlign='left';
     g.fillStyle='#1b2433'; g.font=body; lines.forEach((l,k)=>g.fillText(l,pad+88,y+k*56));
     if(x.color&&COLORS[x.color]){ g.beginPath(); g.arc(W-pad-30,top+28,30,0,7); g.fillStyle=COLORS[x.color].hex; g.fill(); g.lineWidth=3; g.strokeStyle='rgba(27,36,51,.25)'; g.stroke(); }
     y+=Math.max(1,lines.length)*56+50; });

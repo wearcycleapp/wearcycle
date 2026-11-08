@@ -258,8 +258,10 @@ async function closeSheet(page) { if (!(await sheetOpen(page))) return; await pa
 // Settings: the header button with the bottom bar, the rail's last button with the rail (Phase 7).
 const SETTINGS_BTN = '#rulesBtn:visible, #railSettings:visible';
 async function goTab(page, tab) { await closeSheet(page); await page.click('nav.tabs button[data-tab="' + tab + '"]'); await page.waitForSelector('#tab-' + tab + ':not([hidden])');
-  // Care fills in "Not getting picked" just after it is drawn (v1.66.1): wait for its "Checking" line to go.
-  if (tab === 'care') await page.waitForFunction(() => !document.querySelector('#careBody [role=status]'), null, { timeout: 30000 }); }
+  // Care fills in "Not getting picked" just after it is drawn (v1.66.1), then the reasons on show (Phase 15): wait for
+  // every "Checking" line to go.
+  if (tab === 'care') await page.waitForFunction(CARE_FILLED, null, { timeout: 30000 }); }
+const CARE_FILLED = () => !document.querySelector('#careBody [role=status], #careBody [data-wait]');
 async function openSheetBy(page, selector) { await page.click(selector); await page.waitForSelector('#sheetRoot .sheet', { timeout: 5000 }); }
 
 /* ---------- sign-in ---------- */
@@ -309,7 +311,8 @@ const RAW_COLOR_RE = RAW_COLORS.length ? new RegExp('\\b(' + RAW_COLORS.join('|'
 async function pageFacts(page, lang, texts, inSheet) { // inSheet: true for the open sheet, or the selector of a layer
   return page.evaluate(({ lang, texts, inSheet, source, rawColors }) => {
     const root = inSheet && document.querySelector(inSheet === true ? '#sheetRoot .sheet' : inSheet) || document.body;
-    const W = innerWidth, out = { overflowX: document.documentElement.scrollWidth - W, wide: [], truncated: [], userTruncated: [], spilling: [], english: [] };
+    // the device's width: on a phone the layout viewport (innerWidth) grows to fit wider content, which hid an overflow (Phase 15)
+    const W = Math.min(innerWidth, screen.width || innerWidth), out = { overflowX: document.documentElement.scrollWidth - W, wide: [], truncated: [], userTruncated: [], spilling: [], english: [] };
     const sel = el => el.tagName.toLowerCase() + (el.id ? '#' + el.id : '') + (el.classList.length ? '.' + [...el.classList].slice(0, 2).join('.') : '');
     const scroller = el => { for (let p = el.parentElement; p; p = p.parentElement) { const s = getComputedStyle(p).overflowX; if (s === 'auto' || s === 'scroll') return true; } return false; };
     for (const el of document.body.querySelectorAll('*')) {
@@ -436,9 +439,147 @@ const SPEED = { rate: 4, pieces: 100, writeDelay: 300, runs: 3 };
 // Budgets (ms), Phase 15 step 0, from runs on 2026-11-07 (Chromium build 1243, medians of 3): Wear this shown 106 to 136
 // and longest task 86 to 98 on v1.67.1 and v1.66.1, 6,527 and 5,673 on v1.66.0 (the freeze the owner reported); tabs
 // 68 to 285; sheets 55 to 169. 500 ms is where web.dev rates responsiveness (INP) poor and about twice the slowest
-// measured, so the container's noise does not trip it. The task after opening Care (Not getting picked, 2.2 to 2.4 s since
-// v1.66.1) is reported, not gated.
-const SPEED_BUDGET = { wear: 500, wearTask: 500, tab: 500, sheet: 500 };
+// measured, so the container's noise does not trip it. Tabs' longest task (Phase 15): Closet, Shop and Outfits 0 to 227 on
+// v1.66.1; Care, until Not getting picked is filled in, 2,122 to 2,808 (the 2.3 s lock the owner made a high finding),
+// which the background worker removes. How long Care takes to fill in is reported, not gated.
+const SPEED_BUDGET = { wear: 500, wearTask: 500, tab: 500, tabTask: 500, sheet: 500 };
+// Phase 15: Care's "Not getting picked" comes from a background worker (npworker.js). Its list and reasons must equal the
+// page's own (logic.js on the main thread), for the fixture and 100 pieces, as set and then with a dress code, a department
+// and a custom palette (logic.js keeps the first two in module state). suggest() ranks a random 3,000 when an occasion has
+// more combinations (logic.js, 100 pieces do), so both sides get the same seeded Math.random before each comparison.
+// Without a worker, Care must fill in with the same rows (the fixture, which stays under 3,000).
+const SEEDED = s => { let a = s >>> 0; Math.random = () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; };
+async function workerSame(browser, base, state) {
+  const out = [], rowsOf = page => page.evaluate(() => [...document.querySelectorAll('#careBody .crow')].map(r => r.innerText.replace(/\s+/g, ' ').trim()));
+  for (const [name, data] of [['fixture', scenario(null)], ['100 pieces', speedData()]]) {
+    const ctx = await newContext(browser, base, DEV['phone-390'], { data: { ...data, writeDelay: 0 }, storageState: state });
+    const page = await ctx.newPage(); watchConsole(page, () => 'worker'); let withWorker = null;
+    try {
+      await page.goto(base + '/index.html'); await waitApp(page); await goTab(page, 'care'); withWorker = await rowsOf(page);
+      const wk = page.workers()[0]; if (!wk) throw new Error('no worker started');
+      const seed = async n => { await wk.evaluate(([f, n]) => { (0, eval)('(' + f + ')')(n); }, [SEEDED.toString(), n]); await page.evaluate(([f, n]) => { window.__seed = () => (0, eval)('(' + f + ')')(n); }, [SEEDED.toString(), n]); };
+      for (const v of ['as set', 'suits', 'women', 'custom palette']) {
+        await page.evaluate(v => {
+          if (v === 'suits') { S.settings.work = { code: 'suits' }; setDressCode(S.settings.work); }
+          if (v === 'women') { S.settings.dept = 'women'; setDept('women'); }
+          if (v === 'custom palette') { S.settings.palette = 'custom'; S.settings.paletteCustom = ['navy', 'white', 'grey']; } }, v);
+        await seed(1);
+        const list = await page.evaluate(async () => { const sig = l => l.map(x => x.id + ':' + x.occs.join(',')).join(' '); __seed();
+          const mine = sig(notPicked(allItems(), ctxFor, { n: 8 }).map(x => ({ id: x.item.id, occs: x.occs }))), w = await npAsk({ kind: 'list', n: 8 });
+          return { same: mine === sig(w.list), n: w.list.length }; });
+        await seed(2);
+        const why = await page.evaluate(async () => { __seed();
+          const pins = allItems().filter(i => isActive(i) && ['top', 'bottom', 'onepiece', 'outerwear', 'shoes'].includes(i.cat))
+            .map(i => ({ it: i, occs: effectiveOccasions(i) })).filter(x => !npQuick(x.it, x.occs)).slice(0, 24);
+          const mine = pins.map(x => npWhy(x.it, x.occs)), a = await npAsk({ kind: 'why', layer: layerOn(), pins: pins.map(x => ({ id: x.it.id, occ: x.occs[0] })) });
+          return { n: pins.length, diff: pins.filter((x, k) => mine[k] !== npText(x.occs, a.why[k].has, a.why[k].neg)).map(x => x.it.id), worker: !NPW.off && !!NPW.w }; });
+        out.push({ name, v, list: list.same, n: list.n, reasons: why.n, diff: why.diff, worker: why.worker });
+      }
+    } catch (e) { out.push({ name, v: 'worker', error: String(e && e.message || e).split('\n')[0] }); }
+    await ctx.close().catch(() => {});
+    if (name !== 'fixture') continue;
+    // the same closet with no Worker: Care fills in on the page, with the same rows
+    const c2 = await newContext(browser, base, DEV['phone-390'], { data: { ...data, writeDelay: 0 }, storageState: state });
+    try {
+      await c2.addInitScript(() => { window.Worker = undefined; });
+      const p2 = await c2.newPage(); watchConsole(p2, () => 'worker');
+      await p2.goto(base + '/index.html'); await waitApp(p2); await goTab(p2, 'care');
+      const without = await rowsOf(p2), off = await p2.evaluate(() => NPW.off);
+      // focus stays on the control it was on when Care is drawn again with the answers
+      const focus = await p2.evaluate(() => { const vis = () => [...document.querySelectorAll('#careBody [data-edit]')].filter(e => e.offsetParent), l = vis(), b = l[l.length - 1];
+        if (!b) return null; b.focus(); if (document.activeElement !== b) return null; npDraw(); const n = vis(); return document.activeElement === n[n.length - 1]; });
+      out.push({ name, v: 'no worker', same: JSON.stringify(without) === JSON.stringify(withWorker), off, rows: without.length, focus });
+    } catch (e) { out.push({ name, v: 'no worker', error: String(e && e.message || e).split('\n')[0] }); }
+    await c2.close().catch(() => {});
+  }
+  R.workerSame = out;
+  const bad = out.filter(x => x.error || (x.v === 'no worker' ? !x.same || !x.off || x.focus !== true : !x.list || x.diff.length || !x.worker));
+  const why = x => x.error || (x.v === 'no worker' ? [x.same ? '' : 'rows differ', x.off ? '' : 'worker not off', x.focus === true ? '' : 'focus lost'] : [x.list ? '' : 'list differs', x.diff.length ? 'reasons differ ' + x.diff.slice(0, 3).join(',') : '', x.worker ? '' : 'no worker']).filter(Boolean).join(', ');
+  check('Care: the worker\'s Not getting picked equals the page\'s, and Care fills in the same without a worker (Phase 15)', bad.length ? 'FAIL' : 'PASS',
+    bad.length ? bad.map(x => x.name + ' ' + x.v + ': ' + why(x)).slice(0, 4).join('; ')
+      : out.filter(x => x.v !== 'no worker').map(x => x.name + ' ' + x.v + ' ' + x.n + ' pieces, ' + x.reasons + ' reasons').join('; ') + '; without a worker ' + out.filter(x => x.v === 'no worker').map(x => x.rows + ' rows').join(', ') + ' the same, focus kept');
+}
+// Phase 15 functional regression: each action that changes data, done with the app's own buttons (sheets opened the way
+// "Each sheet opens and closes" does), must change the closet as expected and send a write to Supabase (answered locally).
+async function actions(browser, base, state) {
+  const out = [], data = { ...scenario(null), writeDelay: 0 };
+  const ctx = await newContext(browser, base, DEV['phone-390'], { data, storageState: state }), page = await ctx.newPage(); watchConsole(page, () => 'actions'); page.setDefaultTimeout(6000);
+  const ev = (f, a) => page.evaluate(f, a), piece = id => ev(id => { const i = byId(id); return i ? JSON.parse(JSON.stringify(i)) : null; }, id);
+  const settle2 = () => page.waitForTimeout(500), closed = () => page.waitForFunction(() => !document.querySelector('#sheetRoot .sheet'), null, { timeout: 8000 });
+  const act = async (name, fn, verify, wantWrite = /POST items|PATCH items/) => { const w0 = R.writes.length; let v = { ok: false, detail: '' };
+    try { const r = await fn(); await settle2(); v = await verify(r); } catch (e) { const m = String(e && e.message || e).split('\n'); v = { ok: false, detail: m[0] + ' ' + m.filter(l => /intercepts|not visible|not enabled|not stable|waiting for/.test(l)).slice(-2).join(' ').trim() };
+      v.sheet = await ev(() => { const r = document.querySelector('#sheetRoot'); return r ? r.innerText.replace(/\s+/g, ' ').slice(0, 300) : ''; }).catch(() => ''); }
+    const w = R.writes.slice(w0), wrote = w.some(x => wantWrite.test(x));
+    out.push({ name, ok: v.ok && wrote, detail: v.detail + (wrote ? '' : ' (no write: ' + (w.join(', ') || 'none') + ')'), writes: w, sheet: v.sheet }); };
+  try {
+    await page.goto(base + '/index.html'); await waitApp(page); await goTab(page, 'outfits');
+    await act('Wear this', async () => { const n = await ev(() => allLog().length); await page.click('.fit.hero [data-wear]'); await page.waitForSelector('.fit.hero .worn-ok', { timeout: 8000 }); return n; },
+      async n => { const m = await ev(() => allLog().length); return { ok: m === n + 1, detail: 'wears ' + n + ' to ' + m }; }, /POST wears/);
+    await act('What I wore: log two pieces', async () => { const n = await ev(() => allLog().length); await ev(() => openLog()); await page.waitForSelector('#sheetRoot [data-lgit]');
+      const ids = await ev(() => [...document.querySelectorAll('#sheetRoot [data-lgit]')].slice(0, 2).map(b => b.dataset.lgit)); for (const id of ids) await page.click(`#sheetRoot [data-lgit="${id}"]`);
+      await page.click('#sheetRoot [data-lgsave]'); await closed(); return n; },
+      async n => { const m = await ev(() => allLog().length); return { ok: m === n + 1, detail: 'wears ' + n + ' to ' + m }; }, /POST wears/);
+    await goTab(page, 'closet');
+    const first = await ev(() => { const b = document.querySelector('#closetGrid [data-edit]'); return b && b.dataset.edit; });
+    await act('Editor: rename a piece and save', async () => { await page.click(`#closetGrid [data-edit="${first}"]`); await page.waitForSelector('#sheetRoot #f-name');
+      await page.fill('#sheetRoot #f-name', 'Renamed by the check'); await page.click('#sheetRoot [data-save]'); await closed(); },
+      async () => { const i = await piece(first); return { ok: !!i && i.name === 'Renamed by the check', detail: first + ' is "' + (i && i.name) + '"' }; });
+    const cleanId = await ev(f => { const i = allItems().find(i => isActive(i) && !i.dirty && !isEx(i) && i.id !== f); return i && i.id; }, first);
+    await act('Editor: In the wash, then save', async () => { await ev(id => openEditor(id), cleanId); await page.waitForSelector('#sheetRoot #f-name'); await ev(() => document.querySelectorAll('#sheetRoot details').forEach(d => { d.open = true; }));
+      await page.check('#sheetRoot #f-dirty'); await page.click('#sheetRoot [data-save]'); await closed(); },
+      async () => { const i = await piece(cleanId); return { ok: !!i && i.dirty === true, detail: cleanId + ' dirty ' + (i && i.dirty) }; });
+    await act('Closet, In the wash: Mark all clean', async () => { await goTab(page, 'closet'); await page.click('[data-cat="laundry"]'); await page.click('[data-act="allClean"]'); },
+      async () => { const n = await ev(() => allItems().filter(i => i.dirty && !isEx(i)).length); return { ok: n === 0, detail: n + ' pieces left in the wash' }; });
+    await act('Editor: new piece', async () => { const n = await ev(() => allItems().filter(i => !isEx(i)).length); await ev(() => openEditor()); await page.waitForSelector('#sheetRoot #f-name');
+      await page.fill('#sheetRoot #f-name', 'New piece by the check'); await page.click('#sheetRoot [data-color]'); await page.click('#sheetRoot [data-save]'); await closed(); return n; },
+      async n => { const m = await ev(() => allItems().filter(i => !isEx(i)).length), f = await ev(() => !!allItems().find(i => i.name === 'New piece by the check')); return { ok: m === n + 1 && f, detail: 'pieces ' + n + ' to ' + m }; }, /POST items/);
+    const delId = await ev(() => { const i = allItems().find(i => i.name === 'New piece by the check'); return i && i.id; });
+    await act('Editor: delete a piece (asks first)', async () => { await ev(id => openEditor(id), delId); await page.click('#sheetRoot [data-del]'); await page.waitForTimeout(200); await page.click('#sheetRoot [data-del]'); await closed(); },
+      async () => { const i = await piece(delId); return { ok: !i, detail: delId + (i ? ' still there' : ' removed') }; }, /DELETE items/);
+    await goTab(page, 'care');
+    const fixId = await ev(() => { const b = document.querySelector('#careBody [data-fixed]'); return b && b.dataset.fixed; });
+    await act('Care: repair Fixed', async () => { await page.click(`#careBody [data-fixed="${fixId}"]`); }, async () => { const i = await piece(fixId); return { ok: !!i && !i.repair, detail: fixId + ' repair ' + (i && i.repair) }; });
+    const recId = await ev(() => { const b = document.querySelector('#careBody [data-recycle]'); return b && b.dataset.recycle; });
+    await act('Care: Mark recycled', async () => { await page.click(`#careBody [data-recycle="${recId}"]`); }, async () => { const i = await piece(recId); return { ok: !!i && i.status === 'recycled', detail: recId + ' ' + (i && i.status) }; });
+    await act('Restore a recycled piece', async () => { const sel = '[data-restore="' + recId + '"]'; const b = await page.$(sel); if (!b) throw new Error('no Restore button on Care'); await b.click(); },
+      async () => { const i = await piece(recId); return { ok: !!i && i.status === 'active', detail: recId + ' ' + (i && i.status) }; });
+    await goTab(page, 'care');
+    await act('Condition check: 5, Save check', async () => { await ev(() => openCheck('fx-11')); await page.click('#sheetRoot [data-ckc="5"]'); await page.click('#sheetRoot [data-cksave]'); await closed(); },
+      async () => { const i = await piece('fx-11'); return { ok: !!i && i.cond === 5 && !!i.lastCheck, detail: 'fx-11 condition ' + (i && i.cond) + ', checked ' + (i && i.lastCheck) }; });
+    await act('Settings: work dress code', async () => { await ev(() => openSettings()); const c = await ev(() => { const b = [...document.querySelectorAll('#sheetRoot [data-wcode]')].find(b => b.dataset.wcode !== (S.settings.work || {}).code); return b && b.dataset.wcode; });
+      await page.click(`#sheetRoot [data-wcode="${c}"]`); await page.waitForTimeout(2500); return c; },
+      async c => { const now = await ev(() => (S.settings.work || {}).code); return { ok: now === c, detail: 'work dress code ' + now }; }, /settings/);
+  } catch (e) { out.push({ name: 'setup', ok: false, detail: String(e.message).split('\n')[0], writes: [] }); }
+  await ctx.close(); R.actions = out;
+  const bad = out.filter(x => !x.ok);
+  check('Actions that save: done with the app\'s buttons, saved and sent (Phase 15)', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.map(x => x.name + ': ' + x.detail).slice(0, 4).join('; ') : out.length + ' actions: ' + out.map(x => x.name).join(', '));
+}
+// Phase 15: offline, the header's Settings button ran off the right edge at 360 and 390 (the OFFLINE label took its
+// room) and the overflow check did not see it. The header's controls must stay inside the screen with an 8px gutter, in
+// every language and status (none, Offline, Syncing), on the phones and on iPad portrait.
+async function headerFit(browser, base, state) {
+  const bad = [], seen = [];
+  for (const dn of ['phone-360', 'phone-390', 'ipad-820']) for (const lang of LANGS) {
+    const ctx = await newContext(browser, base, DEV[dn], { lang, data: scenario(null), storageState: state }), page = await ctx.newPage(); watchConsole(page, () => 'header');
+    try {
+      await page.goto(base + '/index.html'); await waitApp(page);
+      for (const st of ['none', 'offline', 'syncing']) {
+        const r = await page.evaluate(async st => { S.online = st !== 'offline'; S.fromCache = st === 'syncing'; renderStatus();
+          await new Promise(f => requestAnimationFrame(() => setTimeout(f, 50))); // i18n.js translates the new label after this task
+          const W = Math.min(innerWidth, screen.width || innerWidth);
+          return [...document.querySelectorAll('header.top > *, header.top button')].filter(e => e.offsetParent && getComputedStyle(e).visibility !== 'hidden')
+            .map(e => { const b = e.getBoundingClientRect(), t = e.closest('header.top') === e.parentElement; return { e: (e.id ? '#' + e.id : '') + '.' + String(e.className || e.tagName).split(' ')[0], l: Math.round(b.left), r: Math.round(b.right), W, t,
+              cut: e.scrollWidth > e.clientWidth + 1 }; })
+            .filter((x, k, a) => x.r > x.W - 8 || x.l < 8 || x.cut || (x.t && a.some(y => y !== x && y.t && y.l > x.l && y.l < x.r - 1))); }, st); // off the screen, text cut, or overlapping the next
+        if (dn === 'phone-360' && lang === 'fr' && st === 'syncing') await page.screenshot({ path: path.join(A.out, 'screens', 'header-360-fr-syncing.png'), clip: { x: 0, y: 0, width: 360, height: 70 } });
+        seen.push(dn + ' ' + lang + ' ' + st); if (r.length) bad.push(dn + ' ' + lang + ' ' + st + ': ' + r.map(x => x.e + ' ' + x.l + '-' + x.r + ' of ' + x.W).join(', '));
+      }
+    } catch (e) { bad.push(dn + ' ' + lang + ': ' + String(e.message).split('\n')[0]); }
+    await ctx.close();
+  }
+  R.headerFit = { seen: seen.length, bad };
+  check('Header: every control inside the screen (8px gutter), with Offline or Syncing showing (Phase 15)', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.length + ': ' + bad.slice(0, 4).join('; ') : seen.length + ' states: 360, 390 and 820, 7 languages');
+}
 function speedData() {
   const b = scenario(null), extra = Array.from({ length: SPEED.pieces - b.items.length }, (_, k) => { const src = b.items[k % b.items.length];
     return { ...src, id: 'sp-' + String(k + 1).padStart(3, '0'), body: { ...src.body, name: src.body.name + ' ' + (k + 2) } }; });
@@ -459,7 +600,7 @@ async function speed(browser, base, state) {
         window.__obs[0][0].observe({ type: 'event', durationThreshold: 16 }); window.__obs[1][0].observe({ type: 'longtask' });
         window.__take = () => { for (const [o, f] of window.__obs) f(o.takeRecords()); }; });
       const cdp = await ctx.newCDPSession(page); await cdp.send('Emulation.setCPUThrottlingRate', { rate: SPEED.rate });
-      const tap = async (key, selector, ready, waitWrites) => {
+      const tap = async (key, selector, ready, waitWrites, after) => {
         const t = await page.evaluate(src => { const cond = eval(src); window.__shown = null;
           // seen in a frame's animation callbacks: that frame paints next, then this task runs (before tasks the app queues later)
           const loop = () => { if (cond()) setTimeout(() => { window.__shown = performance.now(); }, 0); else requestAnimationFrame(loop); };
@@ -468,7 +609,8 @@ async function speed(browser, base, state) {
         await page.click(selector, { timeout: 60000 });
         await page.waitForFunction(() => window.__shown != null, null, { timeout: 60000, polling: 50 });
         const readyMs = Date.now() - t0;
-        let lastWrite = null;
+        let lastWrite = null, fill = null;
+        if (after) { await after(); fill = Date.now() - t0; } // Care: until filled in, so its longest task counts
         if (waitWrites) { let n = -1, still = 0; // until no new write for 2 s (each takes 300 ms) and the page is idle, at most 90 s
           while (Date.now() - t0 < 90000) { await page.waitForTimeout(250); if (R.writes.length !== n) { n = R.writes.length; still = 0; } else still += 250;
             if (still >= 2000) { await page.evaluate(() => 1); if (R.writes.length === n) break; } } // the evaluation waits for a busy page
@@ -476,13 +618,14 @@ async function speed(browser, base, state) {
         await page.waitForTimeout(400); // a last task may still be running
         const m = await page.evaluate(t => { __take(); const ev = __ev.filter(e => e.t >= t - 5), start = ev.length ? Math.min(...ev.map(e => e.t)) : t;
           return { shown: Math.round(__shown - start), inp: Math.round(Math.max(0, ...ev.map(e => e.d))), task: Math.round(Math.max(0, ...__lt.filter(e => e.t >= t - 5).map(e => e.d))) }; }, t);
-        row[key] = { shown: m.shown, inp: m.inp, task: m.task, ready: readyMs, ...(waitWrites ? { writes: R.writes.length - w0, lastWrite } : {}) };
+        row[key] = { shown: m.shown, inp: m.inp, task: m.task, ready: readyMs, ...(after ? { fill } : {}), ...(waitWrites ? { writes: R.writes.length - w0, lastWrite } : {}) };
         await page.evaluate(() => { __ev.length = 0; __lt.length = 0; });
       };
       const shown = id => '() => { const s = document.querySelector("#tab-' + id + '"); return s && !s.hidden; }';
       for (const tab of ['closet', 'care', 'shop', 'outfits']) {
-        await tap('tab-' + tab, 'nav.tabs button[data-tab="' + tab + '"]', shown(tab));
-        if (tab === 'care') { const t0 = Date.now(); await page.waitForFunction(() => !document.querySelector('#careBody [role=status]'), null, { timeout: 60000, polling: 50 }); row['care-fill'] = { ready: row['tab-care'].ready + Date.now() - t0 }; }
+        await tap('tab-' + tab, 'nav.tabs button[data-tab="' + tab + '"]', shown(tab), false,
+          tab === 'care' ? () => page.waitForFunction(CARE_FILLED, null, { timeout: 60000, polling: 50 }) : null);
+        if (tab === 'care') row['care-fill'] = { ready: row['tab-care'].fill, worker: await page.evaluate(() => typeof NPW === 'undefined' ? null : !NPW.off && !!NPW.w) };
       }
       await page.waitForTimeout(500);
       await tap('sheet-settings', SETTINGS_BTN, '() => !!document.querySelector("#sheetRoot .sheet")'); await closeSheet(page);
@@ -505,8 +648,10 @@ function speedChecks() {
   check('Speed: Wear this, shown and longest task until saved (budget ' + B.wear + ' and ' + B.wearTask + ' ms)', gateIf(wear, B.wear) && gateIf(wearTask, B.wearTask) ? 'PASS' : 'FAIL',
     'median ' + ms(wear) + ' and ' + ms(wearTask) + ' (worst ' + ms(worst('wear', 'shown')) + ', ' + ms(worst('wear', 'task')) + '); ' + fig('wear', 'writes') + ' writes, the last after ' + fig('wear', 'lastWrite') + ' ms');
   const line = k => k.replace(/^(tab|sheet)-/, '') + ' ' + ms(fig(k, 'shown')) + ' (task ' + ms(fig(k, 'task')) + ')';
-  const tabs = ['closet', 'care', 'shop', 'outfits'].map(t => 'tab-' + t), tabMax = Math.max(...tabs.map(k => fig(k, 'shown') || 0));
-  check('Speed: tab switches, shown (budget ' + B.tab + ' ms)', gateIf(tabMax, B.tab) ? 'PASS' : 'FAIL', tabs.map(line).join(', ') + '; Care filled in after ' + fig('care-fill', 'ready') + ' ms');
+  const tabs = ['closet', 'care', 'shop', 'outfits'].map(t => 'tab-' + t), tabMax = Math.max(...tabs.map(k => fig(k, 'shown') || 0)), taskMax = Math.max(...tabs.map(k => fig(k, 'task') || 0));
+  const wk = ok.map(r => r['care-fill'] && r['care-fill'].worker);
+  check('Speed: tab switches, shown and longest task, Care until filled in (budget ' + B.tab + ' and ' + B.tabTask + ' ms)', gateIf(tabMax, B.tab) && gateIf(taskMax, B.tabTask) ? 'PASS' : 'FAIL',
+    tabs.map(line).join(', ') + '; Care filled in after ' + fig('care-fill', 'ready') + ' ms' + (wk.every(x => x === true) ? ' by the worker' : wk.some(x => x === true) ? ', the worker in ' + wk.filter(x => x).length + ' of ' + wk.length + ' runs' : ''));
   const sh = ['sheet-settings', 'sheet-piece'], shMax = Math.max(...sh.map(k => fig(k, 'shown') || 0));
   check('Speed: opening a sheet, shown (budget ' + B.sheet + ' ms)', gateIf(shMax, B.sheet) ? 'PASS' : 'FAIL', sh.map(line).join(', '));
   if (ok.length < R.speed.length) check('Speed: every run completed', 'FAIL', R.speed.filter(r => r.error).map(r => r.error).join('; '));
@@ -680,8 +825,15 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
     await banner('banner-offline', {}, page => page.context().setOffline(true));
     // Shown when the phone's language is one the app offers and nobody chose a language yet: an English app on a French phone.
     if (lang === 'en') await banner('banner-language', { lang: null, locale: 'fr-CA' }, () => {});
-    await banner('banner-install', { installAsk: true }, page => page.evaluate(() => { const e = new Event('beforeinstallprompt', { cancelable: true });
-      e.prompt = () => Promise.resolve(); e.userChoice = Promise.resolve({ outcome: 'dismissed' }); window.dispatchEvent(e); }));
+    // The install prompt stays off Outfits, where it pushed Wear this under the tab bar (Phase 15): seen there, then on Closet.
+    await session(browser, { data, storageState: state, installAsk: true }, async (page, sw) => {
+      await page.goto(base + '/index.html'); await waitApp(page); await goTab(page, 'outfits');
+      await page.evaluate(() => { const e = new Event('beforeinstallprompt', { cancelable: true });
+        e.prompt = () => Promise.resolve(); e.userChoice = Promise.resolve({ outcome: 'dismissed' }); window.dispatchEvent(e); });
+      await page.waitForTimeout(300); const onOutfits = await page.evaluate(() => !!document.querySelector('#banner [data-act=install]'));
+      await record(page, sw, 'banner-install', null, null, async () => { await goTab(page, 'closet'); await page.waitForSelector('#banner [data-act=install]', { timeout: 5000 });
+        await page.evaluate(() => window.scrollTo(0, 0)); await settle(page); }, texts);
+      (R.installBanner = R.installBanner || []).push({ view: tag, onOutfits, onCloset: true }); });
   }
   if (on('sheets') || on('layers')) {
     const data = scenario(sheetData || 'sheets');
@@ -729,6 +881,24 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
 }
 // The share image in every language and occasion: the canvas's PNG (saved for every language, with and without cut-outs,
 // on the first occasion, and for French and Hindi on every occasion) and every text it draws, measured against the canvas.
+// Phase 15: every text on a 1080px share picture is 36px or more (12px where it is seen 360px wide) and 4.5:1 or more
+// against what is behind it, measured from the PNG: in the text's box the most common color is the background and the
+// one farthest from it in luminance the text (stems at 36px have pixels fully inside the glyph). Piece names are in ink.
+const SHARE_MIN_PX = 36, SHARE_INK = '#1b2433';
+const relLum = (r, g, b) => { const f = c => { c /= 255; return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+function textContrast(png, t) {
+  const x0 = Math.max(0, t.l), x1 = Math.min(png.width, t.r), y0 = Math.max(0, t.t), y1 = Math.min(png.height, t.b), seen = new Map();
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) { const i = (y * png.width + x) * 4, k = (png.data[i] << 16) | (png.data[i + 1] << 8) | png.data[i + 2]; seen.set(k, (seen.get(k) || 0) + 1); }
+  if (!seen.size) return null; const L = k => relLum(k >> 16 & 255, k >> 8 & 255, k & 255);
+  const bg = [...seen].sort((a, b) => b[1] - a[1])[0][0], lb = L(bg); let lt = lb;
+  for (const k of seen.keys()) { const l = L(k); if (Math.abs(l - lb) > Math.abs(lt - lb)) lt = l; }
+  return Math.round((Math.max(lb, lt) + 0.05) / (Math.min(lb, lt) + 0.05) * 10) / 10;
+}
+// The lines of piece names among the texts drawn (a kind label is left out: "Top" can be part of "Low-Top").
+const nameLines = (drawn, names, kinds) => drawn.filter(t => { const s = t.s.replace(/[…-]$/, '').trim(); return s && !kinds.includes(t.s) && names.some(n => n.includes(s)); });
+async function sharePieces(page) { return page.evaluate(() => { const f = S.fits[S.sel], o = f && hydrate(f.ids); return !o ? null : {
+  names: [o.outer, o.top, o.under, o.bottom, o.onepiece, o.shoes, ...(o.acc || [])].filter(Boolean).map(it => String(isEx(it) ? I18N.tr(it.name) : it.name).trim().replace(/\s+/g, ' ')),
+  kinds: ['Layer', 'Underneath', 'Top, worn open', ...Object.values(CAT).map(c => c.label)].map(x => I18N.tr(x)) }; }); }
 async function captureShare(browser, base, state) {
   R.share = []; R.shareSent = [];
   const withCut = scenario(null), noCut = { ...withCut, items: withCut.items.map(i => { const body = { ...i.body }; delete body.cut; return { ...i, body }; }) };
@@ -742,7 +912,9 @@ async function captureShare(browser, base, state) {
       await page.evaluate(() => { const P = CanvasRenderingContext2D.prototype, o = P.fillText; window.__drawn = [];
         const di = P.drawImage; window.__pics = [];
         P.drawImage = function (im, x, y, w, h) { if (w && im.naturalWidth > 0 && this.canvas.width === 1080) window.__pics.push(Math.round(Math.max(w / im.naturalWidth, h / im.naturalHeight) * 10) / 10); return di.apply(this, arguments); };
-        P.fillText = function (s, x, y, m) { const w = this.measureText(s).width, l = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x; window.__drawn.push({ s: String(s), left: Math.round(l), right: Math.round(l + w), W: this.canvas.width, y: Math.round(y - this.measureText(s).actualBoundingBoxAscent) }); return o.call(this, s, x, y, m); }; });
+        P.fillText = function (s, x, y, m) { const r = this.measureText(s), w = r.width, l = this.textAlign === 'center' ? x - w / 2 : this.textAlign === 'right' || this.textAlign === 'end' ? x - w : x;
+          window.__drawn.push({ s: String(s), left: Math.round(l), right: Math.round(l + w), W: this.canvas.width, y: Math.round(y - r.actualBoundingBoxAscent), b: Math.round(y + r.actualBoundingBoxDescent),
+            px: parseFloat((this.font.match(/(\d+(?:\.\d+)?)px/) || [])[1]) || 0, color: String(this.fillStyle) }); return o.call(this, s, x, y, m); }; });
       const occs = await page.evaluate(() => [...document.querySelectorAll('#occChips [data-occ]')].map(b => b.dataset.occ));
       const first = await page.evaluate(() => document.querySelector('#occChips [aria-pressed="true"]')?.dataset.occ);
       // What the phone's share menu receives (headless Chromium has none, so the images below come through the download):
@@ -756,11 +928,15 @@ async function captureShare(browser, base, state) {
         try {
           await page.click('#occChips [data-occ="' + occ + '"]'); await settle(page);
           if (!(await page.evaluate(() => !!S.fits[S.sel]))) { row.na = true; continue; }
-          await page.evaluate(() => { window.__drawn.length = 0; window.__pics.length = 0; });
+          await page.evaluate(() => { window.__drawn.length = 0; window.__pics.length = 0; }); const pieces = await sharePieces(page);
           const [dl] = await Promise.all([page.waitForEvent('download', { timeout: 20000 }), page.evaluate(() => { shareOutfit(); })]);
-          const keep = occ === first || (variant !== 'no-cutouts' && ['fr', 'hi'].includes(lang));
+          const keep = occ === first || (variant !== 'no-cutouts' && ['fr', 'hi'].includes(lang)), png = PNG.sync.read(readFileSync(await dl.path()));
           if (keep) { row.file = 'share-' + name + '.png'; await dl.saveAs(path.join(A.out, 'screens', row.file)); } else await dl.delete();
           const drawn = await page.evaluate(() => window.__drawn);
+          row.minPx = Math.min(...drawn.filter(t => t.W === 1080).map(t => t.px)); row.small = drawn.filter(t => t.W === 1080 && t.px < SHARE_MIN_PX).map(t => t.s.slice(0, 30) + ' ' + t.px + 'px');
+          row.contrast = drawn.filter(t => t.W === 1080).map(t => ({ s: t.s, c: textContrast(png, { l: t.left, r: t.right, t: t.y, b: t.b }) })).filter(x => x.c != null);
+          row.lowContrast = row.contrast.filter(x => x.c < 4.5).map(x => x.s.slice(0, 30) + ' ' + x.c); row.mark = (row.contrast.find(x => x.s === 'WEARCYCLE') || {}).c; delete row.contrast;
+          row.notInk = pieces ? nameLines(drawn, pieces.names, pieces.kinds).filter(t => t.color !== SHARE_INK).map(t => t.s + ' ' + t.color) : [];
           row.over = drawn.filter(t => t.right > t.W || t.left < 0).map(t => ({ s: t.s, by: Math.max(t.right - t.W, -t.left) }));
           row.rawColor = RAW_COLOR_RE ? drawn.filter(t => RAW_COLOR_RE.test(t.s)).map(t => t.s) : [];
           row.pics = await page.evaluate(() => window.__pics);
@@ -822,21 +998,30 @@ async function shareWorst(browser, base, state) {
     try {
       await page.goto(base + '/index.html'); await waitApp(page);
       await page.evaluate(() => { const P = CanvasRenderingContext2D.prototype, f = P.fillText, d = P.drawImage; window.__t = []; window.__p = [];
-        P.fillText = function (s, x, y, m) { const r = this.measureText(s); window.__t.push({ s: String(s), l: Math.round(x), r: Math.round(x + r.width), y: Math.round(y), W: this.canvas.width }); return f.call(this, s, x, y, m); };
+        P.fillText = function (s, x, y, m) { const r = this.measureText(s); window.__t.push({ s: String(s), l: Math.round(x), r: Math.round(x + r.width), y: Math.round(y), W: this.canvas.width,
+          t: Math.round(y - r.actualBoundingBoxAscent), b: Math.round(y + r.actualBoundingBoxDescent), px: parseFloat((this.font.match(/(\d+(?:\.\d+)?)px/) || [])[1]) || 0, color: String(this.fillStyle) }); return f.call(this, s, x, y, m); };
         P.drawImage = function (im, x, y, w, h) { if (w && this.canvas.width === 1080) { window.__p.push(Math.round(Math.max(w, h))); window.__boxes.push([Math.round(y), Math.round(y + h)]); } return d.apply(this, arguments); };
         window.__boxes = []; window.__cells = []; const rr = P.roundRect; P.roundRect = function (x, y, w, h) { if (this.canvas.width === 1080) window.__cells.push([Math.round(y), Math.round(y + h)]); return rr.apply(this, arguments); };
         // Where the outfit sits in its area, and every break inside a word (only scripts without spaces may break without a hyphen).
         const kit = window.shareKit; window.shareKit = async function (g, o, top, bottom) { window.__cells.length = 0; const end = await kit.apply(this, arguments); window.__area = { top, bottom, start: Math.min(...window.__cells.map(c => c[0])), end }; return end; };
-        const sl = window.shareLines; window.__splits = []; window.shareLines = function (g, text) { const out = sl.apply(this, arguments), src = String(text).trim().replace(/\s+/g, ' ');
+        const sl = window.shareLines; window.__splits = []; window.__inword = []; window.shareLines = function (g, text) { const out = sl.apply(this, arguments), src = String(text).trim().replace(/\s+/g, ' ');
           let pos = 0; out.slice(0, -1).forEach(l => { let s = l.replace(/…$/, ''), hy = s.endsWith('-'); const at = src.indexOf(s, pos); if (at < 0 && hy) { s = s.slice(0, -1); } const i = src.indexOf(s, pos); if (i < 0) return; pos = i + s.length;
-            if (src[pos] && src[pos] !== ' ' && !hy && !/-$/.test(s) && /\p{L}\p{M}*$/u.test(s) && /^\p{L}/u.test(src.slice(pos)) && !/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(s.slice(-1) + src[pos])) window.__splits.push(s.slice(-10) + '|' + src.slice(pos, pos + 6)); if (src[pos] === ' ') pos++; }); return out; }; });
+            if (src[pos] && src[pos] !== ' ' && !hy && !/-$/.test(s) && /\p{L}\p{M}*$/u.test(s) && /^\p{L}/u.test(src.slice(pos)) && !/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(s.slice(-1) + src[pos])) window.__splits.push(s.slice(-10) + '|' + src.slice(pos, pos + 6));
+            // any break inside a word, with a hyphen or not ("Chrono- / graph"), outside scripts without spaces (Phase 15)
+            if (src[pos] && src[pos] !== ' ' && !/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/.test(s.slice(-1) + src[pos])) window.__inword.push(s.slice(-10) + (hy ? '' : '|') + src.slice(pos, pos + 6)); if (src[pos] === ' ') pos++; }); return out; }; });
       for (const [shape, expr] of Object.entries(SHARE_SHAPES)) {
         const name = lang + '-' + shape, row = { name };
         try {
-          const b64 = await page.evaluate('(async () => { window.__t.length = 0; window.__p.length = 0; window.__boxes.length = 0; window.__splits.length = 0; const blob = await shareImage(' + expr + '); const u = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); })()');
-          writeFileSync(path.join(A.out, 'screens', 'share-wc-' + name + '.png'), Buffer.from(b64, 'base64'));
-          const m = await page.evaluate(() => ({ t: window.__t, p: window.__p, b: window.__boxes, a: window.__area, splits: window.__splits }));
-          row.above = m.a.start - m.a.top; row.below = m.a.bottom - m.a.end; row.midWord = m.splits;
+          const b64 = await page.evaluate('(async () => { window.__t.length = 0; window.__p.length = 0; window.__boxes.length = 0; window.__splits.length = 0; window.__inword.length = 0; const o = ' + expr + ';'
+            + ' window.__names = [o.outer, o.top, o.under, o.bottom, o.onepiece, o.shoes, ...(o.acc || [])].filter(Boolean).map(it => String(isEx(it) ? I18N.tr(it.name) : it.name).trim().replace(/\\s+/g, " "));'
+            + ' window.__kinds = ["Layer", "Underneath", "Top, worn open", ...Object.values(CAT).map(c => c.label)].map(x => I18N.tr(x));'
+            + ' const blob = await shareImage(o); const u = new Uint8Array(await blob.arrayBuffer()); let s = ""; for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); })()');
+          const buf = Buffer.from(b64, 'base64'), png = PNG.sync.read(buf); writeFileSync(path.join(A.out, 'screens', 'share-wc-' + name + '.png'), buf);
+          const m = await page.evaluate(() => ({ t: window.__t, p: window.__p, b: window.__boxes, a: window.__area, splits: window.__splits, inword: window.__inword, names: window.__names, kinds: window.__kinds }));
+          row.above = m.a.start - m.a.top; row.below = m.a.bottom - m.a.end; row.midWord = m.splits; row.inWord = m.inword;
+          const big = m.t.filter(t => t.W === 1080); row.minPx = Math.min(...big.map(t => t.px)); row.small = big.filter(t => t.px < SHARE_MIN_PX).map(t => t.s.slice(0, 30) + ' ' + t.px + 'px');
+          row.lowContrast = big.map(t => ({ s: t.s, c: textContrast(png, t) })).filter(x => x.c != null && x.c < 4.5).map(x => x.s.slice(0, 30) + ' ' + x.c);
+          row.notInk = nameLines(big, m.names, m.kinds).filter(t => t.color !== SHARE_INK).map(t => t.s + ' ' + t.color);
           row.off = m.t.filter(t => t.r > t.W || t.l < 0).map(t => t.s.slice(0, 40)); row.low = m.t.filter(t => t.y > 1660 && t.s !== 'WEARCYCLE').map(t => t.s.slice(0, 40));
           // Lines on one baseline must not run into each other (a kind or name wider than its column).
           row.overlap = m.t.flatMap((a, i) => m.t.slice(i + 1).filter(b => Math.abs(a.y - b.y) < 10 && a.l < b.r && b.l < a.r).map(b => a.s.slice(0, 24) + ' / ' + b.s.slice(0, 24)));
@@ -1026,6 +1211,16 @@ function colorsCheck() {
   for (const [k, n, b] of [['bg', 'bg', L], ['ink', 'ink', L], ['muted', 'muted', L], ['onInk', 'bg', L], ['mutedOnInk', 'muted', D], ['c1', 'canvas-1', L], ['c2', 'canvas-2', L]]) want('share image ' + k, val(k), tok(b, n));
   check('Colors outside styles.css match the tokens', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.slice(0, 5).join('; ') : "theme-color metas (3 pages), theme.js, app.js, manifest, privacy and What's new, share image");
 }
+// Detector warnings on added views reviewed one by one in Phase 15 (owner: "Mark the 11 warnings reviewed"); a warning
+// that matches no line here still goes to review.
+const DETECTOR_REVIEWED = [
+  // 9 sheets: the detector reads the bottom padding calc(20px + env(safe-area-inset-bottom)) as 0; copies with a plain 20px
+  // gave no warning (Adjust, Condition check, Diary, Help, Inspiration, Inspiration result, Language, Reminders, What I wore)
+  { rule: 'cramped-padding', file: /^sheet-[a-z-]+\.html$/, snippet: /"sheet": children flush against bg on bottom/ },
+  // grouped lists: each row is 48px with its text centred (14px inset), touching the box's border by design
+  { rule: 'cramped-padding', file: /^sheet-language\.html$/, snippet: /"langlist": children flush/ },
+  { rule: 'cramped-padding', file: /^sheet-share-list\.html$/, snippet: /"wlmeas": children flush/ },
+];
 function detector() {
   const run = targets => {
     const r = spawnSync('npx', ['--yes', 'impeccable@4.5.2', 'detect', '--json', ...targets], { cwd: REPO, encoding: 'utf8', maxBuffer: 64 << 20,
@@ -1137,6 +1332,9 @@ async function main() {
     check('Sign-in', 'PASS', R.auth.mode + ': ' + R.auth.reason);
     if (!A.worstCase) {
       await flows(browser, server.base, state, data);
+      await workerSame(browser, server.base, state);
+      await headerFit(browser, server.base, state);
+      await actions(browser, server.base, state);
       if (!A.noSpeed) await speed(browser, server.base, state);
       if (views.includes('outfits') && !A.quick) { await wearSizes(browser, server.base, state, data); await busyMorning(browser, server.base, state, data); }
       const sets = [];
@@ -1174,10 +1372,12 @@ async function main() {
   check('No console errors', R.console.length ? 'FAIL' : 'PASS', R.console.length ? R.console.slice(0, 4).map(c => c.where + ': ' + c.text).join(' | ') : '');
   check('Network stays local (Supabase, Open-Meteo stubbed)', R.unexpectedHosts.size ? 'FAIL' : 'PASS', R.unexpectedHosts.size ? 'blocked: ' + [...R.unexpectedHosts].join(', ') : R.writes.length + ' writes and ' + R.functions.length + ' function calls answered locally');
   speedChecks();
+  if (R.installBanner) { const bad = R.installBanner.filter(x => x.onOutfits);
+    check('Install prompt: on Closet, not above the outfit', bad.length ? 'FAIL' : 'PASS', bad.length ? 'on Outfits in ' + bad.map(x => x.view).slice(0, 4).join(', ') : R.installBanner.length + ' views'); }
   if (R.offlineLoads) check('Offline banner: loads refused while offline (expected)', 'INFO', R.offlineLoads.length + ': ' + [...new Set(R.offlineLoads.map(x => x.split(' ').slice(1).join(' ')))].slice(0, 4).join(', '));
   { const b = caps.filter(c => /^banner-/.test(c.view) && c.wear && ['phone-360', 'phone-390'].includes(c.device)), hid = b.filter(c => !c.wear.visible);
-    // REVIEW, not FAIL, until Phase 15 fixes the install prompt (found by this check); then it gates.
-    if (b.length) check('Banners on Outfits: Wear this still in the first screen on phones', hid.length ? 'REVIEW' : 'PASS', hid.length ? hid.map(c => c.name + ' ' + c.wear.top + '-' + c.wear.bottom + ' of ' + c.wear.vh).slice(0, 4).join('; ') : b.length + ' views'); }
+    // Gates since Phase 15, which moved the install prompt (found by this check) off Outfits.
+    if (b.length) check('Banners on Outfits: Wear this still in the first screen on phones', hid.length ? 'FAIL' : 'PASS', hid.length ? hid.map(c => c.name + ' ' + c.wear.top + '-' + c.wear.bottom + ' of ' + c.wear.vh).slice(0, 4).join('; ') : b.length + ' views'); }
   let base = null, baseDevices = null;
   if (A.baseline) { const bs = JSON.parse(readFileSync(path.resolve(A.baseline), 'utf8')); base = bs.totals || null; baseDevices = new Set((bs.captures || []).map(c => c.device)); }
   const T = totals();
@@ -1216,12 +1416,20 @@ async function main() {
     const split = R.shareWorst.filter(x => (x.midWord || []).length), off = R.shareWorst.filter(x => Math.abs(x.above - x.below) > 2 && x.below > 2);
     check('Share image, worst case: a word broken inside has a hyphen (scripts with spaces)', split.length ? 'FAIL' : 'PASS', split.length ? split.slice(0, 4).map(x => x.name + ' ' + x.midWord.slice(0, 2).join(', ')).join('; ') : '');
     check('Share image, worst case: room left over is shared above and below the outfit', off.length ? 'FAIL' : 'PASS', off.length ? off.slice(0, 4).map(x => x.name + ' above ' + x.above + ', below ' + x.below).join('; ') : 'largest band ' + Math.max(...R.shareWorst.map(x => Math.max(x.above, x.below))) + 'px');
-    { const own = R.shareWorst.filter(x => /^[a-z]+-owner-/.test(x.name)), cut = own.filter(x => (x.cut || []).length);
-      check("Share image, worst case: the owner's outfits keep every name whole (4 lines)", cut.length || !own.length ? 'FAIL' : 'PASS', cut.length ? cut.slice(0, 4).map(x => x.name + ' "' + x.cut[0] + '"').join('; ') : own.length + ' images'); }
+    { const own = R.shareWorst.filter(x => /^[a-z]+-owner-/.test(x.name)), cut = own.filter(x => (x.cut || []).length || (x.inWord || []).length);
+      check("Share image, worst case: the owner's outfits keep every name whole (4 lines), no word broken inside (Phase 15)", cut.length || !own.length ? 'FAIL' : 'PASS', cut.length ? cut.slice(0, 4).map(x => x.name + ' ' + JSON.stringify((x.cut || []).concat(x.inWord || []).slice(0, 3))).join('; ') : own.length + ' images'); }
     { const raw = R.shareWorst.filter(x => (x.rawColor || []).length), lb = R.shareWorst.find(x => x.name === 'en-owner-2026-11-07b');
       check('Share image, worst case: color names as words ("light blue")', raw.length || !lb || !lb.lightBlue ? 'FAIL' : 'PASS', raw.length ? raw.slice(0, 4).map(x => x.name + ' "' + x.rawColor[0] + '"').join('; ') : lb && lb.lightBlue ? 'en-owner-2026-11-07b says light blue' : 'en-owner-2026-11-07b: light blue not drawn'); }
     check('Share image: a failure says so', R.shareFail === 'Could not make the image.' ? 'PASS' : 'FAIL', R.shareFail);
   }
+  { const rows = (R.share || []).concat(R.shareWorst || []).filter(x => x.minPx != null && isFinite(x.minPx)), wish = (R.wishPic || []).filter(x => x.minPx != null);
+    if (rows.length || wish.length) { // Phase 15: the owner's 12px rule and his picture's names in grey
+      const small = rows.filter(x => x.small.length), wsmall = wish.filter(x => x.minPx < SHARE_MIN_PX), low = rows.filter(x => x.lowContrast.length), grey = rows.filter(x => x.notInk.length);
+      check('Share pictures: every text ' + SHARE_MIN_PX + 'px or more of 1080 (12px seen 360px wide)', small.length || wsmall.length ? 'FAIL' : 'PASS', small.length || wsmall.length ? small.slice(0, 3).map(x => x.name + ' ' + x.small.slice(0, 2).join(', ')).concat(wsmall.map(x => 'wish list ' + x.lang + ' ' + x.minPx + 'px')).slice(0, 4).join('; ')
+        : rows.length + ' outfit pictures from ' + Math.min(...rows.map(x => x.minPx)) + 'px' + (wish.length ? ', ' + wish.length + ' wish-list pictures from ' + Math.min(...wish.map(x => x.minPx)) + 'px' : ''));
+      const marks = rows.map(x => x.mark).filter(x => x != null);
+      check('Share pictures: text 4.5:1 or more against what is behind it, from the pixels', low.length ? 'FAIL' : 'PASS', low.length ? low.slice(0, 4).map(x => x.name + ' ' + x.lowContrast.slice(0, 2).join(', ')).join('; ') : rows.length + ' pictures' + (marks.length ? '; the wordmark ' + Math.min(...marks) + ':1 or more' : ''));
+      check('Share pictures: piece names in ink', grey.length ? 'FAIL' : 'PASS', grey.length ? grey.slice(0, 4).map(x => x.name + ' ' + x.notInk.slice(0, 2).join(', ')).join('; ') : rows.length + ' pictures'); } }
   if (R.wishPic) { const bad = R.wishPic.filter(x => x.error || (x.over || []).length);
     check('Wish-list picture: drawn in every language, text inside', bad.length ? 'FAIL' : 'PASS', bad.length ? bad.map(x => x.lang + ' ' + (x.error || 'off the picture: ' + x.over.slice(0, 2).join(' / '))).join('; ') : R.wishPic.length + ' pictures ' + R.wishPic[0].size + ', ' + R.wishPic.map(x => x.lines).join('/') + ' lines; smallest text ' + Math.min(...R.wishPic.map(x => x.minPx)) + 'px of ' + R.wishPic[0].size.split('x')[0]); }
   if (R.shareSent) {
@@ -1270,7 +1478,9 @@ async function main() {
       T.detectorWarnings = det.static.warnings + snap.warnings - addedW.length; T.detectorAdvisories = det.static.advisories + snap.advisories;
       T.detectorHiddenExcluded = Object.values(snap.hiddenElementsExcluded || {}).reduce((a, b) => a + b, 0);
       const w = T.detectorWarnings + ' (index.html + styles.css ' + det.static.warnings + (det.snapshots ? ', screen snapshots ' + (snap.warnings - addedW.length) : '') + ')';
-      if (R.captures.some(c => !VIEWS.includes(c.view))) check('Added views: detector warnings', addedW.length ? 'REVIEW' : 'PASS', addedW.length + (addedW.length ? ': ' + [...new Set(addedW.map(f => f.antipattern + ' ' + path.basename(f.file, '.html')))].slice(0, 6).join(', ') : ''));
+      const seenOk = f => DETECTOR_REVIEWED.some(x => x.rule === f.antipattern && x.file.test(path.basename(f.file || '')) && x.snippet.test(f.snippet || '')), newW = addedW.filter(f => !seenOk(f));
+      if (R.captures.some(c => !VIEWS.includes(c.view))) check('Added views: detector warnings', newW.length ? 'REVIEW' : 'PASS', newW.length + (newW.length ? ': ' + [...new Set(newW.map(f => f.antipattern + ' ' + path.basename(f.file, '.html')))].slice(0, 6).join(', ') : '')
+        + (addedW.length - newW.length ? ' new; ' + (addedW.length - newW.length) + ' reviewed in Phase 15 as false positives (DETECTOR_REVIEWED)' : ''));
       if (base && base.detectorWarnings != null) check('Detector warnings (npx impeccable@4.5.2 detect)', T.detectorWarnings <= base.detectorWarnings ? 'PASS' : 'FAIL', w + ' (baseline ' + base.detectorWarnings + '). Rules: detector.json');
       else check('Detector warnings (npx impeccable@4.5.2 detect)', T.detectorWarnings ? 'REVIEW' : 'PASS', w + (T.detectorWarnings ? ' (no baseline yet: recorded for Phase 4)' : '') + '. Rules: detector.json');
       check('Detector advisories (recorded, not gated)', 'INFO', T.detectorAdvisories + ' (index.html + styles.css ' + det.static.advisories + (det.snapshots ? ', screen snapshots ' + snap.advisories + '; ' + T.detectorHiddenExcluded + ' hidden elements left out of the snapshots' : '') + ')');
@@ -1279,7 +1489,7 @@ async function main() {
   if (A.compare) await compareTo(A.compare);
 
   const summary = { when: new Date().toISOString(), seconds: Math.round((Date.now() - started) / 1000), options: { ...A, out: undefined }, fixedClock: CLOSET.now,
-    auth: R.auth, render: R.render, totals: T, speed: R.speed, speedBudget: SPEED_BUDGET, share: R.share, shareSent: R.shareSent, shareWorst: R.shareWorst, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
+    auth: R.auth, render: R.render, totals: T, speed: R.speed, speedBudget: SPEED_BUDGET, actions: R.actions, workerSame: R.workerSame, headerFit: R.headerFit, installBanner: R.installBanner, share: R.share, shareSent: R.shareSent, shareWorst: R.shareWorst, checks: R.checks, compare: R.compare, wearSizes: R.wearSizes, busyMorning: R.busy, console: R.console, writesAnsweredLocally: R.writes, functionsAnsweredLocally: R.functions,
     detector: det && Object.fromEntries(Object.entries(det).map(([k, v]) => [k, { ...v, findings: undefined }])), captures: R.captures };
   writeFileSync(path.join(A.out, 'summary.json'), JSON.stringify(summary, null, 1));
   const md = ['# Wearcycle check' + (A.worstCase ? ' (worst case)' : ''), '', 'Fixed clock ' + CLOSET.now + '. Auth: ' + R.auth.mode + ' (' + R.auth.reason + '). ' + summary.seconds + ' s.', '',

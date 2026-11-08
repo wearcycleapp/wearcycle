@@ -369,7 +369,10 @@ function pickAccessories(o,by,occ,now,wx,all){
 function makeRng(seed){ let x=(seed>>>0)||1; return ()=>{ x^=x<<13; x>>>=0; x^=x>>17; x^=x<<5; x>>>=0; return x/4294967296; }; }
 
 function suggest(items,occ,ctx,opts){
-  opts=opts||{}; const n=opts.n||4, jitter=opts.jitter||0, rnd=opts.rng||Math.random;
+  // Without opts.rng (Outfits passes its own; New ideas changes it) the draws are seeded by the day, so the same closet gives
+  // the same outfits all day wherever they are worked out: Care's Not getting picked, its reasons, the worker (owner, Phase 15).
+  const day=new Date(ctx&&ctx.now!=null?ctx.now:Date.now());
+  opts=opts||{}; const n=opts.n||4, jitter=opts.jitter||0, rnd=opts.rng||makeRng(day.getFullYear()*10000+(day.getMonth()+1)*100+day.getDate());
   const pool=eligible(items,occ); const by=group(pool);
   // Pinned piece (from "See outfits with this"): every outfit is built around it, even if it is not normally
   // picked for this occasion; the app explains why separately.
@@ -402,7 +405,7 @@ function suggest(items,occ,ctx,opts){
     let best=null,bs=-Infinity; for(const u of unders){ const r=scoreOutfit(Object.assign({},b,{under:u}),occ,ctx).score; if(r>bs){bs=r;best=u;} }
     bases2.push(Object.assign({},b,{under:best})); } }
   let combos=[]; for(const b of bases2) for(const sh of shoes) combos.push(Object.assign({},b,sh?{shoes:sh}:{}));
-  if(combos.length>3000){ combos=combos.map(c=>[rnd(),c]).sort((a,b)=>a[0]-b[0]).slice(0,3000).map(x=>x[1]); }
+  if(combos.length>3000){ combos=combos.map(c=>[rnd(),c]).sort((a,b)=>a[0]-b[0]).slice(0,3000).map(x=>x[1]); } // a sample, drawn as above
   const outers=opts.layer?(by.outerwear||[]):[];
   const scored=combos.map(c=>{
     if(outers.length){ let best=null,bs=-Infinity; for(const ow of outers){ const r=scoreOutfit(Object.assign({},c,{outer:ow}),occ,ctx); if(r.score>bs){bs=r.score;best=ow;} } c.outer=best; }

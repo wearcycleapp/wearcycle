@@ -221,7 +221,8 @@ async function closeSheet(page) { if (!(await sheetOpen(page))) return; await pa
 const SETTINGS_BTN = '#rulesBtn:visible, #railSettings:visible';
 async function goTab(page, tab) { await closeSheet(page); await page.click('nav.tabs button[data-tab="' + tab + '"]'); await page.waitForSelector('#tab-' + tab + ':not([hidden])');
   // Care fills in "Not getting picked" just after it is drawn (v1.66.1): wait for its "Checking" line to go.
-  if (tab === 'care') await page.waitForFunction(() => !document.querySelector('#careBody [role=status]'), null, { timeout: 30000 }); await settle(page); }
+  // Care fills in "Not getting picked", then its reasons, from a background worker (Phase 15)
+  if (tab === 'care') await page.waitForFunction(() => !document.querySelector('#careBody [role=status], #careBody [data-wait]'), null, { timeout: 30000 }); await settle(page); }
 async function openSheet(page, sel, label) { const el = await page.$(sel); if (!el) return label + ' (no control)'; await el.click(); await page.waitForSelector('#sheetRoot .sheet', { timeout: 8000 }); await closeSheet(page); return label; }
 const brokenImages = page => page.evaluate(() => { const imgs = [...document.images].filter(i => i.getClientRects().length && i.getAttribute('src'));
   return { shown: imgs.length, broken: imgs.filter(i => i.complete && !i.naturalWidth).length }; });
@@ -310,6 +311,9 @@ async function deviceChecks(browser, engine, dev, state) {
       return { status: 'REVIEW', detail: l ? 'no forecast in the label' : 'no forecast (weather off or no location for this account)' }; });
     await step(tag + 'every tab opens', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { const b0 = net.bytes, f0 = net.files; await goTab(page, t); await sharpened(page);
       const b = await brokenImages(page); imgs.shown += b.shown; imgs.broken += b.broken; if (t !== 'outfits') perTab[t] = { bytes: net.bytes - b0, files: net.files - f0 }; } return 'outfits, closet, care, shop'; });
+    await step(tag + 'Care: Not getting picked from the background worker (Phase 15)', async () => { const w = await page.evaluate(() => typeof NPW === 'undefined' ? 'none' : NPW.off ? 'off' : NPW.w ? 'on' : 'not started');
+      const rows = await page.evaluate(() => document.querySelectorAll('#careBody .crow').length);
+      return { status: w === 'on' ? 'PASS' : w === 'none' ? 'PASS' : 'REVIEW', detail: w === 'none' ? 'before Phase 15 (no worker in this version)' : 'worker ' + w + ', Care filled in, ' + rows + ' rows' }; });
     await step(tag + 'image bytes per screen (first open)', async () => ['outfits', 'closet', 'care', 'shop'].filter(t => perTab[t])
       .map(t => t + (t === 'outfits' ? ' ' : ' +') + kb(perTab[t].bytes) + ' in ' + perTab[t].files + ' files').join(', '));
     // Phase 9: Closet and the item editor on real pictures (the fixture's files are small, so only real data shows
