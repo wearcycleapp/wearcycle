@@ -775,7 +775,7 @@ function langName(c){ return (I18N.langs.find(l=>l[0]===c)||[c,c])[1]; }
 function phoneLang(){ const codes=I18N.langs.map(l=>l[0]); for(const n of (navigator.languages||[navigator.language||''])){ let c=String(n||'').toLowerCase().split('-')[0]; if(c==='fil') c='tl'; if(codes.includes(c)) return c; } return null; }
 function langSuggest(){ let chosen=null; try{ chosen=localStorage.getItem('wearcycle.lang'); }catch(e){}
   if(chosen||LS.get('wearcycle.langAsked')) return ''; const p=phoneLang(); if(!p||p===I18N.lang||!LANG_ASK[p]) return '';
-  return `<div class="banner langask" lang="${p}"><div style="flex:1" data-notr><b>${GLOBE_ICON}${esc(LANG_ASK[p][0])}</b></div><button class="btn sm primary" data-lang-use="${p}" data-notr>${esc(LANG_ASK[p][1])}</button><button class="btn sm ghost" data-act="langKeep"><span>Keep</span> <span data-notr>${esc(langName(I18N.lang))}</span></button></div>`; }
+  return `<div class="banner langask" lang="${p}"><div class="lt" data-notr><b>${GLOBE_ICON}${esc(LANG_ASK[p][0])}</b></div><button class="btn sm primary" data-lang-use="${p}" data-notr>${esc(LANG_ASK[p][1])}</button><button class="btn sm ghost" data-act="langKeep"><span>Keep</span> <span data-notr>${esc(langName(I18N.lang))}</span></button></div>`; }
 function openLangs(){ openSheet(sheetHead('Language')+`<p class="hint">Item names you typed stay as they are.</p>
    <div class="langlist" role="group" aria-label="Language">${I18N.langs.map(([c,n])=>`<button type="button" class="langopt" data-lang-use="${c}" aria-pressed="${c===I18N.lang}" lang="${c}" data-notr>${esc(n)}${c===I18N.lang?'<span class="mark" aria-hidden="true">✓</span>':''}</button>`).join('')}</div>`); }
 // Standalone pages (What's new, privacy) open in the app's language (v1.58.5).

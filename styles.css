@@ -196,8 +196,10 @@ header.top .status:not(.hidden)+.langbtn{margin-left:0}
 .wnbanner [data-act="wnDismiss"]{min-width:44px;min-height:44px}
 .version a{color:inherit;text-underline-offset:3px}
 .banner.langask svg{width:18px;height:18px;flex:none}
-/* Phones: the sentence on its own line, the two buttons under it (it was a 4-line column at 390, Phase 15) */
-@media (max-width:459.98px){ .banner.langask{flex-wrap:wrap;align-items:center} .banner.langask>div{flex-basis:100%} }
+.banner.langask .lt{flex:1}
+/* Phones: the sentence on its own line, the two buttons under it (it was a 4-line column at 390, Phase 15); kept
+   compact so Wear this stays in the first screen at 360x800 */
+@media (max-width:459.98px){ .banner.langask{flex-wrap:wrap;align-items:center;row-gap:6px;padding-block:8px} .banner.langask .lt{flex-basis:100%} }
 .langlist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;background:var(--raised);overflow:hidden}
 .langopt{display:flex;align-items:center;justify-content:space-between;min-height:48px;padding:0 14px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--ink);font:500 16px var(--f-body);text-align:left;cursor:pointer}
 .langopt:last-child{border-bottom:0}
