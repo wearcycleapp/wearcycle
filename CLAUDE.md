@@ -11,8 +11,7 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
 - Android phones: Chrome, app installed from the browser. Main use.
 - iPad: Safari (WebKit), Home Screen app; portrait 744 to 1032px, landscape 1133 to 1376.
 - Windows: Chrome or Edge, mouse and keyboard; common widths 1366, 1536, 1920.
-- Claude's container has Chromium only. iPad screenshots there show
-  layout, not WebKit rendering: check WebKit on a real iPad.
+- Claude's container has Chromium only: iPad screenshots show layout, not WebKit (check a real iPad).
 
 ## Stack (hard constraints)
 - Plain HTML, CSS and vanilla JavaScript. No framework, bundler,
@@ -39,8 +38,9 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   branch, preview. Cloudflare previews it at preview.wearcycle.pages.dev.
   Never delete it (Claude's session cannot delete branches). Before work,
   check preview equals main or only adds commits on top of it.
-- Release = fast-forward main to preview (git merge --ff-only), so the
-  two are identical afterwards. Never force-push either branch.
+- Release = push the commit that was tested to main by its hash, after checking it is still
+  preview's tip and main is its ancestor (git push origin <sha>:refs/heads/main), so the two are
+  identical afterwards; never "whatever preview holds" (2026-11-07). Never force-push either branch.
 - Every phase ends with a release to main. Users may see new and old
   screens side by side until the redesign is finished.
 - Urgent fixes while a phase is unfinished on preview: commit on main,
@@ -60,7 +60,7 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
 4. APP_VERSION in app.js and VERSION in sw.js bumped to the same value
    (app changes only); sw.js non-empty and lists every shell file.
    Add it to whats-new.html in plain words, translated in i18n/pages-*.js.
-5. Fast-forward main to preview; log it in Project doc claude/wardrobe-app-decisions.md.
+5. Release (Release model above); log it in Project doc claude/wardrobe-app-decisions.md.
 
 ## Checks (Claude's container)
 - `for f in *.js i18n/*.js tools/*.mjs; do node --check "$f"; done`
@@ -70,10 +70,11 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   locally, sign-in too when Supabase is unreachable, as from Claude's container (the report
   says so). Test packages: outside, tools/deps.mjs; set WEARCYCLE_PLAYWRIGHT to match
   the container's Chromium (ls /opt/pw-browsers: 1194 = 1.56.0, 1243 = 1.63.0).
+- Modes: --quick for everyday work (main screens, 3 devices, flows, speed; about 2 minutes); the
+  full run (the default, about 45 minutes) before every release. Speed budgets: SPEED_BUDGET.
 - Screenshots go outside the repo, except the Phase 4 baseline in docs/design/baseline/: always
   --css-pixels. To prove "no visible change": --compare <before> --exact (before from this session).
-- Detector: only warnings gate a release (against the baseline);
-  advisories are recorded, not gated. Hidden elements are left out.
+- Detector: only warnings gate a release (against the baseline); advisories are recorded.
 
 ## Translations
 - i18n.js translates each text node by exact English match. Changing
@@ -118,8 +119,7 @@ features or paywalls in the redesign). Product truth: PRODUCT.md.
   a skill suggests one (overdrive does).
 - break-ui: worst-case data lives in tools/fixtures/ and enters through
   tools/check.mjs. Never add a demo-data switch to app code.
-- harden: never truncate translated labels to hide overflow.
-- distill and quieter: never remove a feature, action or font family.
+- harden: never truncate translated labels. distill, quieter: never remove a feature, action or font.
 - Type and motion come from DESIGN.md, not skill defaults: body stays 15px
   (the skills assume 16px); animations only inside
   prefers-reduced-motion: no-preference, editorial motion up to 450ms.
