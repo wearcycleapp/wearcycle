@@ -6,7 +6,7 @@ Every screen must work for a stranger with an empty closet, in all seven languag
 
 ## Phase status (2026-10-31)
 
-Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01), Phase 12 row when it opened and at its release (2026-11-03), Phase 13 row when it opened and at its release (2026-11-03), Phase 14 row when it opened (2026-11-04) and at its release (2026-11-05), Phase 15 row at its release (2026-11-07). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
+Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its release, Phase 10 row when it opened and at its release (2026-11-01), Phase 12 row when it opened and at its release (2026-11-03), Phase 13 row when it opened and at its release (2026-11-03), Phase 14 row when it opened (2026-11-04) and at its release (2026-11-05), Phase 15 row at its release (2026-11-11). Release commits checked as ancestors of main 4210ff9 (v1.61.1). Phases 0, 1 and 3 changed no repository file, so they have no release commit.
 
 | Phase | Status | Release on main |
 | --- | --- | --- |
@@ -25,7 +25,7 @@ Recorded at the start of Phase 9 (owner, 2026-10-31); Phase 9 row updated at its
 | 12 Settings and other sheets | Released 2026-11-03, v1.64.0 | f99ad4d |
 | 13 Full-screen and fixed layers | Released 2026-11-03, v1.65.0 | 0e4c1d4, 8a23253 |
 | 14 Share image, privacy page, colors outside CSS | Released 2026-11-05, v1.66.0 (coverage tooling released first, main 86bcedd) | d43035a, ced4d1c |
-| 15 Final audits | Released 2026-11-07, v1.68.0 (step 0 tooling released first, main 809f4d1) | 809f4d1 (step 0); v1.68.0 in the Project log |
+| 15 Final audits | Released 2026-11-11, v1.68.0, built 2026-11-07 (step 0 tooling released first, 2026-11-07, main 809f4d1) | 809f4d1 (step 0); v1.68.0 in the Project log |
 
 Screen freeze while Phase 9 was open (owner, 2026-10-31): no feature work on Closet, the piece preview, the item editor or the zoom viewer until Phase 9 was released. Lifted with the release of v1.62.0 (2026-10-31).
 
