@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.68.0';
+const APP_VERSION='1.69.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -781,7 +781,7 @@ function openLangs(){ openSheet(sheetHead('Language')+`<p class="hint">Item name
 // Standalone pages (What's new, privacy) open in the app's language (v1.58.5).
 function pageUrl(f){ return f+'?lang='+encodeURIComponent(I18N.lang); }
 // After an update, people who already used the app see a one-time notice; new users do not (v1.58.5).
-function whatsNewBanner(){ let seen=null; try{ seen=localStorage.getItem('wearcycle.seenVersion'); }catch(e){}
+function whatsNewBanner(){ if(S.demo) return ''; let seen=null; try{ seen=localStorage.getItem('wearcycle.seenVersion'); }catch(e){}
   if(seen===APP_VERSION) return '';
   if(S.tab==='outfits') return ''; // never above the outfit: Wear this must stay in the first screen
   if(!seen&&!allItems().length){ if(S.loaded) try{ localStorage.setItem('wearcycle.seenVersion',APP_VERSION); }catch(e){} return ''; }
@@ -792,7 +792,7 @@ function renderStatus(){
   if(!S.online){ st.textContent='Offline'; st.className='status warn'; b='<div class="banner"><div><b>You are offline.</b> Showing the last saved copy. Changes and automatic features need a connection.</div></div>'; }
   else if(S.fromCache){ st.textContent='Syncing'; st.className='status'; }
   else { st.textContent=''; st.className='status ok hidden'; }
-  b+=langSuggest(); b+=whatsNewBanner();
+  b=demoBar()+b; b+=langSuggest(); b+=whatsNewBanner();
   // never above the outfit, where it pushed Wear this under the tab bar (Phase 15); Settings has Install too
   if(S.online && S.installEvt && S.tab!=='outfits' && !LS.get('wardrobe.installDismissed')) b+='<div class="banner" style="background:var(--accent-soft)"><div style="flex:1"><b style="color:var(--accent)">Install Wearcycle</b> to open it from your home screen like any app.</div><button class="btn sm primary" data-act="install">Install</button><button class="btn sm ghost" data-act="installNo">Later</button></div>';
   $('#banner').innerHTML=b;
@@ -2156,6 +2156,7 @@ function changeSetting(k,v){
 }
 let setTimer=null;
 function queueSettingsSave(){
+  if(S.demo) return; // the example closet saves nothing
   const st=$('#set-status'); if(st) st.textContent='Saving…';
   clearTimeout(setTimer);
   setTimer=setTimeout(async()=>{
@@ -3068,14 +3069,80 @@ window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); S.install
 window.addEventListener('appinstalled',()=>{ S.installEvt=null; if(UID){ renderStatus(); toast('Wearcycle is installed. Open it from its home-screen icon.',6000); } });
 
 /* ---------- setup and sign-in screens ---------- */
-function showGate(html,cls){ $('#appRoot').hidden=true; const g=$('#gate'); g.hidden=false; g.className='gate'+(cls?' '+cls:'');
+function showGate(html,cls,noBrand){ $('#appRoot').hidden=true; const g=$('#gate'); g.hidden=false; g.className='gate'+(cls?' '+cls:'');
+  if(noBrand){ g.innerHTML=html; return; }
   g.innerHTML=`<div class="brandrow"><img class="logo" src="icons/logo-icon.svg" alt="" width="52" height="52"><div class="brand">Wearcycle<small data-notr>WEAR · CARE · DONATE · BUY</small></div><button type="button" class="langbtn" id="g-langbtn" aria-label="Language">${GLOBE_ICON}<span class="ln" data-notr>${esc(langName(I18N.lang))}</span></button></div>`+html; }
-/* Sign-in and welcome (Phase 13, the brand moment): an outfit laid out on the cream canvas, drawn with the app's own
-   garment pictures (the ones a piece shows before it has a photo), so the first screen shows what Wearcycle does with
-   clothes. Decorative: hidden from screen readers; the headline and the list say it in words. */
-function gateBoard(){ const p=[['outerwear','navy'],['top','white'],['bottom','khaki'],['shoes','brown'],['belt','brown'],['watch','grey'],['hat','beige']].map(([cat,c])=>({id:'gate-'+cat,cat,colors:[c],name:''}));
-  const o={outer:p[0],top:p[1],bottom:p[2],shoes:p[3],acc:p.slice(4)};
-  return `<div class="flatlay gateboard" aria-hidden="true">${flCells(o).map(c=>`<span class="fl${c.small?' small':''}" style="left:${c.x}%;top:${c.y}%;width:${c.w}%;height:${c.h}%">${glyph(c.it)}</span>`).join('')}</div>`; }
+/* ---------- welcome page for new visitors (v1.69.0, owner 2026-11-13) ----------
+   An example pick drawn with the garment glyphs (photos replace them later), how it works, Care, data, and two ways in:
+   a free account, or the example closet without one (nothing saved). Pieces and reasons match the example closet. */
+const WEX={
+  work:{n:5,match:'Excellent match',t:12,w:'Rain from 3 pm',main:[['outerwear','green','Layer','Green rain jacket'],['top','lightblue','Top','Light blue shirt'],['bottom','khaki','Bottom','Khaki chinos']],
+    small:[['shoes','brown','Brown leather shoes'],['belt','brown','Brown belt'],['watch','grey','Steel watch']],
+    why:['A rain jacket for the rain from 3 pm','Light blue and khaki go well together','The shirt was last worn 9 days ago']},
+  out:{n:4,match:'Great match',t:17,w:'Clear',main:[['top','red','Top','Plaid button-up shirt'],['bottom','denim','Bottom','Dark jeans'],['shoes','white','Shoes','White sneakers']],
+    small:[['watch','grey','Steel watch']],why:['Plaid and denim: a relaxed pair','Light enough for 17°C','Not worn together in the last 2 weeks']},
+  sport:{n:3,match:'Good match',t:9,w:'Cloudy',main:[['top','grey','Top','Grey tee'],['bottom','black','Bottom','Black joggers'],['shoes','grey','Shoes','Running shoes']],
+    small:[],why:['Made for moving','Running shoes: a condition check is due']},
+  formal:{n:5,match:'Excellent match',t:14,w:'Clear',main:[['outerwear','navy','Layer','Navy blazer'],['top','white','Top','White dress shirt'],['bottom','navy','Bottom','Navy suit trousers']],
+    small:[['shoes','black','Black oxford shoes'],['belt','black','Black leather belt']],why:['Navy and white: a classic pair','Every piece at the same level of formality']}};
+let WEX_OCC='work';
+const TICK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12l4 4 10-10"/></svg>';
+function wexGlyph(cat,c){ return `<span class="wex-pic">${glyph({cat,colors:[c]})}</span>`; }
+function wexCard(){ const o=WEX[WEX_OCC];
+  return `<div class="wex-occ chips" role="group" aria-label="Occasion">${Object.keys(WEX).map(k=>`<button type="button" class="chip" data-wex="${k}" aria-pressed="${k===WEX_OCC}">${esc(OCC[k].label)}</button>`).join('')}</div>
+    <div class="wex-h"><span class="rank top" aria-hidden="true" data-notr>01</span><span class="wex-t"><b><span>Today’s pick</span><span class="ex">Example</span></b><span><span>${o.match}</span>${bars(o.n)}</span></span></div>
+    <p class="wex-wx"><span data-notr>${o.t}°C</span> · <span>${o.w}</span></p>
+    <div class="wex-main">${o.main.map(([cat,c,k,n])=>`<div class="wex-pc">${wexGlyph(cat,c)}<span class="wex-k">${k}</span><b>${n}</b></div>`).join('')}</div>
+    ${o.small.length?`<div class="wex-small">${o.small.map(([cat,c,n])=>`<span class="wex-sm">${wexGlyph(cat,c)}<span>${n}</span></span>`).join('')}</div>`:''}
+    <ul class="wex-why">${o.why.map(t=>`<li>${TICK}<span>${t}</span></li>`).join('')}</ul>`; }
+function showWelcome(){
+  S.demo=false;
+  const step=(n,t,d)=>`<li><span class="wh-n" aria-hidden="true" data-notr>${n}</span><span><b>${t}</b><span>${d}</span></span></li>`;
+  const crow=(cat,c,name,tag,txt)=>`<div class="wh-crow">${wexGlyph(cat,c)}<span class="wh-ct"><b>${name}</b><span><span>${tag}</span> · <span>${txt}</span></span></span></div>`;
+  showGate(`<header class="wh-top"><a class="wh-brand" href="./" aria-label="Wearcycle"><img class="logo" src="icons/logo-icon.svg" alt="" width="40" height="40"><span class="brand" data-notr>Wearcycle<small>WEAR · CARE · DONATE · BUY</small></span></a>
+    <span class="wh-acts"><button type="button" class="langbtn" id="g-langbtn" aria-label="Language">${GLOBE_ICON}<span class="ln" data-notr>${esc(langName(I18N.lang))}</span></button><button type="button" class="btn" id="g-signin">Sign in</button></span></header>
+   <div class="wh-main">
+    <section class="wh-hero" aria-labelledby="wh-h1">
+     <div class="wh-intro"><h1 id="wh-h1">Get dressed in seconds.</h1><p class="wh-lead">Wearcycle picks today's outfit from clothes you already own, for the weather and where you're going.</p></div>
+     <div class="wh-card" id="wh-card">${wexCard()}</div>
+     <div class="wh-act"><button type="button" class="btn primary cta" data-welcome="up">Create a free account</button><button type="button" class="btn wh-demo" id="g-demo">Look around an example closet</button>
+      <p class="wh-trust">No ads. No tracking. Delete everything whenever you want.</p></div>
+    </section>
+    <section class="wh-band" aria-labelledby="wh-how"><div class="wh-in"><h2 id="wh-how">How it works</h2><ol class="wh-steps">
+     ${step('01','Photograph your clothes','One piece per photo. The app cuts each one out on your device and can fill in the details for you.')}
+     ${step('02','Get a pick every morning','Outfits ranked for the occasion and the weather, each with the reasons behind it.')}
+     ${step('03','Keep your clothes in use','Laundry, condition checks and repairs, what to donate, and only the purchases that fill a real gap.')}</ol></div></section>
+    <div class="wh-two">
+     <section aria-labelledby="wh-care"><h2 id="wh-care">Care, not just outfits</h2><p class="wh-p">Wearcycle notices what needs attention, from the same closet.</p>
+      <div class="wh-care">${crow('shoes','grey','Running shoes','Condition check due','31 wears since the last one')}${crow('top','white','Stained paint tee','Worn out','Donate or recycle, with places near you')}${crow('bottom','khaki','Khaki chinos','Buy next','A second pair would add 9 work outfits')}</div>
+      <p class="wh-note">Example closet. Your own pieces appear here once you add them.</p></section>
+     <section aria-labelledby="wh-data"><h2 id="wh-data">Your clothes, your data</h2><ul class="wh-ticks">
+      ${['AI features are optional. Without them you fill in each piece yourself.','Download or delete your closet and photos at any time.','No ads and no tracking.','Works on Android, iPad and Windows, in 7 languages.'].map(t=>`<li>${TICK}<span>${t}</span></li>`).join('')}</ul></section>
+    </div>
+    <section class="wh-close"><div><p class="wh-big">Start with three pieces.</p><p>A top, a bottom and a pair of shoes are enough for a first pick. Add the rest whenever you like.</p></div><button type="button" class="btn primary cta" data-welcome="up">Create a free account</button></section>
+   </div>
+   <footer class="wh-foot"><a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">Privacy notice</a><a href="${pageUrl('whats-new.html')}" target="_blank" rel="noopener">What's new</a><span data-notr>Wearcycle v${APP_VERSION}</span>${FIXED_SERVER?'':'<button type="button" class="linkbtn" id="g-server">Server settings</button>'}</footer>`,'home',true);
+  $('#g-signin').onclick=()=>showLogin('','in',true);
+  $('#g-demo').onclick=startDemo;
+  if($('#g-server')) $('#g-server').onclick=()=>showSetup(true);
+}
+document.addEventListener('click',e=>{ const t=e.target.closest&&e.target.closest('[data-wex],[data-welcome]'); if(!t) return;
+  if(t.dataset.wex){ WEX_OCC=t.dataset.wex; $('#wh-card').innerHTML=wexCard(); const b=$(`#wh-card [data-wex="${WEX_OCC}"]`); if(b) b.focus(); return; }
+  showLogin('',t.dataset.welcome,true); });
+/* Example closet without an account: the app with the example pieces only. UID stays null, settings are not saved,
+   and anything that would add or store something asks for an account instead. */
+const DEMO_BLOCK='#addBtn,#rulesBtn,#railSettings,[data-ai],[data-act^="inspo"],[data-act^="scan"],'+['camBatch','bulk','add','ideas','export','wipe','signout','chpass','server','cutAll','cutOutfit','cropAll','reminders','clearEx','examples'].map(a=>`[data-act="${a}"]`).join(',');
+function startDemo(){
+  S.demo=true; UID=null; S.occ=OCC[WEX_OCC]?WEX_OCC:defaultOcc(); S.loaded=true;
+  $('#gate').hidden=true; $('#appRoot').hidden=false; loadExamples();
+}
+function demoAsk(){ openSheet(sheetHead('Create an account to add your own clothes')+`<p>This is an example closet. With a free account you can photograph your own clothes, and everything is saved.</p>
+  <div class="row"><button class="btn primary" data-demo="up">Create a free account</button><button class="btn ghost" data-demo="stay">Keep looking</button></div>`); }
+function demoBar(){ return S.demo?`<div class="banner demobar"><div><b>Example closet.</b> <span>Nothing is saved.</span></div><button class="btn sm primary" data-demo="up">Create account</button><button class="btn sm ghost" data-demo="leave">Leave</button></div>`:''; }
+document.addEventListener('click',e=>{ if(!S.demo) return; const t=e.target.closest&&e.target.closest('[data-demo]');
+  if(t){ e.preventDefault(); e.stopPropagation(); const k=t.dataset.demo; if(k==='stay'){ closeSheet(); return; }
+    history.replaceState(null,'',location.pathname+location.search+(k==='up'?'#signup':'')); location.reload(); return; }
+  const b=e.target.closest&&e.target.closest(DEMO_BLOCK); if(b){ e.preventDefault(); e.stopPropagation(); demoAsk(); } },true);
 function showSetup(again){
   showGate(`<div class="card2"><h3>Connect your database</h3>
     <p class="hint">Paste the two values from your Supabase project (Project Settings, then API Keys). Both are safe to keep on this device. Never paste a secret key here.</p>
@@ -3101,37 +3168,35 @@ document.addEventListener('click',e=>{ const b=e.target.closest&&e.target.closes
   inp.type=show?'text':'password'; b.setAttribute('aria-pressed',String(show)); b.textContent=show?'Hide':'Show'; b.setAttribute('aria-label',show?'Hide password':'Show password'); inp.focus(); });
 // New passwords: at least 8 characters, typed twice. Returns an error message or ''.
 function pwCheck(a,b){ if(a.length<8) return 'Use at least 8 characters.'; if(a!==b) return 'The two passwords do not match.'; return ''; }
-function showLogin(msg,mode){
+function showLogin(msg,mode,fromWelcome){
   mode=mode||'up';
   const up=mode==='up', reset=mode==='reset';
-  showGate(`<section class="welcome"><h1>Get dressed in seconds.</h1>
-    <div class="wpair">${gateBoard()}<p>Photograph your clothes once. Every day, Wearcycle lays out the best outfit from your own closet, for the weather and the occasion, and tells you what to repair, donate or buy.</p></div></section>
-   <section class="card2 gform"><div class="gmode" role="group"><button type="button" aria-pressed="${up}" id="g-mode-up">Create account</button><button type="button" aria-pressed="${!up}" id="g-mode-in">Sign in</button></div>
+  const title=reset?'Forgot password?':up?'Create your free account':'Sign in';
+  showGate(`<section class="card2 gform">${fromWelcome||!LS.get('wearcycle.known')?`<button type="button" class="linkbtn gback" id="g-home">${CHEV_L}<span>Back</span></button>`:''}<h1 class="gtitle">${title}</h1>
+    ${reset?'':`<div class="gmode" role="group"><button type="button" aria-pressed="${up}" id="g-mode-up">Create account</button><button type="button" aria-pressed="${!up}" id="g-mode-in">Sign in</button></div>`}
     <div class="field"><label for="g-email">Email</label><input type="email" id="g-email" autocomplete="email"></div>
     ${reset?'':pwField('g-pass',up?'Password (8+ characters)':'Password',up?'new-password':'current-password')}
-    ${up?pwField('g-pass2','Confirm password','new-password'):''}
     ${up?`<label class="consent"><input type="checkbox" id="g-agree"><span>I agree to the <a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">privacy notice</a>: my clothes, photos and outfit log are stored with Supabase, and an AI service (Claude by Anthropic, United States) reads the photos I add. I am 13 or older.</span></label>`
       :`<p class="hint">How your data is handled: <a href="${pageUrl('privacy.html')}" target="_blank" rel="noopener">privacy notice</a>.</p>`}
     <p class="err" id="g-err" role="alert">${esc(msg||'')}</p><p class="gnote" id="g-note" role="status"></p>
-    ${reset?'<button class="btn primary" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back">Back to sign in</button>'
-      :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'':'<button class="linkbtn" id="g-forgot">Forgot password?</button>'}`}
-    <div class="gfoot"><p class="hint">Wearcycle v${APP_VERSION}</p>${FIXED_SERVER?'':'<button class="btn ghost sm" id="g-server">Server settings</button>'}</div></section>
-   <ul class="perks"><li>Ranked outfits with a reason for each</li><li>Flat-lay view of every look</li><li>Care, donate and shopping lists from what you own</li></ul>`,'login');
+    ${reset?'<button class="btn primary cta" id="g-reset">Send reset link</button><button class="linkbtn" id="g-back">Back to sign in</button>'
+      :`<button class="btn primary cta" id="${up?'g-up':'g-in'}">${up?'Create account':'Sign in'}</button>${up?'<p class="hint">Next: we send a confirmation email. Then photograph a top, a bottom and a pair of shoes for your first pick.</p>':'<button class="linkbtn" id="g-forgot">Forgot password?</button>'}`}
+    ${FIXED_SERVER?'':'<div class="gfoot"><button class="btn ghost sm" id="g-server">Server settings</button></div>'}</section>`,'login');
+  if($('#g-home')) $('#g-home').onclick=showWelcome;
   const note=t=>{ $('#g-err').textContent=''; $('#g-note').textContent=t; }; // confirmations are not errors
   const creds=()=>({email:$('#g-email').value.trim(),password:($('#g-pass')||{}).value||''});
-  $('#g-mode-up').onclick=()=>showLogin('','up'); $('#g-mode-in').onclick=()=>showLogin('','in');
+  if($('#g-mode-up')){ $('#g-mode-up').onclick=()=>showLogin('','up',fromWelcome); $('#g-mode-in').onclick=()=>showLogin('','in',fromWelcome); }
   if($('#g-in')) $('#g-in').onclick=async()=>{ const c=creds(); if(!c.email||!c.password){ $('#g-err').textContent='Enter your email and password.'; return; }
     $('#g-in').disabled=true; const {error}=await sb.auth.signInWithPassword(c); if($('#g-in')) $('#g-in').disabled=false;
     if(error) $('#g-err').textContent=error.message==='Invalid login credentials'?'Email or password is wrong.':error.message; };
   if($('#g-up')) $('#g-up').onclick=async()=>{ const c=creds(); if(!c.email||c.password.length<8){ $('#g-err').textContent='Enter an email and a password of at least 8 characters.'; return; }
-    if(c.password!==$('#g-pass2').value){ $('#g-err').textContent='The two passwords do not match.'; return; }
     if(!$('#g-agree').checked){ $('#g-err').textContent='Check the box to agree to the privacy notice first.'; return; }
     try{ localStorage.setItem('wearcycle.consent',new Date().toISOString()); }catch(e){}
     $('#g-up').disabled=true; const {data,error}=await sb.auth.signUp({email:c.email,password:c.password,options:{emailRedirectTo:location.origin+location.pathname}}); if($('#g-up')) $('#g-up').disabled=false;
     if(error){ $('#g-err').textContent=/not allowed|disabled/i.test(error.message)?'New accounts are not open yet. If someone created an account for you, use the Sign in tab.':error.message; return; }
     if(!data.session) note('Almost there: open the confirmation email, tap the link, then sign in here.'); };
-  if($('#g-forgot')) $('#g-forgot').onclick=()=>showLogin('','reset');
-  if($('#g-back')) $('#g-back').onclick=()=>showLogin('','in');
+  if($('#g-forgot')) $('#g-forgot').onclick=()=>showLogin('','reset',fromWelcome);
+  if($('#g-back')) $('#g-back').onclick=()=>showLogin('','in',fromWelcome);
   if($('#g-reset')) $('#g-reset').onclick=async()=>{ const e=$('#g-email').value.trim(); if(!e){ $('#g-err').textContent='Enter your email.'; return; }
     const {error}=await sb.auth.resetPasswordForEmail(e,{redirectTo:location.origin+location.pathname}); if(error) $('#g-err').textContent=error.message; else note('If that email has an account, a reset link is on its way.'); };
   if($('#g-server')) $('#g-server').onclick=()=>showSetup(true);
@@ -3172,6 +3237,8 @@ async function boot(){
     else if(event==='PASSWORD_RECOVERY'){ setTimeout(askNewPassword,0); }
   });
   const {data}=await sb.auth.getSession();
-  if(data&&data.session) startApp(data.session); else showLogin('',LS.get('wearcycle.known')?'in':'up');
+  if(data&&data.session) startApp(data.session);
+  else if(location.hash==='#signup'){ history.replaceState(null,'',location.pathname+location.search); showLogin('','up',true); }
+  else if(LS.get('wearcycle.known')) showLogin('','in'); else showWelcome();
 }
 boot();

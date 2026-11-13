@@ -264,6 +264,7 @@ body.hasjob .fab{bottom:calc(132px + env(safe-area-inset-bottom,0px))}
 /* Wide rail: the header becomes the top of the rail */
 @media (min-width:1280px) and (min-height:600px){
   body{padding-left:calc(208px + env(safe-area-inset-left,0px))}
+  body:has(#gate:not([hidden])){padding-left:0} /* sign-in and welcome have no rail */
   header.top{position:fixed;top:env(safe-area-inset-top,0px);left:env(safe-area-inset-left,0px);width:208px;min-height:0;z-index:7;background:none;border-bottom:0;flex-wrap:wrap;row-gap:8px;padding:16px 16px 0 24px}
   header.top .holibadge{left:46px;top:38px}
   header.top .status{margin-left:0} /* its own line under the logo; the longest status (fr Synchronisation, 137px) fits the 168px */
@@ -433,16 +434,6 @@ body:has(#camRoot .cam) .toast{top:calc(76px + env(safe-area-inset-top,0px));bot
 .gate .langbtn{margin-left:auto}
 .gate .card2{background:var(--raised);border:1px solid var(--line);border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:14px} /* flat: a hairline, no shadow */
 .gate a{color:inherit}
-.welcome{display:flex;flex-direction:column;gap:14px}
-.welcome h1{font-family:var(--f-display);font-weight:800;font-size:44px;line-height:.95;margin:0;letter-spacing:.005em;text-wrap:balance}
-.welcome p{margin:0;color:var(--muted);font-size:15px;max-width:52ch}
-.wpair{display:grid;grid-template-columns:44% minmax(0,1fr);gap:14px;align-items:center} /* phones: the board beside the promise, so the form starts in the first screen */
-.gateboard{width:100%;aspect-ratio:1;pointer-events:none}
-.gateboard .fl{padding:6px}
-.gateboard svg.glyph{filter:drop-shadow(0 2px 2px rgba(50,35,20,.16)) drop-shadow(0 8px 10px rgba(50,35,20,.12))}
-.perks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:14px}
-.perks li{display:flex;gap:10px;align-items:baseline}
-.perks li::before{content:"";flex:none;width:9px;height:5px;border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:translateY(-3px) rotate(-45deg)} /* a drawn ink tick (coral is for the action) */
 .gmode{display:grid;grid-template-columns:1fr 1fr;box-shadow:inset 0 -1px 0 var(--line);margin-top:-6px} /* text tabs with an ink underline, as on Outfits */
 .gmode button{min-height:44px;border:0;background:none;font-weight:600;color:var(--muted)}
 .gmode button[aria-pressed="true"]{color:var(--ink);font-weight:700;box-shadow:inset 0 -2px 0 var(--ink)}
@@ -453,16 +444,101 @@ body:has(#camRoot .cam) .toast{top:calc(76px + env(safe-area-inset-top,0px));bot
 .gnote:empty,.gform .err:empty{display:none}
 .gfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px}
 @media (min-width:600px){ .gate{max-width:560px;padding-top:40px} } /* iPad portrait and small windows: one wider column */
-@media (min-width:900px), (min-width:700px) and (max-height:599.98px){ /* iPad landscape, computers, phones turned sideways */
-  .gate.login{max-width:1200px;min-height:100vh;min-height:100svh;padding:32px clamp(24px,4vw,64px) 40px;display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,420px);grid-template-rows:auto auto auto;align-content:center;column-gap:clamp(32px,6vw,96px);row-gap:20px}
-  .gate.login .brandrow{grid-column:1 / -1;margin-bottom:8px}
-  .gate.login .welcome{grid-column:1;grid-row:2}
-  .gate.login .perks{grid-column:1;grid-row:3}
-  .gate.login .gform{grid-column:2;grid-row:2 / span 2;align-self:center;padding:24px}
-  .gate.login .wpair{display:flex;flex-direction:column;align-items:flex-start;gap:16px}
-  .gate.login .wpair p{order:-1}
-  .gate.login .welcome h1{font-size:clamp(48px,5vw,64px)}
-  .gate.login .gateboard{aspect-ratio:4/3;width:clamp(220px,calc((100vh - 480px) * 4 / 3),560px);width:clamp(220px,calc((100svh - 480px) * 4 / 3),560px);max-width:100%} }
+/* Sign-in and create account (v1.69.0): one column on every screen, reached from the welcome page */
+.gate.login{max-width:480px}
+.gtitle{font-family:var(--f-display);font-weight:800;font-size:38px;line-height:1;margin:0;text-wrap:balance}
+.gback{display:inline-flex;align-items:center;gap:4px;font-weight:600}
+.gback svg{width:20px;height:20px}
+@media (min-width:600px){ .gate.login{padding-top:56px} }
+
+/* Welcome page for new visitors (v1.69.0, owner 2026-11-13). Phone first; from 600px the actions sit in a row;
+   from 900px the example outfit stands beside the headline. */
+.gate.home{max-width:none;padding:0;display:block}
+.wh-top{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 16px;max-width:1280px;margin:0 auto}
+.wh-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0}
+.wh-brand .logo{width:40px;height:40px;flex:none}
+.wh-brand .brand{font-size:26px}
+.wh-brand .brand small{font-size:12px}
+.wh-acts{display:flex;gap:6px;flex:none}
+.wh-acts .btn,.wh-acts .langbtn{min-height:44px}
+.wh-main{max-width:1280px;margin:0 auto}
+.wh-hero{display:flex;flex-direction:column;gap:18px;padding:12px 16px 0}
+.wh-intro h1{font-family:var(--f-display);font-weight:800;font-size:46px;line-height:.98;margin:0;text-wrap:balance}
+.wh-lead{margin:14px 0 0;font-size:17px;max-width:48ch}
+.wh-card{background:var(--raised);border:1px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:14px}
+.wex-occ{display:flex;gap:6px;flex-wrap:wrap}
+.wex-occ .chip{min-height:40px}
+.wex-h{display:flex;align-items:center;gap:12px}
+.wex-h .rank{min-width:48px;height:48px;font-size:28px}
+.wex-t{display:flex;flex-direction:column;gap:2px;min-width:0}
+.wex-t b{font-size:18px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wex-t>span{display:flex;gap:8px;align-items:center;color:var(--muted);font-size:14px}
+.wex-wx{margin:0;font-size:14px;color:var(--muted)}
+.wex-main{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.wex-pc{display:flex;flex-direction:column;gap:4px;min-width:0}
+.wex-pc b{font-size:15px;line-height:1.25;overflow-wrap:break-word}
+.wex-pic{display:grid;place-items:center;aspect-ratio:1;border-radius:14px;background:linear-gradient(var(--canvas-1),var(--canvas-2))}
+.wex-pic svg.glyph{width:66%;height:66%}
+.wex-k{font-size:13px;color:var(--muted)}
+.wex-small{display:flex;gap:8px;flex-wrap:wrap}
+.wex-sm{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border-radius:12px;background:var(--bg);font-size:14px;font-weight:600}
+.wex-sm .wex-pic{width:40px;border-radius:9px;flex:none}
+.wex-why,.wh-ticks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.wex-why{padding-top:12px;border-top:1px solid var(--line);gap:6px;font-size:14px}
+.wex-why li,.wh-ticks li{display:flex;gap:8px}
+.wex-why svg{width:18px;height:18px;flex:none;margin-top:1px}
+.wh-act{display:flex;flex-direction:column;gap:10px}
+.wh-act .btn,.wh-close .btn{min-height:52px;font-size:17px;border-radius:14px}
+.wh-act .btn{width:100%}
+.btn.wh-demo{border:1.5px solid var(--ink);background:transparent;font-weight:600}
+.wh-trust{margin:0;font-size:13px;color:var(--muted);text-align:center}
+.wh-band{margin-top:40px;background:var(--raised);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.wh-in{max-width:1280px;margin:0 auto;padding:28px 16px}
+.gate.home h2{font-size:32px;text-transform:uppercase}
+.wh-steps{list-style:none;margin:20px 0 0;padding:0;display:grid;gap:22px}
+.wh-steps li{display:flex;gap:14px}
+.wh-steps b{display:block;font-size:17px}
+.wh-steps li>span>span{color:var(--muted)}
+.wh-n{flex:none;width:44px;height:44px;border-radius:10px;background:var(--ink);color:var(--bg);font-family:var(--f-display);font-weight:800;font-size:24px;line-height:1;display:grid;place-items:center}
+.wh-two{display:grid;gap:32px;padding:32px 16px 0}
+.wh-p{margin:10px 0 14px;color:var(--muted)}
+.wh-care{background:var(--raised);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.wh-crow{display:flex;gap:12px;align-items:center;padding:12px}
+.wh-crow+.wh-crow{border-top:1px solid var(--line)}
+.wh-crow .wex-pic{width:56px;flex:none;border-radius:10px}
+.wh-ct{display:flex;flex-direction:column;min-width:0}
+.wh-ct>span{font-size:14px;color:var(--muted)}
+.wh-note{margin:10px 0 0;font-size:13px;color:var(--muted)}
+.wh-ticks{margin-top:14px;gap:10px}
+.wh-ticks svg{width:20px;height:20px;flex:none;margin-top:1px}
+.wh-close{margin:36px 16px 0;padding:24px 20px;border-radius:20px;background:var(--accent);color:var(--accent-ink);display:flex;flex-direction:column;gap:14px}
+.wh-close p{margin:0}
+.wh-big{font-family:var(--f-display);font-weight:800;font-size:34px;line-height:1;margin:0 0 8px!important}
+.wh-foot{max-width:1280px;margin:0 auto;padding:28px 16px 40px;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--muted);align-items:center}
+.wh-foot a{color:inherit}
+.wh-foot .linkbtn{margin:0}
+.banner.demobar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px}
+.banner.demobar>div{flex:1 1 180px}
+@media (max-width:599.98px){ .banner.demobar>div{flex-basis:100%} }
+.banner.demobar .btn{min-height:40px}
+@media (max-width:479.98px){ .wh-brand .brand small{display:none} .wh-acts .langbtn .ln{display:none} }
+@media (min-width:600px){
+  .wh-top{padding:20px 32px} .wh-hero{padding:24px 32px 0;gap:22px}
+  .wh-intro h1{font-size:64px} .wh-lead{font-size:20px}
+  .wh-act{order:2;flex-direction:row;flex-wrap:wrap} .wh-act .btn{width:auto;padding:0 24px} .wh-trust{text-align:left;width:100%}
+  .wh-card{order:3;width:100%;max-width:600px;align-self:center}
+  .wh-in{padding:40px 32px} .wh-two{padding:40px 32px 0} .wh-close{margin:48px 32px 0;padding:32px} .wh-foot{padding:32px} }
+@media (min-width:900px){
+  .wh-top{padding:24px 40px}
+  .wh-hero{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);grid-template-areas:"intro card" "act card";column-gap:clamp(32px,5vw,64px);row-gap:24px;padding:40px 40px 0}
+  .wh-intro{grid-area:intro;align-self:end} .wh-act{grid-area:act;align-self:start} .wh-card{grid-area:card;align-self:center;max-width:none}
+  .wh-intro h1{font-size:clamp(64px,7vw,104px);line-height:.92}
+  .gate.home h2{font-size:44px}
+  .wh-in{padding:56px 40px} .wh-steps{grid-template-columns:repeat(3,minmax(0,1fr));gap:40px} .wh-steps li{flex-direction:column}
+  .wh-two{grid-template-columns:repeat(2,minmax(0,1fr));gap:64px;padding:64px 40px 0}
+  .wh-close{max-width:1200px;margin:72px auto 0;flex-direction:row;align-items:center;justify-content:space-between;padding:40px 48px}
+  .wh-big{font-size:48px} .wh-close .btn{flex:none;padding:0 28px}
+  .wh-foot{padding:40px} }
 .version{margin:28px 0 0;text-align:center;font-size:12px;color:var(--muted)}
 /* Closet below 700px wide, where Add clothes floats above the bar (v1.63.1): a page 22 to 92px taller than the screen
    showed the version line under Add clothes on the first screen (an empty closet at 360x800 is 30px taller). A page at

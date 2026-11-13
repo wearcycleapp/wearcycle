@@ -274,7 +274,8 @@ async function signIn(browser, base, data) {
     watchConsole(page, () => 'sign-in');
     page.on('requestfailed', r => { if (/\/auth\/v1\/token/.test(r.url())) failure = r.failure() && r.failure().errorText || 'request failed'; });
     await page.goto(base + '/index.html');
-    await page.waitForSelector('#g-email', { timeout: 15000 });
+    await page.waitForSelector('#g-email, #g-signin', { timeout: 15000 }); // v1.69.0: new visitors land on the welcome page
+    if (await page.$('#g-signin')) { await page.click('#g-signin'); await page.waitForSelector('#g-email'); }
     if (await page.$('#g-mode-in')) await page.click('#g-mode-in');
     await page.fill('#g-email', R.auth.mode === 'real' ? email : CLOSET.user.email);
     await page.fill('#g-pass', R.auth.mode === 'real' ? pass : 'fixture-password');
@@ -805,8 +806,10 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
     watchConsole(page, () => w); try { await run(page, x => { w = x; }); } finally { await ctx.close(); }
   };
   if (on('signed-out')) await session(browser, { data: scenario(null), known: false }, async (page, sw) => {
-    await page.goto(base + '/index.html'); await page.waitForSelector('#g-email', { timeout: 15000 });
-    await record(page, sw, 'signup', null, 'page', () => {});
+    await page.goto(base + '/index.html'); await page.waitForSelector('#g-signin', { timeout: 15000 });
+    await record(page, sw, 'welcome', null, 'page', () => {}); // v1.69.0: the welcome page, then its example switched to Formal
+    await record(page, sw, 'welcome-formal', null, 'page', () => page.click('[data-wex="formal"]'));
+    await record(page, sw, 'signup', null, 'page', async () => { await page.click('[data-welcome="up"]'); await page.waitForSelector('#g-email'); });
     await record(page, sw, 'signin', null, 'page', () => page.click('#g-mode-in'));
     await record(page, sw, 'signin-error', null, 'page', () => page.click('#g-in'));
     await record(page, sw, 'reset', null, 'page', () => page.click('#g-forgot'));

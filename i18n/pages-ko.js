@@ -127,5 +127,8 @@ I18N.add("ko",{
 "The picture you share of an outfit is easier to read on a phone: all text is larger, every name is dark, no word is split in two, and shoes and accessories get bigger when there is room. With many accessories, they are listed in two columns with their names beside them. The wish list picture’s text is larger too.": "공유하는 코디 이미지가 휴대폰에서 더 잘 읽힙니다. 모든 글자가 더 커지고, 모든 이름이 진한 색이며, 단어가 둘로 나뉘지 않고, 공간이 있으면 신발과 액세서리가 더 크게 보입니다. 액세서리가 많으면 이름을 옆에 붙여 두 열로 보여 줍니다. 위시리스트 이미지의 글자도 더 커졌습니다.",
 "On phones, the Settings button no longer runs off the edge of the screen when you are offline or while the app is syncing.": "휴대폰에서 오프라인일 때나 앱이 동기화하는 동안 설정 버튼이 더 이상 화면 가장자리 밖으로 나가지 않습니다.",
 "On phones, the offer to use your phone’s language puts its buttons under the sentence, so it is easier to read.": "휴대폰에서 휴대폰 언어를 사용하라는 안내의 버튼이 문장 아래에 놓여 더 읽기 쉽습니다.",
-"With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "옷장이 커도 같은 날에는 계산할 때마다 같은 추천과 같은 관리 목록이 나옵니다."
+"With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "옷장이 커도 같은 날에는 계산할 때마다 같은 추천과 같은 관리 목록이 나옵니다.",
+"New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "처음 오신 분은 먼저 환영 페이지를 보게 돼요: 상황별로 바꿔 볼 수 있는 예시 코디, 앱 사용 방법, 데이터를 어떻게 다루는지.",
+"You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "계정을 만들기 전에 예시 옷장을 둘러볼 수 있어요. 아무것도 저장되지 않고, 거기서 바로 계정을 만들 수 있어요.",
+"Creating an account asks for your password once, with a Show button to check it.": "계정을 만들 때 비밀번호는 한 번만 입력하고, 보기 버튼으로 확인할 수 있어요."
 });

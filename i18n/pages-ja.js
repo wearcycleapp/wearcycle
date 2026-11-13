@@ -127,5 +127,8 @@ I18N.add("ja",{
 "The picture you share of an outfit is easier to read on a phone: all text is larger, every name is dark, no word is split in two, and shoes and accessories get bigger when there is room. With many accessories, they are listed in two columns with their names beside them. The wish list picture’s text is larger too.": "共有するコーデの画像がスマホで読みやすくなりました。文字はすべて大きくなり、名前はすべて濃い色になり、単語が途中で分かれることもなく、余白があれば靴や小物が大きく表示されます。小物が多いときは、名前を横に添えて2列で並びます。欲しいものリストの画像の文字も大きくなりました。",
 "On phones, the Settings button no longer runs off the edge of the screen when you are offline or while the app is syncing.": "スマホで、オフラインのときや同期中に、設定ボタンが画面の端からはみ出さなくなりました。",
 "On phones, the offer to use your phone’s language puts its buttons under the sentence, so it is easier to read.": "スマホでは、スマホの言語を使うかどうかの案内で、ボタンが文の下に並ぶようになり、読みやすくなりました。",
-"With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "アイテムが多いクローゼットでも、同じ日なら何度計算しても同じ提案と同じケアの一覧になります。"
+"With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "アイテムが多いクローゼットでも、同じ日なら何度計算しても同じ提案と同じケアの一覧になります。",
+"New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "初めての方には、まずようこそページが表示されます：場面ごとに切り替えられるコーデの例、アプリの使い方、データの扱いを紹介します。",
+"You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "アカウントを作成する前に、サンプルのクローゼットを見られます。何も保存されず、そこからアカウントを作成できます。",
+"Creating an account asks for your password once, with a Show button to check it.": "アカウント作成時のパスワード入力は1回だけになり、確認用の表示ボタンがあります。"
 });

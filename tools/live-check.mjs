@@ -264,7 +264,8 @@ async function signIn(browser) {
   const { ctx, log } = await guardedContext(browser, DEVICES.chromium[0]);
   const page = await ctx.newPage();
   await page.goto(BASE + '/');
-  await page.waitForSelector('#g-email', { timeout: 30000 });
+  await page.waitForSelector('#g-email, #g-signin', { timeout: 30000 }); // v1.69.0: new visitors land on the welcome page
+  if (await page.$('#g-signin')) { await page.click('#g-signin'); await page.waitForSelector('#g-email'); }
   if (await page.$('#g-mode-in')) await page.click('#g-mode-in');
   await page.waitForSelector('#g-in');
   await page.fill('#g-email', EMAIL); await page.fill('#g-pass', PASS); await page.click('#g-in');
@@ -403,7 +404,7 @@ async function main() {
     { // signed out: the sign-in screen, the version and the service worker (offline shell)
       const { ctx, log } = await guardedContext(chrome, DEVICES.chromium[0], { serviceWorkers: 'allow' });
       const page = await ctx.newPage();
-      await step('Signed out: sign-in screen and version', async () => { await page.goto(BASE + '/'); await page.waitForSelector('#g-email', { timeout: 30000 });
+      await step('Signed out: sign-in screen and version', async () => { await page.goto(BASE + '/'); await page.waitForSelector('#g-email, #g-signin', { timeout: 30000 });
         const txt = await page.textContent('#gate'); if (!txt.includes('Wearcycle v' + APP_VERSION)) throw new Error('version label is not v' + APP_VERSION); return 'v' + APP_VERSION; });
       await step('Service worker installs and controls the page', async () => {
         const state = await page.evaluate(() => Promise.race([
@@ -411,7 +412,7 @@ async function main() {
             : new Promise(res => r.active.addEventListener('statechange', e => { if (e.target.state === 'activated' || e.target.state === 'redundant') res(e.target.state); }))),
           new Promise(r => setTimeout(() => r('timeout'), 20000))]));
         if (state !== 'activated') throw new Error('state ' + state);
-        await page.reload(); await page.waitForSelector('#g-email', { timeout: 30000 });
+        await page.reload(); await page.waitForSelector('#g-email, #g-signin', { timeout: 30000 });
         if (!(await page.evaluate(() => !!navigator.serviceWorker.controller))) throw new Error('no controller after reload');
         return 'activated, controls the page after reload'; });
       // v1.58.6: the standalone pages must open while the service worker controls the site (it once followed
