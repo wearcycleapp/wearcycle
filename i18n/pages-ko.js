@@ -130,5 +130,6 @@ I18N.add("ko",{
 "With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "옷장이 커도 같은 날에는 계산할 때마다 같은 추천과 같은 관리 목록이 나옵니다.",
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "처음 오신 분은 먼저 환영 페이지를 보게 돼요: 상황별로 바꿔 볼 수 있는 예시 코디, 앱 사용 방법, 데이터를 어떻게 다루는지.",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "계정을 만들기 전에 예시 옷장을 둘러볼 수 있어요. 아무것도 저장되지 않고, 거기서 바로 계정을 만들 수 있어요.",
-"Creating an account asks for your password once, with a Show button to check it.": "계정을 만들 때 비밀번호는 한 번만 입력하고, 보기 버튼으로 확인할 수 있어요."
+"Creating an account asks for your password once, with a Show button to check it.": "계정을 만들 때 비밀번호는 한 번만 입력하고, 보기 버튼으로 확인할 수 있어요.",
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "빨래를 모두 깨끗함으로 표시하면 이제 몇 초 동안 하나씩이 아니라 목록이 바로 바뀌어요."
 });

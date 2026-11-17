@@ -130,5 +130,6 @@ I18N.add("es",{
 "With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "Con un clóset grande, el mismo día ahora da las mismas sugerencias y la misma lista de Cuidado cada vez que se calculan.",
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "Las personas nuevas ven primero una página de bienvenida: un conjunto de ejemplo que puedes cambiar según la ocasión, cómo funciona la app y qué hace con tus datos.",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "Puedes ver un clóset de ejemplo antes de crear una cuenta. No se guarda nada, y puedes crear tu cuenta desde ahí.",
-"Creating an account asks for your password once, with a Show button to check it.": "Al crear una cuenta, la contraseña se pide una sola vez, con un botón Mostrar para revisarla."
+"Creating an account asks for your password once, with a Show button to check it.": "Al crear una cuenta, la contraseña se pide una sola vez, con un botón Mostrar para revisarla.",
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "Marcar toda la ropa como limpia ahora actualiza la lista al instante, en vez de prenda por prenda durante varios segundos."
 });

@@ -130,5 +130,6 @@ I18N.add("ja",{
 "With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "アイテムが多いクローゼットでも、同じ日なら何度計算しても同じ提案と同じケアの一覧になります。",
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "初めての方には、まずようこそページが表示されます：場面ごとに切り替えられるコーデの例、アプリの使い方、データの扱いを紹介します。",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "アカウントを作成する前に、サンプルのクローゼットを見られます。何も保存されず、そこからアカウントを作成できます。",
-"Creating an account asks for your password once, with a Show button to check it.": "アカウント作成時のパスワード入力は1回だけになり、確認用の表示ボタンがあります。"
+"Creating an account asks for your password once, with a Show button to check it.": "アカウント作成時のパスワード入力は1回だけになり、確認用の表示ボタンがあります。",
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "洗濯物をすべてきれいにしたとき、リストが数秒かけて1点ずつではなく、すぐに更新されるようになりました。"
 });

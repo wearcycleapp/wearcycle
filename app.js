@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.69.0';
+const APP_VERSION='1.69.1';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -937,8 +937,17 @@ function washCard(){
 }
 async function autoWash(){
   if(!laundryOn()||!S.settings.washAuto||!canWrite()) return; const due=washDue(); if(!due.length) return;
-  for(const it of due) await patchItem(it.id,{dirty:false,wearsSinceWash:0,dirtyOn:undefined});
-  toast(due.length+' piece'+(due.length===1?'':'s')+' back from the wash after '+washDays()+' days.',5000);
+  await markClean(due,()=>toast(due.length+' piece'+(due.length===1?'':'s')+' back from the wash after '+washDays()+' days.',5000));
+}
+/* Several pieces back from the wash (v1.69.1): every piece changes on screen at once, with one render and the message
+   right away; the saves then run side by side. Before, each piece rendered the whole app and waited for its own save
+   in turn, so the list emptied piece by piece over several seconds. A save that fails puts that piece back and says so
+   (writeItem). */
+async function markClean(list,done){
+  if(list.some(it=>!isEx(it))&&!canWrite()){ toast('You are offline. Changes need a connection.'); return []; }
+  const jobs=list.map(it=>patchItem(it.id,{dirty:false,wearsSinceWash:0,dirtyOn:undefined},true));
+  renderAll(); if(done) done();
+  return Promise.all(jobs);
 }
 /* ---------- Outfits (Phase 8) ----------
    Direction A, "Kit", below 700px wide or 600px tall: the occasions as a 3 by 2 grid, the kit (every piece named),
@@ -2941,7 +2950,7 @@ document.addEventListener('click',async e=>{
     case 'privacyNoClaude': privacyAgree(false); return;
     case 'scanGraphics': scanGraphics(); return;
     case 'washSnooze': { try{ localStorage.setItem('wearcycle.washSnooze',todayISO()); }catch(e){} renderOutfits(); toast('I will ask again tomorrow.'); return; }
-    case 'allClean': { const ds=allItems().filter(i=>isActive(i)&&i.dirty); for(const it of ds) await patchItem(it.id,{dirty:false,wearsSinceWash:0,dirtyOn:undefined}); S.cat='all'; renderAll(); toast(ds.length+' piece'+(ds.length===1?'':'s')+' back in rotation.'); return; }
+    case 'allClean': { const ds=allItems().filter(i=>isActive(i)&&i.dirty); S.cat='all'; await markClean(ds,()=>toast(ds.length+' piece'+(ds.length===1?'':'s')+' back in rotation.')); return; }
     case 'diary': DI=null; openDiary(); return;
     case 'stats': openStats(); return;
     case 'share': shareOutfit(); return;

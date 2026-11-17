@@ -130,5 +130,6 @@ I18N.add("tl",{
 "With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "Sa malaking closet, pareho na ang mga mungkahi at ang listahan sa Alaga sa buong araw, tuwing kinukuwenta ang mga ito.",
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "Welcome page na ang unang makikita ng mga bagong tao: isang halimbawang outfit na mapapalitan ayon sa okasyon, kung paano gumagana ang app, at ano ang ginagawa nito sa data mo.",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "Puwede mong tingnan ang halimbawang closet bago gumawa ng account. Walang nase-save, at puwede kang gumawa ng account mula roon.",
-"Creating an account asks for your password once, with a Show button to check it.": "Isang beses na lang hinihingi ang password kapag gumagawa ng account, may button na Ipakita para masuri ito."
+"Creating an account asks for your password once, with a Show button to check it.": "Isang beses na lang hinihingi ang password kapag gumagawa ng account, may button na Ipakita para masuri ito.",
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "Kapag minarkahan mong malinis ang lahat ng labada, agad nang nag-a-update ang listahan, sa halip na isa-isa nang ilang segundo."
 });

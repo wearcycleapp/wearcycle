@@ -130,5 +130,6 @@ I18N.add("hi",{
 "With a large closet, the same day now gives the same suggestions and the same Care list each time they are worked out.": "बड़ी अलमारी में, एक ही दिन अब हर बार एक जैसे सुझाव और देखभाल की एक जैसी सूची देता है।",
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "नए लोग अब सबसे पहले स्वागत पेज देखते हैं: एक उदाहरण आउटफ़िट जिसे मौके के हिसाब से बदल सकते हैं, ऐप कैसे काम करता है, और यह आपके डेटा के साथ क्या करता है।",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "खाता बनाने से पहले आप एक उदाहरण अलमारी देख सकते हैं। कुछ भी सहेजा नहीं जाता, और वहीं से आप अपना खाता बना सकते हैं।",
-"Creating an account asks for your password once, with a Show button to check it.": "खाता बनाते समय पासवर्ड एक ही बार माँगा जाता है, उसे जाँचने के लिए दिखाएँ बटन के साथ।"
+"Creating an account asks for your password once, with a Show button to check it.": "खाता बनाते समय पासवर्ड एक ही बार माँगा जाता है, उसे जाँचने के लिए दिखाएँ बटन के साथ।",
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "सारे धुले कपड़ों को साफ़ मार्क करने पर अब सूची तुरंत बदल जाती है, कई सेकंड तक एक-एक करके नहीं।"
 });
