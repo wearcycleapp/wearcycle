@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.69.1';
+const APP_VERSION='1.69.2';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -200,8 +200,7 @@ async function fullPhotoUrl(path){
   if(error||!data) return '';
   signed.set(path,{url:data.signedUrl,exp:Date.now()+3500e3}); return data.signedUrl;
 }
-async function uploadPhoto(blob){
-  const path=UID+'/'+uuid()+'.jpg';
+async function uploadPhoto(blob,path=UID+'/'+uuid()+'.jpg'){
   const {error}=await sb.storage.from('photos').upload(path,blob,{contentType:'image/jpeg',upsert:false});
   if(error){ toast('Photo upload failed ('+(error.message||'unknown error')+'). The item was saved without the full photo.',4500); return null; }
   return path;
@@ -214,6 +213,11 @@ const medPath=photo=>String(photo).replace(/\.[a-z0-9]+$/i,'')+'-1024.jpg';
 async function uploadMed(photo,blob){ if(!photo) return null; if(!blob) return photo;
   const path=medPath(photo); const {error}=await sb.storage.from('photos').upload(path,blob,{contentType:'image/jpeg',upsert:false});
   return !error||error.status===409||error.statusCode==='409'||/exist|duplicate/i.test(error.message||'')?path:null; }
+// A photo and its 1024px copy upload side by side (v1.69.2): the copy's name comes from the photo's, so neither waits for
+// the other. If the photo fails, its copy is removed again.
+async function uploadPhotoMed(blob,med){ const path=UID+'/'+uuid()+'.jpg';
+  const [ph,m]=await Promise.all([uploadPhoto(blob,path),uploadMed(path,med)]);
+  if(!ph){ if(m&&m!==path) removePhoto(m); return {path:null,med:null}; } return {path:ph,med:m}; }
 function removePhotoFiles(photo){ if(photo&&sb) sb.storage.from('photos').remove([photo,medPath(photo)]).catch(()=>{}); }
 
 /* ---------- Claude (through the Supabase Edge Function) ---------- */
@@ -706,17 +710,21 @@ async function addPhotos(blobs){
   if(!blobs.length) return;
   if(!canWrite()){ toast('You are offline. Adding clothes needs a connection.'); return; }
   S.busy=true; let done=0, aiFail=0, aiWhy='', aiStop=claudeOn()?'':'off'; const added=[];
-  const list=blobs.slice(0,40);
-  for(const b of list){
-    job('Adding '+(done+1)+' of '+list.length+(aiStop?'':' · Reading the photo'),done/list.length*100);
+  const list=blobs.slice(0,40), saves=[];
+  // v1.69.2: each photo uploads (with its 1024px copy) while Claude or the color guess reads it, and the next photo
+  // starts without waiting for the piece's save; before, upload, copy, reading and save ran one after another.
+  for(const [k,b] of list.entries()){
+    job('Adding '+(k+1)+' of '+list.length+(aiStop?'':' · Reading the photo'),done/list.length*100);
     let p; try{ p=await prepare(b); }catch(e){ continue; }
     const now=todayISO();
-    const it={id:uuid(),name:'New item '+(done+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
-    const path=await uploadPhoto(p.full); if(path){ it.photo=path; const m=await uploadMed(path,p.med); if(m) it.med=m; }
+    const it={id:uuid(),name:'New item '+(k+1),cat:'top',colors:[],formality:2,occ:[],cond:4,notes:'',created:now,lastCheck:now,status:'active',worn:0,wearsSinceCheck:0,review:true,thumb:p.thumb};
+    const up=uploadPhotoMed(p.full,p.med);
     if(!claudeOn()){ try{ const g=await guessColors(p.full); if(g.length){ it.colors=[g[0]]; it.colorGuess=g; } }catch(e){} }
     if(!aiStop){ try{ const r=await aiTag(p.full); if(r&&!r.error){ applyAi(it,r); await applyBox(it,p.full,r.box); } else { aiFail++; aiWhy=aiWhy||'Could not get an answer right now. Try again.'; } }catch(e){ aiFail++; aiWhy=aiWhy||aiMsg(e); if(/not set up|API key|sign-in/.test(aiMsg(e))) aiStop=aiMsg(e); } }
-    if(await writeItem(it)){ done++; added.push(it); }
+    const u=await up; if(u.path){ it.photo=u.path; if(u.med) it.med=u.med; }
+    saves.push(writeItem(it).then(ok=>ok?it:null));
   }
+  for(const it of await Promise.all(saves)) if(it){ done++; added.push(it); }
   S.busy=false; job(''); renderAll();
   let dupMsg=[]; try{ const dp=await dupPairs(new Set(added.map(i=>i.id))); const nd=new Set(dp.flatMap(x=>[x.a.id,x.b.id]).filter(id=>added.some(a=>a.id===id))).size;
     if(nd) dupMsg=['Possible duplicates: '+nd+'. Review them in Closet.']; }catch(e){}
@@ -1348,9 +1356,10 @@ function dupAsk(keepId,dropId){ const keep=byId(keepId), drop=byId(dropId); if(!
 async function dupMerge(keepId,dropId){ const keep=byId(keepId), drop=byId(dropId); if(!keep||!drop) return;
   if(!canWrite()){ toast('You are offline. This needs a connection.'); return; }
   try{
+    toast('Saving…',0);
     const {data,error}=await sb.from('wears').select('id,date,occ,items').contains('items',[dropId]); if(error) throw error;
-    for(const w of data||[]){ const items=[...new Set(w.items.map(x=>x===dropId?keepId:x))];
-      const r=await sb.from('wears').update({items}).eq('id',w.id); if(r.error) throw r.error; }
+    const rs=await Promise.all((data||[]).map(w=>sb.from('wears').update({items:[...new Set(w.items.map(x=>x===dropId?keepId:x))]}).eq('id',w.id)));
+    const bad=rs.find(r=>r.error); if(bad) throw bad.error;
     for(const e of S.log) if((e.items||[]).includes(dropId)) e.items=[...new Set(e.items.map(x=>x===dropId?keepId:x))];
     const lw=[keep.lastWorn,drop.lastWorn].filter(Boolean).sort().pop();
     if(!await patchItem(keepId,Object.assign({worn:(keep.worn||0)+(drop.worn||0)},lw?{lastWorn:lw}:{}))) throw new Error('save');
@@ -1839,7 +1848,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    <div class="gbody"><div class="gmedia">
    <div class="gpic ${pv||it.photo?'zoomable':''} ${showCut||!pv?'studio':''}" ${pv||it.photo?`data-view="${esc(ED.id||'')}" role="button" aria-label="See full size"`:''}>${pv?`<img ${showCut?`data-cut="${esc(it.id)}"`:''} ${saved&&!showCut?`data-pick="${esc(it.id)}"`:''} src="${esc(pv)}" alt="">`:glyph(it)}${pv?`<span class="zoomhint" aria-hidden="true">${ZOOM_ICON}</span>`:''}</div>
      <div class="gacts"><button type="button" class="btn sm" data-photo="cam">Take photo</button><button type="button" class="btn sm ghost" data-photo="gal">Choose photo</button>
-     ${(ED.blob||(it.review&&it.photo&&!isEx(it)))&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy?'Reading photo…':'Fill in automatically'}</button>`:''}
+     ${(ED.blob||(it.review&&it.photo&&!isEx(it)))&&claudeOn()?`<button type="button" class="btn sm primary" data-ai="tag" ${ED.busy?'disabled':''}>${ED.busy&&!ED.saving?'Reading photo…':'Fill in automatically'}</button>`:''}
      ${ED.id&&!ED.blob&&needsCut(it)?(CUT.queue.includes(it.id)?'<span class="hint">Cut-out in progress…</span>':`<button type="button" class="btn sm primary" data-cutmake="1">${it.cut?'Make cut-out again':'Make cut-out'}</button>${it.cut?'<span class="hint">The saved cut-out could not be loaded.</span>':''}${!it.photo?'<span class="hint">Only a small preview of this photo is saved, so the cut-out will be soft. Choose the photo again for a sharper one.</span>':''}${CUT.failed[it.id]?`<span class="hint">Last try failed: ${esc(CUT.failed[it.id].slice(0,80))}</span>`:''}`):(ED.id&&!ED.blob&&it.cut&&!isEx(it)?`<button type="button" class="btn sm" data-cutredo="1" ${CUT.busy?'disabled':''}>Redo cut-out</button>`:'')}
 </div></div><div class="gside">
    ${ED.ai?`<div class="ai">${ED.ai}</div>`:''}
@@ -1873,7 +1882,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    </details>
    ${ED.id&&!isEx(it)?`<p class="hint">Worn ${it.worn||0} time${it.worn===1?'':'s'}${it.lastWorn?', last on '+esc(it.lastWorn):''}.${it.price!=null?' '+(it.worn?money(it.price/it.worn)+' per wear so far.':'Not worn yet, so no cost per wear.'):''}${it.lastCheck?' Last condition check '+esc(it.lastCheck)+'.':''}</p>`:''}
    </div></div>
-   <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
+   <div class="row sheet-actions"><button type="button" class="btn primary" data-save ${ED.busy?'disabled':''}>${ED.saving?'Saving…':it.review?'Confirm and save':'Save'}</button><button type="button" class="btn ghost" data-close>Cancel</button><span class="spacer"></span>
    ${ED.id?`<button type="button" class="btn danger sm" data-del>${ED.confirmDel?'Tap again to delete':'Delete'}</button>`:''}</div>`,'gsheet');
   setTimeout(()=>{ const im=document.querySelector('#sheetRoot .gpic img[data-pick]'); if(im) upPic(im); },0);
 }
@@ -1889,19 +1898,19 @@ async function saveEditor(){
   if(!it.name){ toast('Give the item a name.'); $('#f-name')?.focus(); return; }
   if(!it.colors||!it.colors.length){ toast('Pick at least one color.'); return; }
   if(!isEx(it)&&!canWrite()){ toast('You are offline. Changes need a connection.'); return; }
-  ED.busy=true; const ED_hadBlob=!!ED.blob; drawEditor();
+  ED.busy=true; ED.saving=true; const ED_hadBlob=!!ED.blob; drawEditor();
   const now=todayISO(); let oldPhoto=null;
   if(!ED.id){ it.id=uuid(); it.created=now; it.status='active'; it.worn=0; it.wearsSinceCheck=0; it.lastCheck=now; }
   if(ED.blob&&it.cut){ removePhoto(it.cut); it.cut=null; }
   if(ED.blob||ED.cropChanged){ it.thumb=ED.thumb; if(ED.newBox) it.box=ED.newBox; else delete it.box; }
   if(ED.blob){
-    if(!isEx(it)){ const path=await uploadPhoto(ED.blob); if(path){ oldPhoto=it.photo; it.photo=path; const m=await uploadMed(path,ED.med); if(m) it.med=m; else delete it.med; } }
+    if(!isEx(it)){ const u=await uploadPhotoMed(ED.blob,ED.med); if(u.path){ oldPhoto=it.photo; it.photo=u.path; if(u.med) it.med=u.med; else delete it.med; } }
     else it._localUrl=ED.preview;
   } else if(ED.id){ const cur=byId(ED.id); if(cur&&cur.med&&cur.photo===it.photo) it.med=cur.med; } // stored by another job while the editor was open
   delete it.review;
   const ok=await writeItem(it);
   if(ok){ if(oldPhoto) removePhotoFiles(oldPhoto); closeSheet(); toast('Saved'); if(ED_hadBlob) autoCuts([byId(it.id)].filter(Boolean)); }
-  else if(ED){ ED.busy=false; drawEditor(); }
+  else if(ED){ ED.busy=false; ED.saving=false; drawEditor(); }
 }
 async function deleteItem(){
   const it=ED.it; closeSheet();
@@ -1927,7 +1936,7 @@ function drawCheck(){
    ${r?`<div class="ai"><span class="k">AI's read · ${esc(r.confidence||'')} confidence</span><div><b>${esc(COND[r.condition]||'')} (${esc(r.condition)}/5)</b>, recommends ${esc(r.recommendation||'')}. ${esc(r.summary||'')}</div>${(r.issues||[]).length?`<ul>${r.issues.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}<span class="hint">A photo can miss odors, fit and fabric thinning. Adjust the rating if you know better.</span></div>`:''}
    <div class="field"><span class="lab">Your rating · ${COND[CK.cond]}</span><div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-ckc="${n}" aria-pressed="${CK.cond===n}"><b>${n}</b><span>${COND[n]}</span></button>`).join('')}</div></div>
    ${CK.blob&&!isEx(it)?`<label class="row hint"><input type="checkbox" id="ck-use" ${CK.usePhoto?'checked':''}> Use this photo as the item photo</label>`:''}
-   <div class="row sheet-actions"><button type="button" class="btn primary" data-cksave ${CK.busy?'disabled':''}>Save check</button><button type="button" class="btn ghost" data-close>Cancel</button></div>`);
+   <div class="row sheet-actions"><button type="button" class="btn primary" data-cksave ${CK.busy||CK.saving?'disabled':''}>${CK.saving?'Saving…':'Save check'}</button><button type="button" class="btn ghost" data-close>Cancel</button></div>`);
 }
 async function checkSetPhoto(blob){
   try{ const p=await prepare(blob); if(!CK) return; CK.blob=p.full; CK.med=p.med; CK.thumb=p.thumb; if(CK.preview) URL.revokeObjectURL(CK.preview); CK.preview=URL.createObjectURL(p.full); CK.res=null; CK.err=''; }
@@ -1938,7 +1947,7 @@ async function saveCheck(){
   const it=byId(CK.id); const patch={cond:CK.cond,lastCheck:todayISO(),wearsSinceCheck:0};
   if(CK.res) patch.ai={date:todayISO(),cond:CK.res.condition,rec:CK.res.recommendation||'',summary:String(CK.res.summary||'').slice(0,300),issues:(CK.res.issues||[]).slice(0,8).map(x=>String(x).slice(0,120))};
   const use=$('#ck-use')?.checked; let old=null;
-  if(use&&CK.blob&&canWrite()&&!isEx(it)){ const path=await uploadPhoto(CK.blob); if(path){ old=it.photo; patch.photo=path; patch.med=await uploadMed(path,CK.med)||undefined; patch.thumb=CK.thumb; patch.box=null; if(it.cut){ removePhoto(it.cut); patch.cut=null; } } }
+  if(use&&CK.blob&&canWrite()&&!isEx(it)){ CK.saving=true; drawCheck(); const u=await uploadPhotoMed(CK.blob,CK.med); if(!CK){ if(u.path) removePhotoFiles(u.path); return; } /* closed while uploading */ if(u.path){ old=it.photo; patch.photo=u.path; patch.med=u.med||undefined; patch.thumb=CK.thumb; patch.box=null; if(it.cut){ removePhoto(it.cut); patch.cut=null; } } }
   const cond=CK.cond; closeSheet();
   if(await patchItem(it.id,patch)){ if(old) removePhotoFiles(old); toast(cond<=1?'Saved. It is now on the donate list.':'Check saved'); }
 }
@@ -2242,9 +2251,13 @@ async function exportData(){
     const wears=[]; for(let from=0;;from+=1000){ const r=await sb.from('wears').select('date,occ,items,created_at').order('date',{ascending:true}).range(from,from+999); if(r.error) throw r.error; wears.push(...r.data); if(r.data.length<1000) break; }
     const se=await sb.from('settings').select('body').maybeSingle(); if(se.error) throw se.error;
     const files=[], enc=new TextEncoder(), paths=[...new Set(items.data.flatMap(r=>[r.body.photo,r.body.med,r.body.cut]).filter(Boolean))]; let miss=0;
-    for(let k=0;k<paths.length;k++){ job('Adding photos '+(k+1)+' of '+paths.length,10+85*k/Math.max(1,paths.length));
-      const {data}=await sb.storage.from('photos').download(paths[k]); if(!data){ miss++; continue; }
-      files.push({name:'photos/'+paths[k].split('/').pop(),data:new Uint8Array(await data.arrayBuffer())}); }
+    // v1.69.2: six downloads at a time (was one after another); files keep their order in the zip
+    const got=new Array(paths.length); let fin=0, next=0;
+    const worker=async()=>{ while(next<paths.length){ const k=next++;
+      const {data}=await sb.storage.from('photos').download(paths[k]); got[k]=data?new Uint8Array(await data.arrayBuffer()):null;
+      fin++; job('Adding photos '+fin+' of '+paths.length,10+85*fin/Math.max(1,paths.length)); } };
+    await Promise.all(Array.from({length:Math.min(6,paths.length)},worker));
+    paths.forEach((pth,k)=>{ if(got[k]) files.push({name:'photos/'+pth.split('/').pop(),data:got[k]}); else miss++; });
     const doc={app:'Wearcycle',version:APP_VERSION,exported:new Date().toISOString(),account:{email:EMAIL,id:UID},
       note:'Photo paths in items point to files in the photos folder of this zip (same file name).',
       items:items.data.map(r=>Object.assign({id:r.id,updated_at:r.updated_at},r.body)),outfitLog:wears,settings:se.data?se.data.body:{}};
@@ -2305,7 +2318,9 @@ async function quickSave(){
   if(!(it.colors||[]).length){ $('#qd-err').textContent='Pick at least one color.'; return; }
   if(GARMENT.includes(it.cat)&&!(it.occ||[]).length&&!$('#qd-err').dataset.warned){ $('#qd-err').dataset.warned='1'; $('#qd-err').textContent='No occasion picked: this piece will only be suggested for Work, if your dress code allows it. Tap Save again to keep it that way.'; return; }
   delete it._typed; delete it.colorGuess; it.review=false;
-  if(await writeItem(it)){ QD.i++; QD.it=null; quickStep(); }
+  if(!isEx(it)&&!canWrite()){ toast('You are offline. Changes need a connection.'); return; }
+  // v1.69.2: the next piece shows at once; a save that fails puts this one back for review and says so (writeItem)
+  const w=writeItem(it); QD.i++; QD.it=null; quickStep(); await w;
 }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-qdcat],[data-qdcol],[data-qdocc],[data-qd]'); if(!b||!QD.it) return;
   const it=QD.it, keepName=()=>{ const n=$('#qd-name'); if(n) it._typed=n.value; };
@@ -2356,18 +2371,21 @@ function drawDiary(){
      :'<p class="hint">Nothing logged on this day.</p>'}`);
   setTimeout(hydrateCuts,0);
 }
+/* v1.69.2: the outfit leaves the diary at once and comes back if the server refuses; then each piece gets one save
+   (was two, one after another, each redrawing the app: 13 requests in a row for a 6-piece outfit). */
 async function removeWear(e){
   const real=(e.items||[]).some(id=>!String(id).startsWith('ex-'));
-  if(real){ if(!canWrite()){ toast('You are offline.'); return; }
-    let q=sb.from('wears').delete(); q=e.id!=null?q.eq('id',e.id):q.eq('date',e.date).eq('occ',e.occ);
-    const {error}=await q; if(error){ toast('Could not remove: '+error.message,4500); return; } }
-  S.log=S.log.filter(x=>x!==e); S.exLog=S.exLog.filter(x=>x!==e);
+  if(real&&!canWrite()){ toast('You are offline.'); return; }
+  const log0=S.log, ex0=S.exLog; S.log=S.log.filter(x=>x!==e); S.exLog=S.exLog.filter(x=>x!==e); if(DI) drawDiary();
+  if(real){ let q=sb.from('wears').delete(); q=e.id!=null?q.eq('id',e.id):q.eq('date',e.date).eq('occ',e.occ);
+    const {error}=await q; if(error){ S.log=log0; S.exLog=ex0; if(DI) drawDiary(); toast('Could not remove: '+error.message,4500); return; } }
+  const jobs=[];
   for(const id of e.items||[]){ const it=byId(id); if(!it) continue;
     const wsw=Math.max(0,(it.wearsSinceWash||0)-1); const undirty=it.dirty&&wsw<washEvery(it);
-    await patchItem(id,Object.assign({wearsSinceWash:wsw},undirty?{dirty:false,dirtyOn:undefined}:{}));
     const last=allLog().filter(x=>(x.items||[]).includes(id)).map(x=>x.date).sort().pop();
-    await patchItem(id,{worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),lastWorn:last||null}); }
-  saveCache(); S.fitKey=''; for(const f of S.fits) if(f.worn&&e.date===todayISO()) f.worn=false; renderAll(); drawDiary(); toast('Log removed.');
+    jobs.push(patchItem(id,Object.assign({wearsSinceWash:wsw,worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),lastWorn:last||null},undirty?{dirty:false,dirtyOn:undefined}:{}),true)); }
+  S.fitKey=''; for(const f of S.fits) if(f.worn&&e.date===todayISO()) f.worn=false; renderAll(); if(DI) drawDiary(); toast('Log removed.');
+  await Promise.all(jobs); saveCache();
 }
 
 /* ---------- closet stats: wear counts and cost per wear ---------- */
@@ -2631,18 +2649,19 @@ async function countWears(list,day,occ){
   if(washed.length) setTimeout(()=>toast('To the wash: '+washed.join(', ')+'. They return to suggestions when you mark them clean in Closet.',6500),900);
 }
 // Takes one wear off a piece that was logged but not worn (count, last worn, laundry if that wear sent it to the wash).
-async function uncountWear(it,day){
+async function uncountWear(it,day,quiet){
   const wsw=Math.max(0,(it.wearsSinceWash||0)-1); const undirty=it.dirty&&it.dirtyOn===day&&wsw<washEvery(it);
   const last=allLog().filter(x=>(x.items||[]).includes(it.id)).map(x=>x.date).sort().pop();
-  await patchItem(it.id,Object.assign({worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),wearsSinceWash:wsw,lastWorn:last||null},undirty?{dirty:false,dirtyOn:undefined}:{}));
+  await patchItem(it.id,Object.assign({worn:Math.max(0,(it.worn||0)-1),wearsSinceCheck:Math.max(0,(it.wearsSinceCheck||0)-1),wearsSinceWash:wsw,lastWorn:last||null},undirty?{dirty:false,dirtyOn:undefined}:{}),quiet);
 }
 async function logWear(list,day,occ){
   const ids=list.map(x=>x.id); const real=ids.filter(id=>!String(id).startsWith('ex-'));
   if(real.length&&!canWrite()){ toast('You are offline. Logging needs a connection.'); return false; }
-  await countWears(list,day,occ);
   const entry={date:day,occ,items:ids};
+  // The log row and the wear counts are saved side by side (v1.69.2); before, the row waited for the counts.
+  const [ins]=await Promise.all([real.length?sb.from('wears').insert(entry).select('id'):null,countWears(list,day,occ)]);
   if(!real.length) S.exLog.unshift(entry);
-  else { const {data,error}=await sb.from('wears').insert(entry).select('id'); if(error){ toast('Could not log the outfit: '+error.message,4500); return false; }
+  else { const {data,error}=ins; if(error){ toast('Could not log the outfit: '+error.message,4500); return false; }
     const row=Array.isArray(data)?data[0]:data; if(row&&row.id!=null) entry.id=row.id; S.log.unshift(entry); saveCache(); }
   S.fitKey=fitKeyNow(); renderAll(); return true;
 }
@@ -2720,13 +2739,15 @@ async function saveLogEdit(){
   const e=LG.edit, items=[...LG.sel].filter(id=>byId(id)), before=new Set(e.items||[]);
   const added=items.filter(id=>!before.has(id)).map(byId), removed=[...before].filter(id=>!LG.sel.has(id)).map(byId).filter(Boolean);
   const real=items.concat([...before]).some(id=>!String(id).startsWith('ex-'));
-  if(real){ if(!canWrite()){ toast('You are offline.'); return; }
-    let q=items.length?sb.from('wears').update({items,occ:LG.occ}):sb.from('wears').delete(); q=e.id!=null?q.eq('id',e.id):q.eq('date',e.date).eq('occ',e.occ);
-    const {error}=await q; if(error){ toast('Could not change the log: '+error.message,4500); return; } }
-  const day=e.date, occ=LG.occ; closeSheet();
+  if(real&&!canWrite()){ toast('You are offline.'); return; }
+  // v1.69.2: the sheet closes and the screen changes at once; if the server refuses, the log goes back as it was.
+  // The pieces' counts are saved after the server accepts, side by side.
+  const day=e.date, occ=LG.occ, was={items:e.items,occ:e.occ}, log0=S.log, ex0=S.exLog, worn0=S.fits.map(f=>f.worn); closeSheet();
   if(items.length){ e.items=items; e.occ=occ; } else { S.log=S.log.filter(x=>x!==e); S.exLog=S.exLog.filter(x=>x!==e); for(const f of S.fits) if(f.worn&&day===todayISO()) f.worn=false; }
-  for(const it of removed) await uncountWear(byId(it.id),day);
-  if(added.length) await countWears(added,day,e.occ);
+  S.fitKey=fitKeyNow(); renderAll(); toast('Saving…',0);
+  if(real){ let q=items.length?sb.from('wears').update({items,occ}):sb.from('wears').delete(); q=e.id!=null?q.eq('id',e.id):q.eq('date',e.date).eq('occ',was.occ);
+    const {error}=await q; if(error){ e.items=was.items; e.occ=was.occ; S.log=log0; S.exLog=ex0; S.fits.forEach((f,i)=>{ f.worn=worn0[i]; }); S.fitKey=fitKeyNow(); renderAll(); toast('Could not change the log: '+error.message,4500); return; } }
+  await Promise.all(removed.map(it=>uncountWear(byId(it.id),day,true)).concat(added.length?[countWears(added,day,occ)]:[]));
   saveCache(); S.fitKey=fitKeyNow(); renderAll();
   toast(items.length?'Log updated: '+items.length+' piece'+(items.length===1?'':'s')+'.':'Log removed.');
 }
@@ -2799,8 +2820,9 @@ async function confirmAll(){
   const list=allItems().filter(i=>i.review && isActive(i));
   const ready=list.filter(i=>(i.colors||[]).length && i.name);
   const skipped=list.length-ready.length;
-  S.busy=true; renderCloset(); let n=0;
-  for(const it of ready){ toast('Confirming '+(n+1)+' of '+ready.length+'…',0); if(await patchItem(it.id,{review:false})) n++; }
+  S.busy=true; renderCloset(); toast('Saving…',0);
+  // v1.69.2: side by side, one redraw (was one piece after another, each redrawing the app)
+  const n=(await Promise.all(ready.map(it=>patchItem(it.id,{review:false},true)))).filter(Boolean).length;
   S.busy=false; renderAll();
   toast('Confirmed '+n+' item'+(n===1?'':'s')+'.'+(skipped?' '+skipped+' still need a color or name; open them to finish.':''),6000);
 }

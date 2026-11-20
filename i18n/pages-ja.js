@@ -131,5 +131,8 @@ I18N.add("ja",{
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "初めての方には、まずようこそページが表示されます：場面ごとに切り替えられるコーデの例、アプリの使い方、データの扱いを紹介します。",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "アカウントを作成する前に、サンプルのクローゼットを見られます。何も保存されず、そこからアカウントを作成できます。",
 "Creating an account asks for your password once, with a Show button to check it.": "アカウント作成時のパスワード入力は1回だけになり、確認用の表示ボタンがあります。",
-"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "洗濯物をすべてきれいにしたとき、リストが数秒かけて1点ずつではなく、すぐに更新されるようになりました。"
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "洗濯物をすべてきれいにしたとき、リストが数秒かけて1点ずつではなく、すぐに更新されるようになりました。",
+"Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "記録したコーデの削除や修正、すべての確認、「これは何？」での各アイテムの保存で、数秒待たずにすぐ画面が更新されるようになりました。",
+"Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "服の追加、新しい写真の保存、状態チェックの保存で写真のアップロードが速くなり、アップロード中は保存ボタンに「保存中…」と表示されます。",
+"Merging duplicates and downloading your data are faster.": "重複の統合とデータのダウンロードが速くなりました。"
 });

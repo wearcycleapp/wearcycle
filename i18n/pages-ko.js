@@ -131,5 +131,8 @@ I18N.add("ko",{
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "처음 오신 분은 먼저 환영 페이지를 보게 돼요: 상황별로 바꿔 볼 수 있는 예시 코디, 앱 사용 방법, 데이터를 어떻게 다루는지.",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "계정을 만들기 전에 예시 옷장을 둘러볼 수 있어요. 아무것도 저장되지 않고, 거기서 바로 계정을 만들 수 있어요.",
 "Creating an account asks for your password once, with a Show button to check it.": "계정을 만들 때 비밀번호는 한 번만 입력하고, 보기 버튼으로 확인할 수 있어요.",
-"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "빨래를 모두 깨끗함으로 표시하면 이제 몇 초 동안 하나씩이 아니라 목록이 바로 바뀌어요."
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "빨래를 모두 깨끗함으로 표시하면 이제 몇 초 동안 하나씩이 아니라 목록이 바로 바뀌어요.",
+"Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "기록한 코디 삭제나 수정, 모두 확인, “이건 뭔가요?”에서 옷마다 저장할 때 몇 초 기다리지 않고 바로 화면이 바뀌어요.",
+"Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "옷 추가, 새 사진 저장, 상태 점검 저장 때 사진이 더 빨리 올라가고, 올라가는 동안 저장 버튼에 “저장 중…”이 보여요.",
+"Merging duplicates and downloading your data are faster.": "중복 합치기와 데이터 다운로드가 더 빨라졌어요."
 });

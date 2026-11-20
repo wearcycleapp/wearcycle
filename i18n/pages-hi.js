@@ -131,5 +131,8 @@ I18N.add("hi",{
 "New people now see a welcome page first: an example outfit you can switch between occasions, how the app works, and what it does with your data.": "नए लोग अब सबसे पहले स्वागत पेज देखते हैं: एक उदाहरण आउटफ़िट जिसे मौके के हिसाब से बदल सकते हैं, ऐप कैसे काम करता है, और यह आपके डेटा के साथ क्या करता है।",
 "You can look around an example closet before creating an account. Nothing is saved, and you can create your account from there.": "खाता बनाने से पहले आप एक उदाहरण अलमारी देख सकते हैं। कुछ भी सहेजा नहीं जाता, और वहीं से आप अपना खाता बना सकते हैं।",
 "Creating an account asks for your password once, with a Show button to check it.": "खाता बनाते समय पासवर्ड एक ही बार माँगा जाता है, उसे जाँचने के लिए दिखाएँ बटन के साथ।",
-"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "सारे धुले कपड़ों को साफ़ मार्क करने पर अब सूची तुरंत बदल जाती है, कई सेकंड तक एक-एक करके नहीं।"
+"Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "सारे धुले कपड़ों को साफ़ मार्क करने पर अब सूची तुरंत बदल जाती है, कई सेकंड तक एक-एक करके नहीं।",
+"Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "दर्ज आउटफ़िट हटाना या सुधारना, सभी कपड़ों की पुष्टि करना, और “यह क्या है?” में हर कपड़ा सेव करना अब कई सेकंड बाद नहीं, तुरंत स्क्रीन बदल देता है।",
+"Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "कपड़े जोड़ते समय, नई फ़ोटो या हालत की जाँच सेव करते समय फ़ोटो अब तेज़ी से अपलोड होती हैं, और फ़ोटो अपलोड होते समय सेव बटन पर “सेव हो रहा है…” दिखता है।",
+"Merging duplicates and downloading your data are faster.": "डुप्लिकेट मिलाना और अपना डेटा डाउनलोड करना अब तेज़ है।"
 });
