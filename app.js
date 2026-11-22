@@ -480,7 +480,8 @@ async function loadRemote(){
   const err=it.error||we.error||se.error;
   if(err){ S.fromCache=true; renderAll(); if(S.online) toast('Could not load from the server: '+(err.message||'unknown error'),5000); return; }
   S.items=new Map(it.data.map(r=>[r.id,Object.assign({},r.body,{id:r.id})]));
-  S.log=we.data||[]; if(se.data&&se.data.body) Object.assign(S.settings,se.data.body); settingsLoaded();
+  S.log=we.data||[]; if(se.data&&se.data.body){ if(!('plan' in se.data.body)) delete S.settings.plan; Object.assign(S.settings,se.data.body); } settingsLoaded();
+  { const pl=planGet(), ch=LS.get('wearcycle.occ'); if(pl&&pl.day===todayISO()&&OCC[pl.occ]&&!S.when&&!(ch&&ch.day===todayISO())&&S.occ!==pl.occ){ S.occ=pl.occ; S.fitKey=''; } }
   S.fromCache=false; S.loaded=true; S.loadedAt=Date.now(); saveCache(); renderAll(); loadWeather(); refreshGps(); autoWash(); privacyCheck(); setTimeout(retryCuts,4000);
 }
 function loadCache(){ const c=LS.get(cacheKey()); if(!c) return false;
@@ -822,7 +823,7 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
-function fitKeyNow(){ const w=wxForScore(); return (S.when?'T|'+planKey()+'|':'')+(S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return (S.when?'T|':'')+planKey()+'|'+(S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 /* "See outfits with this": the Outfits screen builds every outfit around one piece, and says why that piece
@@ -907,12 +908,15 @@ function regenerate(){
 }
 /* Tomorrow (v1.70.0, owner 2026-11-21: "Add the option to see tomorrow's weather to prepare the outfit").
    Today | Tomorrow switch by the day heading; Tomorrow ranks with tomorrow's forecast (7 am to 9 pm) and counts rest
-   from tomorrow. "Plan for tomorrow" keeps the outfit on this device only (wearcycle.plan, nothing on the server); the
-   next day it opens first as "Planned last night" with Wear this, while all its pieces are still active and not in the
+   from tomorrow. "Plan for tomorrow" is saved in settings.plan {day,occ,ids} (owner approved 2026-11-21) so every
+   device of the account has it; the next day it opens first as "Planned last night" with Wear this, while all its pieces are still active and not in the
    wash. The app always opens on Today (owner's choice). */
 function idsKey(ids){ return ['top','under','bottom','onepiece','outer','shoes'].map(k=>ids[k]||'').concat(ids.acc||[]).join(','); }
 function idsList(ids){ return ['top','under','bottom','onepiece','outer','shoes'].map(k=>ids[k]).filter(Boolean).concat(ids.acc||[]); }
-function planGet(){ const p=LS.get('wearcycle.plan'); return p&&p.uid===(UID||'')&&p.day&&p.ids&&typeof p.ids==='object'?p:null; }
+function planGet(){ const p=S.settings.plan; if(!p||!p.day||!p.ids||typeof p.ids!=='object') return null;
+  if(p.day<todayISO()){ delete S.settings.plan; return null; } // a past day's plan; the next settings save drops it
+  return p; }
+function planSet(p){ if(!S.demo&&!canWrite()){ toast('You are offline. Changes need a connection.'); return false; } if(p) S.settings.plan=p; else delete S.settings.plan; saveCache(); queueSettingsSave(); S.fitKey=''; renderOutfits(); }
 function planKey(){ const p=planGet(); return p?p.day+idsKey(p.ids):''; }
 function planHas(f){ const p=planGet(); return !!(p&&p.day===tomorrowISO()&&idsKey(p.ids)===idsKey(f.ids)); }
 function planToday(){ const p=planGet(); if(!p||p.day!==todayISO()||p.occ!==S.occ) return null;
@@ -2991,7 +2995,7 @@ document.addEventListener('click',async e=>{
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
     case 'todaylog': openTodayLog(); return;
-    case 'unplan': LS.del('wearcycle.plan'); S.fitKey=''; renderOutfits(); toast('Plan removed.'); return;
+    case 'unplan': if(planSet(null)!==false) toast('Plan removed.'); return;
     case 'todayadd': openTodayLog(); return;
     case 'export': exportData(); return;
     case 'privacyOk': privacyAgree(true); return;
@@ -3044,7 +3048,7 @@ document.addEventListener('click',async e=>{
   if(ds.edit){ closeSheet(); openEditor(ds.edit); return; }
   if(ds.wear){ wear(+ds.wear); return; }
   if(ds.when!==undefined){ setWhen(+ds.when); return; }
-  if(ds.plan!==undefined){ const f=S.fits[+ds.plan]; if(!f) return; LS.set('wearcycle.plan',{uid:UID||'',day:tomorrowISO(),occ:S.occ,ids:JSON.parse(JSON.stringify(f.ids))}); S.fitKey=''; renderOutfits(); toast('Planned for tomorrow. It will be the first outfit in the morning.',4000); return; }
+  if(ds.plan!==undefined){ const f=S.fits[+ds.plan]; if(!f) return; if(planSet({day:tomorrowISO(),occ:S.occ,ids:JSON.parse(JSON.stringify(f.ids))})!==false) toast('Planned for tomorrow. It will be the first outfit in the morning.',4000); return; }
   if(ds.swap!==undefined){ openPiece(+ds.swap,ds.slot); return; }
   if(ds.pdrop!==undefined){ dropPiece(+ds.pdrop,ds.slot); return; }
   if(ds.punlog){ unlogPiece(ds.punlog); return; }

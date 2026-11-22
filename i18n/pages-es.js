@@ -3,7 +3,7 @@ I18N.add("es",{
 "Wearcycle privacy": "Privacidad de Wearcycle",
 "Privacy at Wearcycle": "Privacidad en Wearcycle",
 "This translation was made with AI and is for convenience. If it differs from the English version, the English version applies.": "Esta traducción se hizo con IA y es solo para facilitar la lectura. Si difiere de la versión en inglés, se aplica la versión en inglés.",
-"Last updated October 11, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).": "Última actualización: 11 de octubre de 2026. Wearcycle es una app personal para tu ropa. Este aviso explica qué recopila, por qué, dónde se guarda, quién lo procesa y qué puedes hacer al respecto. Sigue los diez principios de la ley de privacidad del sector privado de Canadá (PIPEDA).",
+"Last updated November 21, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).": "Última actualización: 21 de noviembre de 2026. Wearcycle es una app personal para tu ropa. Este aviso explica qué recopila, por qué, dónde se guarda, quién lo procesa y qué puedes hacer al respecto. Sigue los diez principios de la ley de privacidad del sector privado de Canadá (PIPEDA).",
 "Who is responsible": "Quién es responsable",
 "The Wearcycle owner is accountable for your information. Questions, requests and complaints:": "El propietario de Wearcycle es responsable de tu información. Preguntas, solicitudes y quejas:",
 ". You will get an answer within 30 days.": ". Recibirás una respuesta en un plazo de 30 días.",
@@ -14,7 +14,7 @@ I18N.add("es",{
 "To sign you in and send sign-in emails (confirmation, password reset).": "Para iniciar tu sesión y enviarte correos de acceso (confirmación, restablecer contraseña).",
 "Photos of your clothes, cut-outs, and the details you or Claude fill in (name, category, colours, condition, notes, price paid if you add it)": "Fotos de tu ropa, recortes y los datos que completas tú o Claude (nombre, categoría, colores, estado, notas, precio pagado si lo agregas)",
 "To show your closet and build outfits from it.": "Para mostrar tu armario y armar conjuntos con él.",
-"Outfit log (what you wore and when) and your settings (style, shopping department, dress code, reminders, holidays, language)": "Registro de conjuntos (qué usaste y cuándo) y tus ajustes (estilo, departamento de compras, código de vestimenta, recordatorios, festividades, idioma)",
+"Outfit log (what you wore and when, and the outfit you plan for the next day) and your settings (style, shopping department, dress code, reminders, holidays, language)": "Registro de conjuntos (qué usaste y cuándo, y el conjunto que planeas para el día siguiente) y tus ajustes (estilo, departamento de compras, código de vestimenta, recordatorios, festividades, idioma)",
 "To rotate outfits, spot unworn pieces and remind you about care and laundry.": "Para rotar conjuntos, detectar prendas sin usar y recordarte el cuidado y la ropa sucia.",
 "Approximate location, only if you turn on weather: coordinates rounded to about 1 km, or the first three characters of a Canadian postal code": "Ubicación aproximada, solo si activas el clima: coordenadas redondeadas a cerca de 1 km, o los tres primeros caracteres de un código postal canadiense",
 "To get the forecast.": "Para obtener el pronóstico.",
@@ -136,5 +136,5 @@ I18N.add("es",{
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "Las fotos se suben más rápido al agregar ropa, guardar una foto nueva o guardar una revisión de estado, y Guardar muestra “Guardando…” mientras se sube una foto.",
 "Merging duplicates and downloading your data are faster.": "Unir duplicados y descargar tus datos es más rápido.",
 "Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "Mañana: toca Mañana junto al día en la pantalla Conjuntos para ver el pronóstico de mañana y conjuntos ordenados para ese día.",
-"Plan for tomorrow keeps the outfit on this device; the next morning it opens first as “Planned last night”, ready to wear.": "Planear para mañana guarda el conjunto en este dispositivo; a la mañana siguiente aparece primero como “Planeado anoche”, listo para usar."
+"Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "Planear para mañana guarda el conjunto en tu cuenta, así que tus otros dispositivos también lo tienen; a la mañana siguiente aparece primero como “Planeado anoche”, listo para usar."
 });
