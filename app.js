@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.70.0';
+const APP_VERSION='1.71.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -27,7 +27,7 @@ const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:30,che
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
 function byId(id){ return S.items.get(id)||S.examples.find(e=>e.id===id); }
-function ctx(){ return {now:Date.now()+(S.when?864e5:0),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',paletteColors:S.settings.paletteCustom||[],style:styleTarget(S.occ),theme:themeNow()}; }
+function ctx(){ return {now:Date.now()+(S.when?864e5:0),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',paletteColors:S.settings.paletteCustom||[],suits:S.settings.suits||null,style:styleTarget(S.occ),theme:themeNow()}; }
 /* ---------- seasons and holidays ---------- */
 // Country for country-specific holidays: the weather place's country, else the phone's time zone, else the language region.
 const CA_TZ=/^America\/(Toronto|Montreal|Vancouver|Edmonton|Winnipeg|Regina|Halifax|St_Johns|Moncton|Glace_Bay|Goose_Bay|Whitehorse|Dawson|Dawson_Creek|Fort_Nelson|Creston|Iqaluit|Rankin_Inlet|Resolute|Cambridge_Bay|Inuvik|Yellowknife|Swift_Current|Atikokan|Blanc-Sablon|Nipigon|Thunder_Bay|Rainy_River|Pangnirtung)$/;
@@ -823,7 +823,7 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
-function fitKeyNow(){ const w=wxForScore(); return (S.when?'T|':'')+planKey()+'|'+(S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return (S.when?'T|':'')+planKey()+'|'+(S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'/'+(S.settings.suits||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 /* "See outfits with this": the Outfits screen builds every outfit around one piece, and says why that piece
@@ -1838,7 +1838,7 @@ async function askIdeas(){
 // inert (no Tab, no taps, skipped by screen readers); closing gives focus back to the control that opened it. A redraw
 // of the same sheet (openSheet again while it is open) keeps focus on the same control when it is still there.
 let SHEET_FROM=null;
-function closeSheet(){ const open=!!$('#sheetRoot').innerHTML; $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; DI=null;
+function closeSheet(){ const open=!!$('#sheetRoot').innerHTML; $('#sheetRoot').innerHTML=''; document.body.style.overflow=''; ED=null; CK=null; LG=null; DI=null; SU=null; /* the selfie goes with the sheet */
   const app=$('#appRoot'); if(app) app.inert=false;
   if(open&&SHEET_FROM&&SHEET_FROM.isConnected&&!SHEET_FROM.closest('[inert]')) try{ SHEET_FROM.focus({preventScroll:true}); }catch(e){}
   SHEET_FROM=null; }
@@ -2586,10 +2586,114 @@ async function saveBlob(blob,name){ const a=document.createElement('a'); a.href=
 /* ---------- style palette ---------- */
 function openPalettes(){
   const cur=S.settings.palette||'any';
-  openSheet(sheetHead('Style palette')+`<p class="hint">Outfits whose main colors all sit in your palette rank higher (+1); each piece outside it costs half a point. Color harmony still applies to every palette.</p>
+  openSheet(sheetHead('Style palette')+suitsEntry()+`<p class="hint">Outfits whose main colors all sit in your palette rank higher (+1); each piece outside it costs half a point. Color harmony still applies to every palette.</p>
    ${Object.entries(PALETTES).map(([k,p])=>`<button class="palopt" data-pal="${k}" aria-pressed="${cur===k}"><span class="sws">${(p.colors||['black','white','navy','olive','burgundy','khaki','lightblue']).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><span class="pl"><b>${esc(p.label)}</b><span>${esc(p.desc)}</span></span></button>`).join('')}
    ${(()=>{ const p=paletteOf('custom',S.settings.paletteCustom); return `<button class="palopt" data-act="palcustom" aria-pressed="${cur==='custom'}"><span class="sws">${(p.colors||[]).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')||'<span class="sw sw-empty"></span>'}</span><span class="pl"><b>${esc(p.label)}</b><span>${esc(p.colors?p.colors.join(', '):p.desc)}</span></span></button>`; })()}`);
 }
+/* ---------- Colors that suit you (v1.71.0, owner approved 2026-11-22: measure + you judge, near the face only) ----------
+   A selfie in daylight with a white sheet of paper; the person taps cheek, hair, eyes and paper. The paper corrects the
+   light, and the measured skin and hair only ORDER the app's colors (evidence is thin: one 2021 study found blue preferred
+   on fair skin and orange-red on tanned skin); the person keeps or drops each color with it shown under the chin, as an
+   analyst's draping does. The photo never leaves the device and is not saved (it lives in SU while the sheet is open);
+   only the kept colors are saved, as settings.suits. Scoring: logic.js scoreOutfit (near-face pieces only). */
+let SU=null;
+const SU_SPOTS=[['cheek','Cheek'],['hair','Hair'],['eyes','Eyes'],['paper','Paper']];
+function suitsEntry(){ const c=S.settings.suits||[];
+  return `<div class="suitcard"><div class="suit-h">${PERSON_ICON}<span><b>Colors that suit you</b><span>${c.length?'Tops, outerwear and scarves in your colors rank a little higher.':'Try each color next to your face in a selfie and keep the ones you like.'}</span></span></div>
+   ${c.length?`<span class="sws">${c.map(k=>`<span class="sw" style="background:${COLORS[k].hex}" title="${esc(colorName(k))}"></span>`).join('')}</span>
+   <div class="row"><button class="btn" data-act="suitsGo">Find my colors again</button><button class="btn ghost" data-act="suitsOff">Turn off</button></div>`
+   :`<button class="btn primary" data-act="suitsGo">Find my colors</button>`}</div>`; }
+const LOCK_ICON='<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+const PERSON_ICON='<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="9" r="4"/><path d="M4.5 20c1.2-3.6 4.2-5.5 7.5-5.5s6.3 1.9 7.5 5.5"/></svg>';
+function suitsStart(){ SU={step:1,img:null,spots:{},cur:'cheek',order:null,i:0,keep:{}}; suitsDraw(); }
+function suitsHead(t,n){ return `<div class="sheet-h"><button class="iconbtn" data-act="${n>1?'suitsBack':'palettes'}" aria-label="Back">${CHEV_L}</button><h3>${t}</h3><span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">${CLOSE_ICON}</button></div>${n?`<p class="hint suit-step">Step ${n} of 3</p>`:''}`; }
+function suitsDraw(){ if(!SU) return; const st=SU.step;
+  if(st===1) openSheet(suitsHead('Colors that suit you',1)+`<h4 class="suit-sub">For true colors</h4>
+    <ul class="suit-tips"><li>Face a window in daylight. No lamps, flash or filters.</li><li>Hold a white sheet of paper next to your face.</li><li>Hair pulled back from the face; little or no makeup.</li></ul>
+    <p class="suit-safe">${LOCK_ICON}<span>The photo stays on this device and is not saved. Only the colors you keep are saved.</span></p>
+    <div class="row"><label class="btn primary suit-file">Take a selfie<input type="file" accept="image/*" capture="user" data-suitfile hidden></label><label class="btn suit-file">Choose a photo<input type="file" accept="image/*" data-suitfile hidden></label></div>
+    <p class="err" id="su-err" role="alert"></p>`,'suits');
+  else if(st===2){ const all=SU_SPOTS.every(([k])=>SU.spots[k]);
+    openSheet(suitsHead('Tap four spots',2)+`<p class="hint">Pick a spot below, then tap it on the photo. Arrow keys move the spot.</p>
+    <div class="suit-photo" id="su-photo"><canvas id="su-cv" tabindex="0" aria-label="Your photo. Tap to place the chosen spot."></canvas>${SU_SPOTS.map(([k])=>SU.spots[k]?`<span class="suit-mark${k===SU.cur?' cur':''}" style="left:${SU.spots[k].x*100}%;top:${SU.spots[k].y*100}%;background:${SU.spots[k].hex}"></span>`:'').join('')}</div>
+    <div class="suit-spots" role="group" aria-label="Spot">${SU_SPOTS.map(([k,l])=>`<button type="button" class="chip" data-suspot="${k}" aria-pressed="${k===SU.cur}"><span class="sw" style="background:${SU.spots[k]?SU.spots[k].hex:'transparent'}"></span>${l}</button>`).join('')}</div>
+    <p class="hint">${all?'All four placed. The white paper corrects the light before measuring.':'Place all four spots to go on.'}</p>
+    <button class="btn primary" data-act="suitsTry" ${all?'':'disabled'}>Next: try the colors</button>`,'suits');
+    suitsPaint(); }
+  else if(st===3){ const k=SU.order[SU.i], n=SU.order.length, kept=Object.keys(SU.keep).filter(x=>SU.keep[x]).length;
+    openSheet(suitsHead('Try each color',3)+`<div class="suit-try"><div class="suit-photo try"><canvas id="su-cv" aria-label="Your photo with ${esc(colorName(k))} under your chin"></canvas><span class="suit-pos">${SU.i+1} of ${n}</span></div>
+     <div class="suit-side"><p class="suit-now"><span class="sw lg" style="background:${COLORS[k].hex}"></span><b><span class="cw">${colorName(k)}</span></b>${SU.i<8?'<span class="hint">Likely good</span>':''}</p>
+      <div class="row"><button class="btn" data-suit="0">Not for me</button><button class="btn primary" data-suit="1">Suits me</button></div>
+      <div class="suit-all" role="group" aria-label="Colors">${SU.order.map((c,j)=>`<button type="button" class="chip suit-c${SU.keep[c]===false?' off':''}" data-suitgo="${j}" aria-pressed="${j===SU.i}"><span class="sw" style="background:${COLORS[c].hex}"></span><span class="cw">${colorName(c)}</span>${SU.keep[c]?' ✓':''}</button>`).join('')}</div>
+      <p class="hint">Ordered from your photo: likely good colors first. It is a starting order; your eye decides.</p>
+      <button class="btn ghost" data-act="suitsDone" ${kept?'':'disabled'}>See my colors</button></div></div>`,'suits suitwide');
+    suitsPaint(); }
+  else if(st===4){ const keep=Object.keys(COLORS).filter(c=>SU.keep[c]);
+    openSheet(suitsHead('Your colors',0)+`<p>You kept ${keep.length} of ${Object.keys(COLORS).length} colors. Tap a color to add or remove it.</p>
+     <div class="chips pcols">${Object.keys(COLORS).map(c=>`<button type="button" class="chip pcol" data-suitkeep="${c}" aria-pressed="${!!SU.keep[c]}"><span class="sw" style="background:${COLORS[c].hex}"></span><span class="cw">${colorName(c)}</span></button>`).join('')}</div>
+     <div class="suit-how"><b>How outfits use them</b><span>Tops, outerwear and scarves in your colors rank a little higher. Trousers and shoes are not affected.</span></div>
+     <div class="row"><button class="btn primary" data-act="suitsSave" ${keep.length?'':'disabled'}>Save my colors</button><button class="btn" data-act="suitsAgain">Try again</button></div>
+     <p class="hint">Change or turn them off any time in Style palette.</p>`,'suits'); } }
+// The photo, scaled to at most 1024 px, kept only in memory.
+async function suitsLoad(file){ if(!file) return; try{
+  const bmp=await createImageBitmap(file,{imageOrientation:'from-image'}); const s=Math.min(1,1024/Math.max(bmp.width,bmp.height));
+  const c=document.createElement('canvas'); c.width=Math.round(bmp.width*s); c.height=Math.round(bmp.height*s); c.getContext('2d').drawImage(bmp,0,0,c.width,c.height); bmp.close&&bmp.close();
+  SU.img=c; SU.spots={}; SU.cur='cheek'; SU.step=2; suitsDraw();
+ }catch(e){ const er=$('#su-err'); if(er) er.textContent='Could not open that photo. Try another one.'; } }
+function suitsSample(x,y){ const c=SU.img, r=Math.max(3,Math.round(Math.min(c.width,c.height)/90)); const X=Math.round(x*c.width), Y=Math.round(y*c.height);
+  const x0=Math.max(0,X-r), y0=Math.max(0,Y-r), w=Math.min(c.width,X+r+1)-x0, h=Math.min(c.height,Y+r+1)-y0; const d=c.getContext('2d').getImageData(x0,y0,w,h).data;
+  let R=0,G=0,B=0,n=0; for(let i=0;i<d.length;i+=4){ R+=d[i]; G+=d[i+1]; B+=d[i+2]; n++; } return [R/n,G/n,B/n]; }
+const hexOf=([r,g,b])=>'#'+[r,g,b].map(v=>Math.max(0,Math.min(255,Math.round(v))).toString(16).padStart(2,'0')).join('');
+function labOf([r,g,b]){ const f=v=>{ v/=255; return v<=0.04045?v/12.92:Math.pow((v+0.055)/1.055,2.4); }; const R=f(r),G=f(g),B=f(b);
+  const X=(R*0.4124+G*0.3576+B*0.1805)/0.95047, Y=R*0.2126+G*0.7152+B*0.0722, Z=(R*0.0193+G*0.1192+B*0.9505)/1.08883;
+  const g3=t=>t>0.008856?Math.cbrt(t):7.787*t+16/116; const fx=g3(X),fy=g3(Y),fz=g3(Z); return [116*fy-16,500*(fx-fy),200*(fy-fz)]; }
+// Starting order: the white paper sets the white balance; skin hue (warmer or cooler), skin lightness and the
+// skin-hair contrast then score each color. Only an order; the person decides each color.
+function suitsOrder(){ const P=SU.spots.paper.rgb, k=P.map(v=>Math.max(1,v)), m=(k[0]+k[1]+k[2])/3; const wb=rgb=>rgb.map((v,i)=>Math.min(255,v*m/k[i]));
+  const skin=labOf(wb(SU.spots.cheek.rgb)), hair=labOf(wb(SU.spots.hair.rgb));
+  const hue=Math.atan2(skin[2],skin[1])*180/Math.PI, warm=Math.max(-1,Math.min(1,(hue-55)/12)), con=Math.max(0,Math.min(1,Math.abs(skin[0]-hair[0])/50)), light=skin[0]>62;
+  const sc={}; for(const [c,v] of Object.entries(COLORS)){ const L=labOf([1,3,5].map(i=>parseInt(v.hex.slice(i,i+2),16))), ch=Math.hypot(L[1],L[2]), h=Math.atan2(L[2],L[1]);
+    let s=0; if(ch>18){ s+=warm*Math.cos(h-60*Math.PI/180); s+=(con-0.5)*0.6*(ch/60); }
+    else if(c==='black') s=(con-0.5)*1.2; else if(c==='white') s=(con-0.5)*0.8+0.1; else if(c==='grey') s=(0.5-con)*0.8;
+    else if(c==='navy') s=0.3-warm*0.3; else s=warm*0.5+(light?-0.1:0.1);
+    sc[c]=s; }
+  return Object.keys(COLORS).sort((a,b)=>sc[b]-sc[a]); }
+// Draws the photo: whole (step 2) or framed on the face with the color under the chin (step 3).
+function suitsPaint(){ const cv=$('#su-cv'); if(!cv||!SU||!SU.img) return; const I=SU.img, box=cv.parentNode.getBoundingClientRect(); const dpr=Math.min(2,devicePixelRatio||1);
+  if(SU.step===2){ const w=box.width, h=w*I.height/I.width; cv.style.height=h+'px'; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); cv.getContext('2d').drawImage(I,0,0,cv.width,cv.height); return; }
+  const E=SU.spots.eyes, C=SU.spots.cheek; const ex=E.x*I.width, ey=E.y*I.height, d=Math.max(I.height/40,Math.hypot((C.x-E.x)*I.width,(C.y-E.y)*I.height));
+  const chin=ey+3.2*d, top=ey-3.6*d, bottom=chin+2.6*d, H=bottom-top, W=H*box.width/box.height, left=ex-W/2;
+  cv.width=Math.round(box.width*dpr); cv.height=Math.round(box.height*dpr); const g=cv.getContext('2d'), sx=cv.width/W;
+  g.fillStyle='#e9e2d6'; g.fillRect(0,0,cv.width,cv.height); g.drawImage(I,left,top,W,H,0,0,cv.width,cv.height);
+  const cy=(chin-top)*sx, cx=(ex-left)*sx, rw=3.4*d*sx; g.fillStyle=COLORS[SU.order[SU.i]].hex;
+  g.beginPath(); g.moveTo(cx-rw,cv.height); g.quadraticCurveTo(cx-rw*0.95,cy+0.35*d*sx,cx-0.9*d*sx,cy); g.lineTo(cx,cy+0.9*d*sx); g.lineTo(cx+0.9*d*sx,cy); g.quadraticCurveTo(cx+rw*0.95,cy+0.35*d*sx,cx+rw,cv.height); g.closePath(); g.fill();
+  g.strokeStyle='rgba(0,0,0,.18)'; g.lineWidth=2*dpr; g.stroke(); }
+function suitsPlace(x,y){ const k=SU.cur, rgb=suitsSample(x,y); SU.spots[k]={x,y,rgb,hex:hexOf(rgb)};
+  const nx=SU_SPOTS.map(s=>s[0]).find(s=>!SU.spots[s]); if(nx) SU.cur=nx; suitsDraw(); const cv=$('#su-cv'); if(cv&&document.activeElement!==cv&&!nx) {} }
+document.addEventListener('change',e=>{ if(e.target.matches&&e.target.matches('[data-suitfile]')) suitsLoad(e.target.files&&e.target.files[0]); });
+document.addEventListener('click',e=>{ if(!SU) return; const t=e.target.closest&&e.target.closest('#su-cv,[data-suspot],[data-suit],[data-suitgo],[data-suitkeep]'); if(!t) return;
+  if(t.id==='su-cv'&&SU.step===2){ const r=t.getBoundingClientRect(); suitsPlace((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height); return; }
+  const ds=t.dataset;
+  if(ds.suspot){ SU.cur=ds.suspot; suitsDraw(); const b=$(`[data-suspot="${ds.suspot}"]`); b&&b.focus(); return; }
+  if(ds.suit!==undefined){ SU.keep[SU.order[SU.i]]=ds.suit==='1'; if(SU.i<SU.order.length-1) SU.i++; else SU.step=4; suitsDraw(); const b=$(`[data-suit="${ds.suit}"]`); b&&b.focus(); return; }
+  if(ds.suitgo!==undefined){ SU.i=+ds.suitgo; suitsDraw(); const b=$(`[data-suitgo="${ds.suitgo}"]`); b&&b.focus(); return; }
+  if(ds.suitkeep){ SU.keep[ds.suitkeep]=!SU.keep[ds.suitkeep]; suitsDraw(); const b=$(`[data-suitkeep="${ds.suitkeep}"]`); b&&b.focus(); return; } });
+document.addEventListener('keydown',e=>{ if(!SU) return;
+  if(SU.step===2&&e.target.id==='su-cv'&&/^Arrow/.test(e.key)){ e.preventDefault(); const p=SU.spots[SU.cur]||{x:.5,y:.5}, st=e.shiftKey?0.05:0.01;
+    const x=Math.max(0,Math.min(1,p.x+(e.key==='ArrowRight'?st:e.key==='ArrowLeft'?-st:0))), y=Math.max(0,Math.min(1,p.y+(e.key==='ArrowDown'?st:e.key==='ArrowUp'?-st:0)));
+    const k=SU.cur, rgb=suitsSample(x,y); SU.spots[k]={x,y,rgb,hex:hexOf(rgb)}; suitsDraw(); const cv=$('#su-cv'); cv&&cv.focus(); return; }
+  if(SU.step===3&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)&&(e.key==='ArrowLeft'||e.key==='ArrowRight')){ e.preventDefault(); const b=$(`[data-suit="${e.key==='ArrowRight'?1:0}"]`); b&&b.click(); } });
+addEventListener('resize',()=>{ if(SU&&SU.step>1&&SU.step<4) suitsPaint(); });
+function suitsAction(a){
+  if(a==='suitsGo'){ suitsStart(); return true; }
+  if(a==='suitsBack'){ if(SU){ SU.step=SU.step===4?3:SU.step-1; if(SU.step===3&&!SU.order) SU.step=2; suitsDraw(); } return true; }
+  if(a==='suitsTry'){ SU.order=suitsOrder(); SU.i=0; SU.keep={}; SU.step=3; suitsDraw(); return true; }
+  if(a==='suitsDone'){ SU.step=4; suitsDraw(); return true; }
+  if(a==='suitsAgain'){ SU.i=0; SU.step=3; suitsDraw(); return true; }
+  if(a==='suitsSave'){ const keep=Object.keys(COLORS).filter(c=>SU.keep[c]); if(!keep.length) return true;
+    S.settings.suits=keep; SU=null; saveCache(); queueSettingsSave(); S.fitKey=''; closeSheet(); renderOutfits(); toast('Your colors are saved. Outfits now favor them near your face.',4000); return true; }
+  if(a==='suitsOff'){ delete S.settings.suits; saveCache(); queueSettingsSave(); S.fitKey=''; renderOutfits(); openPalettes(); toast('Your colors are off.'); return true; }
+  return false; }
 // Custom palette: the person ticks any of the app's colors; saved as settings.paletteCustom.
 let PCOL=null;
 function openPaletteCustom(){
@@ -2967,6 +3071,7 @@ document.addEventListener('click',async e=>{
     case 'logOther': openLog(); return;
     case 'palettes': openPalettes(); return;
     case 'palcustom': openPaletteCustom(); return;
+    case 'suitsGo': case 'suitsBack': case 'suitsTry': case 'suitsDone': case 'suitsAgain': case 'suitsSave': case 'suitsOff': suitsAction(ds.act); return;
     case 'wishlist': openWishlist(); return;
     case 'wlcopy': { const t=wishlistText(); if(t) await copyText(t); return; }
     case 'wlshare': { const t=wishlistText(); if(!t) return;

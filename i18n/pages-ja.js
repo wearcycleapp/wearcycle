@@ -3,7 +3,7 @@ I18N.add("ja",{
 "Wearcycle privacy": "Wearcycleのプライバシー",
 "Privacy at Wearcycle": "Wearcycleのプライバシー",
 "This translation was made with AI and is for convenience. If it differs from the English version, the English version applies.": "この翻訳はAIで作成した参考訳です。英語版と異なる場合は英語版が優先されます。",
-"Last updated November 21, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).": "最終更新日：2026年11月21日。Wearcycleは自分の服を管理する個人向けアプリです。この通知では、何を収集するか、その理由、保存場所、処理する事業者、そしてあなたができることを説明します。カナダの民間部門プライバシー法（PIPEDA）の10原則に従っています。",
+"Last updated November 22, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).": "最終更新日：2026年11月22日。Wearcycleは自分の服を管理する個人向けアプリです。この通知では、何を収集するか、その理由、保存場所、処理する事業者、そしてあなたができることを説明します。カナダの民間部門プライバシー法（PIPEDA）の10原則に従っています。",
 "Who is responsible": "責任者",
 "The Wearcycle owner is accountable for your information. Questions, requests and complaints:": "Wearcycleの所有者があなたの情報に責任を負います。質問・依頼・苦情の連絡先：",
 ". You will get an answer within 30 days.": "。30日以内に回答します。",
@@ -14,7 +14,7 @@ I18N.add("ja",{
 "To sign you in and send sign-in emails (confirmation, password reset).": "サインインと、サインイン用メール（確認、パスワードの再設定）の送信のため。",
 "Photos of your clothes, cut-outs, and the details you or Claude fill in (name, category, colours, condition, notes, price paid if you add it)": "服の写真、切り抜き、あなたまたはClaudeが入力した詳細（名前、カテゴリ、色、状態、メモ、追加した場合は購入価格）",
 "To show your closet and build outfits from it.": "クローゼットを表示し、コーデを組むため。",
-"Outfit log (what you wore and when, and the outfit you plan for the next day) and your settings (style, shopping department, dress code, reminders, holidays, language)": "コーデの記録（いつ何を着たか、翌日のために決めたコーデ）と設定（スタイル、買い物の売り場、服装規定、リマインダー、祝日、言語）",
+"Outfit log (what you wore and when, and the outfit you plan for the next day) and your settings (style, shopping department, dress code, reminders, holidays, language, the colors you keep as suiting you; never the selfie used to find them)": "コーデの記録（いつ何を着たか、翌日のために決めたコーデ）と設定（スタイル、買い物の売り場、服装規定、リマインダー、祝日、言語、似合う色。似合う色を探すためのセルフィーは保存しません）",
 "To rotate outfits, spot unworn pieces and remind you about care and laundry.": "コーデを入れ替え、着ていない服を見つけ、手入れや洗濯をお知らせするため。",
 "Approximate location, only if you turn on weather: coordinates rounded to about 1 km, or the first three characters of a Canadian postal code": "おおよその位置（天気をオンにした場合のみ）：約1 kmに丸めた座標、またはカナダの郵便番号の最初の3文字",
 "To get the forecast.": "天気予報を取得するため。",
@@ -136,5 +136,7 @@ I18N.add("ja",{
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "服の追加、新しい写真の保存、状態チェックの保存で写真のアップロードが速くなり、アップロード中は保存ボタンに「保存中…」と表示されます。",
 "Merging duplicates and downloading your data are faster.": "重複の統合とデータのダウンロードが速くなりました。",
 "Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "明日：コーデ画面の曜日の横にある「明日」をタップすると、明日の天気予報と、それに合わせて順位付けしたコーデが見られます。",
-"Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "「明日のコーデに決める」はコーデをアカウントに保存するので、ほかの端末でも見られます。翌朝「昨夜決めたコーデ」としていちばん最初に表示します。"
+"Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "「明日のコーデに決める」はコーデをアカウントに保存するので、ほかの端末でも見られます。翌朝「昨夜決めたコーデ」としていちばん最初に表示します。",
+"Colors that suit you: in Style palette, take a selfie by a window with a white sheet of paper, tap four spots, then keep or drop each color shown under your chin.": "似合う色：スタイルパレットで、白い紙を持って窓辺でセルフィーを撮り、4か所をタップして、あごの下に表示される各色を残すか外すかを選びます。",
+"Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "似合う色のトップス、アウター、スカーフが少し上位になります。パンツと靴は対象外です。セルフィーは端末にとどまり、保存されることはありません。"
 });

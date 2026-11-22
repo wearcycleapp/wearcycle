@@ -3,7 +3,7 @@ I18N.add("ko",{
 "Wearcycle privacy": "Wearcycle 개인정보",
 "Privacy at Wearcycle": "Wearcycle의 개인정보 보호",
 "This translation was made with AI and is for convenience. If it differs from the English version, the English version applies.": "이 번역은 이해를 돕기 위해 AI로 만든 것입니다. 영어 원문과 다를 경우 영어 원문이 적용됩니다.",
-"Last updated November 21, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).": "최종 업데이트: 2026년 11월 21일. Wearcycle은 내 옷을 관리하는 개인용 앱입니다. 이 안내는 무엇을 수집하는지, 왜 수집하는지, 어디에 저장하는지, 누가 처리하는지, 그리고 여러분이 무엇을 할 수 있는지 설명합니다. 캐나다 민간 부문 개인정보 보호법(PIPEDA)의 10가지 원칙을 따릅니다.",
+"Last updated November 22, 2026. Wearcycle is a personal wardrobe app. This notice explains what it collects, why, where it is stored, who processes it, and what you can do about it. It follows the ten principles of Canada's private-sector privacy law (PIPEDA).": "최종 업데이트: 2026년 11월 22일. Wearcycle은 내 옷을 관리하는 개인용 앱입니다. 이 안내는 무엇을 수집하는지, 왜 수집하는지, 어디에 저장하는지, 누가 처리하는지, 그리고 여러분이 무엇을 할 수 있는지 설명합니다. 캐나다 민간 부문 개인정보 보호법(PIPEDA)의 10가지 원칙을 따릅니다.",
 "Who is responsible": "책임자",
 "The Wearcycle owner is accountable for your information. Questions, requests and complaints:": "Wearcycle 소유자가 여러분의 정보에 책임을 집니다. 질문, 요청, 불만 사항:",
 ". You will get an answer within 30 days.": ". 30일 이내에 답변을 드립니다.",
@@ -14,7 +14,7 @@ I18N.add("ko",{
 "To sign you in and send sign-in emails (confirmation, password reset).": "로그인하고 로그인 이메일(확인, 비밀번호 재설정)을 보내기 위해.",
 "Photos of your clothes, cut-outs, and the details you or Claude fill in (name, category, colours, condition, notes, price paid if you add it)": "옷 사진, 누끼 이미지, 그리고 여러분이나 Claude가 채운 정보(이름, 카테고리, 색상, 상태, 메모, 추가한 경우 구매 가격)",
 "To show your closet and build outfits from it.": "옷장을 보여 주고 코디를 만들기 위해.",
-"Outfit log (what you wore and when, and the outfit you plan for the next day) and your settings (style, shopping department, dress code, reminders, holidays, language)": "코디 기록(언제 무엇을 입었는지, 다음 날로 정한 코디)과 설정(스타일, 쇼핑 매장, 복장 규정, 알림, 기념일, 언어)",
+"Outfit log (what you wore and when, and the outfit you plan for the next day) and your settings (style, shopping department, dress code, reminders, holidays, language, the colors you keep as suiting you; never the selfie used to find them)": "코디 기록(언제 무엇을 입었는지, 다음 날로 정한 코디)과 설정(스타일, 쇼핑 매장, 복장 규정, 알림, 기념일, 언어, 나에게 어울리는 색. 색을 찾을 때 쓴 셀카는 저장하지 않음)",
 "To rotate outfits, spot unworn pieces and remind you about care and laundry.": "코디를 돌려 가며 추천하고, 안 입는 옷을 찾고, 관리와 세탁을 알려 주기 위해.",
 "Approximate location, only if you turn on weather: coordinates rounded to about 1 km, or the first three characters of a Canadian postal code": "대략적인 위치(날씨를 켠 경우에만): 약 1km로 반올림한 좌표 또는 캐나다 우편번호 앞 세 글자",
 "To get the forecast.": "일기예보를 받기 위해.",
@@ -136,5 +136,7 @@ I18N.add("ko",{
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "옷 추가, 새 사진 저장, 상태 점검 저장 때 사진이 더 빨리 올라가고, 올라가는 동안 저장 버튼에 “저장 중…”이 보여요.",
 "Merging duplicates and downloading your data are faster.": "중복 합치기와 데이터 다운로드가 더 빨라졌어요.",
 "Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "내일: 코디 화면에서 요일 옆의 내일을 누르면 내일 일기예보와 그에 맞춘 코디 순위를 볼 수 있어요.",
-"Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "내일 코디로 정하기는 코디를 계정에 저장해서 다른 기기에서도 보여요. 다음 날 아침 “어젯밤 정한 코디”로 가장 먼저 보여 줘요."
+"Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "내일 코디로 정하기는 코디를 계정에 저장해서 다른 기기에서도 보여요. 다음 날 아침 “어젯밤 정한 코디”로 가장 먼저 보여 줘요.",
+"Colors that suit you: in Style palette, take a selfie by a window with a white sheet of paper, tap four spots, then keep or drop each color shown under your chin.": "나에게 어울리는 색: 스타일 팔레트에서 흰 종이를 들고 창가에서 셀카를 찍고, 네 곳을 탭한 뒤 턱 아래에 보이는 색을 하나씩 남기거나 빼세요.",
+"Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "그러면 내 색의 상의, 아우터, 스카프가 조금 더 위로 올라가요. 바지와 신발은 해당되지 않아요. 셀카는 기기에만 있고 저장되지 않아요."
 });

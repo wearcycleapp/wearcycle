@@ -136,6 +136,7 @@ function harmony(colorNames){
   }
   return {s:-3,why:'Three or more accent colors',neg:1};
 }
+function nearFace(i){ return !!i&&(i.cat==='hat'||/scarf|scarves|snood|neck ?warmer|bandana|tie\b/i.test(i.name||'')); }
 function coreOf(o){ return [o.top,o.under,o.bottom,o.onepiece,o.outer,o.shoes].filter(Boolean); }
 
 /* ---------- layered look: an open shirt over a t-shirt ---------- */
@@ -234,6 +235,15 @@ function scoreOutfit(o,occ,ctx){
   if(pal){ const out=core.filter(i=>primary(i)&&!pal.includes(primary(i)));
     if(!out.length){ s+=1; reasons.push({t:'Fits your '+P.label.toLowerCase()+' palette'}); }
     else { s-=0.5*out.length; reasons.push({t:[...new Set(out.map(i=>primary(i)))].map(colorName).join(' and ')+(new Set(out.map(i=>primary(i))).size>1?' are':' is')+' outside your '+P.label.toLowerCase()+' palette',neg:true}); } }
+  // Colors that suit you (v1.71.0, owner approved 2026-11-22): only the pieces near the face count (top, shirt under,
+  // outerwear, one-piece, hat, scarf). All of them in your colors: +0.75; each one outside: -0.25. Trousers and shoes
+  // never count. Works with or without a style palette.
+  const SU=ctx.suits&&ctx.suits.length?ctx.suits:null;
+  if(SU){ const face=[o.top,o.under,o.outer,o.onepiece].concat((o.acc||[]).filter(nearFace)).filter(i=>i&&primary(i));
+    const out=face.filter(i=>!SU.includes(primary(i)));
+    if(face.length&&!out.length){ s+=0.75; reasons.push({t:'Your colors near your face'}); }
+    else if(out.length){ s-=0.25*out.length; const cs=[...new Set(out.map(primary))];
+      reasons.push({t:cs.map(colorName).join(' and ')+(cs.length>1?' are not among your colors':' is not one of your colors'),neg:true}); } }
   const h=harmony(core.map(primary).filter(Boolean)); s+=h.s; reasons.push({t:h.why,neg:!!h.neg});
   if(o.top && o.bottom && primary(o.top)==='denim' && primary(o.bottom)==='denim'){ s-=1; reasons.push({t:'Double denim',neg:true}); }
   // An open shirt over a t-shirt is the outer layer of a relaxed look; under a blazer or suit jacket it makes three layers.
@@ -747,7 +757,7 @@ function themeScore(o,th){
   return {s,r};
 }
 
-return {PALETTES,paletteOf,shoeLoad,OVERUSE_MIN,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
+return {PALETTES,paletteOf,nearFace,shoeLoad,OVERUSE_MIN,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,TARGETS,IDEAS,IDEAS_W,SHOP_COLORS,DAY,setDept,styleDesc,ideaFor,
   daysSince,localDayGap,notPicked,isActive,primary,hueDist,group,effectiveOccasions,eligible,harmony,coreOf,scoreOutfit,
   SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,themeScore,easterDate,warmthOf,rainReady,wetRisk,accWeatherOk,tailored,canOpen,canUnder,needsBase,layeredOver,washEvery,STYLES,STYLE_IDS,ESSENTIALS,pieceStyles,styleScore,outfitStyle,learnStyles,essentials,fitsTarget,lookMatch,pieceMatch,DRESS_CODES,setDressCode,workOk,formalOk,available,repairOk,REPAIR_OCC,NOWASH,sockFit,needsBelt,beltFit,beltPool,wxFeel,wxWet,needsLayer,weatherScore,pickAccessories,makeRng,suggest,swapCandidates,careFlags,goodCombo,combosWith,gaps,versatility,VERSA};
 })();

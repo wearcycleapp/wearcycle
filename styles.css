@@ -1417,3 +1417,30 @@ button.idea.shop .go{align-self:flex-end;margin-top:4px}
   .srow>b{flex:1 1 auto;max-width:none}
   .srow .st{order:9;flex:1 1 100%}
 }
+
+/* Colors that suit you (v1.71.0) */
+.suitcard{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:16px;background:var(--raised);border:1px solid var(--line)}
+.suit-h{display:flex;align-items:center;gap:12px}.suit-h>span{flex:1;display:flex;flex-direction:column;font-size:14px;color:var(--muted)}.suit-h b{color:var(--ink);font-size:16px}
+.suitcard .sws{flex-wrap:wrap;row-gap:4px;padding-left:6px}
+.suit-step{margin:-6px 0 0}
+.suit-sub{margin:4px 0 0;font-size:16px}
+.suit-tips{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.suit-safe{display:flex;gap:8px;align-items:flex-start;margin:0;padding:10px 12px;border-radius:12px;background:var(--accent-soft);font-size:14px}.suit-safe svg{flex:none;margin-top:1px}
+.suit-file{position:relative;flex:1;cursor:pointer}
+.suit-file:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.suit-photo{position:relative;border-radius:16px;overflow:hidden;background:var(--canvas-2);touch-action:manipulation}
+.suit-photo canvas{display:block;width:100%;cursor:crosshair}
+.suit-photo canvas:focus-visible{outline:3px solid var(--ink);outline-offset:-3px}
+.suit-photo.try{height:min(46vh,420px)}.suit-photo.try canvas{height:100%;cursor:default}
+.suit-mark{position:absolute;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;box-sizing:border-box;border:2px solid #fff;box-shadow:0 0 0 1px #1b2433;pointer-events:none}
+.suit-mark.cur{border:3px solid #1b2433;box-shadow:0 0 0 2px #fff}
+.suit-spots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}.suit-spots .chip{justify-content:center;padding:0 4px}
+.chip .sw,.suit-now .sw{display:inline-block;width:14px;height:14px;border-radius:50%;border:1px solid var(--muted);flex:none}
+.suit-now{display:flex;align-items:center;gap:10px;margin:0;font-size:18px}.suit-now b{flex:1}.suit-now .sw.lg{width:28px;height:28px}.suit-now .hint{margin:0;font-size:13px}
+.suit-pos{position:absolute;left:12px;top:12px;padding:4px 10px;border-radius:999px;background:rgba(251,250,248,.92);color:#1b2433;font-size:13px;font-weight:600}
+.suit-side{display:flex;flex-direction:column;gap:12px}.suit-side .row .btn{flex:1}
+.suit-all{display:flex;flex-wrap:wrap;gap:6px}.suit-all .chip.off{color:var(--muted);text-decoration:line-through}
+.suit-how{display:flex;flex-direction:column;gap:4px;padding:12px;border-radius:12px;background:var(--raised);border:1px solid var(--line);font-size:14px}
+.suit-try{display:flex;flex-direction:column;gap:12px}
+@media (max-width:899.98px){ .suit-all{display:none} } /* phones and iPad portrait: one color at a time */
+@media (min-width:900px){ .sheet.suitwide{max-width:900px} .suit-try{display:grid;grid-template-columns:minmax(0,380px) minmax(0,1fr);gap:24px;align-items:start} .suit-photo.try{height:420px} }
