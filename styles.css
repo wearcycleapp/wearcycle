@@ -991,21 +991,23 @@ button.lrow{cursor:pointer}
 #tab-outfits .iconbtn{width:44px;height:44px}
 #tab-outfits .linkbtn{margin:0;min-height:44px}
 /* day row: day, weather and greeting; the style menu (A); the diary */
-.todaybar{display:grid;grid-template-columns:minmax(min-content,1fr) minmax(0,auto) auto;grid-template-areas:"day sel diary" "sub sub when";align-items:center;column-gap:8px}
+.todaybar{display:grid;grid-template-columns:minmax(min-content,1fr) minmax(0,auto) auto;grid-template-areas:"day sel diary" "sub sub sub";align-items:center;column-gap:8px}
 .dayblk{display:contents}
 .greet{grid-area:day;font-family:var(--f-display);font-size:22px;line-height:1;text-transform:none;letter-spacing:.01em;margin:0}
 #styleSel{grid-area:sel;min-width:0}
-.todaybar>[data-act="diary"]{grid-area:diary;justify-self:end}
-/* Today | Tomorrow (v1.70.0): two text tabs on the weather line, the selected day in ink with a 2px ink underline (like
+.todaybar>[data-act="diary"]{grid-area:diary}
+/* Today | Tomorrow (v1.70.0): two text tabs at the end of the weather line (inside .daysub, so they share its full width
+   and move to the next line only when the line is full), the selected day in ink with a 2px ink underline (like
    the occasion tabs on wide screens). Each keeps a 40px target (it reaches down, clear of the diary button above) but takes no extra line
    height (negative margins, as the weather pill), so "Wear this" stays in the first screen on a 360x800 phone. */
-.whensel{grid-area:when;justify-self:end;align-self:center;display:inline-flex;gap:14px;margin-top:2px}
-.whensel button{min-height:40px;margin:-5px 0 -17px;padding:0 2px 12px;border:0;border-radius:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;line-height:18px;white-space:nowrap;text-decoration:underline 2px transparent;text-underline-offset:5px;cursor:pointer}
+.whensel{display:inline-flex;gap:12px;margin-left:auto;padding-left:6px}
+.whensel button{min-height:40px;margin:-2px 0 -20px;padding:0 2px 15px;border:0;border-radius:0;background:none;color:var(--muted);font:inherit;font-size:14px;font-weight:600;line-height:18px;white-space:nowrap;text-decoration:underline 2px transparent;text-underline-offset:5px;cursor:pointer}
 .whensel button[aria-pressed="true"]{color:var(--ink);font-weight:700;text-decoration-color:var(--ink)}
 @media (hover:hover) and (pointer:fine){ .whensel button:not([aria-pressed="true"]):hover{color:var(--ink)} }
 .daysub{grid-area:sub;display:flex;align-items:center;flex-wrap:wrap;gap:0 6px;margin:2px 0 0;font-size:13px;line-height:18px;color:var(--muted)}
 .daysub #wx:not(:empty)::after{content:"·";margin-left:6px}
 .daysub #wx:has(+.hello:empty)::after{content:none}
+.daysub .hello:empty{display:none}
 .wxpill{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin-block:-12px;padding:0;border:0;background:none;font:inherit;font-weight:600;color:var(--ink);white-space:nowrap;cursor:pointer}
 .wxpill svg{width:18px;height:18px;color:var(--muted)}
 .wxpill.add{color:var(--muted);text-decoration:underline;text-underline-offset:3px}
@@ -1139,7 +1141,7 @@ details.whybox .why{margin:2px 0 10px}
 @media (max-width:380px){.ominis .om:nth-child(3){display:none}}
 /* A, wider than 700px but under 600px tall (phones turned sideways, short windows): the kit beside Wear this */
 @media (min-width:700px) and (max-height:599.98px){
-  .todaybar{grid-template-columns:minmax(min-content,auto) minmax(0,1fr) minmax(0,auto) auto;grid-template-areas:"day rem sel diary" "sub sub sub when"}
+  .todaybar{grid-template-columns:minmax(min-content,auto) minmax(0,1fr) minmax(0,auto) auto;grid-template-areas:"day rem sel diary" "sub sub sub sub"}
   .remslot{grid-area:rem;justify-self:end;min-width:0}
   .remslot .remline{width:auto}
   .occsel{grid-template-columns:repeat(6,minmax(0,1fr))}
@@ -1156,7 +1158,6 @@ details.whybox .why{margin:2px 0 10px}
   #fits{gap:24px}
   .todaybar{display:flex;align-items:flex-start;gap:8px}
   .dayblk{display:block;flex:1 1 auto;min-width:0}
-  .whensel{flex:none;align-self:center;margin-top:0}
   .greet{font-size:52px}
   .daysub{font-size:15px;line-height:22px;margin-top:10px}
   .daysub .hello{order:-1}
