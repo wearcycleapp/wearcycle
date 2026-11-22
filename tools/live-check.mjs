@@ -140,7 +140,7 @@ const allowedHosts = cspHosts();
 async function guardedContext(browser, dev, { storageState, serviceWorkers = 'block' } = {}) {
   const ctx = await browser.newContext({ viewport: { width: dev.width, height: dev.height }, deviceScaleFactor: dev.dpr, isMobile: dev.touch, hasTouch: dev.touch,
     locale: 'en-CA', timezoneId: 'America/Toronto', serviceWorkers, storageState });
-  const log = { blocked: [], unexpected: new Set(), failed: [], console: [], csp: [], items: null, bodies: new Map(), copies: { held: 0, stored: 0, pieces: 0, status: [] }, aborted: new Set(), photos: null };
+  const log = { blocked: [], unexpected: new Set(), failed: [], console: [], csp: [], items: null, bodies: new Map(), copies: { held: 0, stored: 0, pieces: 0, status: [] }, aborted: new Set(), photos: null, http: [] };
   await ctx.route('**/*', async route => {
     const req = route.request(), u = new URL(req.url()), m = req.method();
     if (u.host !== SB_HOST) return route.continue();
@@ -165,6 +165,9 @@ async function guardedContext(browser, dev, { storageState, serviceWorkers = 'bl
   ctx.on('request', r => { const u = r.url(); if (/^https?:/.test(u) && !allowedHosts.has(new URL(u).host)) log.unexpected.add(new URL(u).host); });
   ctx.on('requestfailed', r => { const t = (r.failure() || {}).errorText || ''; if (log.aborted.has(r)) return; // aborted by this guard: listed above, or a held-back copy
     if (!/ABORTED|BLOCKED_BY_CLIENT|cancel/i.test(t)) log.failed.push(r.method() + ' ' + new URL(r.url()).host + shortPath(new URL(r.url()).pathname) + ' ' + t); });
+  // Which request answered with an error status (host and the first path segments only: logs are public). Added 2026-11-22
+  // after two runs failed on unexplained "429 Too Many Requests" console errors.
+  ctx.on('response', r => { try { if (r.status() >= 400) { const u = new URL(r.url()); log.http.push(r.status() + ' ' + r.request().method() + ' ' + u.host + shortPath(u.pathname)); } } catch {} });
   ctx.on('response', async r => { try { const u = new URL(r.url()); if (u.host === SB_HOST && u.pathname === '/rest/v1/items' && r.request().method() === 'GET' && log.items === null) { const j = await r.json(); if (Array.isArray(j)) { log.items = j.length; const ph = j.filter(r => r.body && r.body.photo); log.photos = { photos: ph.length, copies: ph.filter(r => r.body.med).length, cutNoCopy: ph.filter(r => !r.body.med && r.body.cut).length }; } } } catch {} });
   ctx.on('page', page => {
     page.on('console', m => { if (m.type() !== 'error') return; const t = m.text(); if (/Content.Security.Policy|Refused to (load|connect|execute|apply|frame)/i.test(t)) log.csp.push(t); else if (!/BLOCKED_BY_CLIENT/i.test(t)) log.console.push(t); });
@@ -181,7 +184,7 @@ function onlyAddsMed(log, u, req) {
     if (!was || !next || typeof next.med !== 'string' || next.med !== String(was.photo).replace(/\.[a-z0-9]+$/i, '') + '-1024.jpg') return false;
     const a = { ...was }, b = { ...next }; delete a.med; delete b.med; return canon(a) === canon(b); } catch { return false; }
 }
-const logProblems = log => [...log.blocked.map(b => 'write blocked: ' + b), ...[...log.unexpected].map(h => 'host outside the CSP: ' + h),
+const logProblems = log => [...(log.console.length ? log.http || [] : []).map(h => 'HTTP ' + h), // listed only to explain console errors ...log.blocked.map(b => 'write blocked: ' + b), ...[...log.unexpected].map(h => 'host outside the CSP: ' + h),
   ...log.failed.map(f => 'request failed: ' + f), ...log.csp.map(c => 'CSP: ' + c), ...log.console.map(c => 'console: ' + c)];
 
 async function settle(page) {
