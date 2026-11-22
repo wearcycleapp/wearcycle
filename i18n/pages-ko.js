@@ -134,5 +134,7 @@ I18N.add("ko",{
 "Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "빨래를 모두 깨끗함으로 표시하면 이제 몇 초 동안 하나씩이 아니라 목록이 바로 바뀌어요.",
 "Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "기록한 코디 삭제나 수정, 모두 확인, “이건 뭔가요?”에서 옷마다 저장할 때 몇 초 기다리지 않고 바로 화면이 바뀌어요.",
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "옷 추가, 새 사진 저장, 상태 점검 저장 때 사진이 더 빨리 올라가고, 올라가는 동안 저장 버튼에 “저장 중…”이 보여요.",
-"Merging duplicates and downloading your data are faster.": "중복 합치기와 데이터 다운로드가 더 빨라졌어요."
+"Merging duplicates and downloading your data are faster.": "중복 합치기와 데이터 다운로드가 더 빨라졌어요.",
+"Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "내일: 코디 화면에서 요일 옆의 내일을 누르면 내일 일기예보와 그에 맞춘 코디 순위를 볼 수 있어요.",
+"Plan for tomorrow keeps the outfit on this device; the next morning it opens first as “Planned last night”, ready to wear.": "내일 코디로 정하기는 이 기기에 코디를 저장하고, 다음 날 아침 “어젯밤 정한 코디”로 가장 먼저 보여 줘요."
 });

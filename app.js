@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.69.2';
+const APP_VERSION='1.70.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
@@ -10,6 +10,7 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LS={get(k){try{return JSON.parse(localStorage.getItem(k));}catch(e){return null;}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v));return true;}catch(e){return false;}},del(k){try{localStorage.removeItem(k);}catch(e){}}};
 const todayISO=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
+const tomorrowISO=()=>{const d=new Date();d.setDate(d.getDate()+1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');};
 const uuid=()=>(crypto.randomUUID?crypto.randomUUID():'id-'+Date.now().toString(36)+Math.random().toString(36).slice(2,10));
 const isEx=it=>String(it.id).startsWith('ex-');
 const CLOSE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
@@ -26,7 +27,7 @@ const S={items:new Map(),examples:[],log:[],exLog:[],settings:{checkEvery:30,che
 function allItems(){ return [...S.items.values(),...S.examples]; }
 function allLog(){ return S.log.concat(S.exLog); }
 function byId(id){ return S.items.get(id)||S.examples.find(e=>e.id===id); }
-function ctx(){ return {now:Date.now(),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',paletteColors:S.settings.paletteCustom||[],style:styleTarget(S.occ),theme:themeNow()}; }
+function ctx(){ return {now:Date.now()+(S.when?864e5:0),log:allLog(),wx:wxForScore(),palette:S.settings.palette||'any',paletteColors:S.settings.paletteCustom||[],style:styleTarget(S.occ),theme:themeNow()}; }
 /* ---------- seasons and holidays ---------- */
 // Country for country-specific holidays: the weather place's country, else the phone's time zone, else the language region.
 const CA_TZ=/^America\/(Toronto|Montreal|Vancouver|Edmonton|Winnipeg|Regina|Halifax|St_Johns|Moncton|Glace_Bay|Goose_Bay|Whitehorse|Dawson|Dawson_Creek|Fort_Nelson|Creston|Iqaluit|Rankin_Inlet|Resolute|Cambridge_Bay|Inuvik|Yellowknife|Swift_Current|Atikokan|Blanc-Sablon|Nipigon|Thunder_Bay|Rainy_River|Pangnirtung)$/;
@@ -263,11 +264,12 @@ async function applyBox(it,blob,box){ if(!validBox(box)) return false; try{ it.t
 
 /* ---------- weather (Open-Meteo, no key; postal codes via Zippopotam) ---------- */
 // Only rounded coordinates (about 1 km) are stored, in your own settings row.
-const WXC={data:null,busy:false,err:''};
+const WXC={data:null,tom:null,busy:false,err:''};
+function wxDay(){ return S.when?WXC.tom:WXC.data; } // the forecast for the day on screen (Today or Tomorrow, v1.70.0)
 const COUNTRIES=[['CA','Canada'],['US','United States'],['MX','Mexico'],['GB','United Kingdom'],['FR','France'],['DE','Germany'],['ES','Spain'],['IT','Italy'],['PT','Portugal'],['NL','Netherlands'],['BE','Belgium'],['CH','Switzerland'],['AU','Australia'],['NZ','New Zealand'],['BR','Brazil'],['IN','India'],['JP','Japan']];
 function wxSet(){ return S.settings.wx||(S.settings.wx={on:false}); }
 function wxOn(){ const w=wxSet(); return !!(w.on&&isFinite(w.lat)&&isFinite(w.lon)); }
-function wxForScore(){ const d=WXC.data; if(!wxOn()||!d) return null; return {feelMin:d.feelMin,feelMax:d.feelMax,rain:d.rain,snow:d.snow,off:wxSet().off||0}; }
+function wxForScore(){ const d=wxDay(); if(!wxOn()||!d) return null; return {feelMin:d.feelMin,feelMax:d.feelMax,rain:d.rain,snow:d.snow,off:wxSet().off||0}; }
 function unitsF(){ const u=wxSet().units; return u?u==='F':/-US$/i.test(navigator.language||''); }
 function tdeg(c){ return unitsF()?Math.round(c*9/5+32)+'°F':Math.round(c)+'°C'; }
 function hourLabel(h){ return unitsF()?((h%12)||12)+(h<12?' am':' pm'):String(h).padStart(2,'0')+':00'; }
@@ -284,10 +286,13 @@ async function geocode(q,cc){
     if(r.ok){ const j=await r.json(); const p=j.results&&j.results[0]; if(p) return {lat:p.latitude,lon:p.longitude,label:p.name+(p.admin1?', '+p.admin1:'')}; } }catch(e){}
   return null;
 }
-function summarize(j){
+// Today: from now to 9 pm. Tomorrow (next=true, v1.70.0): 7 am to 9 pm of the next day, from the same 2-day download.
+function summarize(j,next){
   const H=j.hourly; const nowLocal=new Date(Date.now()+j.utc_offset_seconds*1000).toISOString().slice(0,13);
   let i0=H.time.findIndex(t=>t.slice(0,13)>=nowLocal); if(i0<0) i0=0;
-  const day=H.time[i0].slice(0,10); let i1=H.time.findIndex(t=>t>=day+'T21'); if(i1<=i0+2) i1=i0+3; i1=Math.min(i1,H.time.length-1);
+  if(next){ const d=new Date(H.time[i0].slice(0,10)+'T12:00Z'); d.setUTCDate(d.getUTCDate()+1); const t=d.toISOString().slice(0,10);
+    const a=H.time.findIndex(x=>x>=t+'T07'); if(a<0) return null; i0=a; }
+  const day=H.time[i0].slice(0,10); let i1=H.time.findIndex(t=>t>=day+'T21'); if(i1<0) i1=H.time.length-1; if(i1<=i0+2) i1=i0+3; i1=Math.min(i1,H.time.length-1);
   const idx=[]; for(let i=i0;i<=i1;i++) idx.push(i);
   const pick=k=>idx.map(i=>H[k][i]).filter(v=>v!=null);
   const feel=pick('apparent_temperature'), temp=pick('temperature_2m'), pp=pick('precipitation_probability'), mm=pick('precipitation'), codes=pick('weather_code'), wind=pick('wind_speed_10m');
@@ -303,15 +308,15 @@ async function loadWeather(force){
   const w=wxSet(); if(!wxOn()){ WXC.data=null; return; }
   const key=r2(w.lat)+','+r2(w.lon)+','+todayISO();
   const c=LS.get('wearcycle.wx');
-  if(!force&&c&&c.key===key&&Date.now()-c.data.at<3600e3){ WXC.data=c.data; return; }
-  if(!S.online){ if(c&&c.key===key) WXC.data=c.data; return; }
+  if(!force&&c&&c.key===key&&c.tom!==undefined&&Date.now()-c.data.at<3600e3){ WXC.data=c.data; WXC.tom=c.tom; return; }
+  if(!S.online){ if(c&&c.key===key){ WXC.data=c.data; WXC.tom=c.tom||null; } return; }
   WXC.busy=true; WXC.err=''; if($('#wx')) renderWx();
   try{
     const r=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+r2(w.lat)+'&longitude='+r2(w.lon)+
       '&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,weather_code,wind_speed_10m&timezone=auto&forecast_days=2');
     if(!r.ok) throw new Error('HTTP '+r.status);
-    WXC.data=summarize(await r.json()); LS.set('wearcycle.wx',{key,data:WXC.data});
-  }catch(e){ WXC.err='Could not get the forecast right now.'; if(c&&c.key===key) WXC.data=c.data; }
+    const j=await r.json(); WXC.data=summarize(j); WXC.tom=summarize(j,true); LS.set('wearcycle.wx',{key,data:WXC.data,tom:WXC.tom});
+  }catch(e){ WXC.err='Could not get the forecast right now.'; if(c&&c.key===key){ WXC.data=c.data; WXC.tom=c.tom||null; } }
   WXC.busy=false; S.fitKey=''; renderOutfits();
 }
 function getPosition(){
@@ -817,7 +822,7 @@ function emptyCloset(){
     <p class="hint">The example closet only shows on this screen and is never saved.</p></div>`;
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
-function fitKeyNow(){ const w=wxForScore(); return (S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
+function fitKeyNow(){ const w=wxForScore(); return (S.when?'T|'+planKey()+'|':'')+(S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
 function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
 function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 /* "See outfits with this": the Outfits screen builds every outfit around one piece, and says why that piece
@@ -896,8 +901,27 @@ function pinSee(id){ const it=byId(id); if(!it) return; S.pin=id; const occs=eff
 function regenerate(){
   const pin=S.pin&&byId(S.pin); if(S.pin&&!pin) S.pin=null;
   const r=suggest(allItems(),S.occ,ctx(),{n:4,jitter:S.seed?1.2:0,rng:makeRng(S.seed),layer:layerOn(),pin:pin||undefined});
-  S.fits=r.outfits.map(f=>({ids:idsOf(f.o),score:f.score,reasons:f.reasons,style:f.style})).sort((a,b)=>b.score-a.score); S.fits.forEach((f,k)=>{f.rank=k+1;}); S.missing=r.missing; S.fitKey=fitKeyNow(); S.sel=0;
+  S.fits=r.outfits.map(f=>({ids:idsOf(f.o),score:f.score,reasons:f.reasons,style:f.style})).sort((a,b)=>b.score-a.score);
+  const pl=!S.when&&!S.pin&&planToday(); if(pl){ S.fits=S.fits.filter(f=>idsKey(f.ids)!==idsKey(pl.f.ids)); S.fits.unshift(pl.f); S.fits=S.fits.slice(0,4); }
+  S.fits.forEach((f,k)=>{f.rank=k+1;}); S.missing=r.missing; S.fitKey=fitKeyNow(); S.sel=0;
 }
+/* Tomorrow (v1.70.0, owner 2026-11-21: "Add the option to see tomorrow's weather to prepare the outfit").
+   Today | Tomorrow switch by the day heading; Tomorrow ranks with tomorrow's forecast (7 am to 9 pm) and counts rest
+   from tomorrow. "Plan for tomorrow" keeps the outfit on this device only (wearcycle.plan, nothing on the server); the
+   next day it opens first as "Planned last night" with Wear this, while all its pieces are still active and not in the
+   wash. The app always opens on Today (owner's choice). */
+function idsKey(ids){ return ['top','under','bottom','onepiece','outer','shoes'].map(k=>ids[k]||'').concat(ids.acc||[]).join(','); }
+function idsList(ids){ return ['top','under','bottom','onepiece','outer','shoes'].map(k=>ids[k]).filter(Boolean).concat(ids.acc||[]); }
+function planGet(){ const p=LS.get('wearcycle.plan'); return p&&p.uid===(UID||'')&&p.day&&p.ids&&typeof p.ids==='object'?p:null; }
+function planKey(){ const p=planGet(); return p?p.day+idsKey(p.ids):''; }
+function planHas(f){ const p=planGet(); return !!(p&&p.day===tomorrowISO()&&idsKey(p.ids)===idsKey(f.ids)); }
+function planToday(){ const p=planGet(); if(!p||p.day!==todayISO()||p.occ!==S.occ) return null;
+  const its=idsList(p.ids).map(byId); if(!its.length||its.some(it=>!it||!isActive(it)||it.dirty)) return null;
+  const sc=scoreOutfit(hydrate(p.ids),S.occ,ctx()); return {f:{ids:JSON.parse(JSON.stringify(p.ids)),score:sc.score,reasons:sc.reasons,style:sc.style,planned:true}}; }
+function occForDay(d){ const wd=d.getDay(); return wd===0||wd===6?'out':'work'; }
+function setWhen(k){ if((S.when||0)===k) return;
+  if(k){ S.occToday=S.occ; const d=new Date(); d.setDate(d.getDate()+1); S.occ=occForDay(d); } else if(S.occToday&&OCC[S.occToday]) S.occ=S.occToday;
+  S.when=k; S.theme=undefined; S.pin=null; S.seed=0; S.fitKey=''; renderOutfits(); }
 // Match label from the score (see "How Wearcycle decides"); bars give a quick visual of the same thing.
 const MATCH=[[4,'Excellent match',5],[3,'Great match',4],[2,'Good match',3],[0.5,'Fair match',2],[-Infinity,'Weak match',1]];
 // Each warning (red dot) lowers the label one step, so a high score can't hide a real problem.
@@ -907,15 +931,15 @@ const WX_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke
 function renderWx(){
   const box=$('#wx'); const w=wxSet();
   if(!wxOn()){ box.innerHTML=w.dismissed?'':`<button class="wxpill add" data-wx="edit">${WX_ICON}<span>Weather</span></button>`; return; }
-  const d=WXC.data;
+  const d=wxDay();
   if(!d){ box.innerHTML=`<button class="wxpill" data-wx="edit">${WX_ICON}<span>${WXC.busy?'…':'Weather'}</span></button>`; return; }
   const wet=d.snow?' · snow':d.rain?' · rain':'';
   box.innerHTML=`<button class="wxpill" data-wx="edit" aria-label="Weather: ${tdeg(d.tempMin)} to ${tdeg(d.tempMax)}, ${esc(d.sky)}. Change">${WX_ICON}<span>${tdeg(d.tempMin).replace(/[CF]$/,'')}–${tdeg(d.tempMax)}${wet}</span></button>`;
 }
-function dayName(){ return new Date().toLocaleDateString(I18N.locale,{weekday:'long'}); }
+function dayName(){ const d=new Date(); if(S.when) d.setDate(d.getDate()+1); return d.toLocaleDateString(I18N.locale,{weekday:'long'}); }
 function helloWord(){ const h=new Date().getHours(); return h<12?'Good morning':h<18?'Good afternoon':'Good evening'; }
 function adviceText(){
-  const w=wxForScore(), d=WXC.data; if(!w||!d) return '';
+  const w=wxForScore(), d=wxDay(); if(!w||!d) return '';
   const {lo,hi}=wxFeel(w); const out=[];
   const band=lo<0?'Freezing':lo<5?'Cold':lo<12?'Cool':lo<18?'Mild':hi>=25?'Hot':'Warm';
   out.push(band+(d.snow?' with snow':d.rain?' and wet':'')+' for '+OCC[S.occ].label.toLowerCase()+'.');
@@ -973,7 +997,8 @@ LS.del('wearcycle.view'); // the choice stored before v1.53 is cleared once (own
 const pad2=n=>String(n).padStart(2,'0');
 const reduceMotion=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
 function renderOutfits(){
-  renderWx(); const g=$('#greet'); if(g) g.textContent=dayName(); const hl=$('#hello'); if(hl) hl.textContent=helloWord();
+  renderWx(); const g=$('#greet'); if(g) g.textContent=dayName(); const hl=$('#hello'); if(hl) hl.textContent=S.when?'':helloWord();
+  const ws=$('#whenSel'); if(ws) ws.innerHTML=['Today','Tomorrow'].map((l,k)=>`<button type="button" data-when="${k}" aria-pressed="${(S.when||0)===k}">${l}</button>`).join('');
   const hol=holidaysSoon(14); if(S.theme&&!themeNow()) S.theme=undefined;
   // Holidays are chosen from the reminders line (Reminders sheet), not from the occasions: as tabs they wrapped the
   // tab row with a mouse in Japanese and Tagalog and pushed Wear this out of a 1366x630 window (v1.53.1).
@@ -1052,12 +1077,12 @@ const UNDO_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stro
 const SHARE_ICON='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7"/></svg>';
 const CHEV_D='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>';
 // Header of the selected outfit: rank (the #1 pick in coral), title, style, match label; Adjust on the right.
-function fitHead(f,i){ const m=match(f); const title=f.edited?'Your version':i===0?'Today’s pick':'Option '+f.rank;
+function fitHead(f,i){ const m=match(f); const title=f.edited?'Your version':i===0?(f.planned?'Planned last night':S.when?'Tomorrow’s pick':'Today’s pick'):'Option '+f.rank;
   return `<header class="fit-h"><span class="rank ${i===0&&!f.edited?'top':''}" aria-hidden="true">${pad2(f.rank)}</span><span class="rk-l"><b>${title}${f.style&&STYLES[f.style]?`<em class="stylepill">${STYLES[f.style].label}</em>`:''}</b><span>${m.label}${bars(m.bars)}</span></span>
     <button class="iconbtn" data-act="adjust" aria-label="Adjust: outer layer, view and palette">${ADJ_ICON}</button></header>`; }
 function tapBar(f,i){ return f.edited&&f.orig?`<div class="editbar"><span>You changed this outfit.</span><button class="btn sm" data-revert="${i}">${UNDO_ICON}Back to suggestion</button></div>`
   :`<p class="taphint">${SWAP_ICON}<span>Tap a piece to see it or swap it</span></p>`; }
-function ctaRow(f,i){ return `<div class="ctarow">${f.worn?'<button class="worn-ok linkish" data-act="todaylog">✓ Logged as worn today · Correct</button>':`<button class="btn cta grow" data-wear="${i}">Wear this</button>`}
+function ctaRow(f,i){ return `<div class="ctarow">${S.when?(planHas(f)?'<button class="worn-ok linkish" data-act="unplan">✓ Planned for tomorrow · Undo</button>':`<button class="btn cta grow" data-plan="${i}">Plan for tomorrow</button>`):f.worn?'<button class="worn-ok linkish" data-act="todaylog">✓ Logged as worn today · Correct</button>':`<button class="btn cta grow" data-wear="${i}">Wear this</button>`}
   <button class="btn iconb" data-act="share" aria-label="Share this outfit">${SHARE_ICON}</button></div>`; }
 function addRow(f,i,o){
   const canAddUnder=o.top&&!o.under&&layeredOver(o.top)&&swapCandidates(o,'under',allItems(),S.occ,ctx()).length;
@@ -1068,7 +1093,7 @@ function addRow(f,i,o){
 function reasonsOf(f,o){ const hw=WardrobeLogic.harmony(coreOf(o).map(primary).filter(c=>COLORS[c])).why; return f.reasons.filter(r=>r.t!==hw); }
 const whyLi=r=>`<li class="${r.neg?'neg':''}">${esc(r.t)}</li>`;
 const notesPill=n=>n?` <span class="warnn">${n} note${n>1?'s':''}</span>`:'';
-function rankNote(){ return `<p class="hint">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?', today’s weather':''}${S.settings.palette&&S.settings.palette!=='any'?' and your palette':''}. Tap any piece to swap it.</p>`; }
+function rankNote(){ return `<p class="hint">Ranked by color harmony, dress level, how long pieces have rested${wxForScore()?(S.when?', tomorrow’s weather':', today’s weather'):''}${S.settings.palette&&S.settings.palette!=='any'?' and your palette':''}. Tap any piece to swap it.</p>`; }
 // Direction A: the selected outfit as a kit (or the flat-lay board when chosen in Adjust), Wear this right under it,
 // then the tap hint (or Back to suggestion), the first reason (a note first, if there is one) and "N more reasons".
 function heroCard(f,i){
@@ -2876,7 +2901,7 @@ document.addEventListener('click',async e=>{
   if(ds.holTog){ const off=holidaysOff(), k=ds.holTog; S.settings.holidaysOff=off.includes(k)?off.filter(x=>x!==k):off.concat([k]); saveCache(); queueSettingsSave(); S.fitKey=''; renderAll(); const b_=document.querySelector(`[data-hol-tog="${k}"]`); if(b_) b_.setAttribute('aria-pressed',String(!S.settings.holidaysOff.includes(k))); return; }
   if(ds.pinsee){ pinSee(ds.pinsee); return; }
   if(ds.unpin!==undefined){ S.pin=null; S.fitKey=''; renderOutfits(); return; }
-  if(ds.occ){ S.theme=undefined; S.occ=ds.occ; S.seed=0; LS.set('wearcycle.occ',{day:todayISO(),occ:S.occ}); renderOutfits(); return; }
+  if(ds.occ){ S.theme=undefined; S.occ=ds.occ; S.seed=0; if(!S.when) LS.set('wearcycle.occ',{day:todayISO(),occ:S.occ}); renderOutfits(); return; }
   if(t.id==='shuffleBtn'){ S.seed=(Date.now()%100000)+1; S.fitKey=''; renderOutfits(); toast('New combinations, still ranked best first.'); return; }
   if(DI&&$('#sheetRoot').innerHTML){
     if(ds.dday){ DI.day=ds.dday; drawDiary(); return; }
@@ -2966,6 +2991,7 @@ document.addEventListener('click',async e=>{
     case 'help': openHelp(); return;
     case 'wipe': openWipe(); return;
     case 'todaylog': openTodayLog(); return;
+    case 'unplan': LS.del('wearcycle.plan'); S.fitKey=''; renderOutfits(); toast('Plan removed.'); return;
     case 'todayadd': openTodayLog(); return;
     case 'export': exportData(); return;
     case 'privacyOk': privacyAgree(true); return;
@@ -3017,6 +3043,8 @@ document.addEventListener('click',async e=>{
   if(ds.cat){ S.cat=ds.cat==='laundry'&&S.cat==='laundry'?'all':ds.cat; renderCloset(); return; }
   if(ds.edit){ closeSheet(); openEditor(ds.edit); return; }
   if(ds.wear){ wear(+ds.wear); return; }
+  if(ds.when!==undefined){ setWhen(+ds.when); return; }
+  if(ds.plan!==undefined){ const f=S.fits[+ds.plan]; if(!f) return; LS.set('wearcycle.plan',{uid:UID||'',day:tomorrowISO(),occ:S.occ,ids:JSON.parse(JSON.stringify(f.ids))}); S.fitKey=''; renderOutfits(); toast('Planned for tomorrow. It will be the first outfit in the morning.',4000); return; }
   if(ds.swap!==undefined){ openPiece(+ds.swap,ds.slot); return; }
   if(ds.pdrop!==undefined){ dropPiece(+ds.pdrop,ds.slot); return; }
   if(ds.punlog){ unlogPiece(ds.punlog); return; }
@@ -3249,6 +3277,7 @@ async function askNewPassword(change){
 function defaultStyleToday(){ const v=LS.get('wearcycle.styleDay'); return v&&v.day===todayISO()&&v.k?v.k:undefined; }
 function defaultOcc(){
   const saved=LS.get('wearcycle.occ'); if(saved&&saved.day===todayISO()&&OCC[saved.occ]) return saved.occ;
+  const pl=planGet(); if(pl&&pl.day===todayISO()&&OCC[pl.occ]) return pl.occ; // the outfit planned last night opens first
   const d=new Date(), wd=d.getDay(), h=d.getHours(), weekend=wd===0||wd===6;
   if(!weekend&&h<17) return 'work'; if(h>=17&&(wd===5||wd===6)) return 'out'; if(weekend&&h<17) return 'out'; return 'home'; // weekday evenings and Sunday evening: home
 }

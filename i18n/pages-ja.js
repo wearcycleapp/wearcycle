@@ -134,5 +134,7 @@ I18N.add("ja",{
 "Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "洗濯物をすべてきれいにしたとき、リストが数秒かけて1点ずつではなく、すぐに更新されるようになりました。",
 "Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "記録したコーデの削除や修正、すべての確認、「これは何？」での各アイテムの保存で、数秒待たずにすぐ画面が更新されるようになりました。",
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "服の追加、新しい写真の保存、状態チェックの保存で写真のアップロードが速くなり、アップロード中は保存ボタンに「保存中…」と表示されます。",
-"Merging duplicates and downloading your data are faster.": "重複の統合とデータのダウンロードが速くなりました。"
+"Merging duplicates and downloading your data are faster.": "重複の統合とデータのダウンロードが速くなりました。",
+"Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "明日：コーデ画面の曜日の横にある「明日」をタップすると、明日の天気予報と、それに合わせて順位付けしたコーデが見られます。",
+"Plan for tomorrow keeps the outfit on this device; the next morning it opens first as “Planned last night”, ready to wear.": "「明日のコーデに決める」はこの端末にコーデを保存し、翌朝「昨夜決めたコーデ」としていちばん最初に表示します。"
 });

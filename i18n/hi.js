@@ -1541,5 +1541,13 @@ I18N.load("hi",{
 "Keep looking": "देखते रहें",
 "Example closet.": "उदाहरण अलमारी।",
 "Nothing is saved.": "कुछ भी सहेजा नहीं जाता।",
-"Leave": "बाहर निकलें"
+"Leave": "बाहर निकलें",
+"Tomorrow’s pick": "कल की पसंद",
+"Planned last night": "कल रात तय किया",
+"Plan for tomorrow": "कल के लिए तय करें",
+"✓ Planned for tomorrow · Undo": "✓ कल के लिए तय · पहले जैसा करें",
+"Planned for tomorrow. It will be the first outfit in the morning.": "कल के लिए तय हो गया। सुबह यह सबसे पहला आउटफ़िट होगा।",
+"Plan removed.": "योजना हटा दी गई।",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather. Tap any piece to swap it.": "रंगों के मेल, ड्रेस लेवल, पीस ने कितना आराम किया और कल के मौसम के हिसाब से रैंक। बदलने के लिए किसी भी पीस पर टैप करें।",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather and your palette. Tap any piece to swap it.": "रंगों के मेल, ड्रेस लेवल, पीस ने कितना आराम किया, कल के मौसम और आपके पैलेट के हिसाब से रैंक। बदलने के लिए किसी भी पीस पर टैप करें।"
 });

@@ -134,5 +134,7 @@ I18N.add("fr",{
 "Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "Marquer tout le linge comme propre met maintenant la liste à jour d’un coup, au lieu de pièce par pièce pendant plusieurs secondes.",
 "Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "Retirer ou corriger une tenue notée, tout confirmer et enregistrer chaque pièce dans « Qu’est-ce que c’est? » mettent maintenant l’écran à jour tout de suite, et non après plusieurs secondes.",
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "Les photos s’envoient plus vite quand vous ajoutez des vêtements, enregistrez une nouvelle photo ou une vérification de l’état, et Enregistrer affiche « Enregistrement… » pendant l’envoi.",
-"Merging duplicates and downloading your data are faster.": "Fusionner les doublons et télécharger vos données va plus vite."
+"Merging duplicates and downloading your data are faster.": "Fusionner les doublons et télécharger vos données va plus vite.",
+"Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "Demain : touchez Demain à côté du jour dans l’écran Tenues pour voir la météo de demain et des tenues classées pour ce jour-là.",
+"Plan for tomorrow keeps the outfit on this device; the next morning it opens first as “Planned last night”, ready to wear.": "Prévoir pour demain garde la tenue sur cet appareil; le lendemain matin, elle s’affiche en premier comme « Prévu hier soir », prête à porter."
 });

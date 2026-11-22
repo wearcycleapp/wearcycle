@@ -1541,5 +1541,13 @@ I18N.load("tl",{
 "Keep looking": "Patuloy na tumingin",
 "Example closet.": "Halimbawang closet.",
 "Nothing is saved.": "Walang nase-save.",
-"Leave": "Umalis"
+"Leave": "Umalis",
+"Tomorrow’s pick": "Pili para bukas",
+"Planned last night": "Pinlano kagabi",
+"Plan for tomorrow": "Iplano para bukas",
+"✓ Planned for tomorrow · Undo": "✓ Naiplano para bukas · I-undo",
+"Planned for tomorrow. It will be the first outfit in the morning.": "Naiplano para bukas. Ito ang unang outfit sa umaga.",
+"Plan removed.": "Inalis ang plano.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather. Tap any piece to swap it.": "Nakaayos ayon sa pagkakatugma ng kulay, pormalidad, tagal ng pahinga ng mga piraso at panahon bukas. I-tap ang alinmang piraso para palitan.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather and your palette. Tap any piece to swap it.": "Nakaayos ayon sa pagkakatugma ng kulay, pormalidad, tagal ng pahinga ng mga piraso, panahon bukas at palette mo. I-tap ang alinmang piraso para palitan."
 });

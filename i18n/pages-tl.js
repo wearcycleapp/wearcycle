@@ -134,5 +134,7 @@ I18N.add("tl",{
 "Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "Kapag minarkahan mong malinis ang lahat ng labada, agad nang nag-a-update ang listahan, sa halip na isa-isa nang ilang segundo.",
 "Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "Ang pag-alis o pagwawasto ng naitalang outfit, pag-kumpirma ng lahat ng piraso, at pag-save ng bawat piraso sa “Ano ito?” ay agad nang nag-a-update ng screen, hindi na pagkalipas ng ilang segundo.",
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "Mas mabilis nang na-a-upload ang mga litrato kapag nagdadagdag ng damit, nagse-save ng bagong litrato o ng pagsusuri ng kondisyon, at “Sine-save…” ang nakikita sa I-save habang nag-a-upload.",
-"Merging duplicates and downloading your data are faster.": "Mas mabilis na ang pagsasama ng mga duplicate at pag-download ng data mo."
+"Merging duplicates and downloading your data are faster.": "Mas mabilis na ang pagsasama ng mga duplicate at pag-download ng data mo.",
+"Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "Bukas: i-tap ang Bukas sa tabi ng araw sa screen ng Outfits para makita ang panahon bukas at mga outfit na naka-ranggo para rito.",
+"Plan for tomorrow keeps the outfit on this device; the next morning it opens first as “Planned last night”, ready to wear.": "Sine-save ng Iplano para bukas ang outfit sa device na ito; kinaumagahan, una itong lalabas bilang “Pinlano kagabi”, handa nang isuot."
 });

@@ -1541,5 +1541,13 @@ I18N.load("es",{
 "Keep looking": "Seguir mirando",
 "Example closet.": "Clóset de ejemplo.",
 "Nothing is saved.": "No se guarda nada.",
-"Leave": "Salir"
+"Leave": "Salir",
+"Tomorrow’s pick": "Sugerencia de mañana",
+"Planned last night": "Planeado anoche",
+"Plan for tomorrow": "Planear para mañana",
+"✓ Planned for tomorrow · Undo": "✓ Planeado para mañana · Deshacer",
+"Planned for tomorrow. It will be the first outfit in the morning.": "Planeado para mañana. Será el primer conjunto por la mañana.",
+"Plan removed.": "Plan quitado.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather. Tap any piece to swap it.": "Ordenados por armonía de colores, nivel de formalidad, cuánto han descansado las prendas y el clima de mañana. Toca cualquier prenda para cambiarla.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather and your palette. Tap any piece to swap it.": "Ordenados por armonía de colores, nivel de formalidad, cuánto han descansado las prendas, el clima de mañana y tu paleta. Toca cualquier prenda para cambiarla."
 });

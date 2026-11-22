@@ -1541,5 +1541,13 @@ I18N.load("ko",{
 "Keep looking": "계속 둘러보기",
 "Example closet.": "예시 옷장.",
 "Nothing is saved.": "아무것도 저장되지 않아요.",
-"Leave": "나가기"
+"Leave": "나가기",
+"Tomorrow’s pick": "내일의 추천",
+"Planned last night": "어젯밤 정한 코디",
+"Plan for tomorrow": "내일 코디로 정하기",
+"✓ Planned for tomorrow · Undo": "✓ 내일 코디로 정함 · 실행 취소",
+"Planned for tomorrow. It will be the first outfit in the morning.": "내일 코디로 정했어요. 아침에 가장 먼저 보여요.",
+"Plan removed.": "계획을 지웠어요.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather. Tap any piece to swap it.": "색 조화, 격식 단계, 아이템이 쉰 기간, 내일 날씨를 기준으로 순위를 매겼어요. 아이템을 누르면 바꿀 수 있어요.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather and your palette. Tap any piece to swap it.": "색 조화, 격식 단계, 아이템이 쉰 기간, 내일 날씨, 내 팔레트를 기준으로 순위를 매겼어요. 아이템을 누르면 바꿀 수 있어요."
 });

@@ -1541,5 +1541,13 @@ I18N.load("fr",{
 "Keep looking": "Continuer à explorer",
 "Example closet.": "Garde-robe d’exemple.",
 "Nothing is saved.": "Rien n’est enregistré.",
-"Leave": "Quitter"
+"Leave": "Quitter",
+"Tomorrow’s pick": "Choix de demain",
+"Planned last night": "Prévu hier soir",
+"Plan for tomorrow": "Prévoir pour demain",
+"✓ Planned for tomorrow · Undo": "✓ Prévu pour demain · Annuler",
+"Planned for tomorrow. It will be the first outfit in the morning.": "Prévu pour demain. Ce sera la première tenue au matin.",
+"Plan removed.": "Plan retiré.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather. Tap any piece to swap it.": "Classement selon l’harmonie des couleurs, le niveau d’habillement, le temps de repos des pièces et la météo de demain. Touchez une pièce pour la changer.",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather and your palette. Tap any piece to swap it.": "Classement selon l’harmonie des couleurs, le niveau d’habillement, le temps de repos des pièces, la météo de demain et votre palette. Touchez une pièce pour la changer."
 });

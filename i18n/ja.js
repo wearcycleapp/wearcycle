@@ -1541,5 +1541,13 @@ I18N.load("ja",{
 "Keep looking": "引き続き見る",
 "Example closet.": "サンプルのクローゼット。",
 "Nothing is saved.": "何も保存されません。",
-"Leave": "終了"
+"Leave": "終了",
+"Tomorrow’s pick": "明日のおすすめ",
+"Planned last night": "昨夜決めたコーデ",
+"Plan for tomorrow": "明日のコーデに決める",
+"✓ Planned for tomorrow · Undo": "✓ 明日のコーデに決定 · 元に戻す",
+"Planned for tomorrow. It will be the first outfit in the morning.": "明日のコーデに決めました。朝いちばんに表示されます。",
+"Plan removed.": "予定を取り消しました。",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather. Tap any piece to swap it.": "色の調和、きちんと度、アイテムの休息期間、明日の天気で順位付けしています。アイテムをタップすると入れ替えられます。",
+"Ranked by color harmony, dress level, how long pieces have rested, tomorrow’s weather and your palette. Tap any piece to swap it.": "色の調和、きちんと度、アイテムの休息期間、明日の天気、パレットで順位付けしています。アイテムをタップすると入れ替えられます。"
 });

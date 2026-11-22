@@ -134,5 +134,7 @@ I18N.add("hi",{
 "Marking all your laundry clean now updates the list at once, instead of piece by piece over several seconds.": "सारे धुले कपड़ों को साफ़ मार्क करने पर अब सूची तुरंत बदल जाती है, कई सेकंड तक एक-एक करके नहीं।",
 "Removing or correcting a logged outfit, confirming all pieces, and saving each piece in “What is this?” now update the screen at once instead of after several seconds.": "दर्ज आउटफ़िट हटाना या सुधारना, सभी कपड़ों की पुष्टि करना, और “यह क्या है?” में हर कपड़ा सेव करना अब कई सेकंड बाद नहीं, तुरंत स्क्रीन बदल देता है।",
 "Photos upload faster when you add clothes, save a new photo or save a condition check, and Save shows “Saving…” while a photo uploads.": "कपड़े जोड़ते समय, नई फ़ोटो या हालत की जाँच सेव करते समय फ़ोटो अब तेज़ी से अपलोड होती हैं, और फ़ोटो अपलोड होते समय सेव बटन पर “सेव हो रहा है…” दिखता है।",
-"Merging duplicates and downloading your data are faster.": "डुप्लिकेट मिलाना और अपना डेटा डाउनलोड करना अब तेज़ है।"
+"Merging duplicates and downloading your data are faster.": "डुप्लिकेट मिलाना और अपना डेटा डाउनलोड करना अब तेज़ है।",
+"Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "कल: आउटफ़िट स्क्रीन पर दिन के पास कल पर टैप करें और कल का मौसम और उसके हिसाब से क्रम में लगे आउटफ़िट देखें।",
+"Plan for tomorrow keeps the outfit on this device; the next morning it opens first as “Planned last night”, ready to wear.": "कल के लिए तय करें आउटफ़िट को इसी डिवाइस पर रखता है; अगली सुबह यह “कल रात तय किया” के रूप में सबसे पहले खुलता है, पहनने के लिए तैयार।"
 });
