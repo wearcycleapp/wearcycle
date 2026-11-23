@@ -138,5 +138,6 @@ I18N.add("ko",{
 "Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "내일: 코디 화면에서 요일 옆의 내일을 누르면 내일 일기예보와 그에 맞춘 코디 순위를 볼 수 있어요.",
 "Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "내일 코디로 정하기는 코디를 계정에 저장해서 다른 기기에서도 보여요. 다음 날 아침 “어젯밤 정한 코디”로 가장 먼저 보여 줘요.",
 "Colors that suit you: in Style palette, take a selfie by a window with a white sheet of paper, tap four spots, then keep or drop each color shown under your chin.": "나에게 어울리는 색: 스타일 팔레트에서 흰 종이를 들고 창가에서 셀카를 찍고, 네 곳을 탭한 뒤 턱 아래에 보이는 색을 하나씩 남기거나 빼세요.",
-"Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "그러면 내 색의 상의, 아우터, 스카프가 조금 더 위로 올라가요. 바지와 신발은 해당되지 않아요. 셀카는 기기에만 있고 저장되지 않아요."
+"Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "그러면 내 색의 상의, 아우터, 스카프가 조금 더 위로 올라가요. 바지와 신발은 해당되지 않아요. 셀카는 기기에만 있고 저장되지 않아요.",
+"“How Wearcycle decides” now explains Colors that suit you.": "“Wearcycle의 결정 방식”에서 나에게 어울리는 색을 설명해요."
 });

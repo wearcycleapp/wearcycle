@@ -1594,5 +1594,7 @@ I18N.load("tl",{
 "Your colors are off.": "Naka-off ang mga kulay mo.",
 "Your colors near your face": "Mga kulay mo malapit sa mukha",
 "{a} is not one of your colors": "Hindi kasama sa mga kulay mo ang {a}",
-"{a} are not among your colors": "Hindi kasama sa mga kulay mo ang {a}"
+"{a} are not among your colors": "Hindi kasama sa mga kulay mo ang {a}",
+"Optional, from Style palette. You try each color under your chin in a selfie that stays on your device and is never saved; only the colors you keep are saved. When every piece near your face (top, the shirt under, outerwear, one-piece, hat, scarf) is in your colors: +0.75; each one outside: -0.25. Trousers and shoes never count. The order you see the colors in comes from your photo (the white paper corrects the light) and is only a starting point.": "Opsyonal, mula sa Palette ng estilo. Susubukan mo ang bawat kulay sa ilalim ng baba mo sa isang selfie na nananatili sa device mo at hindi kailanman sine-save; ang mga kulay lang na itatabi mo ang sine-save. Kapag nasa mga kulay mo ang bawat piraso malapit sa mukha (pang-itaas, ang damit sa ilalim, outerwear, one-piece, sumbrero, scarf): +0.75; bawat isa na hindi: -0.25. Hindi kailanman kasama ang pantalon at sapatos. Ang pagkakasunod ng mga kulay ay mula sa litrato mo (itinatama ng puting papel ang liwanag) at simula lang ito.",
+"Colors that suit you.": "Mga kulay na bagay sa iyo."
 });

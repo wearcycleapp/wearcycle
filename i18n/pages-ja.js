@@ -138,5 +138,6 @@ I18N.add("ja",{
 "Tomorrow: tap Tomorrow next to the day on the Outfits screen to see tomorrow’s forecast and outfits ranked for it.": "明日：コーデ画面の曜日の横にある「明日」をタップすると、明日の天気予報と、それに合わせて順位付けしたコーデが見られます。",
 "Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "「明日のコーデに決める」はコーデをアカウントに保存するので、ほかの端末でも見られます。翌朝「昨夜決めたコーデ」としていちばん最初に表示します。",
 "Colors that suit you: in Style palette, take a selfie by a window with a white sheet of paper, tap four spots, then keep or drop each color shown under your chin.": "似合う色：スタイルパレットで、白い紙を持って窓辺でセルフィーを撮り、4か所をタップして、あごの下に表示される各色を残すか外すかを選びます。",
-"Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "似合う色のトップス、アウター、スカーフが少し上位になります。パンツと靴は対象外です。セルフィーは端末にとどまり、保存されることはありません。"
+"Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "似合う色のトップス、アウター、スカーフが少し上位になります。パンツと靴は対象外です。セルフィーは端末にとどまり、保存されることはありません。",
+"“How Wearcycle decides” now explains Colors that suit you.": "「Wearcycleの判断基準」で似合う色を説明するようになりました。"
 });

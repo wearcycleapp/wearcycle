@@ -1594,5 +1594,7 @@ I18N.load("hi",{
 "Your colors are off.": "आपके रंग बंद हैं।",
 "Your colors near your face": "चेहरे के पास आपके रंग",
 "{a} is not one of your colors": "{a} आपके रंगों में नहीं है",
-"{a} are not among your colors": "{a} आपके रंगों में नहीं हैं"
+"{a} are not among your colors": "{a} आपके रंगों में नहीं हैं",
+"Optional, from Style palette. You try each color under your chin in a selfie that stays on your device and is never saved; only the colors you keep are saved. When every piece near your face (top, the shirt under, outerwear, one-piece, hat, scarf) is in your colors: +0.75; each one outside: -0.25. Trousers and shoes never count. The order you see the colors in comes from your photo (the white paper corrects the light) and is only a starting point.": "वैकल्पिक, स्टाइल पैलेट से। आप हर रंग को ठुड्डी के नीचे एक सेल्फ़ी में आज़माते हैं जो आपके डिवाइस पर रहती है और कभी सेव नहीं होती; सिर्फ़ आपके रखे रंग सेव होते हैं। जब चेहरे के पास का हर कपड़ा (ऊपर का कपड़ा, नीचे की शर्ट, बाहरी कपड़ा, वन-पीस, टोपी, स्कार्फ़) आपके रंगों में हो: +0.75; बाहर के हर कपड़े पर: -0.25। पतलून और जूते कभी नहीं गिने जाते। रंगों का क्रम आपकी फ़ोटो से आता है (सफ़ेद कागज़ रोशनी ठीक करता है) और सिर्फ़ शुरुआत है।",
+"Colors that suit you.": "आप पर जँचने वाले रंग।"
 });

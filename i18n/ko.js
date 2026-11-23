@@ -1594,5 +1594,7 @@ I18N.load("ko",{
 "Your colors are off.": "내 색을 껐어요.",
 "Your colors near your face": "얼굴 가까이에 내 색",
 "{a} is not one of your colors": "{a}은(는) 내 색이 아니에요",
-"{a} are not among your colors": "{a}은(는) 내 색이 아니에요"
+"{a} are not among your colors": "{a}은(는) 내 색이 아니에요",
+"Optional, from Style palette. You try each color under your chin in a selfie that stays on your device and is never saved; only the colors you keep are saved. When every piece near your face (top, the shirt under, outerwear, one-piece, hat, scarf) is in your colors: +0.75; each one outside: -0.25. Trousers and shoes never count. The order you see the colors in comes from your photo (the white paper corrects the light) and is only a starting point.": "선택 사항이며 스타일 팔레트에서 시작해요. 기기에만 있고 저장되지 않는 셀카에서 턱 아래에 색을 하나씩 대 보며, 남긴 색만 저장돼요. 얼굴 가까이의 옷(상의, 안에 입는 셔츠, 아우터, 원피스, 모자, 스카프)이 모두 내 색이면 +0.75, 벗어나는 옷마다 -0.25. 바지와 신발은 해당되지 않아요. 색이 보이는 순서는 사진에서 정해지며(흰 종이로 빛 보정) 출발점일 뿐이에요.",
+"Colors that suit you.": "나에게 어울리는 색."
 });

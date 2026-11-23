@@ -1594,5 +1594,7 @@ I18N.load("fr",{
 "Your colors are off.": "Vos couleurs sont désactivées.",
 "Your colors near your face": "Vos couleurs près du visage",
 "{a} is not one of your colors": "{a} : pas une de vos couleurs",
-"{a} are not among your colors": "{a} : pas parmi vos couleurs"
+"{a} are not among your colors": "{a} : pas parmi vos couleurs",
+"Optional, from Style palette. You try each color under your chin in a selfie that stays on your device and is never saved; only the colors you keep are saved. When every piece near your face (top, the shirt under, outerwear, one-piece, hat, scarf) is in your colors: +0.75; each one outside: -0.25. Trousers and shoes never count. The order you see the colors in comes from your photo (the white paper corrects the light) and is only a starting point.": "Facultatif, depuis Palette de style. Vous essayez chaque couleur sous votre menton dans un égoportrait qui reste sur votre appareil et n’est jamais enregistré; seules les couleurs que vous gardez sont enregistrées. Quand chaque pièce près du visage (haut, chemise en dessous, vêtement d’extérieur, une-pièce, chapeau, foulard) est dans vos couleurs : +0,75; chacune en dehors : -0,25. Les pantalons et les chaussures ne comptent jamais. L’ordre des couleurs vient de votre photo (le papier blanc corrige la lumière) et n’est qu’un point de départ.",
+"Colors that suit you.": "Les couleurs qui vous vont."
 });

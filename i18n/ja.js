@@ -1594,5 +1594,7 @@ I18N.load("ja",{
 "Your colors are off.": "似合う色をオフにしました。",
 "Your colors near your face": "顔まわりに似合う色",
 "{a} is not one of your colors": "{a}は似合う色に入っていません",
-"{a} are not among your colors": "{a}は似合う色に入っていません"
+"{a} are not among your colors": "{a}は似合う色に入っていません",
+"Optional, from Style palette. You try each color under your chin in a selfie that stays on your device and is never saved; only the colors you keep are saved. When every piece near your face (top, the shirt under, outerwear, one-piece, hat, scarf) is in your colors: +0.75; each one outside: -0.25. Trousers and shoes never count. The order you see the colors in comes from your photo (the white paper corrects the light) and is only a starting point.": "任意。スタイルパレットから使えます。端末にとどまり保存されないセルフィーで、あごの下に各色を当てて試します。保存されるのは残した色だけです。顔まわりのアイテム（トップス、下に着るシャツ、アウター、ワンピース、帽子、スカーフ）がすべて似合う色なら+0.75、外れるものは1点ごとに-0.25。パンツと靴は対象外です。色の表示順は写真から決めます（白い紙で光を補正）が、あくまで出発点です。",
+"Colors that suit you.": "似合う色。"
 });
