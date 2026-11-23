@@ -184,8 +184,13 @@ function onlyAddsMed(log, u, req) {
     if (!was || !next || typeof next.med !== 'string' || next.med !== String(was.photo).replace(/\.[a-z0-9]+$/i, '') + '-1024.jpg') return false;
     const a = { ...was }, b = { ...next }; delete a.med; delete b.med; return canon(a) === canon(b); } catch { return false; }
 }
-const logProblems = log => [...(log.console.length ? log.http || [] : []).map(h => 'HTTP ' + h), // listed only to explain console errors ...log.blocked.map(b => 'write blocked: ' + b), ...[...log.unexpected].map(h => 'host outside the CSP: ' + h),
-  ...log.failed.map(f => 'request failed: ' + f), ...log.csp.map(c => 'CSP: ' + c), ...log.console.map(c => 'console: ' + c)];
+// Open-Meteo (free, no key, shared by GitHub's runners) answered 429 and timed out on 2026-11-22 while every other check
+// passed; the app then shows the last forecast or none, as designed. Its errors are listed as a REVIEW (wxTrouble), not a failure.
+const OM = /open-meteo\.com/;
+const wxTrouble = log => [...(log.http || []).filter(h => OM.test(h)), ...log.failed.filter(f => OM.test(f))];
+const logProblems = log => { const om = wxTrouble(log).length; const con = om ? log.console.filter(c => !/Failed to load resource: (net::ERR_TIMED_OUT|net::ERR_CONNECTION|the server responded with a status of (429|5\d\d))/.test(c)) : log.console;
+  return [...(con.length ? (log.http || []).filter(h => !OM.test(h)) : []).map(h => 'HTTP ' + h), // listed only to explain console errors ...log.blocked.map(b => 'write blocked: ' + b), ...[...log.unexpected].map(h => 'host outside the CSP: ' + h),
+  ...log.failed.filter(f => !OM.test(f)).map(f => 'request failed: ' + f), ...log.csp.map(c => 'CSP: ' + c), ...con.map(c => 'console: ' + c)]; };
 
 async function settle(page) {
   await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {});
@@ -312,7 +317,7 @@ async function deviceChecks(browser, engine, dev, state) {
       return { status: p.wear && !p.wear.visible ? 'REVIEW' : 'PASS', detail: d }; });
     await step(tag + 'weather (Open-Meteo)', async () => { const l = await page.getAttribute('[data-wx="edit"]', 'aria-label').catch(() => null);
       if (l && /^Weather: .*\d/.test(l)) return 'forecast shown';
-      return { status: 'REVIEW', detail: l ? 'no forecast in the label' : 'no forecast (weather off or no location for this account)' }; });
+      const om = wxTrouble(log); return { status: 'REVIEW', detail: om.length ? 'Open-Meteo did not answer: ' + om.slice(0, 2).join(' | ') : l ? 'no forecast in the label' : 'no forecast (weather off or no location for this account)' }; });
     await step(tag + 'every tab opens', async () => { for (const t of ['outfits', 'closet', 'care', 'shop']) { const b0 = net.bytes, f0 = net.files; await goTab(page, t); await sharpened(page);
       const b = await brokenImages(page); imgs.shown += b.shown; imgs.broken += b.broken; if (t !== 'outfits') perTab[t] = { bytes: net.bytes - b0, files: net.files - f0 }; } return 'outfits, closet, care, shop'; });
     await step(tag + 'Care: Not getting picked from the background worker (Phase 15)', async () => { const w = await page.evaluate(() => typeof NPW === 'undefined' ? 'none' : NPW.off ? 'off' : NPW.w ? 'on' : 'not started');
