@@ -139,5 +139,7 @@ I18N.add("ko",{
 "Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "내일 코디로 정하기는 코디를 계정에 저장해서 다른 기기에서도 보여요. 다음 날 아침 “어젯밤 정한 코디”로 가장 먼저 보여 줘요.",
 "Colors that suit you: in Style palette, take a selfie by a window with a white sheet of paper, tap four spots, then keep or drop each color shown under your chin.": "나에게 어울리는 색: 스타일 팔레트에서 흰 종이를 들고 창가에서 셀카를 찍고, 네 곳을 탭한 뒤 턱 아래에 보이는 색을 하나씩 남기거나 빼세요.",
 "Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "그러면 내 색의 상의, 아우터, 스카프가 조금 더 위로 올라가요. 바지와 신발은 해당되지 않아요. 셀카는 기기에만 있고 저장되지 않아요.",
-"“How Wearcycle decides” now explains Colors that suit you.": "“Wearcycle의 결정 방식”에서 나에게 어울리는 색을 설명해요."
+"“How Wearcycle decides” now explains Colors that suit you.": "“Wearcycle의 결정 방식”에서 나에게 어울리는 색을 설명해요.",
+"Cold days: tap the light layer in your outfit, such as a fleece, then Add a coat over it. The coat is listed first and Wear this logs both.": "추운 날: 코디에서 플리스 같은 얇은 레이어를 탭한 다음 위에 코트 추가를 누르세요. 코트가 맨 앞에 표시되고 이 코디 입기를 누르면 둘 다 기록됩니다.",
+"Below 0°C (32°F), a fleece, softshell, overshirt, vest or zip hoodie worn alone now ranks lower, and suggestions put a coat over it when that suits the weather better.": "0°C(32°F) 미만에서는 플리스, 소프트셸, 오버셔츠, 조끼, 집업 후디를 단독으로 입으면 순위가 낮아지고, 날씨에 더 맞을 때는 추천이 그 위에 코트를 겹칩니다.",
 });

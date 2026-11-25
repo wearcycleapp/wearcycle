@@ -1,9 +1,9 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.71.1';
+const APP_VERSION='1.72.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
-  warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk}=WardrobeLogic;
+  warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk,midLayer,coatOk}=WardrobeLogic;
 
 /* ---------- small helpers ---------- */
 const $=s=>document.querySelector(s);
@@ -824,8 +824,8 @@ function emptyCloset(){
 }
 function layerOn(){ return S.layerMode==='on'||(S.layerMode==='auto'&&(needsLayer(wxForScore())||S.occ==='formal'||(S.occ==='work'&&(S.settings.work||{}).code==='suits'))); }
 function fitKeyNow(){ const w=wxForScore(); return (S.when?'T|':'')+planKey()+'|'+(S.pin||'')+'|'+S.occ+'|'+(S.theme||'')+'|'+styleKey()+'|'+(S.settings.palette||'any')+':'+(S.settings.paletteCustom||[]).join(',')+'/'+(S.settings.suits||[]).join(',')+'|'+layerOn()+'|'+(w?[Math.round(w.feelMin),Math.round(w.feelMax),w.rain,w.snow,w.off].join(','):'nowx')+'|'+allItems().filter(isActive).map(i=>i.id+':'+(i.cond??4)+':'+(i.occ||[]).join(',')+':'+(i.colors||[]).join(',')+':'+(i.formality??3)+':'+warmthOf(i)+':'+rainReady(i)+':'+canOpen(i)+canUnder(i)+needsBelt(i)+(i.dirty?'D':'')+(i.styles||[]).join('')+(i.kind||'')+(i.repair?(i.repairOk?'r':'R'):'')+':'+(i.workOverride||'')+(i.formalOverride||'')+(i.graphic?'G':'')+(i.material||'')+':'+(i.name||'')+':'+(i.thumb||'').length).sort().join(';'); }
-function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
-function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
+function idsOf(o){ return {top:o.top?.id,under:o.under?.id,bottom:o.bottom?.id,onepiece:o.onepiece?.id,outer:o.outer?.id,coat:o.coat?.id,shoes:o.shoes?.id,acc:(o.acc||[]).map(a=>a.id)}; }
+function hydrate(ids){ const o={}; for(const k of ['top','under','bottom','onepiece','outer','coat','shoes']) if(ids[k]&&byId(ids[k])) o[k]=byId(ids[k]); o.acc=(ids.acc||[]).map(byId).filter(Boolean); return o; }
 /* "See outfits with this": the Outfits screen builds every outfit around one piece, and says why that piece
    is not in the usual picks (wash, repair, condition, occasions, dress code, or simply other pieces score higher). */
 function pinWhy(it){
@@ -911,8 +911,8 @@ function regenerate(){
    from tomorrow. "Plan for tomorrow" is saved in settings.plan {day,occ,ids} (owner approved 2026-11-21) so every
    device of the account has it; the next day it opens first as "Planned last night" with Wear this, while all its pieces are still active and not in the
    wash. The app always opens on Today (owner's choice). */
-function idsKey(ids){ return ['top','under','bottom','onepiece','outer','shoes'].map(k=>ids[k]||'').concat(ids.acc||[]).join(','); }
-function idsList(ids){ return ['top','under','bottom','onepiece','outer','shoes'].map(k=>ids[k]).filter(Boolean).concat(ids.acc||[]); }
+function idsKey(ids){ return ['top','under','bottom','onepiece','outer','coat','shoes'].map(k=>ids[k]||'').concat(ids.acc||[]).join(','); }
+function idsList(ids){ return ['top','under','bottom','onepiece','outer','coat','shoes'].map(k=>ids[k]).filter(Boolean).concat(ids.acc||[]); }
 function planGet(){ const p=S.settings.plan; if(!p||!p.day||!p.ids||typeof p.ids!=='object') return null;
   if(p.day<todayISO()){ delete S.settings.plan; return null; } // a past day's plan; the next settings save drops it
   return p; }
@@ -952,7 +952,7 @@ function adviceText(){
     if(needsLayer(w)) out.push(hasOuter?'I added an outer layer.':'An outer layer would help, but none is tagged for '+OCC[S.occ].label.toLowerCase()+' yet.');
     else if(hi>=24) out.push('Light, breathable pieces ranked first.');
   }
-  if(wxWet(w)){ const top=S.fits[0]&&hydrate(S.fits[0].ids); if(!(top&&top.outer&&rainReady(top.outer))) out.push(d.snow?'Wear boots if you have them.':'Take an umbrella.'); }
+  if(wxWet(w)){ const top=S.fits[0]&&hydrate(S.fits[0].ids); if(!(top&&((top.outer&&rainReady(top.outer))||(top.coat&&rainReady(top.coat))))) out.push(d.snow?'Wear boots if you have them.':'Take an umbrella.'); }
   return out.join(' ');
 }
 /* Laundry reminder. The app cannot see the washing machine, so after the set days (default 7, a weekly wash)
@@ -1229,10 +1229,10 @@ if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>{ fitLook
 // The kit (direction A): the main garments as 4:5 pictures with category and name, then shoes, belt and
 // accessories in one row with their names. A dress alone brings the shoes up to the main row.
 function kitHtml(o,i){
-  const main=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom]].filter(Boolean);
+  const main=[o.coat&&['coat',o.coat],o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom]].filter(Boolean);
   const small=(o.shoes?[['shoes',o.shoes]]:[]).concat(o.acc.map((a,k)=>['acc'+k,a]));
   if(main.length<2&&small.length&&small[0][0]==='shoes') main.push(small.shift());
-  const kind=(slot,it)=>slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&o.under&&canOpen(o.top))?'Top, worn open':CAT[it.cat].label;
+  const kind=(slot,it)=>slot==='coat'?'Coat':slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&o.under&&canOpen(o.top))?'Top, worn open':CAT[it.cat].label;
   const piece=(slot,it,big)=>`<button class="kt${big?'':' sm'}" data-swap="${i}" data-slot="${slot}" aria-label="${esc(CAT[it.cat].label)}: ${esc(it.name)}. Tap to see it"><span class="kpic">${kitPic(it,big)}</span><span class="kn" aria-hidden="true">${big?`<span class="k">${esc(kind(slot,it))}</span>`:''}<span class="nm" data-notr>${esc(it.name)}</span></span></button>`;
   return `<div class="kit n${main.length}" data-swipe="1">${main.map(([s,it])=>piece(s,it,1)).join('')}</div>${small.length?`<div class="kitsm">${small.map(([s,it])=>piece(s,it,0)).join('')}</div>`:''}`;
 }
@@ -1306,7 +1306,7 @@ function openAdjust(){
    right column = trousers, then shoes; accessories in a row under the left column.
    Each piece is fitted inside its own cell (no overlaps), so pieces keep consistent sizes. Units: % of a 4:5 board. */
 function flCells(o){
-  const upper=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under]].filter(Boolean);
+  const upper=[o.coat&&['coat',o.coat],o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under]].filter(Boolean);
   const bottom=!o.onepiece&&o.bottom?['bottom',o.bottom]:null;
   const acc=o.acc.map((a,k)=>['acc'+k,a]);
   const cells=[], G=2;
@@ -2177,7 +2177,7 @@ function openSettings(){
   setIndex();
 }
 function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="rules helpdoc">    <p><b>Outfit score.</b> +2 for an all-neutral palette or neutrals plus one accent color, +1 for two analogous or complementary accents, -2 or -3 for accents that compete. +1 when all pieces sit within one dress level, minus a point for each extra level apart. Up to +1.5 for pieces that have rested two weeks, -1 if something was worn yesterday (shoes worn today or yesterday: -3, so they get a day to dry out, as the NHS advises; the list also spreads your other pairs across the picks), -2 if the same top and bottom were worn together this week.</p>
-    <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1, open shoes lose 1.5, shoes made for rain or snow earn +1, and dress shoes and other delicate shoes lose 4, or 2.5 for Formal (smooth soles slip on wet ground and the leather stains). Sneakers or boots worn for the rain do not count as a dress-level clash. Tick "Made for rain or snow" on shoes with grippy rubber soles to keep them in play. Hats are added only when it feels 8° or colder, when it snows, in the rain (a rain hat or a cap, never a beanie) or above 25°; gloves only at 8° or colder and scarves at 10° or colder. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
+    <p><b>Weather.</b> Uses the feels-like temperature from now until 9 pm, shifted by your "I usually feel" choice. Below 12° shorts lose 2 points (3 below 5°); below 16° they lose 1. Below 5° an outfit without an outer layer loses 2; a warm layer earns +1. Below 0° a fleece, softshell, overshirt, vest or zip hoodie alone loses 2 (wind goes through it); worn under a coat or shell it earns +1.5, and a coat over a layer loses 2 above 5°. Above 24° each warm piece loses 2 and an all-light outfit earns +1. With 50%+ rain or snow, a waterproof layer earns +1, open shoes lose 1.5, shoes made for rain or snow earn +1, and dress shoes and other delicate shoes lose 4, or 2.5 for Formal (smooth soles slip on wet ground and the leather stains). Sneakers or boots worn for the rain do not count as a dress-level clash. Tick "Made for rain or snow" on shoes with grippy rubber soles to keep them in play. Hats are added only when it feels 8° or colder, when it snows, in the rain (a rain hat or a cap, never a beanie) or above 25°; gloves only at 8° or colder and scarves at 10° or colder. In Auto, an outer layer is added below 15° or when it is wet. These thresholds are practical rules of thumb, not standards.</p>
     <p><b>Layered look.</b> Shirts that can be worn open (button-ups, flannels, overshirts, cardigans) are also suggested over a t-shirt, using the t-shirt that scores best. Worn open, the shirt counts as casual (dress level 2 at most) and the t-shirt is left out of the dress-level check. With weather on, the t-shirt adds +0.5 below 16° and costs 1 point above 24°. An open shirt is not layered under a blazer or suit jacket (three layers): that costs 3 points. Only light pieces go underneath (t-shirts, tanks, short-sleeve henleys); long-sleeve or thick tops are left out, and dress shirts are not worn open. Under a jacket, the open shirt and the layer beneath it must both be light; a flannel or a long-sleeve top doubled up costs 3 points. Which items count is guessed from their names; change it in each item's editor.</p>
     <p>Hoodies, sweatshirts and sweaters always get the best-matching t-shirt underneath when you have one. Change it per piece with \u201cWorn over a t-shirt\u201d in its More details.</p>
     <p><b>Belts.</b> Jeans, chinos, trousers and casual shorts always get a belt if you own one, even one not tagged for the occasion; joggers and athletic wear don't. With leather dress shoes the belt should match them (black with black, brown with brown) and a casual belt is flagged; with sneakers any belt that keeps the colors in harmony. If your only belt doesn't fit the rule it is still shown, with a warning. Change whether a bottom takes a belt in its editor.</p>
@@ -2373,7 +2373,9 @@ let DI=null;
 function outfitFromIds(ids){
   const o={acc:[]}; for(const it of ids.map(byId).filter(Boolean)){
     if(it.cat==='top'){ if(!o.top) o.top=it; else if(!o.under) o.under=canUnder(it)?it:(o.under||it); }
-    else if(it.cat==='outerwear'&&!o.outer) o.outer=it; else if(it.cat==='bottom'&&!o.bottom) o.bottom=it;
+    else if(it.cat==='outerwear'&&!o.outer) o.outer=it;
+    else if(it.cat==='outerwear'&&!o.coat){ if(midLayer(it)&&!midLayer(o.outer)){ o.coat=o.outer; o.outer=it; } else o.coat=it; } // a fleece under a coat
+    else if(it.cat==='bottom'&&!o.bottom) o.bottom=it;
     else if(it.cat==='onepiece'&&!o.onepiece) o.onepiece=it; else if(it.cat==='shoes'&&!o.shoes) o.shoes=it;
     else if(ACCESSORY.includes(it.cat)) o.acc.push(it); }
   if(o.under&&o.top&&canUnder(o.top)&&!canUnder(o.under)){ const t=o.top; o.top=o.under; o.under=t; }
@@ -2482,10 +2484,10 @@ function shareDraw(g,p,x,y,w,h,r){ if(!p) return; const fit=p.kind!=='photo'||!!
 // the main pictures give up height. Room the main pictures leave makes the row's pictures larger, up to 288px and three
 // quarters of a main picture's width (owner, 2026-11-07: the empty band used for larger accessories).
 async function shareKit(g,o,top,bottom){ const {W,M}=SHARE, cw=W-2*M, gap=24;
-  const main=[o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom]].filter(Boolean);
+  const main=[o.coat&&['coat',o.coat],o.outer&&['outer',o.outer],o.onepiece?['onepiece',o.onepiece]:o.top&&['top',o.top],o.under&&['under',o.under],!o.onepiece&&o.bottom&&['bottom',o.bottom]].filter(Boolean);
   const small=(o.shoes?[['shoes',o.shoes]]:[]).concat(o.acc.map((a,k)=>['acc'+k,a]));
   if(main.length<2&&small.length&&small[0][0]==='shoes') main.push(small.shift());
-  const kind=(slot,it)=>I18N.tr(slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&o.under&&canOpen(o.top))?'Top, worn open':CAT[it.cat].label);
+  const kind=(slot,it)=>I18N.tr(slot==='coat'?'Coat':slot==='outer'?'Layer':slot==='under'?'Underneath':(slot==='top'&&o.under&&canOpen(o.top))?'Top, worn open':CAT[it.cat].label);
   const nm=it=>isEx(it)?I18N.tr(it.name):it.name;
   const n=Math.max(1,main.length), mw=Math.floor((cw-(n-1)*gap)/n), nameS=n>2?36:40, nameF=`600 ${nameS}px `, nameL=Math.round(nameS*1.2), kindF='500 36px ', kindL=41;
   g.font=kindF+SHARE.body; const kinds=main.map(([s,it])=>shareLines(g,kind(s,it),mw)), kindLines=Math.max(1,...kinds.map(l=>l.length)); // a translated kind keeps every line
@@ -2847,7 +2849,7 @@ function openPiece(i,slot,again){
    <p class="ginfo">${esc(CAT[it.cat].label)} · ${COND[it.cond??4]} · ${worn===1?'Worn 1 time':'Worn '+worn+' times'}${it.lastWorn?' · '+'Last worn '+esc(it.lastWorn):''}</p>
    ${it.notes?`<p class="hint" style="margin:0">${esc(it.notes)}</p>`:''}
    ${S.fits[i]&&S.fits[i].worn?(loggedToday(it.id)?`<button class="linkbtn" data-punlog="${esc(it.id)}">I did not wear it today: remove it from today's log</button>`:'')
-     :(DROPPABLE(slot,hydrate(S.fits[i].ids))?`<button class="linkbtn" data-pdrop="${i}" data-slot="${esc(slot)}">Not wearing it: leave it out of this outfit</button>`:'')}</div></div>
+     :`${slot==='outer'&&!hydrate(S.fits[i].ids).coat&&swapOpts(hydrate(S.fits[i].ids),'coat').length?`<button class="btn" data-pcoat="${i}">Add a coat over it</button>`:''}${DROPPABLE(slot,hydrate(S.fits[i].ids))?`<button class="linkbtn" data-pdrop="${i}" data-slot="${esc(slot)}">Not wearing it: leave it out of this outfit</button>`:''}`}</div></div>
    ${isEx(it)?'':`<div class="row sheet-actions"><button class="btn" data-edit="${esc(it.id)}">Open item</button></div>`}`;
   const sh=again&&$('#sheetRoot').innerHTML?document.querySelector('#sheetRoot .sheet'):null;
   if(sh) sh.innerHTML=html; else openSheet(html,'gsheet');
@@ -2856,11 +2858,12 @@ function openPiece(i,slot,again){
 // Pieces that can be left out of an outfit: accessories (bag, scarf, hat, watch, belt, socks), the outer layer and
 // the t-shirt underneath. Top, bottom and shoes are the outfit itself; swap those instead.
 // The shirt worn open over a t-shirt (or a hoodie over one) can be left out too: the t-shirt then becomes the top.
-const DROPPABLE=(slot,o)=>slot.startsWith('acc')||slot==='outer'||slot==='under'||(slot==='top'&&!!(o&&o.under));
+const DROPPABLE=(slot,o)=>slot.startsWith('acc')||slot==='outer'||slot==='coat'||slot==='under'||(slot==='top'&&!!(o&&o.under));
 function dropPiece(i,slot){
   const f=S.fits[i]; if(!f||f.worn) return; const o=hydrate(f.ids); let gone=null;
   if(slot.startsWith('acc')){ const k=+slot.slice(3); gone=o.acc[k]; o.acc.splice(k,1); }
   else if(slot==='top'&&o.under){ gone=o.top; o.top=o.under; delete o.under; }
+  else if(slot==='outer'&&o.coat){ gone=o.outer; o.outer=o.coat; delete o.coat; } // the coat alone stays
   else { gone=o[slot]; delete o[slot]; }
   if(!gone) return; S.fits[i]=editedFit(f,o); closeSheet(); renderOutfits();
   toast(gone.name+' left out. Wear this logs only the pieces shown; Back to suggestion brings it back.',5500);
@@ -2921,7 +2924,7 @@ function swap(i,slot,dir){
   } else {
     const cands=swapOpts(o,slot); const cur=o[slot];
     if(slot==='under'){ if(cands.length<2) return; o.under=step(cands,cur.id); S.fits[i]=editedFit(f,o); renderOutfits(); return; }
-    if(cands.length<2){ toast('No other '+CAT[slot==='outer'?'outerwear':slot].label.toLowerCase()+' for this occasion.'); return; }
+    if(cands.length<2){ toast('No other '+CAT[slot==='outer'||slot==='coat'?'outerwear':slot].label.toLowerCase()+' for this occasion.'); return; }
     o[slot]=step(cands,cur.id);
     if(slot==='top'&&o.under&&(!layeredOver(o.top)||o.under.id===o.top.id)) delete o.under; // a plain top is worn on its own
     if(slot==='top'&&needsBase(o.top)&&!o.under){ const u=swapCandidates(o,'under',allItems(),S.occ,ctx())[0]; if(u) o.under=u; }
@@ -3157,6 +3160,8 @@ document.addEventListener('click',async e=>{
   if(ds.plan!==undefined){ const f=S.fits[+ds.plan]; if(!f) return; if(planSet({day:tomorrowISO(),occ:S.occ,ids:JSON.parse(JSON.stringify(f.ids))})!==false) toast('Planned for tomorrow. It will be the first outfit in the morning.',4000); return; }
   if(ds.swap!==undefined){ openPiece(+ds.swap,ds.slot); return; }
   if(ds.pdrop!==undefined){ dropPiece(+ds.pdrop,ds.slot); return; }
+  if(ds.pcoat!==undefined){ const i=+ds.pcoat, f=S.fits[i]; if(!f) return; const o=hydrate(f.ids), c=swapOpts(o,'coat')[0]; if(!c) return;
+    o.coat=c; S.fits[i]=editedFit(f,o); closeSheet(); renderOutfits(); toast(c.name+' added over '+o.outer.name+'. Tap it to choose another coat.',4000); return; }
   if(ds.punlog){ unlogPiece(ds.punlog); return; }
   if(ds.pstep!==undefined){ const k=+ds.pi, sl=ds.slot; const before=pieceAt(k,sl); swap(k,sl,+ds.pstep); const after=pieceAt(k,sl);
     if(after&&before&&after.id!==before.id){ openPiece(k,sl,true); const b=document.querySelector('#sheetRoot [data-pstep="'+ds.pstep+'"]'); if(b) b.focus(); } return; }

@@ -139,5 +139,7 @@ I18N.add("ja",{
 "Plan for tomorrow saves the outfit in your account, so your other devices have it too; the next morning it opens first as “Planned last night”, ready to wear.": "「明日のコーデに決める」はコーデをアカウントに保存するので、ほかの端末でも見られます。翌朝「昨夜決めたコーデ」としていちばん最初に表示します。",
 "Colors that suit you: in Style palette, take a selfie by a window with a white sheet of paper, tap four spots, then keep or drop each color shown under your chin.": "似合う色：スタイルパレットで、白い紙を持って窓辺でセルフィーを撮り、4か所をタップして、あごの下に表示される各色を残すか外すかを選びます。",
 "Tops, outerwear and scarves in your colors then rank a little higher. Trousers and shoes are not affected. The selfie stays on your device and is never saved.": "似合う色のトップス、アウター、スカーフが少し上位になります。パンツと靴は対象外です。セルフィーは端末にとどまり、保存されることはありません。",
-"“How Wearcycle decides” now explains Colors that suit you.": "「Wearcycleの判断基準」で似合う色を説明するようになりました。"
+"“How Wearcycle decides” now explains Colors that suit you.": "「Wearcycleの判断基準」で似合う色を説明するようになりました。",
+"Cold days: tap the light layer in your outfit, such as a fleece, then Add a coat over it. The coat is listed first and Wear this logs both.": "寒い日：コーデの薄手のレイヤー（フリースなど）をタップし、「上にコートを重ねる」を選びます。コートが最初に表示され、「これを着る」で両方が記録されます。",
+"Below 0°C (32°F), a fleece, softshell, overshirt, vest or zip hoodie worn alone now ranks lower, and suggestions put a coat over it when that suits the weather better.": "0°C（32°F）未満では、フリース、ソフトシェル、オーバーシャツ、ベスト、ジップパーカーを単体で着るとランクが下がり、天気に合う場合は提案がその上にコートを重ねます。",
 });

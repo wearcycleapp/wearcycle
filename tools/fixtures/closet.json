@@ -28,7 +28,7 @@
   "paletteCustom": [],
   "sizes": {}, "measures": {}, "ideas": null, "savedIdeas": [], "dupOk": [], "haveFor": {},
   "suits": ["navy", "teal", "white", "denim", "burgundy", "grey"],
-  "plan": {"day": "2026-10-15", "occ": "work", "ids": {"top": "fx-02", "bottom": "fx-12", "outer": "fx-17", "shoes": "fx-19", "acc": ["fx-22", "fx-23"]}},
+  "plan": {"day": "2026-10-15", "occ": "work", "ids": {"top": "fx-02", "bottom": "fx-12", "outer": "fx-15", "coat": "fx-17", "shoes": "fx-19", "acc": ["fx-22", "fx-23"]}},
   "autoCut": false,
   "claude": true,
   "dept": "any",
