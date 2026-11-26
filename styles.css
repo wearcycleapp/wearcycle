@@ -343,6 +343,21 @@ body:has(#camRoot .cam) .toast{top:calc(76px + env(safe-area-inset-top,0px));bot
 .colors button{width:40px;height:40px;border-radius:50%;border:2px solid var(--line);position:relative;padding:0}
 .colors button[aria-pressed="true"]{border-color:var(--ink);box-shadow:0 0 0 2px var(--bg) inset}
 .colors button .ord{position:absolute;bottom:-4px;right:-4px;background:var(--ink);color:var(--bg);font-size:12px;font-family:var(--f-mono);width:18px;height:18px;border-radius:50%;display:grid;place-items:center}
+.colors .ccadd{background:conic-gradient(#d94b45,#e0be42,#3e8a4d,#2e8987,#3566c4,#6a4a9c,#d94b45);display:grid;place-items:center}
+.colors .ccadd span{width:24px;height:24px;border-radius:50%;background:var(--surface);color:var(--ink);font-weight:700;font-size:18px;line-height:24px}
+.colors .ccadd[aria-expanded="true"]{border-color:var(--ink)}
+/* Custom color panel in the piece editor (v1.74.0) */
+.ccpanel{margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);display:flex;flex-direction:column;gap:12px}
+.cc-top{display:flex;gap:12px;align-items:center}
+.cc-sw{width:48px;height:48px;border-radius:50%;border:2px solid var(--line);flex:none}
+.cc-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.cc-acts{display:flex;flex-wrap:wrap;gap:8px}
+.cc-in{position:relative;overflow:hidden}
+.cc-in input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0}
+.cc-in:focus-within{outline:2px solid var(--ink);outline-offset:2px}
+.cc-photo{position:relative;display:flex;justify-content:center;background:var(--bg);border-radius:10px;padding:6px}
+.cc-photo canvas{max-width:100%;touch-action:manipulation;cursor:crosshair;border-radius:6px}
+.cc-mark{position:absolute;width:24px;height:24px;margin:-12px 0 0 -12px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1.5px var(--ink);pointer-events:none}
 .photo{display:flex;gap:12px;align-items:center}
 .photo .pv{position:relative;width:110px;height:110px;flex:none;border-radius:10px;background:var(--surface);border:1px solid var(--line);display:grid;place-items:center;overflow:hidden}
 .photo .pv img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}

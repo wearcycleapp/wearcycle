@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.73.0';
+const APP_VERSION='1.74.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk,midLayer,coatOk}=WardrobeLogic;
@@ -124,7 +124,11 @@ const GLYPH={
   hat:'<path d="M9 31c0-10 7-17 15-17s15 7 15 17Z"/><rect x="3" y="30" width="42" height="5" rx="2"/>',
   bag:'<path d="M9 18h30l-3 24H12L9 18Z"/><path d="M18 18v-4a6 6 0 0 1 12 0v4" fill="none" stroke-width="2.5"/>',
   other:'<circle cx="24" cy="24" r="13"/>'};
-function glyph(it){ const c=COLORS[primary(it)]?.hex||'#9aa3ad'; return `<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true" fill="${c}" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round">${GLYPH[it.cat]||GLYPH.other}</svg>`; }
+// A piece can keep its own shade of a named color (items.body.shades {color: "#rrggbb"}, v1.74.0, owner approved
+// 2026-11-26): it is drawn everywhere the piece is drawn; outfit rules keep using the named color (the nearest of the 19).
+function shadeOf(it,k){ const h=it&&it.shades&&it.shades[k]; return /^#[0-9a-f]{6}$/i.test(h||'')?h:(COLORS[k]?COLORS[k].hex:'#9aa3ad'); }
+function hexLab(h){ return rgb2lab(parseInt(h.slice(1,3),16),parseInt(h.slice(3,5),16),parseInt(h.slice(5,7),16)); }
+function glyph(it){ const c=COLORS[primary(it)]?shadeOf(it,primary(it)):'#9aa3ad'; return `<svg class="glyph" viewBox="0 0 48 48" aria-hidden="true" fill="${c}" stroke="rgba(120,130,140,.55)" stroke-width="1.2" stroke-linejoin="round">${GLYPH[it.cat]||GLYPH.other}</svg>`; }
 function thumbSrc(it){ return it.thumb||it._localUrl||''; }
 function visual(it){ const src=thumbSrc(it); return src?`<img src="${esc(src)}" alt="${esc(it.name)}" loading="lazy" class="${it.box?'fitted':'cover'}"${enhanceOn()&&it.thumb?` data-enh="${esc(it.id)}"`:''}>`:glyph(it); }
 /* Photo enhancement, on screen only (stored photos are never changed; Claude and color detection see the originals).
@@ -1289,7 +1293,7 @@ function hydratePhotos(){ document.querySelectorAll('#fits img[data-photo]').for
 function paletteStrip(o){
   const core=coreOf(o); const h=WardrobeLogic.harmony(core.map(primary).filter(c=>COLORS[c]));
   const adv=adviceText();
-  return `<div class="palette"><span class="sws">${core.filter(i=>COLORS[primary(i)]).map(i=>`<span class="sw" style="background:${COLORS[primary(i)].hex}" title="${esc(colorName(primary(i)))}: ${esc(i.name)}"></span>`).join('')}</span>
+  return `<div class="palette"><span class="sws">${core.filter(i=>COLORS[primary(i)]).map(i=>`<span class="sw" style="background:${shadeOf(i,primary(i))}" title="${esc(colorName(primary(i)))}: ${esc(i.name)}"></span>`).join('')}</span>
     <span class="pl"><b>${esc(h.why)}</b>${adv?`<span>${esc(adv)}</span>`:''}</span></div>`;
 }
 function palNow(){ return paletteOf(S.settings.palette||'any',S.settings.paletteCustom); }
@@ -1898,9 +1902,9 @@ function openEditor(id){
   ED={more:!base,id:base?base.id:null,it:base?Object.assign({},base):{name:'',cat:'top',colors:[],formality:2,occ:[],cond:4,bought:'',notes:''},blob:null,preview:'',ai:null,busy:false,confirmDel:false};
   drawEditor();
 }
-function drawEditor(){ setTimeout(hydrateCuts,0);
+function drawEditor(){ setTimeout(()=>{ hydrateCuts(); if(ED&&ED.cc&&ED.cc.photo) ccLoadPhoto(); },0);
   const it=ED.it; const pv=ED.cropChanged?ED.thumb:(ED.preview||thumbSrc(it)); const hasPic=!!(ED.blob||it.photo)&&!isEx(it); const cropped=ED.cropChanged?!!ED.newBox:!!it.box;
-  const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${colorName(k)}${ix>=0?', choice '+(ix+1):''}" title="${colorName(k)}" style="background:${v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
+  const colorBtns=Object.entries(COLORS).map(([k,v])=>{ const ix=(it.colors||[]).indexOf(k); return `<button type="button" data-color="${k}" aria-pressed="${ix>=0}" aria-label="${colorName(k)}${ix>=0?', choice '+(ix+1):''}" title="${colorName(k)}" style="background:${ix>=0?shadeOf(it,k):v.hex}">${ix>=0?`<span class="ord">${ix+1}</span>`:''}</button>`; }).join('');
   const seg=(key,labels)=>`<div class="seg">${[1,2,3,4,5].map(n=>`<button type="button" data-seg="${key}" data-v="${n}" aria-pressed="${(it[key]??(key==='cond'?4:3))===n}"><b>${n}</b><span>${key==='cond'?labels[n]:labels[n].split(' ')[0]}</span></button>`).join('')}</div>`;
   const showCut=it.cut&&!ED.blob&&!ED.cropChanged&&!CUT.missing.has(it.id), saved=ED.id&&!ED.blob&&!ED.cropChanged&&!isEx(it);
   openSheet(sheetHead(ED.id?(it.review?'Review item':'Edit item'):'New item')+`
@@ -1915,7 +1919,7 @@ function drawEditor(){ setTimeout(hydrateCuts,0);
    ${ED.id&&!ED.blob&&it.cat!=='socks'?`<button type="button" class="btn sm" data-pinsee="${esc(it.id)}" style="align-self:flex-start;margin:0 0 10px">See outfits with this</button>`:''}
    <div class="field"><label for="f-name">Name</label><input type="text" id="f-name" value="${esc(it.name)}" placeholder="e.g. White oxford shirt" maxlength="60"></div>
    <div class="field"><label for="f-cat">Category</label><select id="f-cat">${CATS.map(c=>`<option value="${c.id}" ${it.cat===c.id?'selected':''}>${c.label}</option>`).join('')}</select></div>
-   <div class="field"><span class="lab">Colors · tap in order, main color first</span><div class="colors">${colorBtns}</div></div>
+   <div class="field"><span class="lab">Colors · tap in order, main color first</span><div class="colors">${colorBtns}<button type="button" class="ccadd" data-ccopen="1" aria-expanded="${!!ED.cc}" aria-controls="ccpanel" aria-label="Custom color" title="Custom color"><span aria-hidden="true">+</span></button></div>${ED.cc?ccPanel(it,hasPic):''}</div>
    <details class="more" ${ED.more?'open':''}><summary><b>More details</b><span>${esc([FORM[it.formality??3],COND[it.cond??4],(it.occ||[]).map(o=>OCC[o]?.label).filter(Boolean).join(', ')||'no occasions'].join(' · '))}</span></summary>
    <div class="field"><span class="lab">Dress level · ${FORM[it.formality??3]}</span>${seg('formality',FORM)}</div>
    <div class="field"><span class="lab">Warmth · ${['','Light','Medium','Warm'][warmthOf(it)]}${it.warmth?'':' (guessed)'}</span><div class="seg s3">${[[1,'Light','tee, shorts'],[2,'Medium','shirt, jeans'],[3,'Warm','sweater, coat']].map(([n,l,e])=>`<button type="button" data-seg="warmth" data-v="${n}" aria-pressed="${warmthOf(it)===n}"><b>${l}</b><span>${e}</span></button>`).join('')}</div>
@@ -1953,10 +1957,40 @@ async function editorSetPhoto(blob){
   catch(e){ toast('That image could not be opened.'); }
   if(ED) drawEditor();
 }
+// Custom color (v1.74.0): the phone's color picker, or a spot of the photo; the shade counts as its nearest named color.
+function ccNear(h){ return nearestColor(hexLab(h)); }
+function ccCounts(h){ return I18N.tr('Counts as '+colorName(ccNear(h))+' in outfits.'); }
+function ccPanel(it,hasPic){ const c=ED.cc, n=ccNear(c.hex), own=!!(it.shades&&it.shades[n]);
+  return `<div class="ccpanel" id="ccpanel" role="group" aria-labelledby="cc-h">
+    <div class="cc-top"><span class="cc-sw" id="cc-sw" style="background:${c.hex}" aria-hidden="true"></span><div class="cc-txt"><b id="cc-h">Custom color</b><span class="hint" id="cc-hex" data-notr>${c.hex.toUpperCase()}</span><span id="cc-n" data-notr>${esc(ccCounts(c.hex))}</span></div></div>
+    <div class="cc-acts"><label class="btn sm cc-in">Choose the shade<input type="color" id="cc-in" value="${c.hex}"></label>${hasPic?`<button type="button" class="btn sm ghost" data-ccphoto="1" aria-pressed="${!!c.photo}">Pick from the photo</button>`:''}</div>
+    ${c.photo?`<div class="cc-photo"><canvas id="cc-cv" tabindex="0" aria-label="Your photo. Tap the fabric to take its color."></canvas><span class="cc-mark" id="cc-mark" hidden></span></div><p class="hint">Tap the fabric to take its color, then adjust the shade if the light changed it.</p>`:''}
+    <div class="cc-acts"><button type="button" class="btn sm primary" data-ccuse="1">Use this color</button><button type="button" class="btn sm ghost" data-ccclose="1">Cancel</button>${own?`<button type="button" class="btn sm ghost" data-ccreset="1">Standard color</button>`:''}</div></div>`; }
+function ccSet(h){ if(!ED||!ED.cc) return; ED.cc.hex=h.toLowerCase(); const g=id=>document.getElementById(id);
+  if(g('cc-sw')) g('cc-sw').style.background=h; if(g('cc-hex')) g('cc-hex').textContent=h.toUpperCase(); if(g('cc-n')) g('cc-n').textContent=ccCounts(h);
+  if(g('cc-in')&&g('cc-in').value!==h.toLowerCase()) g('cc-in').value=h.toLowerCase(); }
+let CC_IMG=null;
+async function ccLoadPhoto(){ const cv=document.getElementById('cc-cv'); if(!cv) return;
+  const img=document.querySelector('#sheetRoot .gpic img'); const src=img&&img.src; if(!src){ toast('Could not load the photo.'); return; }
+  try{ if(!CC_IMG||CC_IMG.src!==src){ const b=await (await fetch(src)).blob(); CC_IMG={src,bm:await createImageBitmap(b)}; }
+    const bm=CC_IMG.bm, box=cv.parentElement.getBoundingClientRect(), sc=Math.min(box.width/bm.width,300/bm.height,1.5);
+    cv.width=Math.round(bm.width*sc); cv.height=Math.round(bm.height*sc); cv.getContext('2d',{willReadFrequently:true}).drawImage(bm,0,0,cv.width,cv.height);
+  }catch(e){ toast('Could not load the photo.'); } }
+function ccSample(cv,x,y){ const g=cv.getContext('2d',{willReadFrequently:true}), r=Math.max(3,Math.round(Math.min(cv.width,cv.height)/40));
+  const x0=Math.max(0,Math.round(x)-r), y0=Math.max(0,Math.round(y)-r), w=Math.min(cv.width-x0,2*r+1), h=Math.min(cv.height-y0,2*r+1); if(w<1||h<1) return;
+  const d=g.getImageData(x0,y0,w,h).data; let R=0,G=0,B=0,n=0; for(let i=0;i<d.length;i+=4){ if(d[i+3]<128) continue; R+=d[i];G+=d[i+1];B+=d[i+2];n++; }
+  if(!n){ toast('That spot is empty. Tap the fabric.'); return; }
+  const hx=v=>Math.round(v/n).toString(16).padStart(2,'0'); ccSet('#'+hx(R)+hx(G)+hx(B));
+  const m=document.getElementById('cc-mark'); if(m){ m.hidden=false; m.style.left=(cv.offsetLeft+x*cv.clientWidth/cv.width)+'px'; m.style.top=(cv.offsetTop+y*cv.clientHeight/cv.height)+'px'; m.style.background=ED.cc.hex; ED.cc.at=[x/cv.width,y/cv.height]; } }
+document.addEventListener('input',e=>{ if(e.target&&e.target.id==='cc-in') ccSet(e.target.value); });
+document.addEventListener('pointerdown',e=>{ const cv=e.target; if(!cv||cv.id!=='cc-cv') return; const r=cv.getBoundingClientRect(); ccSample(cv,(e.clientX-r.left)*cv.width/r.width,(e.clientY-r.top)*cv.height/r.height); });
+document.addEventListener('keydown',e=>{ const cv=e.target; if(!cv||cv.id!=='cc-cv'||!ED||!ED.cc) return; const k={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[e.key]; if(!k) return;
+  e.preventDefault(); const a=ED.cc.at||[.5,.5]; const at=[Math.min(1,Math.max(0,a[0]+k[0]*.03)),Math.min(1,Math.max(0,a[1]+k[1]*.03))]; ccSample(cv,at[0]*cv.width,at[1]*cv.height); });
 async function saveEditor(){
   readEditorFields(); const it=ED.it;
   if(!it.name){ toast('Give the item a name.'); $('#f-name')?.focus(); return; }
   if(!it.colors||!it.colors.length){ toast('Pick at least one color.'); return; }
+  if(it.shades){ for(const k of Object.keys(it.shades)) if(!it.colors.includes(k)) delete it.shades[k]; if(!Object.keys(it.shades).length) delete it.shades; }
   if(!isEx(it)&&!canWrite()){ toast('You are offline. Changes need a connection.'); return; }
   ED.busy=true; ED.saving=true; const ED_hadBlob=!!ED.blob; drawEditor();
   const now=todayISO(); let oldPhoto=null;
@@ -2214,6 +2248,7 @@ function openHelp(){ openSheet(sheetHead('How Wearcycle decides')+`<div class="r
     <p><b>Belts.</b> Jeans, chinos, trousers and casual shorts always get a belt if you own one, even one not tagged for the occasion; joggers and athletic wear don't. With leather dress shoes the belt should match them (black with black, brown with brown) and a casual belt is flagged; with sneakers any belt that keeps the colors in harmony. If your only belt doesn't fit the rule it is still shown, with a warning. Change whether a bottom takes a belt in its editor.</p>
     <p><b>Socks.</b> One pair is suggested whenever the outfit has closed shoes. For work and going out: socks the color of the trousers first (it lengthens the leg line), then a shade darker than pale trousers, then socks matching the shoes; white socks with dress shoes are avoided. For casual days, any socks that keep the colors in harmony. Socks don't change an outfit's rank; tap them to swap.</p>
     <p><b>Style palette.</b> Optional. When set, an outfit whose main pieces all use palette colors gets +1, and each piece outside it -0.5. Palettes: muted classics, earth tones, monochrome, navy and white, or a custom set of colors you pick. A custom palette applies to every option, not only the first.</p>
+    <p><b>Custom colors.</b> A piece can keep its exact shade: tap + after its colors, then use the color picker or tap the fabric in its photo. Your shade is shown wherever the piece is drawn; the outfit rules count it as the nearest of the 19 named colors.</p>
     <p><b>Colors that suit you.</b> Optional, from Style palette. You try each color under your chin in a selfie that stays on your device and is never saved; only the colors you keep are saved. When every piece near your face (top, the shirt under, outerwear, one-piece, hat, scarf) is in your colors: +0.75; each one outside: -0.25. Trousers and shoes never count. The order you see the colors in comes from your photo (the white paper corrects the light) and is only a starting point.</p>
     <p><b>Match label.</b> Excellent (score 4+), Great (3+), Good (2+), Fair (0.5+), Weak. Each warning, shown with a red dot, lowers the label one step. Options are listed from highest score down.</p>
     <p><b>Work dress code.</b> Casual: t-shirts, hoodies, jeans and casual jackets (dress levels 2 to 3), no shorts, no big logos. Business casual: shirts, polos, knits and chinos (levels 3 to 4), no t-shirts or hoodies. Suits: levels 4 to 5, and a jacket is added automatically. Each rule can be switched in Settings, and any piece can be overridden in its editor. Formal (interviews, weddings, graduations) takes pieces at level 4 or above and always adds a jacket.</p>
@@ -2553,7 +2588,7 @@ async function shareKit(g,o,top,bottom){ const {W,M}=SHARE, cw=W-2*M, gap=24;
 }
 async function shareImage(o){ const {W,H,M}=SHARE, cv=document.createElement('canvas'); cv.width=W; cv.height=H; const g=cv.getContext('2d'), cw=W-2*M;
   const occ=I18N.tr(OCC[S.occ].label).toLocaleUpperCase(I18N.locale), date=new Date().toLocaleDateString(I18N.locale,{weekday:'long',month:'long',day:'numeric'});
-  const cols=coreOf(o).map(primary).filter(c=>COLORS[c]), why=I18N.tr(WardrobeLogic.harmony(cols).why);
+  const colP=coreOf(o).filter(i=>COLORS[primary(i)]), cols=colP.map(primary), why=I18N.tr(WardrobeLogic.harmony(cols).why);
   try{ await Promise.race([Promise.all([document.fonts.load('800 120px "Big Shoulders Display"',occ),document.fonts.load('600 34px Figtree'),document.fonts.load('500 28px Figtree')]),new Promise(r=>setTimeout(r,2000))]); }catch(e){} // never hold the picture back for a font
   g.fillStyle=SHARE.bg; g.fillRect(0,0,W,H);
   // Ink above and below: social apps draw their own controls over those edges (about the top 14%), so text starts at 269px.
@@ -2564,7 +2599,7 @@ async function shareImage(o){ const {W,H,M}=SHARE, cv=document.createElement('ca
   g.font='500 40px '+SHARE.body; g.fillStyle=SHARE.mutedOnInk; g.fillText(date,M,dateY);
   // The palette and why it works, above the footer; every line of a translation is kept.
   g.font='600 36px '+SHARE.body; const whyL=shareLines(g,why,cw-(cols.length?cols.length*44+28:0)), swY=footStart-40-Math.max(44,whyL.length*46)/2;
-  let x=M; for(const c of cols){ g.beginPath(); g.arc(x+18,swY,18,0,7); g.fillStyle=COLORS[c].hex; g.fill(); g.lineWidth=2; g.strokeStyle='rgba(27,36,51,.25)'; g.stroke(); x+=44; } if(cols.length) x+=28;
+  let x=M; for(const pc of colP){ g.beginPath(); g.arc(x+18,swY,18,0,7); g.fillStyle=shadeOf(pc,primary(pc)); g.fill(); g.lineWidth=2; g.strokeStyle='rgba(27,36,51,.25)'; g.stroke(); x+=44; } if(cols.length) x+=28;
   g.fillStyle=SHARE.ink; const y0=swY-(whyL.length-1)*23+13; whyL.forEach((l,k)=>g.fillText(l,x,y0+k*46));
   const areaEnd=swY-Math.max(22,whyL.length*23)-32;
   await shareKit(g,o,headEnd+40,areaEnd);
@@ -3208,7 +3243,14 @@ document.addEventListener('click',async e=>{
   if(ds.step){ changeSetting(ds.step, SETDEF[ds.step].get(S.settings)+(+ds.d)*SETDEF[ds.step].step); return; }
   if(ds.preset){ changeSetting(ds.preset,+ds.v); return; }
   if(ED){
-    if(ds.color){ readEditorFields(); const c=ED.it.colors=(ED.it.colors||[]).slice(); const ix=c.indexOf(ds.color); if(ix>=0) c.splice(ix,1); else if(c.length<3) c.push(ds.color); else toast('Up to three colors.'); drawEditor(); return; }
+    if(ds.ccopen){ readEditorFields(); if(ED.cc) ED.cc=null; else { const c0=(ED.it.colors||[])[0]; ED.cc={hex:c0?shadeOf(ED.it,c0).toLowerCase():'#808080'}; } drawEditor(); const pn=ED.cc&&document.querySelector('#ccpanel'); if(pn) pn.scrollIntoView({block:'nearest'}); return; }
+    if(ds.ccphoto){ ED.cc.photo=!ED.cc.photo; readEditorFields(); drawEditor(); return; }
+    if(ds.ccclose){ readEditorFields(); ED.cc=null; drawEditor(); const b=document.querySelector('[data-ccopen]'); if(b) b.focus(); return; }
+    if(ds.ccreset){ readEditorFields(); const n=ccNear(ED.cc.hex); const sh=Object.assign({},ED.it.shades); delete sh[n]; if(Object.keys(sh).length) ED.it.shades=sh; else delete ED.it.shades; ED.cc=null; drawEditor(); toast(I18N.tr('Back to the standard '+colorName(n)+'.')); return; }
+    if(ds.ccuse){ readEditorFields(); const h=ED.cc.hex, n=ccNear(h), c=(ED.it.colors||[]).slice();
+      if(!c.includes(n)){ if(c.length>=3){ toast('Up to three colors.'); return; } c.push(n); }
+      ED.it.colors=c; ED.it.shades=Object.assign({},ED.it.shades,{[n]:h}); ED.cc=null; drawEditor(); toast(I18N.tr('Your shade is saved for '+colorName(n)+'.')); const b=document.querySelector(`[data-color="${n}"]`); if(b) b.focus(); return; }
+    if(ds.color){ readEditorFields(); const c=ED.it.colors=(ED.it.colors||[]).slice(); const ix=c.indexOf(ds.color); if(ix>=0){ c.splice(ix,1); if(ED.it.shades&&ED.it.shades[ds.color]){ const sh=Object.assign({},ED.it.shades); delete sh[ds.color]; if(Object.keys(sh).length) ED.it.shades=sh; else delete ED.it.shades; } } else if(c.length<3) c.push(ds.color); else toast('Up to three colors.'); drawEditor(); return; }
     if(ds.seg){ readEditorFields(); ED.it[ds.seg]=+ds.v; drawEditor(); return; }
     if(ds.washev!==undefined){ readEditorFields(); ED.it.washEvery=+ds.washev; drawEditor(); return; }
     if(ds.isnew){ readEditorFields(); ED.it.cond=5; ED.it.bought=todayISO().slice(0,7); drawEditor(); toast('Set to Like new, bought '+ED.it.bought+'.'); return; }

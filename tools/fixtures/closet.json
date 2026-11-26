@@ -500,6 +500,7 @@
     "colors": [
      "grey"
     ],
+    "shades": {"grey": "#3c3f45"},
     "formality": 5,
     "occ": [
      "formal",
@@ -771,6 +772,7 @@
     "colors": [
      "brown"
     ],
+    "shades": {"brown": "#4a3020"},
     "formality": 3,
     "occ": [
      "work",
