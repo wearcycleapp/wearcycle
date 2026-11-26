@@ -142,4 +142,5 @@ I18N.add("ko",{
 "“How Wearcycle decides” now explains Colors that suit you.": "“Wearcycle의 결정 방식”에서 나에게 어울리는 색을 설명해요.",
 "Cold days: tap the light layer in your outfit, such as a fleece, then Add a coat over it. The coat is listed first and Wear this logs both.": "추운 날: 코디에서 플리스 같은 얇은 레이어를 탭한 다음 위에 코트 추가를 누르세요. 코트가 맨 앞에 표시되고 이 코디 입기를 누르면 둘 다 기록됩니다.",
 "Below 0°C (32°F), a fleece, softshell, overshirt, vest or zip hoodie worn alone now ranks lower, and suggestions put a coat over it when that suits the weather better.": "0°C(32°F) 미만에서는 플리스, 소프트셸, 오버셔츠, 조끼, 집업 후디를 단독으로 입으면 순위가 낮아지고, 날씨에 더 맞을 때는 추천이 그 위에 코트를 겹칩니다.",
+"Shop is now five short sections: Buy next, By occasion, Coming up, Build toward a style and Shopping ideas. Tap one to see its details; Back returns to the list. On iPad and computers the details open beside the list.": "쇼핑이 이제 다섯 개의 짧은 섹션으로 나뉩니다: 다음에 살 것, 상황별, 다가오는 일정, 스타일 완성하기, 쇼핑 아이디어. 하나를 탭하면 자세한 내용이 열리고, 뒤로를 누르면 목록으로 돌아갑니다. iPad와 컴퓨터에서는 목록 옆에 자세한 내용이 열립니다.",
 });

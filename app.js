@@ -1,6 +1,6 @@
 /* Wearcycle app: UI, camera, Supabase storage and Claude calls. Pure scoring rules live in logic.js. */
 'use strict';
-const APP_VERSION='1.72.0';
+const APP_VERSION='1.73.0';
 const {PALETTES,paletteOf,CATS,CAT,ACCESSORY,GARMENT,OCCASIONS,OCC,COND,FORM,COLORS,colorName,DAY,
   daysSince,notPicked,isActive,primary,effectiveOccasions,eligible,coreOf,scoreOutfit,makeRng,suggest,swapCandidates,careFlags,gaps,versatility,
   warmthOf,rainReady,wxFeel,wxWet,needsLayer,needsBase,layeredOver,SEASONS,seasonPlan,seasonChecklist,seasonRotation,HOLIDAYS,upcomingHolidays,STYLES,STYLE_IDS,setDept,styleDesc,pieceStyles,learnStyles,essentials,canOpen,canUnder,needsBelt,beltPool,washEvery,NOWASH,repairOk,REPAIR_OCC,DRESS_CODES,setDressCode,workOk,formalOk,midLayer,coatOk}=WardrobeLogic;
@@ -499,6 +499,7 @@ window.addEventListener('popstate',()=>{
   if(CAM.resolve) closeCamera(CAM.mode==='batch'?CAM.shots:[]);
   else if($('#sheetRoot').innerHTML) closeSheet();
   else if(S.sel!==0){ S.sel=0; renderOutfits(); window.scrollTo(0,0); }
+  else if(S.tab==='shop'&&S.shopSec&&!shopWide()){ const from=S.shopSec; S.shopSec=null; renderShop(); const f=document.querySelector(`[data-shopsec="${from}"]`); if(f){ f.focus({preventScroll:true}); f.scrollIntoView({block:'center'}); } }
   else if(S.tab!=='outfits') goTab('outfits');
   else { history.back(); return; } // nothing left to close: let back leave the app
   if(inDepth()) guard();
@@ -1477,6 +1478,9 @@ function openDecide(id){ const it=byId(id); if(!it) return; const f=careFlags(it
 function shopQ(...parts){ const d={men:'men\'s',women:'women\'s'}[S.settings.dept]; return [d].concat(parts).filter(Boolean).map(p=>COLORS[p]?colorName(p):p).map(p=>I18N.lang==='en'?p:I18N.tr(String(p))).join(' '); }
 function shopUrl(q){ return 'https://www.google.com/search?udm=28&q='+encodeURIComponent(q).replace(/'/g,'%27'); } // %27: some chat apps end a link at an apostrophe
 const SHOP_GO='<span class="go">Shop ›</span>';
+// The store-search button and the tab share the English word "Shop"; a language can name the button apart
+// (fr: "Magasiner", owner 2026-11-25) under the key "Shop (store search)". Without that key it is translated as "Shop".
+const shopBtn=()=>{ const t=I18N.lang!=='en'&&I18N.dict&&I18N.dict['Shop (store search)']; return t?`<span data-notr>${esc(t)}</span>`:'Shop'; };
 const DEPTS=[['men',"Men's"],['women',"Women's"],['any','Any']];
 function deptChips(){ return `<div class="chips" style="flex-wrap:wrap;margin-top:8px">${DEPTS.map(([k,l])=>`<button type="button" class="chip" data-dept="${k}" aria-pressed="${S.settings.dept===k}">${l}</button>`).join('')}</div>`; }
 const DEPT_HINT='Used for what to buy and for shopping searches. Outfits from your own closet are not affected.';
@@ -1583,13 +1587,13 @@ function ideaHave(id,itemId){ const h=S.settings.haveFor||(S.settings.haveFor={}
 // Shop (v1.55.0, owner 2026-10-27): one answer first (Buy next, at most three), everything else folded into rows
 // that open in place. Two columns from 700x600. Numbers come from gaps(), versatility(), the Replace rule and the
 // season and style lists; nothing here invents a need.
-S.shopOpen=new Set();
+S.shopOpen=new Set(); S.shopSec=null;
 function fold(id,label,status,pill,body,open){ const on=open??S.shopOpen.has(id);
   return `<button type="button" class="srow" data-fold="${id}" aria-expanded="${on}"><b>${label}</b><span class="st">${status}</span>${pill||''}<span class="chev" aria-hidden="true">›</span></button><div class="sdet" id="fold-${id}" ${on?'':'hidden'}>${body}</div>`; }
 function pillHtml(t,good){ return `<span class="spill${good?' good':''}">${t}</span>`; }
 // A card that replaces one of the person's pieces shows that piece (cut-out, else its photo); new pieces keep the glyph (v1.57.1).
 function buyPic(x){ const it=x.piece&&byId(x.piece); return it?smallPic(it):glyph({cat:x.cat,colors:[x.color]}); }
-function buyCard(c){ return `<div class="buy"><span class="bsw${c.piece?' own':''}" aria-hidden="true">${buyPic(c)}</span><div class="bt"><span class="bwhy${c.bad?' bad':''}">${c.why}</span><b>${c.title}</b>${c.big?`<span class="big">${c.big}</span>`:''}${c.sub||''}${c.pairs&&c.pairs.length?`<span class="pairs"><span>Pairs with</span>${c.pairs.slice(0,3).map(it=>`<i title="${esc(it.name)}">${smallPic(it)}</i>`).join('')}</span>`:''}</div><a class="btn sm bgo" href="${shopUrl(c.q)}" target="_blank" rel="noopener">Shop</a></div>`; }
+function buyCard(c){ return `<div class="buy"><span class="bsw${c.piece?' own':''}" aria-hidden="true">${buyPic(c)}</span><div class="bt"><span class="bwhy${c.bad?' bad':''}">${c.why}</span><b>${c.title}</b>${c.big?`<span class="big">${c.big}</span>`:''}${c.sub||''}${c.pairs&&c.pairs.length?`<span class="pairs"><span>Pairs with</span>${c.pairs.slice(0,3).map(it=>`<i title="${esc(it.name)}">${smallPic(it)}</i>`).join('')}</span>`:''}</div><a class="btn sm bgo" href="${shopUrl(c.q)}" target="_blank" rel="noopener">${shopBtn()}</a></div>`; }
 // Share my list (v1.56.0, owner 2026-10-27): the person picks pieces, sizes (saved per kind in settings.sizes)
 // and a note, then shares plain text through the phone's share menu or copies it. Nothing is published or stored
 // outside the person's own settings.
@@ -1757,10 +1761,10 @@ function renderShop(){
   const ideaRows=moreIdeas.map(r=>`<a class="lrow shop" href="${shopUrl(shopQ(r.color,r.label.toLowerCase()))}" target="_blank" rel="noopener"><span class="mark">+</span><span class="t"><b><span class="cw">${esc(colorName(r.color))}</span> · <span>${esc(r.label.toLowerCase())}</span></b><span>+${r.adds} ${r.adds===1?'outfit':'outfits'} · ${pl(r.newLooks,'1 new color pairing','{0} new color pairings')}</span></span>${SHOP_GO}</a>`).join('');
   // Needs past the first three: one row each with the same reason line and Shop link as a card.
   const needRow=c=>`<a class="lrow shop" href="${shopUrl(c.q)}" target="_blank" rel="noopener"><span class="bsw sm${c.piece?' own':''}" aria-hidden="true">${buyPic(c)}</span><span class="t"><b>${c.title}</b><span class="nwhy">${c.why}</span>${c.group?c.sub:''}</span>${SHOP_GO}</a>`;
-  const buy=shown.length?`<section class="panel" aria-labelledby="h-buy"><div class="panel-h"><h3 id="h-buy">Buy next</h3><span class="count">${shown.length}</span><span class="spacer"></span>${shareBtn}</div>${shown.map(buyCard).join('')}
+  const buyBody=shown.length?`${shown.map(buyCard).join('')}
       ${hidden.length?fold('moreneeds',pl(hidden.length,'1 more need','{0} more needs'),'','',hidden.map(needRow).join('')):''}
-      ${moreIdeas.length?fold('ideas',pl(moreIdeas.length,'1 more idea','{0} more ideas'),'','',ideaRows):''}</section>`
-    :(moreIdeas.length?`<section class="panel">${fold('ideas','More outfits from one purchase',pl(moreIdeas.length,'1 idea','{0} ideas'),'',ideaRows)}<div class="panel-h" style="border:0">${shareBtn}</div></section>`:'');
+      ${moreIdeas.length?fold('ideas',pl(moreIdeas.length,'1 more idea','{0} more ideas'),'','',ideaRows):''}`
+    :(moreIdeas.length?fold('ideas','More outfits from one purchase',pl(moreIdeas.length,'1 idea','{0} ideas'),'',ideaRows):'');
   // By occasion: one row each; a covered one is one line, a gap opens the details in place.
   const needHtml=n=>`<div class="need"><div class="row"><b>${slotName[n.slot]}</b><span class="meter" role="img" aria-label="${n.have} of ${n.target}">${Array.from({length:n.target},(_,k)=>`<i class="${k<n.have?'on':''}"></i>`).join('')}</span><span class="hint">${n.have} of ${n.target}</span></div>
       ${(n.tired||[]).length?`<div class="opt">Another pair lets your shoes rest between wears.</div>${n.tired.map(x=>`<div class="opt hint"><span data-notr>${esc(x.item.name)}</span>: <span>Worn on ${x.days} of the last 30 days.</span></div>`).join('')}`:''}
@@ -1771,9 +1775,8 @@ function renderShop(){
     ?fold('occ-'+x.occ,OCC[x.occ].label,x.needs.map(n=>`<span>${slotName[n.slot]}</span> <span>${n.have} of ${n.target}</span>`).join(' · '),pillHtml(x.needs.length===1?'1 gap':x.needs.length+' gaps'),x.needs.map(needHtml).join(''))
     :`<div class="srow plain"><b>${OCC[x.occ].label}</b><span class="st ok">Covered: ${x.have.top} tops, ${x.have.bottom} bottoms, ${x.have.shoes} shoes ready.</span></div>`).join('');
   const gapN=g.filter(x=>x.needs.length).length;
-  const occ=`<section class="panel" aria-labelledby="h-occ"><div class="panel-h"><h3 id="h-occ">By occasion</h3><span class="count">${gapN?pl(gapN,'1 with gaps','{0} with gaps'):'ready'}</span></div>${occRows}</section>`;
   // Coming up: the season and the holidays, a row each.
-  const coming=[]; const w=wxSet(); const plan=seasonPlan(Date.now(),wxOn()?w.lat:NaN);
+  const coming=[], comingSt=[]; const w=wxSet(); const plan=seasonPlan(Date.now(),wxOn()?w.lat:NaN);
   if(plan){ const se=SEASONS[plan.id]; const list=seasonChecklist(plan.id,items); const okL=list.filter(x=>x.have.length>=x.need), miss=list.filter(x=>x.have.length<x.need);
     const rot=seasonRotation(plan.id,items,Date.now());
     // The preview ranks outfits twice, so it is worked out only while the row is open (v1.66.1).
@@ -1785,11 +1788,12 @@ function renderShop(){
       ${S.shopOpen.has('season')?'':'<span data-lazy hidden></span>'}${prev?`<p class="sh4">${'What you would wear on a '+se.label.toLowerCase()+' day'}</p><div class="seaprevs">${prev}</div>`:''}
       ${rot.bringOut.length?`<p class="hint"><b>Bring these out</b> <span data-notr>${esc(rot.bringOut.slice(0,8).map(i=>i.name).join(', '))}</span></p>`:''}
       ${rot.store.length?`<p class="hint"><b>Can go into storage</b> <span data-notr>${esc(rot.store.slice(0,8).map(i=>i.name).join(', '))}</span></p>`:''}`;
+    comingSt.push(`<span>${se.label}</span> · ${plan.upcoming?`<span>${fmtDay(plan.start)}</span> · `:''}<span>${miss.length?pl(miss.length,'1 to add','{0} to add'):'Complete'}</span>`);
     coming.push(fold('season',se.label,`${plan.upcoming?`<span>${fmtDay(plan.start)}</span> · `:''}<span>${okL.length} of ${list.length} ready</span>`,miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1),body)); }
   const hs=holidaysSoon(30);
+  if(hs.length) comingSt.push(`<span>${hs[0].label}</span> <span>${fmtDay(hs[0].date)}</span>`);
   if(hs.length) coming.push(fold('holidays','Holidays',hs.map(h=>`<span>${h.label}</span> <span>${fmtDay(h.date)}</span>`).join(' · '),'',hs.map(h=>{ const own=h.colors.map(c=>[c,items.filter(i=>isActive(i)&&primary(i)===c).length]);
       return `<div class="li hol"><span class="sws">${h.colors.slice(0,4).map(c=>`<span class="sw" style="background:${COLORS[c].hex}"></span>`).join('')}</span><div class="txt"><b>${h.label} · ${fmtDay(h.date)}</b><span>${h.tip}</span><span>${'You own: '+own.map(([c,n])=>I18N.t(colorName(c))+' '+n).join(' · ')}</span></div><div class="acts"><button class="btn sm" data-theme-go="${h.id}">See outfits</button></div></div>`; }).join('')));
-  const comingP=coming.length?`<section class="panel" aria-labelledby="h-coming"><div class="panel-h"><h3 id="h-coming">Coming up</h3></div>${coming.join('')}</section>`:'';
   // Build toward a style: what to add per style; the owned essentials behind one row.
   const st=styleSet(); const lr=learned(); const keys=[...new Set(st.pick.length?st.pick.concat(st.work):lr.ids.concat(st.work))];
   let ownedRows='', ownedN=0;
@@ -1798,21 +1802,48 @@ function renderShop(){
         return e.manual?`<div class="essman">${row}<button type="button" class="btn sm" data-ess-undo="${esc(k)}" data-ess-l="${esc(e.label)}">Undo</button></div>`:row; }).join('');
       return `<div class="srow plain"><b ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</b><span class="st">${have.length} of ${ess.length}</span>${miss.length?pillHtml(pl(miss.length,'1 to add','{0} to add')):pillHtml('Complete',1)}</div>
         ${miss.map(e=>`<button type="button" class="lrow shop" data-ess="${esc(k)}" data-ess-l="${esc(e.label)}" aria-haspopup="dialog"><span class="mark">+</span><span class="t"><b ${STYLES[k]?'':'data-notr'}>${esc(e.label)}</b></span><span class="chev" aria-hidden="true">›</span></button>`).join('')}`; }).join('');
-  const styleP=keys.length?`<section class="panel" aria-labelledby="h-style"><div class="panel-h"><h3 id="h-style">Build toward a style</h3></div><p class="hint sp">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p>${styleBody}${ownedN?fold('owned',pl(ownedN,'Show the 1 you own','Show the {0} you own'),'','',ownedRows):''}<div class="panel-h" style="border:0"><button class="btn sm" data-act="inspo">Inspiration from a photo</button></div></section>`
-    :`<div class="panel"><div class="li"><div class="txt"><b>Build toward a style</b><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button><button class="btn sm" data-act="inspo">From a photo</button></div></div></div>`;
+  const styleBodyAll=keys.length?`<p class="hint sp">${st.pick.length?'Essentials for the styles you picked. ✓ means you own one.':(lr.ids.length?'Learned from what you wear. ✓ means you own one.':'')}</p>${styleBody}${ownedN?fold('owned',pl(ownedN,'Show the 1 you own','Show the {0} you own'),'','',ownedRows):''}<div class="panel-h" style="border:0"><button class="btn sm" data-act="inspo">Inspiration from a photo</button></div>`
+    :`<div class="li"><div class="txt"><span>Pick a style to see which pieces would build it from what you own.</span></div><div class="acts"><button class="btn sm" data-act="styles">Pick</button><button class="btn sm" data-act="inspo">From a photo</button></div></div>`;
+  const styleSt=keys.length?keys.slice(0,3).map(k=>{ const ess=styleEss(k,items), m=ess.filter(e=>!e.have).length; return `<span ${STYLES[k]?'':'data-notr'}>${esc(styleName(k))}</span> <span>${m?pl(m,'1 to add','{0} to add'):'Complete'}</span>`; }).join(' · ')+(keys.length>3?' · +'+(keys.length-3):'')
+    :'<span>Pick a style to see which pieces would build it from what you own.</span>';
   const last=S.settings.ideas&&Array.isArray(S.settings.ideas.list)?S.settings.ideas:null;
   const list=ideasState.list||(last?last.list:null), at=ideasState.list?ideasState.at:(last?last.at:null);
   const saved=S.settings.savedIdeas||[], savedK=new Set(saved.map(ideaKey));
   const when=at?new Date(at).toLocaleDateString(I18N.locale,{month:'short',day:'numeric'}):'';
   const ownI=ideasOwned(saved,allItems()), savedS=saved.filter(x=>!ownI.has(x.id)).concat(saved.filter(x=>ownI.has(x.id)));
   const savedP=saved.length?`<div class="ideash"><h4>Saved ideas <span class="n">${saved.length}</span></h4></div>${savedS.map(x=>ideaRow(x,ownI.get(x.id))).join('')}`:'';
-  const ai=`<div class="panel"><div class="panel-h"><h3>Shopping ideas</h3><span class="spacer"></span><button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button></div>
-     ${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
+  const ideasBtn=`<button class="btn sm" data-act="ideas" ${ideasState.busy?'disabled':''}>${ideasState.busy?'Thinking…':(list?'Ask again':'Suggest purchases')}</button>`;
+  const aiBody=`${ideasState.err?`<div class="li"><span class="hint">${esc(ideasState.err)}</span></div>`:''}
      ${savedP}
-     ${list?fold('ideaslist',list.length===1?'1 latest idea':`${list.length} latest ideas`,when?`Suggested ${when}`:'','',list.map((x,k)=>{ const on=savedK.has(ideaKey(x)); return `<div class="idearow">${ideaLink(x)}<button type="button" class="btn sm ideasave" data-idea-save="${k}" aria-pressed="${on}">${on?'Saved':'Save'}</button></div>`; }).join('')):`<div class="li"><span class="hint">AI reads a summary of your closet and the gaps above, and suggests specific pieces.</span></div>`}</div>`;
+     ${list?fold('ideaslist',list.length===1?'1 latest idea':`${list.length} latest ideas`,when?`Suggested ${when}`:'','',list.map((x,k)=>{ const on=savedK.has(ideaKey(x)); return `<div class="idearow">${ideaLink(x)}<button type="button" class="btn sm ideasave" data-idea-save="${k}" aria-pressed="${on}">${on?'Saved':'Save'}</button></div>`; }).join('')):`<div class="li"><span class="hint">AI reads a summary of your closet and the gaps above, and suggests specific pieces.</span></div>`}`;
+  const aiSt=[saved.length?`<span>Saved ideas</span> ${saved.length}`:'',when?`<span>Suggested ${when}</span>`:''].filter(Boolean).join(' · ')||(ideasState.busy?'<span>Thinking…</span>':'<span>Suggest purchases</span>');
   const ask=S.settings.dept?'':`<div class="panel"><div class="li"><div class="txt"><b>Which department do you shop in?</b><span>${DEPT_HINT}</span>${deptChips()}</div></div></div>`;
-  box.innerHTML=`<div class="shopv">${summary}${ask}<div class="scol">${buy}${occ}</div><div class="scol">${comingP}${styleP}${ai}</div></div>`;
+  // Sections (v1.73.0, owner 2026-11-25: "too many lists"): Shop lists five sections, one line each; a section opens
+  // its details, as a page of its own on phones (Back returns) and beside the list from 700x600. Nothing inside changed.
+  const coveredSt=covered.length?`<span>${'Covered: '+covered.join(', ')+'.'}</span>`:'';
+  const SEC=[
+    buyBody&&{id:'buy',title:'Buy next',count:shown.length||'',act:shareBtn,body:buyBody,
+      pics:shown.length?`<span class="secpics" aria-hidden="true">${shown.map(c=>`<span class="bsw xs${c.piece?' own':''}">${buyPic(c)}</span>`).join('')}</span>`:'',
+      status:shown.length?shown.map(c=>c.title).join(', ')+(hidden.length?` · <span>${pl(hidden.length,'1 more need','{0} more needs')}</span>`:''):`<span>${pl(moreIdeas.length,'1 idea','{0} ideas')}</span>`},
+    {id:'occ',title:'By occasion',body:occRows,status:[gapN?`<span>${pl(gapN,'1 with gaps','{0} with gaps')}</span>`:'',coveredSt].filter(Boolean).join(' · ')},
+    coming.length&&{id:'coming',title:'Coming up',body:coming.join(''),status:comingSt.join(' · ')},
+    {id:'style',title:'Build toward a style',body:styleBodyAll,status:styleSt},
+    {id:'ideas',title:'Shopping ideas',act:ideasBtn,body:aiBody,status:aiSt}].filter(Boolean);
+  const wide=shopWide(); if(S.shopSec&&!SEC.some(x=>x.id===S.shopSec)) S.shopSec=null;
+  const cur=SEC.find(x=>x.id===S.shopSec)||(wide?SEC[0]:null);
+  const det=cur?`<section class="panel shopdet" aria-labelledby="h-sec"><div class="panel-h">${wide?'':`<button type="button" class="iconbtn secback" data-shopsec="" aria-label="Back">${CHEV_L}</button>`}<h3 id="h-sec">${cur.title}</h3>${cur.count?`<span class="count">${cur.count}</span>`:''}<span class="spacer"></span>${cur.act||''}</div>${cur.body}</section>`:'';
+  const rows=`<nav class="panel secs" aria-label="Shopping list">${SEC.map(x=>`<button type="button" class="srow sec" data-shopsec="${x.id}"${wide?` aria-current="${cur&&cur.id===x.id}"`:''}><span class="sect"><b>${x.title}</b>${x.count?`<span class="count">${x.count}</span>`:''}</span>${x.pics||''}<span class="st">${x.status}</span><span class="chev" aria-hidden="true">›</span></button>`).join('')}</nav>`;
+  const share=shareBtn&&!(wide&&cur&&cur.id==='buy')?`<div class="sshare">${shareBtn}</div>`:''; // once on screen: the open To buy section has it
+  $('#tab-shop').classList.toggle('indet',!wide&&!!cur);
+  box.innerHTML=!wide&&cur?`<div class="shopv">${det}</div>`
+    :`<div class="shopv"><div class="scol">${summary}${share}${rows}${ask}</div>${wide?`<div class="scol">${det}</div>`:''}</div>`;
 }
+// Shop's two columns follow the same condition as its CSS (700x600).
+const SHOP_WIDE=window.matchMedia?matchMedia('(min-width:700px) and (min-height:600px)'):null;
+function shopWide(){ return !!(SHOP_WIDE&&SHOP_WIDE.matches); }
+if(SHOP_WIDE&&SHOP_WIDE.addEventListener) SHOP_WIDE.addEventListener('change',()=>{ if(S.tab==='shop') renderShop(); });
+/** Opens a Shop section (or the list, with null). Returns false when that section is not shown. Used by tools/check.mjs too. */
+function openShopSec(id){ S.shopSec=id||null; if(id&&!shopWide()) guard(); renderShop(); if(id&&!document.querySelector('#h-sec')) { S.shopSec=null; renderShop(); return false; } return true; }
 function versaPanel(items){
   const v=versatility(items,5); if(!v.list.length) return '';
   const pl=(n,one,many)=>(n===1?one:many).replace('{0}',n);
@@ -2074,7 +2105,7 @@ function openInspoResult(){
    <h4>In your closet <span class="n">${have.length}</span></h4>
    ${have.length?`<div class="inspo-l">${have.map(e=>`<div class="inspo-r"><i>${smallPic(e.have)}</i><span><span data-notr>${esc(e.label)}</span> → <b data-notr>${esc(e.have.name)}</b></span></div>`).join('')}</div>`:'<p class="hint">Nothing in your closet matches yet.</p>'}
    <h4>To complete it <span class="n">${miss.length}</span></h4>
-   ${miss.length?`<div class="inspo-l">${miss.map((e,k)=>{ const on=sv.has(String(e.label).toLowerCase()); return `<div class="inspo-r"><span class="t" data-notr>${esc(e.label)}</span><a class="btn sm ghost" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener">Shop</a><button type="button" class="btn sm" data-inspo-wish="${k}" aria-pressed="${on}">${on?'On your wish list':'Add to wish list'}</button></div>`; }).join('')}</div>`:'<p class="hint">You own every piece of this look.</p>'}
+   ${miss.length?`<div class="inspo-l">${miss.map((e,k)=>{ const on=sv.has(String(e.label).toLowerCase()); return `<div class="inspo-r"><span class="t" data-notr>${esc(e.label)}</span><a class="btn sm ghost" href="${shopUrl(shopQ(e.label))}" target="_blank" rel="noopener">${shopBtn()}</a><button type="button" class="btn sm" data-inspo-wish="${k}" aria-pressed="${on}">${on?'On your wish list':'Add to wish list'}</button></div>`; }).join('')}</div>`:'<p class="hint">You own every piece of this look.</p>'}
    ${done?`<div class="inspo-done" role="status"><b data-notr>${esc(I18N.t('Saved {a}.',{a:done.label}))}</b><div class="row"><button class="btn primary" data-act="inspoSee">See outfits in this style</button><button class="btn" data-close>Close</button></div></div>`
    :`<div class="inspo-acts"><button class="btn primary" data-act="inspoNew">Save as a new style</button>
      ${looks().length?`<div class="inspo-merge"><label for="inspo-into">Update a style</label><div class="row"><select id="inspo-into">${looks().map(l=>`<option value="${esc(l.id)}" data-notr>${esc(l.label)}</option>`).join('')}</select><button class="btn" data-act="inspoMerge">Update</button></div></div>`:''}
@@ -2964,9 +2995,10 @@ async function confirmAll(){
   toast('Confirmed '+n+' item'+(n===1?'':'s')+'.'+(skipped?' '+skipped+' still need a color or name; open them to finish.':''),6000);
 }
 function goTab(tab){
+  const shopBack=tab==='shop'&&S.tab!=='shop'&&!shopWide()&&!!S.shopSec; if(shopBack) S.shopSec=null;
   S.tab=tab; if(tab!=='outfits') guard();
   for(const b of document.querySelectorAll('nav.tabs button')){ if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
-  if(STALE.has(tab)){ STALE.delete(tab); LAZYTAB[tab](); }
+  if(STALE.has(tab)){ STALE.delete(tab); LAZYTAB[tab](); } else if(shopBack) renderShop();
   for(const s of document.querySelectorAll('section.tab')) s.hidden=s.id!=='tab-'+tab;
   renderStatus(); window.scrollTo(0,0);
   if(tab==='outfits'){ fitLooks(); fitKit(); } // sized again here: a resize or rotation while Outfits was hidden could not measure it
@@ -3142,6 +3174,10 @@ document.addEventListener('click',async e=>{
     saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.styleWork!==undefined){ const st=styleSet(), k=ds.styleWork; st.work=!k?[]:(st.work.includes(k)?st.work.filter(x=>x!==k):st.work.concat([k])); saveCache(); queueSettingsSave(); S.fitKey=''; openStyles(); renderAll(); return; }
   if(ds.revert!==undefined){ const k=+ds.revert, f=S.fits[k]; if(f&&f.orig){ S.fits[k]=Object.assign({},f.orig,{worn:f.worn||f.orig.worn}); renderOutfits(); toast('Back to the suggested outfit.'); } return; }
+  if(t.hasAttribute&&t.hasAttribute('data-shopsec')){ const from=S.shopSec, id=ds.shopsec||null, wide=shopWide(); openShopSec(id);
+    if(wide){ const r=document.querySelector(`[data-shopsec="${id}"]`); if(r) r.focus({preventScroll:true}); }
+    if(!wide){ window.scrollTo(0,0); const f=id?document.querySelector('#h-sec'):document.querySelector(`[data-shopsec="${from}"]`); if(f){ if(id) f.setAttribute('tabindex','-1'); f.focus({preventScroll:!id}); if(!id) f.scrollIntoView({block:'center'}); } }
+    return; }
   if(ds.fold){ const id=ds.fold, on=t.getAttribute('aria-expanded')!=='true'; if(on) S.shopOpen.add(id); else S.shopOpen.delete(id);
     t.setAttribute('aria-expanded',String(on)); const el=document.getElementById('fold-'+id); if(on&&el&&el.querySelector('[data-lazy]')){ renderShop(); const nb=document.querySelector(`[data-fold="${id}"]`); if(nb) nb.focus(); setTimeout(hydrateCuts,0); return; } if(el){ el.hidden=!on; if(on) setTimeout(hydrateCuts,0); } return; }
   if(ds.more){ const id=ds.more, on=t.getAttribute('aria-expanded')!=='true'; if(on) S.careOpen.add(id); else S.careOpen.delete(id);

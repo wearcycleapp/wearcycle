@@ -853,6 +853,10 @@ async function captureAdded(browser, camBrowser, base, state, { dev, theme, lang
         }, texts);
       }
       await closeSheet(page);
+      // Shop sections (v1.73.0): each section's details, a page of its own on phones and beside the list from 700x600.
+      if (on('sheets')) { for (const id of ['buy', 'occ', 'coming', 'style', 'ideas']) await record(page, sw, 'shop-' + id, null, 'page', async () => {
+        await goTab(page, 'shop'); const ok = await page.evaluate(i => openShopSec(i), id); await page.evaluate(() => window.scrollTo(0, 0)); return ok; }, texts);
+        await page.evaluate(() => openShopSec(null)); }
       if (on('layers')) {
         const shut = async () => { await page.keyboard.press('Escape'); await page.waitForFunction(() => !document.querySelector('#viewRoot').innerHTML, null, { timeout: 5000 }); };
         await goTab(page, 'closet');

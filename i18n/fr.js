@@ -811,6 +811,7 @@ I18N.load("fr",{
 "Loading": "Chargement",
 "Outfits": "Tenues",
 "Shop": "Achats",
+"Shop (store search)": "Magasiner",
 "Shopping list": "Liste d’achats",
 "Stats": "Stats",
 "What is missing for each kind of day, and which colors would add the most outfits with what you already have.": "Ce qui manque pour chaque type de journée, et quelles couleurs ajouteraient le plus de tenues avec ce que vous avez déjà.",

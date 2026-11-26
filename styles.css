@@ -972,9 +972,30 @@ button.lrow{cursor:pointer}
 .wlmin{display:flex;align-items:center;gap:6px}
 .wlmin input{width:100%;min-width:0;min-height:44px}
 .wlmin .u{font-size:13px;color:var(--muted);flex:none}
+/* Shop sections (v1.73.0, owner 2026-11-25): one row per section; its details open as a page on phones and beside
+   the list from 700x600. The selected row is marked in ink (coral is not a selected-state color). */
+.secs{display:flex;flex-direction:column}
+.srow.sec{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;column-gap:10px;row-gap:4px;min-height:64px;padding:12px 14px}
+.srow.sec>.sect{grid-column:1;display:flex;align-items:baseline;gap:8px;min-width:0}
+.srow.sec>.sect b{font-size:16px;font-weight:700;min-width:0;max-width:none}
+.srow.sec>.secpics,.srow.sec>.st{grid-column:1}
+.srow.sec>.st{font-size:13.5px;line-height:1.4;color:var(--muted);order:0;flex:none}
+.srow.sec>.chev{grid-column:2;grid-row:1/span 3}
+.srow.sec:last-child{border-bottom:0}
+.secpics{display:flex;gap:6px}
+.bsw.xs{width:32px;height:40px;border-radius:8px}
+.bsw.xs svg.glyph{width:24px;height:24px}
+.srow.sec[aria-current="true"]{background:var(--accent-soft);box-shadow:inset 3px 0 0 var(--accent)}
+.srow.sec[aria-current="true"] .sect b{color:var(--accent)}
+.sshare{display:flex}
+.shopdet>.panel-h{gap:8px}
+.shopdet>.panel-h h3{font-size:18px}
+.secback{margin-left:-6px}
+#tab-shop.indet>div:first-child{display:none}
+@media (hover:hover) and (pointer:fine){ .srow.sec:not([aria-current="true"]):hover{background:color-mix(in srgb,var(--ink) 6%,transparent)} }
 @media (min-width:700px) and (min-height:600px){
-  .shopv{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px 20px;align-items:start}
-  .shopv>.ssum,.shopv>.panel{grid-column:1/-1}
+  .shopv{display:grid;grid-template-columns:minmax(300px,.85fr) minmax(0,1.15fr);gap:16px 20px;align-items:start}
+  .shopv>.scol:last-child{position:sticky;top:16px}
 }
 
 /* Wide screens (v1.41): at 960px only the page widens (the shared layer). Every screen switches at 700x600 in its own
