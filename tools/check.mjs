@@ -1228,7 +1228,7 @@ const DETECTOR_REVIEWED = [
   { rule: 'cramped-padding', file: /^sheet-language\.html$/, snippet: /"langlist": children flush/ },
   { rule: 'cramped-padding', file: /^sheet-share-list\.html$/, snippet: /"wlmeas": children flush/ },
   // Shop section pages (v1.73.0): the 44px Back button sits beside the section title in one row, not above it (measured
-  // 2026-11-26 at 360 and 390px in fr, en and ja: button top 188px, title top 200px, button right of none, left of the title).
+  // 2026-11-26 at 360 and 390px in fr, en and ja: button top 188px, title top 200px, the button left of the title).
   // The detector's static copy has no layout, so it reads the button before the h3 as an icon tile above it.
   { rule: 'icon-tile-stack', file: /^shop-(buy|occ|coming|style|ideas)\.html$/, snippet: /^44x44px icon tile above h3 "/ },
 ];
