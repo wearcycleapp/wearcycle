@@ -990,7 +990,7 @@ button.lrow{cursor:pointer}
 .sshare{display:flex}
 .shopdet>.panel-h{gap:8px}
 .shopdet>.panel-h h3{font-size:18px}
-.secback{margin-left:-6px}
+.secback{width:44px;height:44px;margin-left:-6px}
 #tab-shop.indet>div:first-child{display:none}
 @media (hover:hover) and (pointer:fine){ .srow.sec:not([aria-current="true"]):hover{background:color-mix(in srgb,var(--ink) 6%,transparent)} }
 @media (min-width:700px) and (min-height:600px){
